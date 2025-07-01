@@ -10,13 +10,26 @@
         <p>Tizimga kirish uchun login va parolingizni kiriting.</p>
         <form @submit.prevent="handleLogin">
           <el-input v-model="username" style="width: 240px" placeholder="Foydalanuvchi nomi" />
+          <el-alert
+            v-if="isloginEnterd"
+            title="Loginingizni kiriting"
+            type="error"
+            :closable="false"
+          />
           <el-input
             v-model="password"
             style="width: 240px"
             placeholder="Maxfiy so'z"
             type="password"
+            show-password
           />
-          <el-button type="primary" native-type="submit">Kirish</el-button>
+          <el-alert
+            v-if="isPasswordEntered"
+            title="Maxfiy kodni kiriting"
+            type="error"
+            :closable="false"
+          />
+          <el-button :loading="loading" type="primary" native-type="submit">Kirish</el-button>
         </form>
       </div>
     </div>
@@ -24,17 +37,68 @@
 </template>
 
 <script setup>
+import { useUsersStore } from '@/stores/user'
+import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
 
+const usersStore = useUsersStore()
+const isPasswordEntered = ref(false)
+const isloginEnterd = ref(false)
 const username = ref('')
 const password = ref('')
+const loading = ref(false)
 
-const handleLogin = () => {
-  console.log('Logging in with', username.value, password.value)
+const handleLogin = async () => {
+  loading.value = true
+  // Check if username and password are entered
+  if (!username.value) {
+    isloginEnterd.value = true
+    if (!password.value) {
+      isPasswordEntered.value = true
+    } else {
+      isPasswordEntered.value = false
+    }
+  } else if (!password.value) {
+    isPasswordEntered.value = true
+    isloginEnterd.value = false
+  } else {
+    isloginEnterd.value = false
+    isPasswordEntered.value = false
+
+    const payload = {
+      username: username.value,
+      password: password.value,
+    }
+    await usersStore
+      .loginUser(payload)
+      .then((res) => {
+        localStorage.setItem('userid', res.user.id)
+        localStorage.setItem('refreshtoken', res.tokens.refreshToken)
+        localStorage.setItem('accesstoken', res.tokens.accessToken)
+        loading.value = false
+        window.location.href = '/'
+      })
+      .catch((error) => {
+        ElNotification({
+          title: 'Xatolik',
+          message: error.response.data.message || 'Login failed',
+          type: 'error',
+        })
+        loading.value = false
+      })
+  }
 }
 </script>
 
 <style lang="scss" scoped>
+.el-alert {
+  margin: -10px 0 0;
+  height: 25px;
+  .el-alert__title {
+    font-size: 12px !important;
+  }
+}
+
 .login-page {
   display: flex;
   justify-content: center;
@@ -124,5 +188,11 @@ const handleLogin = () => {
   .login-box {
     box-shadow: none;
   }
+}
+</style>
+
+<style lang="scss">
+.el-alert__title {
+  font-size: 11px !important;
 }
 </style>

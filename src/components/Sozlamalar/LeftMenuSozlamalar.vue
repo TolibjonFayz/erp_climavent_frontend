@@ -7,7 +7,7 @@
         </div>
         <div class="logo-text">
           <h3>Climavent</h3>
-          <span>Xodimlar uchun</span>
+          <span>Xodimlar uchun panel</span>
         </div>
       </div>
       <button class="back-btn">
@@ -18,69 +18,27 @@
     <nav class="sidebar-nav">
       <ul class="nav-list">
         <li class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="/" class="nav-link">
             <i class="icon home-icon"></i>
-            <span>Dashboard</span>
+            <span>Obyekt</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="/davomat" class="nav-link">
+            <i class="icon project-icon"></i>
+            <span>Davomat</span>
           </a>
         </li>
 
         <li class="nav-item active">
-          <a href="#" class="nav-link">
-            <i class="icon project-icon"></i>
-            <span>Project</span>
-            <i class="chevron-down"></i>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="icon client-icon"></i>
-            <span>Client</span>
-            <i class="chevron-down"></i>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="icon board-icon"></i>
-            <span>Board</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="/settings" class="nav-link">
             <i class="icon calendar-icon"></i>
-            <span>Calendar</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="icon message-icon"></i>
-            <span>Message</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="icon components-icon"></i>
-            <span>Components</span>
-            <i class="chevron-down"></i>
+            <span>Sozlamalar</span>
           </a>
         </li>
       </ul>
     </nav>
-
-    <!-- Dark Mode Toggle -->
-    <div class="sidebar-footer">
-      <div class="darkmode-toggle">
-        <i class="icon darkmode-icon"></i>
-        <span>Darkmode</span>
-        <div class="toggle-switch" :class="{ active: isDarkMode }" @click="toggleDarkMode">
-          <div class="toggle-thumb"></div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -254,7 +212,7 @@ export default {
   color: #9ca3af;
 
   &.home-icon::before {
-    content: '🏠';
+    content: '📍';
     font-size: 16px;
   }
 
@@ -263,33 +221,8 @@ export default {
     font-size: 16px;
   }
 
-  &.client-icon::before {
-    content: '👤';
-    font-size: 16px;
-  }
-
-  &.board-icon::before {
-    content: '📋';
-    font-size: 16px;
-  }
-
   &.calendar-icon::before {
-    content: '📅';
-    font-size: 16px;
-  }
-
-  &.message-icon::before {
-    content: '💬';
-    font-size: 16px;
-  }
-
-  &.components-icon::before {
-    content: '🧩';
-    font-size: 16px;
-  }
-
-  &.darkmode-icon::before {
-    content: '🌙';
+    content: '⚙️';
     font-size: 16px;
   }
 }
@@ -301,54 +234,6 @@ export default {
   border-bottom: 2px solid #9ca3af;
   transform: rotate(45deg);
   margin-left: auto;
-}
-
-.sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.darkmode-toggle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  span {
-    flex: 1;
-    font-size: 15px;
-    font-weight: 500;
-    color: #6b7280;
-  }
-}
-
-.toggle-switch {
-  width: 44px;
-  height: 24px;
-  background: #e5e7eb;
-  border-radius: 12px;
-  position: relative;
-  cursor: pointer;
-  transition: background 0.3s ease;
-
-  &.active {
-    background: #409eff;
-
-    .toggle-thumb {
-      transform: translateX(20px);
-    }
-  }
-}
-
-.toggle-thumb {
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 // Scrollbar styling
