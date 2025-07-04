@@ -1,8 +1,10 @@
+import HomePageSozlamalar from '@/views/HomePageSozlamalar.vue'
+import CreateObyektPage from '@/views/CreateObyektPage.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import HomePageDavomat from '@/views/HomePageDavomat.vue'
 import HomePage from '@/views/HomePageObyekt.vue'
 import LoginPage from '@/views/LoginPage.vue'
-import HomePageSozlamalar from '@/views/HomePageSozlamalar.vue'
+import HehePage from '@/views/hehePage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -29,6 +31,16 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginPage,
+    },
+    {
+      path: '/create-obyekt',
+      name: 'create-obyekt',
+      component: CreateObyektPage,
+    },
+    {
+      path: '/hehe',
+      name: 'hehe',
+      component: HehePage,
     },
   ],
 })
