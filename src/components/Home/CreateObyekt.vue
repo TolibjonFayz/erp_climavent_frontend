@@ -54,7 +54,7 @@
 
       <!-- KP raqami -->
       <el-form-item label="KP raqami" v-if="isKPSelected">
-        <el-input v-model="form.dogovornumber" style="width: 240px" placeholder="Kiriting" />
+        <el-input v-model="form.kpnumber" style="width: 240px" placeholder="Kiriting" />
       </el-form-item>
 
       <!-- Dogovor sanasi -->
@@ -62,7 +62,7 @@
         <el-col :span="11">
           <el-config-provider :locale="locale">
             <el-date-picker
-              v-model="value1"
+              v-model="form.dogovortime"
               type="date"
               placeholder="Vaqtni tanlang"
               size="default"
@@ -75,8 +75,8 @@
       <el-form-item v-if="isKPSelected" label="KP sanasi">
         <el-col :span="11">
           <el-config-provider :locale="locale">
-            <el-date-picker
-              v-model="value1"
+            <el-date-pickers
+              v-model="form.kptime"
               type="date"
               placeholder="Vaqtni tanlang"
               size="default"
@@ -91,11 +91,11 @@
       </el-form-item>
 
       <LocationPicker
-        :access-token="MAPBOX_ACCESS_TOKEN"
-        :initial-center="[69.2401, 41.2995]"
-        :initial-zoom="10"
-        :show-geocoding="true"
-        @location-selected="handleLocationSelected"
+        access-token="pk.eyJ1IjoidG9saWJqb25mYXl6IiwiYSI6ImNtY2x6amdkczBoZG0ya3NkYTI2NW8waWMifQ.yM3o-yj1ZPUGJG-gWREK6Q"
+        :initial-center="{ lng: -74.006, lat: 40.7128 }"
+        :initial-zoom="12"
+        @location-selected="onLocationSelected"
+        @current-location="onCurrentLocation"
       />
 
       <el-form-item>
@@ -124,7 +124,9 @@ const form = reactive({
   dogovororkp: '',
   dogokpother: '',
   dogovornumber: '',
+  kpnumber: '',
   dogovortime: '',
+  kptime: '',
   firmanomi: '',
   lat: '',
   lng: '',
