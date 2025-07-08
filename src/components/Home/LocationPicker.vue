@@ -38,7 +38,7 @@
           @keyup.enter="parseLocationLink"
         />
         <button @click="parseLocationLink" :disabled="!locationLink || parsing" class="parse-btn">
-          {{ parsing ? 'Tahlil qilinmoqda...' : 'Borish' }}
+          {{ parsing ? 'Tahlil qilinmoqda...' : 'Tanlash' }}
         </button>
       </div>
       <p v-if="linkError" class="error-message">{{ linkError }}</p>
@@ -295,7 +295,7 @@ const getCurrentLocation = () => {
     {
       enableHighAccuracy: true,
       timeout: 15000,
-      maximumAge: 60000, // Allow cached location up to 1 minute old
+      maximumAge: 60000,
     },
   )
 

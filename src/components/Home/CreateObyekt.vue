@@ -19,9 +19,9 @@
       <!-- Qayerga -->
       <el-form-item label="Qayerga">
         <el-select v-model="form.where" placeholder="Tanlang">
-          <el-option label="Zavod" value="zavod" />
-          <el-option label="Klient" value="klient" />
-          <el-option label="Shaxsiy" value="shaxsiy" />
+          <el-option label="Zavod" value="Zavod" />
+          <el-option label="Klient" value="Klient" />
+          <el-option label="Shaxsiy" value="Shaxsiy" />
           <el-option label="Boshqa" value="boshqa" />
         </el-select>
         <el-input
@@ -35,8 +35,8 @@
       <!-- Dogovor or kp -->
       <el-form-item label="Dogov yoki KP">
         <el-select v-model="form.dogovororkp" placeholder="Tanlang">
-          <el-option label="Dogovor" value="dogovor" />
-          <el-option label="KP" value="kp" />
+          <el-option label="Dogovor" value="Dogovor" />
+          <el-option label="KP" value="KP" />
           <el-option label="Boshqa" value="boshqa" />
         </el-select>
         <el-input
@@ -75,7 +75,7 @@
       <el-form-item v-if="isKPSelected" label="KP sanasi">
         <el-col :span="11">
           <el-config-provider :locale="locale">
-            <el-date-pickers
+            <el-date-picker
               v-model="form.kptime"
               type="date"
               placeholder="Vaqtni tanlang"
@@ -94,13 +94,12 @@
         access-token="pk.eyJ1IjoidG9saWJqb25mYXl6IiwiYSI6ImNtY2x6amdkczBoZG0ya3NkYTI2NW8waWMifQ.yM3o-yj1ZPUGJG-gWREK6Q"
         :initial-center="{ lng: -74.006, lat: 40.7128 }"
         :initial-zoom="12"
-        @location-selected="onLocationSelected"
-        @current-location="onCurrentLocation"
+        @location-selected="handleLocationSelected"
       />
 
-      <el-form-item>
-        <el-button type="primary" @click="onSubmit">Saqlash</el-button>
-        <el-button type="warning" plain>Bekor qilish</el-button>
+      <el-form-item class="button-group">
+        <el-button :loading="loading" type="primary" @click="onSubmit">Saqlash</el-button>
+        <el-button type="warning" plain @click="goback()">Bekor qilish</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -110,11 +109,16 @@
 import LocationPicker from './LocationPicker.vue'
 import ru from 'element-plus/dist/locale/ru.mjs'
 import { reactive, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useComeAndGoesStore } from '@/stores/comeandgoes'
+import router from '@/router'
 
+const comeandgoesStore = useComeAndGoesStore()
 const isWhereBoshqa = ref(false)
 const isKPSelected = ref(false)
 const isDogovorSelected = ref(false)
 const isDogoKpNotSelected = ref(false)
+const loading = ref(false)
 
 const locale = ru
 const form = reactive({
@@ -129,17 +133,14 @@ const form = reactive({
   kptime: '',
   firmanomi: '',
   lat: '',
-  lng: '',
+  lang: '',
+  locationname: '',
 })
 
-const MAPBOX_ACCESS_TOKEN =
-  'pk.eyJ1IjoidG9saWJqb25mYXl6IiwiYSI6ImNtY2x6amdkczBoZG0ya3NkYTI2NW8waWMifQ.yM3o-yj1ZPUGJG-gWREK6Q'
-
 const handleLocationSelected = (location) => {
-  console.log('Location selected:', location)
-  form.lng = location.lng
+  form.lang = location.lng
   form.lat = location.lat
-  console.log(form)
+  form.locationname = location.address || ''
 }
 
 const disabledDate = (time) => {
@@ -151,8 +152,44 @@ const disabledDate = (time) => {
   return time.getTime() < sevenDaysAgo.getTime() || time.getTime() > twoDaysLater.getTime()
 }
 
-const onSubmit = () => {
-  console.log('submit!')
+const onSubmit = async () => {
+  if (!form.goingtime) {
+    ElMessage.warning('Iltimos, obyektga ketish vaqtini tanlang.')
+    return
+  }
+  if (!form.where) {
+    ElMessage.warning('Iltimos, qayerga ketayotganingizni tanlang.')
+    return
+  }
+  if (!form.dogovororkp) {
+    ElMessage.warning('Iltimos, Dogovor yoki KP ni tanlang.')
+    return
+  }
+  if (!form.lat && !form.lang) {
+    ElMessage.warning('Iltimos, joylashuvni tanlang.')
+    return
+  } else {
+    loading.value = true
+    const payload = {
+      when_gone: form.goingtime,
+      whereto: form.where === 'boshqa' ? form.whereother : form.where,
+      dogovor_or_kp: form.dogovororkp === 'boshqa' ? form.dogokpother : form.dogovororkp,
+      dogovorkp_date: form.dogovororkp === 'Dogovor' ? form.dogovortime : form.kptime || '',
+      dogovorkp_number: form.dogovororkp === 'Dogovor' ? form.dogovornumber : form.kpnumber || '',
+      company_name: form.firmanomi,
+      lat: form.lat,
+      lng: form.lang,
+      locationname: form.locationname,
+      user_id: Number(localStorage.getItem('userid')),
+    }
+    await comeandgoesStore.createComeAndGoes(payload)
+    router.push('/')
+    loading.value = false
+  }
+}
+
+const goback = () => {
+  router.push('/')
 }
 
 watch(form, async (value) => {
@@ -161,11 +198,11 @@ watch(form, async (value) => {
   } else {
     isWhereBoshqa.value = false
   }
-  if (value.dogovororkp == 'kp') {
+  if (value.dogovororkp == 'KP') {
     isKPSelected.value = true
     isDogovorSelected.value = false
     isDogoKpNotSelected.value = false
-  } else if (value.dogovororkp == 'dogovor') {
+  } else if (value.dogovororkp == 'Dogovor') {
     isDogovorSelected.value = true
     isKPSelected.value = false
     isDogoKpNotSelected.value = false
@@ -221,5 +258,11 @@ h2 {
 
 .whereotherinput {
   margin-top: 5px;
+}
+
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 </style>
