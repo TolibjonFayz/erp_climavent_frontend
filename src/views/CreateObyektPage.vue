@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import CreateObyekt from '@/components/Home/CreateObyekt.vue'
+import CreateObyekt from '@/components/CreateObyect/CreateObyekt.vue'
 </script>
 
 <style lang="scss" scoped>

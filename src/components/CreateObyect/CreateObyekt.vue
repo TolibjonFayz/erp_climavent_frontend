@@ -1,6 +1,10 @@
 <template>
   <div class="container">
-    <h2>Obyekt qo'shish</h2>
+    <div class="header-row">
+      <el-icon @click="goback()"><Back /></el-icon>
+      <h2>Obyekt qo'shish</h2>
+      <span class="dot">-</span>
+    </div>
     <el-form :model="form" label-width="auto" style="max-width: 600px" class="form">
       <!-- Qachon obyektga ketyapti -->
       <el-form-item label="Obyektga ketish vaqti">
@@ -95,6 +99,8 @@
         :initial-center="{ lng: -74.006, lat: 40.7128 }"
         :initial-zoom="12"
         @location-selected="handleLocationSelected"
+        @current-location="handleLocationSelected"
+        @link-parsed="handleLocationSelected"
       />
 
       <el-form-item class="button-group">
@@ -174,8 +180,8 @@ const onSubmit = async () => {
       when_gone: form.goingtime,
       whereto: form.where === 'boshqa' ? form.whereother : form.where,
       dogovor_or_kp: form.dogovororkp === 'boshqa' ? form.dogokpother : form.dogovororkp,
-      dogovorkp_date: form.dogovororkp === 'Dogovor' ? form.dogovortime : form.kptime || '',
-      dogovorkp_number: form.dogovororkp === 'Dogovor' ? form.dogovornumber : form.kpnumber || '',
+      dogovorkp_date: form.dogovororkp === 'Dogovor' ? form.dogovortime : form.kptime || null,
+      dogovorkp_number: form.dogovororkp === 'Dogovor' ? form.dogovornumber : form.kpnumber || null,
       company_name: form.firmanomi,
       lat: form.lat,
       lng: form.lang,
@@ -228,6 +234,28 @@ watch(form, async (value) => {
   padding-top: 20px;
 }
 
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 185px;
+  margin-bottom: 18px;
+}
+
+.header-row .el-icon {
+  font-size: 22px;
+  color: #222;
+  cursor: pointer;
+}
+
+.header-row h2 {
+  margin: 0;
+  color: #222;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  font-size: 22px;
+  line-height: 1;
+}
+
 .form {
   background: #fff;
   padding: 32px 40px 24px 40px;
@@ -249,13 +277,6 @@ watch(form, async (value) => {
   margin-left: 12px;
 }
 
-h2 {
-  margin-bottom: 18px;
-  color: #222;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
 .whereotherinput {
   margin-top: 5px;
 }
@@ -264,5 +285,9 @@ h2 {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+.dot {
+  opacity: 0;
 }
 </style>

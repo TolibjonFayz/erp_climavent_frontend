@@ -115,34 +115,25 @@ const initMap = () => {
   })
 
   map.on('load', () => {
-    // Add click event to map
     map.on('click', onMapClick)
-
-    // Add navigation controls
     map.addControl(new window.mapboxgl.NavigationControl(), 'top-right')
   })
 }
 
-// Handle map click
 const onMapClick = async (e) => {
   const { lng, lat } = e.lngLat
-
-  // Update selected location
   selectedLocation.value = {
     lng,
     lat,
     address: null,
   }
 
-  // Remove existing marker
   if (marker) {
     marker.remove()
   }
 
-  // Add new marker
   marker = new window.mapboxgl.Marker({ color: '#3b82f6' }).setLngLat([lng, lat]).addTo(map)
 
-  // Try to get address via reverse geocoding
   try {
     const address = await reverseGeocode(lng, lat)
     if (selectedLocation.value) {
@@ -401,7 +392,7 @@ const parseLocationLink = async () => {
       // Clear the input
       locationLink.value = ''
 
-      // Emit event
+      // Emit event 
       emit('link-parsed', { lng, lat, address: selectedLocation.value.address })
     } else {
       linkError.value =
