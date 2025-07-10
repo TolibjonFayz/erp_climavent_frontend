@@ -105,7 +105,7 @@
 
       <el-form-item class="button-group">
         <el-button :loading="loading" type="primary" @click="onSubmit">Saqlash</el-button>
-        <el-button type="warning" plain @click="goback()">Bekor qilish</el-button>
+        <el-button type="warning" plain @click="goback()">Ortga</el-button>
       </el-form-item>
     </el-form>
   </div>

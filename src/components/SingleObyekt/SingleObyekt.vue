@@ -22,11 +22,18 @@
         <span style="margin-right: 10px" v-if="form.comingtime">{{
           formatDateShort(form.comingtime)
         }}</span>
-        <el-col :span="11">
+        <el-col :span="11" v-if="!isMoreThanTwoDays(form.createdAt)">
           <el-config-provider :locale="locale">
             <el-date-picker v-model="form.comingtime" type="date" placeholder="Vaqtni tanlang" />
           </el-config-provider>
         </el-col>
+        <el-alert
+          v-if="isMoreThanTwoDays(form.createdAt) && !form.comingtime"
+          class="itslatebro"
+          title="Obyekt ochilganidan 2kundan keyin tahrirlay olmaysiz"
+          type="error"
+          :closable="false"
+        />
       </el-form-item>
 
       <!-- Qayerga -->
@@ -95,11 +102,11 @@ import { useRoute } from 'vue-router'
 import router from '@/router'
 
 const comeandgoesStore = useComeAndGoesStore()
+const updateLoading = ref(false)
+const isUpdating = ref(false)
 const loading = ref(false)
 const route = useRoute()
 const locale = ru
-const isUpdating = ref(false)
-const updateLoading = ref(false)
 
 const form = reactive({
   goingtime: '',
@@ -112,6 +119,7 @@ const form = reactive({
   lat: '',
   lang: '',
   locationname: '',
+  createdAt: '',
 })
 
 const goback = () => {
@@ -133,6 +141,19 @@ const formatDateShort = (date) => {
   return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getFullYear()}`
 }
 
+function isMoreThanTwoDays(time) {
+  const givenTime = new Date(time)
+  const currentTime = new Date()
+  const timeDifference = Math.abs(currentTime - givenTime)
+  const twoDaysInMs = 2 * 24 * 60 * 60 * 1000
+
+  if (timeDifference < twoDaysInMs) {
+    return false
+  } else {
+    return true
+  }
+}
+
 watch(form, async (value) => {
   if (value.comingtime != null) {
     isUpdating.value = true
@@ -151,6 +172,7 @@ onMounted(async () => {
   form.lat = comeandgoesStore.comeandgobyid.lat
   form.lang = comeandgoesStore.comeandgobyid.lng
   form.firmanomi = comeandgoesStore.comeandgobyid.company_name
+  form.createdAt = comeandgoesStore.comeandgobyid.createdAt
   loading.value = false
 })
 </script>
@@ -220,5 +242,10 @@ onMounted(async () => {
 
 .dot {
   opacity: 0;
+}
+
+.itslatebro {
+  width: 350px;
+  height: 30px;
 }
 </style>
