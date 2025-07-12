@@ -1,5 +1,5 @@
-import SingleObyekt from '@/components/SingleObyekt/SingleObyekt.vue'
 import HomePageSozlamalar from '@/views/HomePageSozlamalar.vue'
+import SingleObyektPage from '@/views/SingleObyektPage.vue'
 import CreateObyektPage from '@/views/CreateObyektPage.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import HomePageDavomat from '@/views/HomePageDavomat.vue'
@@ -41,7 +41,7 @@ const router = createRouter({
     {
       path: '/single-obyekt/:id',
       name: 'single-obyekt',
-      component: SingleObyekt,
+      component: SingleObyektPage,
       meta: { requiresAuth: true },
     },
   ],
