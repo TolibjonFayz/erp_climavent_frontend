@@ -23,5 +23,21 @@ export const useVideosStore = defineStore('videos', {
         this.isLoading = false
       }
     },
+
+    async getVideosOfAObyekt(id) {
+      try {
+        this.isLoading = true
+        this.error = null
+        let res = await videos.getVideosOfAObyekt(id)
+        this.isAuthenticated = true
+        return res
+      } catch (error) {
+        this.error = error.message || 'Getting video failed'
+        console.log(error)
+        throw error
+      } finally {
+        this.isLoading = false
+      }
+    },
   },
 })
