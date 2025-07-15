@@ -31,6 +31,13 @@
           </a>
         </li>
 
+        <li class="nav-item">
+          <a href="/tasks" class="nav-link">
+            <i class="icon tasks-icon"></i>
+            <span>Tasklar</span>
+          </a>
+        </li>
+
         <li class="nav-item active">
           <a href="/settings" class="nav-link">
             <i class="icon calendar-icon"></i>
@@ -218,6 +225,11 @@ export default {
 
   &.project-icon::before {
     content: '⚡';
+    font-size: 16px;
+  }
+
+  &.tasks-icon::before {
+    content: '✅';
     font-size: 16px;
   }
 

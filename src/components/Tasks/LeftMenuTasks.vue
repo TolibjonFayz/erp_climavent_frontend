@@ -24,14 +24,14 @@
           </a>
         </li>
 
-        <li class="nav-item active">
+        <li class="nav-item">
           <a href="/davomat" class="nav-link">
             <i class="icon project-icon"></i>
             <span>Davomat</span>
           </a>
         </li>
 
-        <li class="nav-item">
+        <li class="nav-item active">
           <a href="/tasks" class="nav-link">
             <i class="icon tasks-icon"></i>
             <span>Tasklar</span>
