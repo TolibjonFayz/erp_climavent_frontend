@@ -5,14 +5,17 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePageDavomat from '@/views/HomePageDavomat.vue'
 import HomePage from '@/views/HomePageObyekt.vue'
 import LoginPage from '@/views/LoginPage.vue'
-import TasksPage from '@/views/TasksPage.vue'
+import VazifalarPage from '@/views/VazifalarPage.vue'
+import HomePageMijozlar from '@/views/HomePageMijozlar.vue'
+import RaqiblarPage from '@/views/RaqiblarPage.vue'
+import AddMijoz from '@/components/MijozlarVaHamkorlar/AddMijoz.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'home',
+      path: '/obyekt',
+      name: 'obyektlar',
       component: HomePage,
       meta: { requiresAuth: true },
     },
@@ -31,7 +34,25 @@ const router = createRouter({
     {
       path: '/tasks',
       name: 'tasks',
-      component: TasksPage,
+      component: VazifalarPage,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/',
+      name: 'home',
+      component: HomePageMijozlar,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/mijozlar/new',
+      name: 'mijozlarnew',
+      component: AddMijoz,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/raqiblar',
+      name: 'raqiblar',
+      component: RaqiblarPage,
       meta: { requiresAuth: true },
     },
     {

@@ -171,8 +171,6 @@ const getCurrentLocation = () => {
     async (position) => {
       const { longitude, latitude, accuracy } = position.coords
 
-      console.log('Joylashuv olindi:', { longitude, latitude, accuracy })
-
       // Update map center
       map.flyTo({
         center: [longitude, latitude],
@@ -392,7 +390,7 @@ const parseLocationLink = async () => {
       // Clear the input
       locationLink.value = ''
 
-      // Emit event 
+      // Emit event
       emit('link-parsed', { lng, lat, address: selectedLocation.value.address })
     } else {
       linkError.value =

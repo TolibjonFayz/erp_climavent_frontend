@@ -10,18 +10,14 @@
           <span>Xodimlar uchun panel</span>
         </div>
       </div>
-      <button
-        class="toggle-btn"
-        @click="toggleSidebar"
-        :title="isCollapsed ? 'Kengaytirish' : 'Qisqartirish'"
-      >
+      <button class="toggle-btn" @click="toggleSidebar" :title="isCollapsed ? 'Kengaytirish' : 'Qisqartirish'">
         <i class="toggle-icon" :class="{ rotated: isCollapsed }"></i>
       </button>
     </div>
 
     <nav class="sidebar-nav">
       <ul class="nav-list">
-        <li class="nav-item">
+        <li class="nav-item active">
           <a href="/" class="nav-link" :title="isCollapsed ? 'Mijozlar va hamkorlar' : ''">
             <i class="icon places-icon"></i>
             <span class="nav-text">Mijozlar va hamkorlar bo'yicha ma'lumotlar</span>
@@ -42,7 +38,7 @@
           </a>
         </li>
 
-        <li class="nav-item active">
+        <li class="nav-item">
           <a href="/davomat" class="nav-link" :title="isCollapsed ? 'Davomat' : ''">
             <i class="icon project-icon"></i>
             <span class="nav-text">Davomat</span>
@@ -128,7 +124,7 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .sidebar {
-  width: 260px;
+  width: 310px;
   height: 100vh;
   background: #f8f9fb;
   border-right: 1px solid #e5e7eb;
@@ -342,13 +338,13 @@ onUnmounted(() => {
     font-size: 16px;
   }
 
-  &.places-icon::before {
-    content: '🏬';
+  &.oppenents-icon::before {
+    content: '⚔️';
     font-size: 16px;
   }
 
-  &.oppenents-icon::before {
-    content: '⚔️';
+  &.places-icon::before {
+    content: '🏬';
     font-size: 16px;
   }
 

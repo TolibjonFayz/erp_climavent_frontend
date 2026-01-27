@@ -1,19 +1,17 @@
 <template>
-  <div class="home-page-sozlamalar">
-    <LeftMenuSozlamalar />
-    <Sozlamalar />
+  <div class="vazifalar-page">
+    <LeftMenuTasks />
   </div>
 </template>
 
 <script setup>
-import LeftMenuSozlamalar from '@/components/Sozlamalar/LeftMenuSozlamalar.vue'
-import Sozlamalar from '@/components/Sozlamalar/Sozlamalar.vue'
+import LeftMenuTasks from '@/components/Vazifalar/LeftMenuTasks.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const isSidebarCollapsed = ref(false)
 
 const sidebarWidth = computed(() => {
-  return isSidebarCollapsed.value ? 80 : 310
+  return isSidebarCollapsed.value ? 80 : 260
 })
 
 const handleSidebarChange = () => {
@@ -40,9 +38,7 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.home-page-sozlamalar {
-  display: flex;
-  height: 100vh;
+.tasks-page {
   width: v-bind('`calc(100% - ${sidebarWidth}px)`');
   margin-left: v-bind('`${sidebarWidth}px`');
   transition: width 0.3s ease, margin-left 0.3s ease;

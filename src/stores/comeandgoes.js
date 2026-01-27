@@ -32,7 +32,7 @@ export const useComeAndGoesStore = defineStore('comeandgoes', {
       try {
         this.isLoading = true
         this.error = null
-        let res = await comeandgoes.getAllComeAndGoesOfUser(id)
+        let res = await comeandgoes.getAllComeAndGoOfUserById(id)
         this.allComeAndGoesofUser = res.data || res
         return res
       } catch (error) {
@@ -49,10 +49,10 @@ export const useComeAndGoesStore = defineStore('comeandgoes', {
         this.isLoading = true
         this.error = null
         let res = await comeandgoes.getComeAndGoById(id)
-        this.comeandgobyid = res.data || res
+        this.allComeAndGoesofUser = res.data || res
         return res
       } catch (error) {
-        this.error = error.message || 'Get come and go by id is failed'
+        this.error = error.message || 'Get Come and Go of user failed'
         console.log(error)
         throw error
       } finally {

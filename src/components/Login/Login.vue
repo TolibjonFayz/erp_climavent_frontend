@@ -6,10 +6,10 @@
       </div>
 
       <div class="login-form">
-        <h2>Tizimga kirish</h2>
-        <p>Tizimga kirish uchun login va parolingizni kiriting.</p>
+        <img class="logo" src="/biglogo.png" />
+        <p>Tizimga kirish uchun login va parolingizni kiriting!</p>
         <form @submit.prevent="handleLogin">
-          <el-input v-model="username" style="width: 240px" placeholder="Foydalanuvchi nomi" />
+          <el-input v-model="username" style="width: 240px" placeholder="Login" />
           <el-alert
             v-if="isloginEnterd"
             title="Loginingizni kiriting"
@@ -19,7 +19,7 @@
           <el-input
             v-model="password"
             style="width: 240px"
-            placeholder="Maxfiy so'z"
+            placeholder="Parol"
             type="password"
             show-password
           />
@@ -148,10 +148,9 @@ const handleLogin = async () => {
   display: flex;
   flex-direction: column;
 
-  h2 {
-    font-size: clamp(24px, 4vw, 28px);
-    margin-bottom: 10px;
-    color: #0a0a0a;
+  .logo {
+    width: clamp(120px, 12vw, 180px);
+    margin-bottom: 20px;
   }
 
   p {

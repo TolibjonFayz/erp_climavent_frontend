@@ -10,11 +10,7 @@
           <span>Xodimlar uchun panel</span>
         </div>
       </div>
-      <button
-        class="toggle-btn"
-        @click="toggleSidebar"
-        :title="isCollapsed ? 'Kengaytirish' : 'Qisqartirish'"
-      >
+      <button class="toggle-btn" @click="toggleSidebar" :title="isCollapsed ? 'Kengaytirish' : 'Qisqartirish'">
         <i class="toggle-icon" :class="{ rotated: isCollapsed }"></i>
       </button>
     </div>
@@ -35,14 +31,14 @@
           </a>
         </li>
 
-        <li class="nav-item">
+        <li class="nav-item active">
           <a href="/raqiblar" class="nav-link" :title="isCollapsed ? 'Raqib' : ''">
             <i class="icon oppenents-icon"></i>
             <span class="nav-text">Raqib (Kankurentlar)</span>
           </a>
         </li>
 
-        <li class="nav-item active">
+        <li class="nav-item">
           <a href="/davomat" class="nav-link" :title="isCollapsed ? 'Davomat' : ''">
             <i class="icon project-icon"></i>
             <span class="nav-text">Davomat</span>
@@ -107,17 +103,17 @@ onMounted(async () => {
   loading.value = true
   const userId = localStorage.getItem('userid')
   await usersStore.getUserInfo(Number(userId))
-
+  
   // Restore sidebar state
   const saved = localStorage.getItem('sidebarCollapsed')
   if (saved !== null) {
     isCollapsed.value = saved === 'true'
   }
-
+  
   // Auto-collapse on small screens
   handleResize()
   window.addEventListener('resize', handleResize)
-
+  
   loading.value = false
 })
 
@@ -342,13 +338,13 @@ onUnmounted(() => {
     font-size: 16px;
   }
 
-  &.places-icon::before {
-    content: '🏬';
+  &.oppenents-icon::before {
+    content: '⚔️';
     font-size: 16px;
   }
 
-  &.oppenents-icon::before {
-    content: '⚔️';
+  &.places-icon::before {
+    content: '🏬';
     font-size: 16px;
   }
 

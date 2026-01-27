@@ -1,7 +1,7 @@
 <template>
-  <div class="sidebar">
+  <div class="sidebar" :class="{ collapsed: isCollapsed }">
     <div class="sidebar-header">
-      <div class="logo">
+      <div class="logo" v-show="!isCollapsed">
         <div class="logo-icon">
           <img src="../../assets/logo.png" alt="Logo img" />
         </div>
@@ -10,69 +10,155 @@
           <span>Xodimlar uchun panel</span>
         </div>
       </div>
-      <button class="back-btn">
-        <i class="arrow-left"></i>
+      <button
+        class="toggle-btn"
+        @click="toggleSidebar"
+        :title="isCollapsed ? 'Kengaytirish' : 'Qisqartirish'"
+      >
+        <i class="toggle-icon" :class="{ rotated: isCollapsed }"></i>
       </button>
     </div>
 
     <nav class="sidebar-nav">
       <ul class="nav-list">
+        <li class="nav-item">
+          <a href="/" class="nav-link" :title="isCollapsed ? 'Mijozlar va hamkorlar' : ''">
+            <i class="icon places-icon"></i>
+            <span class="nav-text">Mijozlar va hamkorlar bo'yicha ma'lumotlar</span>
+          </a>
+        </li>
+
         <li class="nav-item active">
-          <a href="/" class="nav-link">
+          <a href="/obyekt" class="nav-link" :title="isCollapsed ? 'Obyekt' : ''">
             <i class="icon home-icon"></i>
-            <span>Obyekt</span>
+            <span class="nav-text">Obyekt</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a href="/davomat" class="nav-link">
+          <a href="/raqiblar" class="nav-link" :title="isCollapsed ? 'Raqib' : ''">
+            <i class="icon oppenents-icon"></i>
+            <span class="nav-text">Raqib (Kankurentlar)</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="/davomat" class="nav-link" :title="isCollapsed ? 'Davomat' : ''">
             <i class="icon project-icon"></i>
-            <span>Davomat</span>
+            <span class="nav-text">Davomat</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a href="/tasks" class="nav-link">
+          <a href="/tasks" class="nav-link" :title="isCollapsed ? 'Vazifalar' : ''">
             <i class="icon tasks-icon"></i>
-            <span>Tasklar</span>
+            <span class="nav-text">Vazifalar</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a href="/settings" class="nav-link">
+          <a href="/settings" class="nav-link" :title="isCollapsed ? 'Sozlamalar' : ''">
             <i class="icon calendar-icon"></i>
-            <span>Sozlamalar</span>
+            <span class="nav-text">Sozlamalar</span>
           </a>
         </li>
       </ul>
     </nav>
+
+    <!-- User Profile Section -->
+    <div class="user-profile" v-loading="loading" v-show="!isCollapsed">
+      <div class="user-avatar">
+        <img
+          v-if="usersStore?.currentUser?.profile_image == 'profile.jpg'"
+          src="/user.png"
+          alt="User profile"
+        />
+        <img v-else :src="usersStore?.currentUser?.profile_image" alt="User profile" />
+        <div class="status-dot"></div>
+      </div>
+      <div class="user-info">
+        <h4>{{ usersStore?.currentUser?.firstname }} {{ usersStore?.currentUser?.lastname }}</h4>
+        <p>{{ usersStore?.currentUser?.username }}</p>
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ProTendSidebar',
-  data() {
-    return {
-      isDarkMode: false,
-    }
-  },
-  methods: {
-    toggleDarkMode() {
-      this.isDarkMode = !this.isDarkMode
-    },
-  },
+<script setup lang="ts">
+import { useUsersStore } from '@/stores/user'
+import { onMounted, ref, onUnmounted } from 'vue'
+
+const usersStore = useUsersStore()
+const loading = ref(false)
+const isCollapsed = ref(false)
+
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value
+  localStorage.setItem('sidebarCollapsed', String(isCollapsed.value))
 }
+
+const handleResize = () => {
+  if (window.innerWidth < 768) {
+    isCollapsed.value = true
+  }
+}
+
+onMounted(async () => {
+  loading.value = true
+  const userId = localStorage.getItem('userid')
+  await usersStore.getUserInfo(Number(userId))
+
+  // Restore sidebar state
+  const saved = localStorage.getItem('sidebarCollapsed')
+  if (saved !== null) {
+    isCollapsed.value = saved === 'true'
+  }
+
+  // Auto-collapse on small screens
+  handleResize()
+  window.addEventListener('resize', handleResize)
+
+  loading.value = false
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
 </script>
 
 <style lang="scss" scoped>
 .sidebar {
-  width: 280px;
+  width: 310px;
   height: 100vh;
   background: #f8f9fb;
   border-right: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
+  transition: width 0.3s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+
+  &.collapsed {
+    width: 80px;
+
+    .logo-text {
+      display: none;
+    }
+
+    .nav-text {
+      display: none;
+    }
+
+    .user-info {
+      display: none;
+    }
+
+    .toggle-icon {
+      transform: rotate(180deg);
+    }
+  }
 }
 
 .sidebar-header {
@@ -81,12 +167,19 @@ export default {
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid #e5e7eb;
+  transition: padding 0.3s ease;
+
+  .sidebar.collapsed & {
+    padding: 16px 10px;
+    justify-content: center;
+  }
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: 12px;
+  transition: opacity 0.3s ease;
 }
 
 .logo-icon {
@@ -98,6 +191,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 
   img {
     width: 28px;
@@ -139,30 +233,36 @@ export default {
   }
 }
 
-.back-btn {
+.toggle-btn {
   background: none;
   border: none;
   cursor: pointer;
   padding: 8px;
   border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
 
   &:hover {
     background: #f3f4f6;
   }
 }
 
-.arrow-left {
+.toggle-icon {
   width: 16px;
   height: 16px;
-  border-left: 2px solid #6b7280;
+  border-right: 2px solid #6b7280;
   border-bottom: 2px solid #6b7280;
-  transform: rotate(45deg);
+  transform: rotate(-45deg);
+  transition: transform 0.3s ease;
 }
 
 .sidebar-nav {
   flex: 1;
   padding: 16px 0;
   overflow-y: auto;
+  transition: padding 0.3s ease;
 }
 
 .nav-list {
@@ -173,6 +273,11 @@ export default {
 
 .nav-item {
   margin: 0 16px 4px;
+  transition: margin 0.3s ease;
+
+  .sidebar.collapsed & {
+    margin: 0 8px 4px;
+  }
 
   &.active {
     .nav-link {
@@ -198,17 +303,19 @@ export default {
   color: #6b7280;
   border-radius: 12px;
   transition: all 0.2s ease;
+  position: relative;
 
   &:hover:not(.active) {
     background: #f3f4f6;
     color: #374151;
   }
 
-  span {
+  .nav-text {
     flex: 1;
     font-size: 15px;
     font-weight: 500;
     margin-left: 12px;
+    transition: display 0.3s ease;
   }
 }
 
@@ -217,6 +324,8 @@ export default {
   height: 20px;
   position: relative;
   color: #9ca3af;
+  font-style: normal;
+  flex-shrink: 0;
 
   &.home-icon::before {
     content: '📍';
@@ -233,6 +342,16 @@ export default {
     font-size: 16px;
   }
 
+  &.oppenents-icon::before {
+    content: '⚔️';
+    font-size: 16px;
+  }
+
+  &.places-icon::before {
+    content: '🏬';
+    font-size: 16px;
+  }
+
   &.calendar-icon::before {
     content: '⚙️';
     font-size: 16px;
@@ -246,6 +365,70 @@ export default {
   border-bottom: 2px solid #9ca3af;
   transform: rotate(45deg);
   margin-left: auto;
+}
+
+/* User Profile Section */
+.user-profile {
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  background: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: #f9fafb;
+  }
+}
+
+.user-avatar {
+  position: relative;
+  flex-shrink: 0;
+
+  img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
+  }
+
+  .status-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border: 2px solid white;
+    border-radius: 50%;
+  }
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+
+  h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 // Scrollbar styling

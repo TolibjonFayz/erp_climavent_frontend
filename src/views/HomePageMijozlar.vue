@@ -1,13 +1,13 @@
 <template>
   <div class="home-page-sozlamalar">
-    <LeftMenuSozlamalar />
-    <Sozlamalar />
+    <LeftMenuMijozlar />
+    <Mijozlar />
   </div>
 </template>
 
 <script setup>
-import LeftMenuSozlamalar from '@/components/Sozlamalar/LeftMenuSozlamalar.vue'
-import Sozlamalar from '@/components/Sozlamalar/Sozlamalar.vue'
+import LeftMenuMijozlar from '@/components/MijozlarVaHamkorlar/LeftMenuMijozlar.vue'
+import Mijozlar from '@/components/MijozlarVaHamkorlar/Mijozlar.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const isSidebarCollapsed = ref(false)
