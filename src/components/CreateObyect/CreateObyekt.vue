@@ -3,28 +3,26 @@
     <div class="header-row">
       <el-icon @click="goback()"><Back /></el-icon>
       <h2>Obyekt qo'shish</h2>
-      <span class="dot">-</span>
     </div>
 
     <!-- ASOSIY OBYEKT -->
-    <el-form :model="form" label-width="auto" style="max-width: 600px" class="form">
+    <el-form :model="form" label-width="auto" class="form">
       <div class="form-section-title">Asosiy obyekt</div>
 
       <el-form-item label="Obyektga ketish vaqti">
-        <el-col :span="11">
-          <el-config-provider :locale="locale">
-            <el-date-picker
-              v-model="form.goingtime"
-              type="datetime"
-              placeholder="Vaqtni tanlang"
-              :disabled-date="disabledDate"
-            />
-          </el-config-provider>
-        </el-col>
+        <el-config-provider :locale="locale">
+          <el-date-picker
+            v-model="form.goingtime"
+            type="datetime"
+            placeholder="Vaqtni tanlang"
+            :disabled-date="disabledDate"
+            class="full-width-picker"
+          />
+        </el-config-provider>
       </el-form-item>
 
       <el-form-item label="Qayerga">
-        <el-select v-model="form.where" placeholder="Tanlang">
+        <el-select v-model="form.where" placeholder="Tanlang" class="full-width-select">
           <el-option label="Zavod" value="Zavod" />
           <el-option label="Klient" value="Klient" />
           <el-option label="Shaxsiy" value="Shaxsiy" />
@@ -39,7 +37,7 @@
       </el-form-item>
 
       <el-form-item label="KP yoki dogovor">
-        <el-select v-model="form.dogovororkp" placeholder="Tanlang">
+        <el-select v-model="form.dogovororkp" placeholder="Tanlang" class="full-width-select">
           <el-option label="KP" value="KP" />
           <el-option label="Dogovor" value="Dogovor" />
           <el-option label="Boshqa" value="boshqa" />
@@ -55,41 +53,39 @@
       </el-form-item>
 
       <el-form-item label="Dogovor raqami" v-if="isDogovorSelected">
-        <el-input v-model="form.dogovornumber" style="width: 240px" placeholder="Kiriting" />
+        <el-input v-model="form.dogovornumber" placeholder="Kiriting" class="full-width-input" />
       </el-form-item>
 
       <el-form-item label="KP raqami" v-if="isKPSelected">
-        <el-input v-model="form.kpnumber" style="width: 240px" placeholder="Kiriting" />
+        <el-input v-model="form.kpnumber" placeholder="Kiriting" class="full-width-input" />
       </el-form-item>
 
       <el-form-item v-if="isDogovorSelected" label="Dogovor sanasi">
-        <el-col :span="11">
-          <el-config-provider :locale="locale">
-            <el-date-picker
-              v-model="form.dogovortime"
-              type="date"
-              placeholder="Vaqtni tanlang"
-              size="default"
-            />
-          </el-config-provider>
-        </el-col>
+        <el-config-provider :locale="locale">
+          <el-date-picker
+            v-model="form.dogovortime"
+            type="date"
+            placeholder="Vaqtni tanlang"
+            size="default"
+            class="full-width-picker"
+          />
+        </el-config-provider>
       </el-form-item>
 
       <el-form-item v-if="isKPSelected" label="KP sanasi">
-        <el-col :span="11">
-          <el-config-provider :locale="locale">
-            <el-date-picker
-              v-model="form.kptime"
-              type="date"
-              placeholder="Vaqtni tanlang"
-              size="default"
-            />
-          </el-config-provider>
-        </el-col>
+        <el-config-provider :locale="locale">
+          <el-date-picker
+            v-model="form.kptime"
+            type="date"
+            placeholder="Vaqtni tanlang"
+            size="default"
+            class="full-width-picker"
+          />
+        </el-config-provider>
       </el-form-item>
 
       <el-form-item v-if="isKPSelected || isDogovorSelected" label="Firma nomi">
-        <el-input v-model="form.firmanomi" style="width: 240px" placeholder="Kiriting" />
+        <el-input v-model="form.firmanomi" placeholder="Kiriting" class="full-width-input" />
       </el-form-item>
 
       <span class="location-picker-label">Obyekt joylashuvini tanlang 👇</span>
@@ -113,7 +109,7 @@
 
     <!-- QO'SHIMCHA OBYEKTLAR -->
     <div v-for="(obj, index) in additionalObjects" :key="index" class="additional-object-section">
-      <el-form :model="obj" label-width="auto" style="max-width: 600px" class="form">
+      <el-form :model="obj" label-width="auto" class="form">
         <div class="form-section-header">
           <div class="form-section-title">Qo'shimcha obyekt #{{ index + 1 }}</div>
           <el-button
@@ -126,20 +122,19 @@
         </div>
 
         <el-form-item label="Obyektga ketish vaqti">
-          <el-col :span="11">
-            <el-config-provider :locale="locale">
-              <el-date-picker
-                v-model="obj.goingtime"
-                type="datetime"
-                placeholder="Vaqtni tanlang"
-                :disabled-date="disabledDate"
-              />
-            </el-config-provider>
-          </el-col>
+          <el-config-provider :locale="locale">
+            <el-date-picker
+              v-model="obj.goingtime"
+              type="datetime"
+              placeholder="Vaqtni tanlang"
+              :disabled-date="disabledDate"
+              class="full-width-picker"
+            />
+          </el-config-provider>
         </el-form-item>
 
         <el-form-item label="Qayerga">
-          <el-select v-model="obj.where" placeholder="Tanlang">
+          <el-select v-model="obj.where" placeholder="Tanlang" class="full-width-select">
             <el-option label="Zavod" value="Zavod" />
             <el-option label="Klient" value="Klient" />
             <el-option label="Shaxsiy" value="Shaxsiy" />
@@ -154,7 +149,7 @@
         </el-form-item>
 
         <el-form-item label="KP yoki dogovor">
-          <el-select v-model="obj.dogovororkp" placeholder="Tanlang">
+          <el-select v-model="obj.dogovororkp" placeholder="Tanlang" class="full-width-select">
             <el-option label="KP" value="KP" />
             <el-option label="Dogovor" value="Dogovor" />
             <el-option label="Boshqa" value="boshqa" />
@@ -170,44 +165,42 @@
         </el-form-item>
 
         <el-form-item label="Dogovor raqami" v-if="obj.dogovororkp === 'Dogovor'">
-          <el-input v-model="obj.dogovornumber" style="width: 240px" placeholder="Kiriting" />
+          <el-input v-model="obj.dogovornumber" placeholder="Kiriting" class="full-width-input" />
         </el-form-item>
 
         <el-form-item label="KP raqami" v-if="obj.dogovororkp === 'KP'">
-          <el-input v-model="obj.kpnumber" style="width: 240px" placeholder="Kiriting" />
+          <el-input v-model="obj.kpnumber" placeholder="Kiriting" class="full-width-input" />
         </el-form-item>
 
         <el-form-item v-if="obj.dogovororkp === 'Dogovor'" label="Dogovor sanasi">
-          <el-col :span="11">
-            <el-config-provider :locale="locale">
-              <el-date-picker
-                v-model="obj.dogovortime"
-                type="date"
-                placeholder="Vaqtni tanlang"
-                size="default"
-              />
-            </el-config-provider>
-          </el-col>
+          <el-config-provider :locale="locale">
+            <el-date-picker
+              v-model="obj.dogovortime"
+              type="date"
+              placeholder="Vaqtni tanlang"
+              size="default"
+              class="full-width-picker"
+            />
+          </el-config-provider>
         </el-form-item>
 
         <el-form-item v-if="obj.dogovororkp === 'KP'" label="KP sanasi">
-          <el-col :span="11">
-            <el-config-provider :locale="locale">
-              <el-date-picker
-                v-model="obj.kptime"
-                type="date"
-                placeholder="Vaqtni tanlang"
-                size="default"
-              />
-            </el-config-provider>
-          </el-col>
+          <el-config-provider :locale="locale">
+            <el-date-picker
+              v-model="obj.kptime"
+              type="date"
+              placeholder="Vaqtni tanlang"
+              size="default"
+              class="full-width-picker"
+            />
+          </el-config-provider>
         </el-form-item>
 
         <el-form-item
           v-if="obj.dogovororkp === 'KP' || obj.dogovororkp === 'Dogovor'"
           label="Firma nomi"
         >
-          <el-input v-model="obj.firmanomi" style="width: 240px" placeholder="Kiriting" />
+          <el-input v-model="obj.firmanomi" placeholder="Kiriting" class="full-width-input" />
         </el-form-item>
 
         <span class="location-picker-label">Obyekt joylashuvini tanlang 👇</span>
@@ -232,9 +225,10 @@
 
     <!-- QO'SHISH TUGMASI -->
     <div class="add-button-container" v-if="additionalObjects.length < 5">
-      <el-button type="success" plain @click="addAdditionalObject">
+      <el-button type="success" plain @click="addAdditionalObject" class="add-button">
         <el-icon style="margin-right: 8px"><Plus /></el-icon>
-        Shu mijoz bo'yicha qo'shimcha obyekt qo'shish
+        <span class="button-text">Shu mijoz bo'yicha qo'shimcha obyekt qo'shish</span>
+        <span class="button-text-short">Qo'shimcha obyekt</span>
       </el-button>
     </div>
 
@@ -428,7 +422,7 @@ const onSubmit = async () => {
 }
 
 const goback = () => {
-  router.push('/')
+  router.push('/obyekt')
 }
 
 watch(
@@ -470,19 +464,51 @@ watch(
   min-height: 100vh;
   padding: 20px;
   padding-bottom: 40px;
+
+  @media (max-width: 768px) {
+    padding: 12px;
+    padding-bottom: 24px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px;
+    padding-bottom: 20px;
+  }
 }
 
 .header-row {
   display: flex;
   align-items: center;
-  gap: 185px;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 600px;
   margin-bottom: 18px;
+  padding: 0 8px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 14px;
+    padding: 0 4px;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 12px;
+    padding: 0 2px;
+  }
 }
 
 .header-row .el-icon {
   font-size: 22px;
   color: #222;
   cursor: pointer;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
 }
 
 .header-row h2 {
@@ -492,6 +518,16 @@ watch(
   letter-spacing: 0.5px;
   font-size: 22px;
   line-height: 1;
+  text-align: center;
+  flex-grow: 1;
+
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
 }
 
 .form {
@@ -502,17 +538,36 @@ watch(
   width: 100%;
   max-width: 600px;
 
+  @media (max-width: 768px) {
+    padding: 24px 20px 18px 20px;
+    border-radius: 10px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px 16px 16px 16px;
+    border-radius: 8px;
+  }
+
   .location-picker-label {
     font-size: 14px;
     display: block;
     font-weight: 400;
     margin-bottom: 10px;
     color: #606266;
+
+    @media (max-width: 480px) {
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
   }
 
   .more-info-input {
     margin-top: 16px;
     width: 100%;
+
+    @media (max-width: 480px) {
+      margin-top: 12px;
+    }
   }
 }
 
@@ -523,6 +578,18 @@ watch(
   margin-bottom: 20px;
   padding-bottom: 10px;
   border-bottom: 2px solid #409eff;
+
+  @media (max-width: 768px) {
+    font-size: 15px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+  }
 }
 
 .form-section-header {
@@ -530,11 +597,18 @@ watch(
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  gap: 12px;
+
+  @media (max-width: 480px) {
+    gap: 8px;
+  }
 
   .form-section-title {
     margin-bottom: 0;
     padding-bottom: 0;
     border-bottom: none;
+    flex: 1;
+    min-width: 0;
   }
 }
 
@@ -542,6 +616,14 @@ watch(
   width: 100%;
   max-width: 600px;
   margin-top: 24px;
+
+  @media (max-width: 768px) {
+    margin-top: 20px;
+  }
+
+  @media (max-width: 480px) {
+    margin-top: 16px;
+  }
 }
 
 .add-button-container {
@@ -551,6 +633,41 @@ watch(
   max-width: 600px;
   display: flex;
   justify-content: center;
+
+  @media (max-width: 768px) {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+
+  .add-button {
+    @media (max-width: 768px) {
+      padding: 8px 16px;
+    }
+
+    @media (max-width: 480px) {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+
+    .button-text {
+      @media (max-width: 640px) {
+        display: none;
+      }
+    }
+
+    .button-text-short {
+      display: none;
+
+      @media (max-width: 640px) {
+        display: inline;
+      }
+    }
+  }
 }
 
 .button-group-container {
@@ -561,10 +678,38 @@ watch(
   width: 100%;
   max-width: 600px;
   padding: 0 40px;
+
+  @media (max-width: 768px) {
+    padding: 0 20px;
+    margin-top: 20px;
+    gap: 10px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 16px;
+    margin-top: 16px;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .el-button {
+    @media (max-width: 480px) {
+      flex: 1;
+      max-width: 150px;
+    }
+  }
 }
 
 .el-form-item {
   margin-bottom: 22px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 18px;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 16px;
+  }
 }
 
 .el-form-item:last-child {
@@ -575,7 +720,58 @@ watch(
   padding-top: 5px;
 }
 
-.dot {
-  opacity: 0;
+// Full width classes for responsive inputs
+.full-width-picker {
+  width: 100% !important;
+
+  @media (max-width: 768px) {
+    width: 100% !important;
+  }
+}
+
+.full-width-select {
+  width: 100%;
+}
+
+.full-width-input {
+  width: 100%;
+}
+
+// Override Element Plus label width on mobile
+:deep(.el-form-item__label) {
+  @media (max-width: 768px) {
+    width: 100% !important;
+    text-align: left !important;
+    margin-bottom: 8px;
+  }
+}
+
+:deep(.el-form-item__content) {
+  @media (max-width: 768px) {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+}
+
+// Make date pickers responsive
+:deep(.el-date-editor) {
+  width: 100% !important;
+
+  @media (max-width: 768px) {
+    width: 100% !important;
+  }
+}
+
+// Make selects responsive
+:deep(.el-select) {
+  width: 100%;
+}
+
+// Responsive form layout
+:deep(.el-form-item) {
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+  }
 }
 </style>

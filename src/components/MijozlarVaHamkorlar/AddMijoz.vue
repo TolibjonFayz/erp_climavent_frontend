@@ -3,12 +3,16 @@
     <div class="header-row">
       <el-icon @click="goback()"><Back /></el-icon>
       <h2>Yangi mijoz haqida ma'lumot</h2>
-      <span class="dot">-</span>
     </div>
 
-    <el-form :model="form" label-width="auto" style="max-width: 600px" class="form">
+    <el-form :model="form" label-width="auto" class="form">
       <el-form-item label="Respublika">
-        <el-select v-model="form.republic" filterable placeholder="Tanlang">
+        <el-select
+          v-model="form.republic"
+          filterable
+          placeholder="Tanlang"
+          class="full-width-select"
+        >
           <el-option label="O'zbekiston" value="ozbekiston" />
           <el-option label="Qozog'iston" value="qozogiston" />
           <el-option label="Tojikiston" value="tojikiston" />
@@ -30,7 +34,12 @@
       </el-form-item>
 
       <el-form-item label="Viloyat">
-        <el-select v-model="form.viloyat" filterable placeholder="Tanlang">
+        <el-select
+          v-model="form.viloyat"
+          filterable
+          placeholder="Tanlang"
+          class="full-width-select"
+        >
           <el-option label="Toshkent shahri" value="toshkent_shahri" />
           <el-option label="Toshkent viloyat" value="toshkent" />
           <el-option label="Andijon viloyat" value="andijon" />
@@ -58,7 +67,12 @@
       </el-form-item>
 
       <el-form-item label="Tuman/Shahar">
-        <el-select v-model="form.shahar_tuman" filterable placeholder="Tanlang">
+        <el-select
+          v-model="form.shahar_tuman"
+          filterable
+          placeholder="Tanlang"
+          class="full-width-select"
+        >
           <el-option label="Bektemir tumani" value="bektemir" />
           <el-option label="Chilonzor tumani" value="chilonzor" />
           <el-option label="Yashnobod tumani" value="yashnobod" />
@@ -84,29 +98,29 @@
       </el-form-item>
 
       <el-form-item label="Mijoz turi">
-        <el-radio-group v-model="form.mijozturi">
+        <el-radio-group v-model="form.mijozturi" class="responsive-radio-group">
           <el-radio value="Yuridik shaxs">Yuridik shaxs</el-radio>
           <el-radio value="Jismoniy shaxs">Jismoniy shaxs</el-radio>
         </el-radio-group>
       </el-form-item>
 
       <el-form-item label="INN" v-if="form.mijozturi === 'Yuridik shaxs'">
-        <el-input v-model="form.inn" style="width: 240px" placeholder="Kiriting" />
+        <el-input v-model="form.inn" placeholder="Kiriting" class="full-width-input" />
       </el-form-item>
 
       <el-form-item label="Telefon raqam">
-        <el-input v-model="form.phone_number" style="width: 240px" placeholder="Kiriting" />
+        <el-input v-model="form.phone_number" placeholder="Kiriting" class="full-width-input" />
       </el-form-item>
 
       <el-form-item label="Qo'shimcha telefon raqam">
         <el-input
           v-model="form.additional_phone_number"
-          style="width: 240px"
           placeholder="Kiriting"
+          class="full-width-input"
         />
       </el-form-item>
       <el-form-item label="Ism familiya">
-        <el-input v-model="form.fullname" style="width: 240px" placeholder="Kiriting" />
+        <el-input v-model="form.fullname" placeholder="Kiriting" class="full-width-input" />
       </el-form-item>
     </el-form>
 
@@ -252,19 +266,51 @@ watch(
   min-height: 100vh;
   padding: 20px;
   padding-bottom: 40px;
+
+  @media (max-width: 768px) {
+    padding: 12px;
+    padding-bottom: 24px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px;
+    padding-bottom: 20px;
+  }
 }
 
 .header-row {
   display: flex;
   align-items: center;
-  gap: 185px;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 600px;
   margin-bottom: 18px;
+  padding: 0 8px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 14px;
+    padding: 0 4px;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 12px;
+    padding: 0 2px;
+  }
 }
 
 .header-row .el-icon {
   font-size: 22px;
   color: #222;
   cursor: pointer;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
 }
 
 .header-row h2 {
@@ -274,6 +320,21 @@ watch(
   letter-spacing: 0.5px;
   font-size: 22px;
   line-height: 1;
+  text-align: center;
+  flex-grow: 1;
+
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+    letter-spacing: 0.3px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 16px;
+  }
 }
 
 .form {
@@ -284,17 +345,36 @@ watch(
   width: 100%;
   max-width: 600px;
 
+  @media (max-width: 768px) {
+    padding: 24px 20px 18px 20px;
+    border-radius: 10px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px 16px 16px 16px;
+    border-radius: 8px;
+  }
+
   .location-picker-label {
     font-size: 14px;
     display: block;
     font-weight: 400;
     margin-bottom: 10px;
     color: #606266;
+
+    @media (max-width: 480px) {
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
   }
 
   .more-info-input {
     margin-top: 16px;
     width: 100%;
+
+    @media (max-width: 480px) {
+      margin-top: 12px;
+    }
   }
 }
 
@@ -305,6 +385,18 @@ watch(
   margin-bottom: 20px;
   padding-bottom: 10px;
   border-bottom: 2px solid #409eff;
+
+  @media (max-width: 768px) {
+    font-size: 15px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+  }
 }
 
 .form-section-header {
@@ -324,6 +416,14 @@ watch(
   width: 100%;
   max-width: 600px;
   margin-top: 24px;
+
+  @media (max-width: 768px) {
+    margin-top: 20px;
+  }
+
+  @media (max-width: 480px) {
+    margin-top: 16px;
+  }
 }
 
 .add-button-container {
@@ -333,6 +433,16 @@ watch(
   max-width: 600px;
   display: flex;
   justify-content: center;
+
+  @media (max-width: 768px) {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) {
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
 }
 
 .button-group-container {
@@ -343,10 +453,38 @@ watch(
   width: 100%;
   max-width: 600px;
   padding: 0 40px;
+
+  @media (max-width: 768px) {
+    padding: 0 20px;
+    margin-top: 20px;
+    gap: 10px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 16px;
+    margin-top: 16px;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .el-button {
+    @media (max-width: 480px) {
+      flex: 1;
+      max-width: 150px;
+    }
+  }
 }
 
 .el-form-item {
   margin-bottom: 22px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 18px;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 16px;
+  }
 }
 
 .el-form-item:last-child {
@@ -357,7 +495,72 @@ watch(
   padding-top: 5px;
 }
 
-.dot {
-  opacity: 0;
+// Full width classes for responsive inputs
+.full-width-select {
+  width: 100%;
+}
+
+.full-width-input {
+  width: 100%;
+
+  @media (min-width: 769px) {
+    max-width: 240px;
+  }
+}
+
+// Responsive radio group
+.responsive-radio-group {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+// Override Element Plus label width on mobile
+:deep(.el-form-item__label) {
+  @media (max-width: 768px) {
+    width: 100% !important;
+    text-align: left !important;
+    margin-bottom: 8px;
+  }
+}
+
+:deep(.el-form-item__content) {
+  @media (max-width: 768px) {
+    margin-left: 0 !important;
+    width: 100%;
+  }
+}
+
+// Make selects responsive
+:deep(.el-select) {
+  width: 100%;
+}
+
+// Responsive form layout
+:deep(.el-form-item) {
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+// Radio buttons responsive styling
+:deep(.el-radio) {
+  @media (max-width: 480px) {
+    margin-right: 0;
+    display: flex;
+    align-items: center;
+  }
+}
+
+:deep(.el-radio__label) {
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
 }
 </style>
