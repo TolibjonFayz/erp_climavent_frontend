@@ -160,7 +160,7 @@
 
 <script setup>
 import { useComeAndGoesStore } from '@/stores/comeandgoes'
-import { useComeAndGoInsideStore } from '@/stores/comeandgoinside'
+import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { onMounted, ref } from 'vue'
 import LocationShower from './LocationShower.vue'
 import ru from 'element-plus/dist/locale/ru.mjs'
