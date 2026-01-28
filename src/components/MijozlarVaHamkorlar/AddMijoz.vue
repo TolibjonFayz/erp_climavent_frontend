@@ -178,10 +178,6 @@ const validateObject = (obj) => {
     ElMessage.warning(`Iltimos mijoz turini tanlang.`)
     return false
   }
-  if (!obj.inn && obj.mijozturi === 'Yuridik shaxs') {
-    ElMessage.warning(`Iltimos INN ni kiriting.`)
-    return false
-  }
   if (!obj.phone_number) {
     ElMessage.warning(`Iltimos telefon raqamni kiriting.`)
     return false
