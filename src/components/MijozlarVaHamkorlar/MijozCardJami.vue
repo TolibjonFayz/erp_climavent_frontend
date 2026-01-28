@@ -6,6 +6,11 @@
         <span class="header-text">#</span>
       </div>
 
+      <div class="header-cell cell-group">
+        <el-icon><Folder /></el-icon>
+        <span class="header-text">GURUHI</span>
+      </div>
+
       <div class="header-cell cell-name">
         <el-icon><User /></el-icon>
         <span class="header-text">ISM</span>
@@ -18,7 +23,7 @@
 
       <div class="header-cell cell-phone-extra">
         <el-icon><Phone /></el-icon>
-        <span class="header-text">QO'SHIMCHA</span>
+        <span class="header-text">QO'SHIMCHA TELEFON</span>
       </div>
 
       <div class="header-cell cell-republic">
@@ -33,12 +38,12 @@
 
       <div class="header-cell cell-district">
         <el-icon><Location /></el-icon>
-        <span class="header-text">TUMAN</span>
+        <span class="header-text">SHAHAR/TUMAN</span>
       </div>
 
       <div class="header-cell cell-type">
         <el-icon><OfficeBuilding /></el-icon>
-        <span class="header-text">TURI</span>
+        <span class="header-text">MIJOZ TURI</span>
       </div>
 
       <div class="header-cell cell-inn">
@@ -52,6 +57,10 @@
       <div v-for="(partner, index) in partners" :key="partner.id" class="partner-table-row">
         <div class="table-cell cell-index">
           <span class="index-number">{{ index + 1 }}</span>
+        </div>
+
+        <div class="table-cell cell-group">
+          <el-tag type="info" size="small">{{ formatPartnerType(partner.partner_type) }}</el-tag>
         </div>
 
         <div class="table-cell cell-name">
@@ -99,7 +108,7 @@
 </template>
 
 <script setup>
-import { User, Phone, Location, OfficeBuilding, Document } from '@element-plus/icons-vue'
+import { User, Phone, Location, OfficeBuilding, Document, Folder } from '@element-plus/icons-vue'
 
 const props = defineProps({
   partners: {
@@ -111,6 +120,20 @@ const props = defineProps({
 const formatText = (text) => {
   if (!text) return ''
   return text.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
+const formatPartnerType = (type) => {
+  const types = {
+    doimiymijoz: 'Doimiy mijoz',
+    montajnik: 'Montajnik',
+    quruvchi: 'Quruvchi',
+    dokonchitadbirkor: "Do'konchi tadbirkor",
+    proyektinstitut: 'Proyekt institut',
+    tenderfirmalar: 'Tender firmasi',
+    uks: 'UKS tashkiloti',
+    boshqa: 'Boshqa',
+  }
+  return types[type] || type
 }
 
 const getTypeTag = (type) => {
@@ -138,7 +161,7 @@ const getTypeTag = (type) => {
 // ========== HEADER STYLES ==========
 .partner-table-header {
   display: grid;
-  grid-template-columns: 50px 1.2fr 1fr 1fr 0.9fr 0.9fr 0.9fr 0.8fr 0.8fr;
+  grid-template-columns: 50px 1fr 1.2fr 1fr 1fr 0.9fr 0.9fr 0.9fr 0.8fr 0.8fr;
   align-items: center;
   padding: 14px 16px;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
@@ -150,30 +173,30 @@ const getTypeTag = (type) => {
   min-width: max-content;
 
   @media (max-width: 1600px) {
-    grid-template-columns: 45px 1.1fr 0.9fr 0.9fr 0.85fr 0.85fr 0.85fr 0.75fr 0.75fr;
+    grid-template-columns: 45px 0.9fr 1.1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
     gap: 10px;
   }
 
   @media (max-width: 1400px) {
-    grid-template-columns: 40px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
+    grid-template-columns: 40px 0.8fr 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
     gap: 10px;
-    padding: 12px 14px;
+    padding: 12px 12px;
   }
 
   @media (max-width: 1200px) {
-    grid-template-columns: 35px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
+    grid-template-columns: 35px 120px 140px 110px 110px 100px 100px 100px 90px 80px;
     gap: 8px;
     padding: 12px;
   }
 
   @media (max-width: 992px) {
-    grid-template-columns: 30px 140px 110px 110px 100px 100px 100px 90px 80px;
+    grid-template-columns: 30px 110px 130px 100px 100px 90px 90px 90px 80px 70px;
     gap: 8px;
     padding: 10px;
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 30px 120px 100px 100px 90px 90px 90px 80px 70px;
+    grid-template-columns: 30px 100px 120px 100px 100px 90px 90px 90px 80px 70px;
     padding: 10px 12px;
     gap: 8px;
   }
@@ -227,7 +250,7 @@ const getTypeTag = (type) => {
 
 .partner-table-row {
   display: grid;
-  grid-template-columns: 50px 1.2fr 1fr 1fr 0.9fr 0.9fr 0.9fr 0.8fr 0.8fr;
+  grid-template-columns: 50px 1fr 1.2fr 1fr 1fr 0.9fr 0.9fr 0.9fr 0.8fr 0.8fr;
   align-items: center;
   padding: 12px 16px;
   background: #ffffff;
@@ -241,30 +264,30 @@ const getTypeTag = (type) => {
   }
 
   @media (max-width: 1600px) {
-    grid-template-columns: 45px 1.1fr 0.9fr 0.9fr 0.85fr 0.85fr 0.85fr 0.75fr 0.75fr;
+    grid-template-columns: 45px 0.9fr 1.1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
     gap: 10px;
   }
 
   @media (max-width: 1400px) {
-    grid-template-columns: 40px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
+    grid-template-columns: 40px 0.8fr 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
     gap: 10px;
-    padding: 10px 14px;
+    padding: 10px 12px;
   }
 
   @media (max-width: 1200px) {
-    grid-template-columns: 35px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
+    grid-template-columns: 35px 120px 140px 110px 110px 100px 100px 100px 90px 80px;
     gap: 8px;
     padding: 10px 12px;
   }
 
   @media (max-width: 992px) {
-    grid-template-columns: 30px 140px 110px 110px 100px 100px 100px 90px 80px;
+    grid-template-columns: 30px 110px 130px 100px 100px 90px 90px 90px 80px 70px;
     gap: 8px;
     padding: 8px 10px;
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 30px 120px 100px 100px 90px 90px 90px 80px 70px;
+    grid-template-columns: 30px 100px 120px 100px 100px 90px 90px 90px 80px 70px;
     padding: 8px 12px;
     gap: 8px;
   }
@@ -292,7 +315,6 @@ const getTypeTag = (type) => {
   border-radius: 50%;
   font-weight: 600;
   font-size: 13px;
-  flex-shrink: 0;
 
   @media (max-width: 1400px) {
     width: 24px;

@@ -17,38 +17,32 @@
             </el-button>
           </div>
 
-          <div v-if="getFilteredPartners('doimiymijoz').length > 0" class="partners-grid">
-            <MijozCard
-              v-for="(item, index) in getFilteredPartners('doimiymijoz')"
-              :key="index"
-              :partner="item"
-              @delete="handleDelete"
-              @edit="handleEdit"
-            />
-          </div>
+          <MijozCard
+            v-if="getFilteredPartners('doimiymijoz').length > 0"
+            :partners="getFilteredPartners('doimiymijoz')"
+            @delete="handleDelete"
+            @edit="handleEdit"
+          />
 
           <el-empty v-else description="Doimiy mijozlar topilmadi" />
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="Montajnik" name="montajnik">
+      <el-tab-pane label="Montaj guruhlar" name="montajnik">
         <div class="tab-content">
           <div class="tab-header">
-            <h2>Montajniklar</h2>
+            <h2>Montaj guruhlar</h2>
             <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
               Yangi qo'shish
             </el-button>
           </div>
 
-          <div v-if="getFilteredPartners('montajnik').length > 0" class="partners-grid">
-            <MijozCard
-              v-for="(item, index) in getFilteredPartners('montajnik')"
-              :key="index"
-              :partner="item"
-              @delete="handleDelete"
-              @edit="handleEdit"
-            />
-          </div>
+          <MijozCard
+            v-if="getFilteredPartners('montajnik').length > 0"
+            :partners="getFilteredPartners('montajnik')"
+            @delete="handleDelete"
+            @edit="handleEdit"
+          />
 
           <el-empty v-else description="Montajniklar topilmadi" />
         </div>
@@ -63,21 +57,18 @@
             </el-button>
           </div>
 
-          <div v-if="getFilteredPartners('quruvchi').length > 0" class="partners-grid">
-            <MijozCard
-              v-for="(item, index) in getFilteredPartners('quruvchi')"
-              :key="index"
-              :partner="item"
-              @delete="handleDelete"
-              @edit="handleEdit"
-            />
-          </div>
+          <MijozCard
+            v-if="getFilteredPartners('quruvchi').length > 0"
+            :partners="getFilteredPartners('quruvchi')"
+            @delete="handleDelete"
+            @edit="handleEdit"
+          />
 
           <el-empty v-else description="Quruvchilar topilmadi" />
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="Do'konchi tadbirkor" name="dokonchitadbirkor">
+      <el-tab-pane label="Do'kon / Bozor" name="dokonchitadbirkor">
         <div class="tab-content">
           <div class="tab-header">
             <h2>Do'konchi tadbirkorlar</h2>
@@ -86,21 +77,18 @@
             </el-button>
           </div>
 
-          <div v-if="getFilteredPartners('dokonchitadbirkor').length > 0" class="partners-grid">
-            <MijozCard
-              v-for="(item, index) in getFilteredPartners('dokonchitadbirkor')"
-              :key="index"
-              :partner="item"
-              @delete="handleDelete"
-              @edit="handleEdit"
-            />
-          </div>
+          <MijozCard
+            v-if="getFilteredPartners('dokonchitadbirkor').length > 0"
+            :partners="getFilteredPartners('dokonchitadbirkor')"
+            @delete="handleDelete"
+            @edit="handleEdit"
+          />
 
           <el-empty v-else description="Do'konchi tadbirkorlar topilmadi" />
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="Proyekt institut" name="proyektinstitut">
+      <el-tab-pane label="Proyekt instituti" name="proyektinstitut">
         <div class="tab-content">
           <div class="tab-header">
             <h2>Proyekt institutlar</h2>
@@ -109,17 +97,54 @@
             </el-button>
           </div>
 
-          <div v-if="getFilteredPartners('proyektinstitut').length > 0" class="partners-grid">
-            <MijozCard
-              v-for="(item, index) in getFilteredPartners('proyektinstitut')"
-              :key="index"
-              :partner="item"
-              @delete="handleDelete"
-              @edit="handleEdit"
-            />
-          </div>
+          <MijozCard
+            v-if="getFilteredPartners('proyektinstitut').length > 0"
+            :partners="getFilteredPartners('proyektinstitut')"
+            @delete="handleDelete"
+            @edit="handleEdit"
+          />
 
           <el-empty v-else description="Proyekt institutlar topilmadi" />
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane label="Tender firmalar" name="tenderfirmalar">
+        <div class="tab-content">
+          <div class="tab-header">
+            <h2>Tender o'tkazadigan firmalar ro'yxati</h2>
+            <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
+              Yangi qo'shish
+            </el-button>
+          </div>
+
+          <MijozCard
+            v-if="getFilteredPartners('tenderfirmalar').length > 0"
+            :partners="getFilteredPartners('tenderfirmalar')"
+            @delete="handleDelete"
+            @edit="handleEdit"
+          />
+
+          <el-empty v-else description="Tender firmalar topilmadi" />
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane label='"UKS" - Yagona buyurtmachi' name="uks">
+        <div class="tab-content">
+          <div class="tab-header">
+            <h2>UKS tashkiloti</h2>
+            <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
+              Yangi qo'shish
+            </el-button>
+          </div>
+
+          <MijozCard
+            v-if="getFilteredPartners('uks').length > 0"
+            :partners="getFilteredPartners('uks')"
+            @delete="handleDelete"
+            @edit="handleEdit"
+          />
+
+          <el-empty v-else description="UKS tashkilotlar topilmadi" />
         </div>
       </el-tab-pane>
 
@@ -132,15 +157,25 @@
             </el-button>
           </div>
 
-          <div v-if="getFilteredPartners('boshqa').length > 0" class="partners-grid">
-            <MijozCard
-              v-for="(item, index) in getFilteredPartners('boshqa')"
-              :key="index"
-              :partner="item"
-              @delete="handleDelete"
-              @edit="handleEdit"
-            />
-          </div>
+          <MijozCard
+            v-if="getFilteredPartners('boshqa').length > 0"
+            :partners="getFilteredPartners('boshqa')"
+            @delete="handleDelete"
+            @edit="handleEdit"
+          />
+
+          <el-empty v-else description="Boshqa hamkorlar topilmadi" />
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane label="Jami" name="jami">
+        <div class="tab-content">
+          <MijozCardJami
+            v-if="getFilteredPartners('jami').length > 0"
+            :partners="getFilteredPartners('jami')"
+            @delete="handleDelete"
+            @edit="handleEdit"
+          />
 
           <el-empty v-else description="Boshqa hamkorlar topilmadi" />
         </div>
@@ -156,6 +191,7 @@ import { usePartnersStore } from '@/stores/partners'
 import { Plus } from '@element-plus/icons-vue'
 import MijozCard from './MijozCard.vue'
 import { ElMessage } from 'element-plus'
+import MijozCardJami from './MijozCardJami.vue'
 
 const loading = ref(false)
 const activeTab = ref('doimiymijoz')
@@ -185,7 +221,15 @@ const handleDelete = async (id) => {
 }
 
 const getFilteredPartners = (type) => {
+  if (type === 'jami') {
+    return partnersStore.allPartnersofUser.filter(() => true)
+  }
+
   return partnersStore.allPartnersofUser.filter((item) => item.partner_type === type)
+}
+
+const handleClick = () => {
+  // Tab click handler
 }
 
 onMounted(async () => {
@@ -297,26 +341,19 @@ onMounted(async () => {
   }
 }
 
-.partners-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 24px;
-  width: 100%;
-}
-
 // Desktop Large
 @media (max-width: 1400px) {
-  .partners-grid {
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  .mijozlar-container {
+    padding: 28px;
+  }
+
+  .header-text h1 {
+    font-size: 30px;
   }
 }
 
 // Desktop
 @media (max-width: 1200px) {
-  .partners-grid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  }
-
   .mijozlar-container {
     padding: 24px;
   }
@@ -332,10 +369,6 @@ onMounted(async () => {
 
 // Tablet Large
 @media (max-width: 992px) {
-  .partners-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  }
-
   .mijozlar-container {
     padding: 20px;
   }
@@ -416,18 +449,12 @@ onMounted(async () => {
       font-size: 18px;
     }
   }
-
-  .partners-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
-  }
 }
 
 // Small Tablet / Large Mobile
 @media (max-width: 640px) {
   .mijozlar-container {
     padding: 12px;
-    background: #f5f7fa;
   }
 
   .page-header {
@@ -464,11 +491,6 @@ onMounted(async () => {
     h2 {
       font-size: 16px;
     }
-  }
-
-  .partners-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
   }
 }
 
@@ -516,11 +538,6 @@ onMounted(async () => {
     h2 {
       font-size: 14px;
     }
-  }
-
-  .partners-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
   }
 }
 
