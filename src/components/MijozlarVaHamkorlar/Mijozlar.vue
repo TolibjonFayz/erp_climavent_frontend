@@ -1,19 +1,40 @@
 <template>
   <div class="mijozlar-container" v-loading="loading">
     <div class="page-header">
-      <div class="header-text">
-        <h1>Hamkorlar va mijozlar</h1>
-        <p class="subtitle">Barcha hamkorlar va mijozlar ro'yxati</p>
+      <div class="header-content">
+        <div class="header-text">
+          <h1>{{ $t('mijozlarVaHamkorlar') }}</h1>
+          <p class="subtitle">{{ $t('mijozlarHamkorlarTable') }}</p>
+        </div>
+
+        <div class="date-filters">
+          <span>{{ $t('yangikitilganlar') }}</span>
+          <el-tag size="large" type="success" effect="plain">
+            {{ $t('today') }}: {{ getTodayCount() }}
+          </el-tag>
+          <el-tag size="large" type="primary" effect="plain">
+            {{ $t('thisWeek') }}: {{ getWeekCount() }}
+          </el-tag>
+          <el-tag size="large" type="warning" effect="plain">
+            {{ $t('thisMonth') }}: {{ getMonthCount() }}
+          </el-tag>
+          <el-tag size="large" type="info" effect="plain">
+            {{ $t('total') }}: {{ getAllCount() }}
+          </el-tag>
+        </div>
       </div>
     </div>
 
     <el-tabs v-model="activeTab" class="modern-tabs" @tab-click="handleClick">
-      <el-tab-pane label="Doimiy mijoz" name="doimiymijoz">
+      <el-tab-pane
+        :label="`${$t('doimiymijoz')} (${getFilteredPartners('doimiymijoz').length})`"
+        name="doimiymijoz"
+      >
         <div class="tab-content">
           <div class="tab-header">
-            <h2>Doimiy mijozlar</h2>
+            <h2>{{ $t('doimiymijozlar') }}</h2>
             <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
-              Yangi qo'shish
+              {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
@@ -24,16 +45,19 @@
             @edit="handleEdit"
           />
 
-          <el-empty v-else description="Doimiy mijozlar topilmadi" />
+          <el-empty v-else :description="$t('noPartnersFound')" />
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="Montaj guruhlar" name="montajnik">
+      <el-tab-pane
+        :label="`${$t('montajguruhlar')} (${getFilteredPartners('montajnik').length})`"
+        name="montajnik"
+      >
         <div class="tab-content">
           <div class="tab-header">
-            <h2>Montaj guruhlar</h2>
+            <h2>{{ $t('montajguruhlar') }}</h2>
             <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
-              Yangi qo'shish
+              {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
@@ -44,16 +68,19 @@
             @edit="handleEdit"
           />
 
-          <el-empty v-else description="Montajniklar topilmadi" />
+          <el-empty v-else :description="$t('noMantajnikFound')" />
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="Quruvchi" name="quruvchi">
+      <el-tab-pane
+        :label="`${$t('quruvchi')} (${getFilteredPartners('quruvchi').length})`"
+        name="quruvchi"
+      >
         <div class="tab-content">
           <div class="tab-header">
-            <h2>Quruvchilar</h2>
+            <h2>{{ $t('quruvchilar') }}</h2>
             <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
-              Yangi qo'shish
+              {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
@@ -64,16 +91,19 @@
             @edit="handleEdit"
           />
 
-          <el-empty v-else description="Quruvchilar topilmadi" />
+          <el-empty v-else :description="$t('noQuruvchiFound')" />
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="Do'kon / Bozor" name="dokonchitadbirkor">
+      <el-tab-pane
+        :label="`${$t('dokonchitadbirkor')} (${getFilteredPartners('dokonchitadbirkor').length})`"
+        name="dokonchitadbirkor"
+      >
         <div class="tab-content">
           <div class="tab-header">
-            <h2>Do'konchi tadbirkorlar</h2>
+            <h2>{{ $t('dokonchitadbirkorlar') }}</h2>
             <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
-              Yangi qo'shish
+              {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
@@ -84,16 +114,19 @@
             @edit="handleEdit"
           />
 
-          <el-empty v-else description="Do'konchi tadbirkorlar topilmadi" />
+          <el-empty v-else :description="$t('noDokonchitadbirkorFound')" />
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="Proyekt instituti" name="proyektinstitut">
+      <el-tab-pane
+        :label="`${$t('proyektinstitut')} (${getFilteredPartners('proyektinstitut').length})`"
+        name="proyektinstitut"
+      >
         <div class="tab-content">
           <div class="tab-header">
-            <h2>Proyekt institutlar</h2>
+            <h2>{{ $t('proyektinstitutlar') }}</h2>
             <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
-              Yangi qo'shish
+              {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
@@ -104,16 +137,19 @@
             @edit="handleEdit"
           />
 
-          <el-empty v-else description="Proyekt institutlar topilmadi" />
+          <el-empty v-else :description="$t('noProyektInstitutFound')" />
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="Tender firmalar" name="tenderfirmalar">
+      <el-tab-pane
+        :label="`${$t('tenderfirmalar')} (${getFilteredPartners('tenderfirmalar').length})`"
+        name="tenderfirmalar"
+      >
         <div class="tab-content">
           <div class="tab-header">
-            <h2>Tender o'tkazadigan firmalar ro'yxati</h2>
+            <h2>{{ $t('tenderfirmalar') }}</h2>
             <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
-              Yangi qo'shish
+              {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
@@ -124,16 +160,16 @@
             @edit="handleEdit"
           />
 
-          <el-empty v-else description="Tender firmalar topilmadi" />
+          <el-empty v-else :description="$t('noTenderFirmalarFound')" />
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label='"UKS" - Yagona buyurtmachi' name="uks">
+      <el-tab-pane :label="`${$t('uks')} (${getFilteredPartners('uks').length})`" name="uks">
         <div class="tab-content">
           <div class="tab-header">
-            <h2>UKS tashkiloti</h2>
+            <h2>{{ $t('uks2') }}</h2>
             <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
-              Yangi qo'shish
+              {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
@@ -144,16 +180,19 @@
             @edit="handleEdit"
           />
 
-          <el-empty v-else description="UKS tashkilotlar topilmadi" />
+          <el-empty v-else :description="$t('noUksFound')" />
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="Boshqa" name="boshqa">
+      <el-tab-pane
+        :label="`${$t('boshqa')} (${getFilteredPartners('boshqa').length})`"
+        name="boshqa"
+      >
         <div class="tab-content">
           <div class="tab-header">
-            <h2>Boshqalar</h2>
+            <h2>{{ $t('boshqa') }}</h2>
             <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
-              Yangi qo'shish
+              {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
@@ -164,11 +203,11 @@
             @edit="handleEdit"
           />
 
-          <el-empty v-else description="Boshqa hamkorlar topilmadi" />
+          <el-empty v-else :description="$t('noBoshqaFound')" />
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="Jami" name="jami">
+      <el-tab-pane :label="`${$t('jami')} (${getFilteredPartners('jami').length})`" name="jami">
         <div class="tab-content">
           <MijozCardJami
             v-if="getFilteredPartners('jami').length > 0"
@@ -177,7 +216,7 @@
             @edit="handleEdit"
           />
 
-          <el-empty v-else description="Boshqa hamkorlar topilmadi" />
+          <el-empty v-else :description="$t('noJamiFound')" />
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -220,6 +259,56 @@ const handleDelete = async (id) => {
   }
 }
 
+// Date counting functions
+const isToday = (date) => {
+  const today = new Date()
+  const itemDate = new Date(date)
+  return (
+    itemDate.getDate() === today.getDate() &&
+    itemDate.getMonth() === today.getMonth() &&
+    itemDate.getFullYear() === today.getFullYear()
+  )
+}
+
+const isThisWeek = (date) => {
+  const today = new Date()
+  const itemDate = new Date(date)
+  const weekStart = new Date(today)
+  weekStart.setDate(today.getDate() - today.getDay()) // Start of week (Sunday)
+  weekStart.setHours(0, 0, 0, 0)
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekStart.getDate() + 6) // End of week (Saturday)
+  weekEnd.setHours(23, 59, 59, 999)
+  return itemDate >= weekStart && itemDate <= weekEnd
+}
+
+const isThisMonth = (date) => {
+  const today = new Date()
+  const itemDate = new Date(date)
+  return itemDate.getMonth() === today.getMonth() && itemDate.getFullYear() === today.getFullYear()
+}
+
+const getTodayCount = () => {
+  return partnersStore.allPartnersofUser.filter((item) => item.createdAt && isToday(item.createdAt))
+    .length
+}
+
+const getWeekCount = () => {
+  return partnersStore.allPartnersofUser.filter(
+    (item) => item.createdAt && isThisWeek(item.createdAt),
+  ).length
+}
+
+const getMonthCount = () => {
+  return partnersStore.allPartnersofUser.filter(
+    (item) => item.createdAt && isThisMonth(item.createdAt),
+  ).length
+}
+
+const getAllCount = () => {
+  return partnersStore.allPartnersofUser.length
+}
+
 const getFilteredPartners = (type) => {
   if (type === 'jami') {
     return partnersStore.allPartnersofUser.filter(() => true)
@@ -252,7 +341,18 @@ onMounted(async () => {
   margin-bottom: 32px;
 }
 
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
 .header-text {
+  flex: 1;
+  min-width: 250px;
+
   h1 {
     font-size: 32px;
     font-weight: 700;
@@ -266,6 +366,20 @@ onMounted(async () => {
     color: #6b7280;
     margin: 0;
     word-break: break-word;
+  }
+}
+
+.date-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+
+  .el-tag {
+    font-size: 15px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
   }
 }
 
@@ -377,12 +491,29 @@ onMounted(async () => {
     margin-bottom: 24px;
   }
 
-  .header-text h1 {
-    font-size: 26px;
+  .header-content {
+    gap: 20px;
   }
 
-  .header-text .subtitle {
-    font-size: 14px;
+  .header-text {
+    min-width: 200px;
+
+    h1 {
+      font-size: 26px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+    }
+  }
+
+  .date-filters {
+    gap: 10px;
+
+    .el-tag {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
   }
 
   .modern-tabs {
@@ -418,12 +549,35 @@ onMounted(async () => {
     margin-bottom: 18px;
   }
 
-  .header-text h1 {
-    font-size: 22px;
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
   }
 
-  .header-text .subtitle {
-    font-size: 13px;
+  .header-text {
+    min-width: auto;
+
+    h1 {
+      font-size: 22px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+    }
+  }
+
+  .date-filters {
+    gap: 8px;
+    justify-content: center;
+
+    .el-tag {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 12px;
+      font-size: 13px;
+      text-align: center;
+    }
   }
 
   .modern-tabs {
@@ -468,6 +622,16 @@ onMounted(async () => {
 
   .header-text .subtitle {
     font-size: 12px;
+    margin-bottom: 10px;
+  }
+
+  .date-filters {
+    gap: 6px;
+
+    .el-tag {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
   }
 
   .modern-tabs {
@@ -511,6 +675,18 @@ onMounted(async () => {
 
   .header-text .subtitle {
     font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .date-filters {
+    gap: 6px;
+
+    .el-tag {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 12px;
+      text-align: center;
+    }
   }
 
   .modern-tabs {
@@ -553,6 +729,13 @@ onMounted(async () => {
 
   .header-text .subtitle {
     font-size: 10px;
+  }
+
+  .date-filters {
+    .el-tag {
+      font-size: 11px;
+      padding: 6px 10px;
+    }
   }
 
   .tab-header h2 {

@@ -2,131 +2,135 @@
   <div class="container">
     <div class="header-row">
       <el-icon @click="goback()"><Back /></el-icon>
-      <h2>Yangi mijoz haqida ma'lumot</h2>
+      <h2>{{ $t('yangiMijozQoshishText') }}</h2>
     </div>
 
     <el-form :model="form" label-width="auto" class="form">
-      <el-form-item label="Respublika">
+      <el-form-item :label="$t('respublika')">
         <el-select
           v-model="form.republic"
           filterable
-          placeholder="Tanlang"
+          :placeholder="$t('tanlang')"
           class="full-width-select"
         >
-          <el-option label="O'zbekiston" value="ozbekiston" />
-          <el-option label="Qozog'iston" value="qozogiston" />
-          <el-option label="Tojikiston" value="tojikiston" />
-          <el-option label="Turkmaniston" value="turkmaniston" />
-          <el-option label="Qizg'iziston" value="qizgiziston" />
-          <el-option label="Afg'oniston" value="afgoniston" />
-          <el-option label="Azarbayjon" value="azarbayjon" />
-          <el-option label="Eron" value="eron" />
-          <el-option label="Pokiston" value="pokiston" />
-          <el-option label="Armeniya" value="armeniya" />
-          <el-option label="Boshqa" value="boshqa" />
+          <el-option :label="$t('ozbekiston')" value="ozbekiston" />
+          <el-option :label="$t('qozogiston')" value="qozogiston" />
+          <el-option :label="$t('tojikiston')" value="tojikiston" />
+          <el-option :label="$t('turkmaniston')" value="turkmaniston" />
+          <el-option :label="$t('qizgiziston')" value="qizgiziston" />
+          <el-option :label="$t('afgoniston')" value="afgoniston" />
+          <el-option :label="$t('azarbayjon')" value="azarbayjon" />
+          <el-option :label="$t('eron')" value="eron" />
+          <el-option :label="$t('pokiston')" value="pokiston" />
+          <el-option :label="$t('armeniya')" value="armeniya" />
+          <el-option :label="$t('boshqa')" value="boshqa" />
         </el-select>
         <el-input
           v-if="isBoshqaRespublika"
           class="whereotherinput"
           v-model="form.otherrepublic"
-          placeholder="Qaysi respublika?"
+          :placeholder="$t('qaysiRespublika')"
         />
       </el-form-item>
 
-      <el-form-item label="Viloyat">
+      <el-form-item :label="$t('viloyat')">
         <el-select
           v-model="form.viloyat"
           filterable
-          placeholder="Tanlang"
+          :placeholder="$t('tanlang')"
           class="full-width-select"
         >
-          <el-option label="Toshkent shahri" value="toshkent_shahri" />
-          <el-option label="Toshkent viloyat" value="toshkent" />
-          <el-option label="Andijon viloyat" value="andijon" />
-          <el-option label="Fargʻona viloyat" value="fargona" />
-          <el-option label="Namangan viloyat" value="namangan" />
-          <el-option label="Sirdaryo viloyat" value="sirdaryo" />
-          <el-option label="Jizzax viloyat" value="jizzax" />
-          <el-option label="Samarqand viloyat" value="samarqand" />
-          <el-option label="Qashqadaryo viloyat" value="qashqadaryo" />
-          <el-option label="Surxondaryo viloyat" value="surxondaryo" />
-          <el-option label="Navoiy viloyat" value="navoiy" />
-          <el-option label="Buxoro viloyat" value="buxoro" />
-          <el-option label="Xorazm viloyat" value="xorazm" />
-          <el-option label="Qoraqalpogʻiston Respublikasi" value="qoraqalpogiston" />
-          <el-option label="Boshqa" value="boshqa" />
+          <el-option :label="$t('toshkent_shahri')" value="toshkent_shahri" />
+          <el-option :label="$t('toshkent')" value="toshkent" />
+          <el-option :label="$t('andijon')" value="andijon" />
+          <el-option :label="$t('fargona')" value="fargona" />
+          <el-option :label="$t('namangan')" value="namangan" />
+          <el-option :label="$t('sirdaryo')" value="sirdaryo" />
+          <el-option :label="$t('jizzax')" value="jizzax" />
+          <el-option :label="$t('samarqand')" value="samarqand" />
+          <el-option :label="$t('qashqadaryo')" value="qashqadaryo" />
+          <el-option :label="$t('surxondaryo')" value="surxondaryo" />
+          <el-option :label="$t('navoiy')" value="navoiy" />
+          <el-option :label="$t('buxoro')" value="buxoro" />
+          <el-option :label="$t('xorazm')" value="xorazm" />
+          <el-option :label="$t('qoraqalpogiston')" value="qoraqalpogiston" />
+          <el-option :label="$t('boshqa')" value="boshqa" />
         </el-select>
         <el-input
           v-if="isBoshqaViloyat"
           class="whereotherinput"
           :rows="2"
           v-model="form.otherviloyat"
-          placeholder="Qaysi viloyat?"
+          :placeholder="$t('qaysiViloyat')"
           type="textarea"
         />
       </el-form-item>
 
-      <el-form-item label="Tuman/Shahar">
+      <el-form-item :label="$t('shaharTuman')">
         <el-select
           v-model="form.shahar_tuman"
           filterable
-          placeholder="Tanlang"
+          :placeholder="$t('tanlang')"
           class="full-width-select"
         >
-          <el-option label="Bektemir tumani" value="bektemir" />
-          <el-option label="Chilonzor tumani" value="chilonzor" />
-          <el-option label="Yashnobod tumani" value="yashnobod" />
-          <el-option label="Mirobod tumani" value="mirobod" />
-          <el-option label="Mirzo Ulugʻbek tumani" value="mirzo_ulugbek" />
-          <el-option label="Sergeli tumani" value="sergeli" />
-          <el-option label="Shayhontohur tumani" value="shayhontohur" />
-          <el-option label="Olmazor tumani" value="olmazor" />
-          <el-option label="Uchtepa tumani" value="uchtepa" />
-          <el-option label="Yakkasaroy tumani" value="yakkasaroy" />
-          <el-option label="Yunusobod tumani" value="yunusobod" />
-          <el-option label="Yangihayot tumani" value="yangihayot" />
-          <el-option label="Boshqa" value="boshqa" />
+          <el-option :label="$t('bektemir')" value="bektemir" />
+          <el-option :label="$t('chilonzor')" value="chilonzor" />
+          <el-option :label="$t('yashnobod')" value="yashnobod" />
+          <el-option :label="$t('mirobod')" value="mirobod" />
+          <el-option :label="$t('mirzo_ulugbek')" value="mirzo_ulugbek" />
+          <el-option :label="$t('sergeli')" value="sergeli" />
+          <el-option :label="$t('shayhontohur')" value="shayhontohur" />
+          <el-option :label="$t('olmazor')" value="olmazor" />
+          <el-option :label="$t('uchtepa')" value="uchtepa" />
+          <el-option :label="$t('yakkasaroy')" value="yakkasaroy" />
+          <el-option :label="$t('yunusobod')" value="yunusobod" />
+          <el-option :label="$t('yangihayot')" value="yangihayot" />
+          <el-option :label="$t('boshqa')" value="boshqa" />
         </el-select>
         <el-input
           v-if="isBoshqaShaharTuman"
           class="whereotherinput"
           :rows="2"
           v-model="form.other_shahar_tuman"
-          placeholder="Qaysi shahar/tuman?"
+          :placeholder="$t('qaysiShaharTuman')"
           type="textarea"
         />
       </el-form-item>
 
-      <el-form-item label="Mijoz turi">
+      <el-form-item :label="$t('mijozTuri')">
         <el-radio-group v-model="form.mijozturi" class="responsive-radio-group">
-          <el-radio value="Yuridik shaxs">Yuridik shaxs</el-radio>
-          <el-radio value="Jismoniy shaxs">Jismoniy shaxs</el-radio>
+          <el-radio value="Yuridik shaxs">{{ $t('yuridikShaxs') }}</el-radio>
+          <el-radio value="Jismoniy shaxs">{{ $t('jismoniyShaxs') }}</el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item label="INN" v-if="form.mijozturi === 'Yuridik shaxs'">
-        <el-input v-model="form.inn" placeholder="Kiriting" class="full-width-input" />
+      <el-form-item :label="$t('inn')" v-if="form.mijozturi === 'Yuridik shaxs'">
+        <el-input v-model="form.inn" :placeholder="$t('tanlang')" class="full-width-input" />
       </el-form-item>
 
-      <el-form-item label="Telefon raqam">
-        <el-input v-model="form.phone_number" placeholder="Kiriting" class="full-width-input" />
-      </el-form-item>
-
-      <el-form-item label="Qo'shimcha telefon raqam">
+      <el-form-item :label="$t('telefon')">
         <el-input
-          v-model="form.additional_phone_number"
-          placeholder="Kiriting"
+          v-model="form.phone_number"
+          :placeholder="$t('tanlang')"
           class="full-width-input"
         />
       </el-form-item>
-      <el-form-item label="Ism familiya">
-        <el-input v-model="form.fullname" placeholder="Kiriting" class="full-width-input" />
+
+      <el-form-item :label="$t('qoshimcha')">
+        <el-input
+          v-model="form.additional_phone_number"
+          :placeholder="$t('tanlang')"
+          class="full-width-input"
+        />
+      </el-form-item>
+      <el-form-item :label="$t('ismFamiliya')">
+        <el-input v-model="form.fullname" :placeholder="$t('tanlang')" class="full-width-input" />
       </el-form-item>
     </el-form>
 
     <div class="button-group-container">
-      <el-button :loading="loading" type="primary" @click="onSubmit">Saqlash</el-button>
-      <el-button type="warning" plain @click="goback()">Ortga</el-button>
+      <el-button :loading="loading" type="primary" @click="onSubmit">{{ $t('save') }}</el-button>
+      <el-button type="warning" plain @click="goback()">{{ $t('cancel') }}</el-button>
     </div>
   </div>
 </template>
@@ -143,6 +147,18 @@ const isBoshqaViloyat = ref(false)
 const isBoshqaShaharTuman = ref(false)
 const loading = ref(false)
 
+function getCookie(name) {
+  const cookies = document.cookie.split('; ')
+  for (const cookie of cookies) {
+    const [cookieName, cookieValue] = cookie.split('=')
+    if (cookieName === name) {
+      return decodeURIComponent(cookieValue)
+    }
+  }
+  return 'uz'
+}
+const lang = getCookie('lang')
+
 const form = reactive({
   republic: '',
   otherrepublic: '',
@@ -158,35 +174,83 @@ const form = reactive({
 })
 
 const validateObject = (obj) => {
-  if (!obj.republic) {
-    ElMessage.warning(`Iltimos respublikani tanlang.`)
-    return false
+  if (lang === 'uz') {
+    if (!obj.republic) {
+      ElMessage.warning(`Iltimos respublikani tanlang.`)
+      return false
+    }
+    if (obj.republic === 'boshqa' && !obj.otherrepublic) {
+      ElMessage.warning(`Iltimos respublikani kiriting.`)
+      return false
+    }
+    if (!obj.viloyat) {
+      ElMessage.warning(`Iltimos viloyatni tanlang.`)
+      return false
+    }
+    if (obj.viloyat === 'boshqa' && !obj.otherviloyat) {
+      ElMessage.warning(`Iltimos viloyatni kiriting.`)
+      return false
+    }
+    if (!obj.shahar_tuman) {
+      ElMessage.warning(`Iltimos shahar/tumanni tanlang.`)
+      return false
+    }
+    if (obj.shahar_tuman === 'boshqa' && !obj.other_shahar_tuman) {
+      ElMessage.warning(`Iltimos shahar/tuman nomini kiriting.`)
+      return false
+    }
+    if (!obj.mijozturi) {
+      ElMessage.warning(`Iltimos mijoz turini tanlang.`)
+      return false
+    }
+    if (!obj.phone_number) {
+      ElMessage.warning(`Iltimos telefon raqamni kiriting.`)
+      return false
+    }
+    if (!obj.fullname) {
+      ElMessage.warning(`Iltimos ism familiyani kiriting.`)
+      return false
+    }
+    return true
+  } else if (lang === 'ru') {
+    if (!obj.republic) {
+      ElMessage.warning(`Пожалуйста, выберите республику.`)
+      return false
+    }
+    if (obj.republic === 'boshqa' && !obj.otherrepublic) {
+      ElMessage.warning(`Пожалуйста, введите республику.`)
+      return false
+    }
+    if (!obj.viloyat) {
+      ElMessage.warning(`Пожалуйста, выберите область.`)
+      return false
+    }
+    if (obj.viloyat === 'boshqa' && !obj.otherviloyat) {
+      ElMessage.warning(`Пожалуйста, введите область.`)
+      return false
+    }
+    if (!obj.shahar_tuman) {
+      ElMessage.warning(`Пожалуйста, выберите город/район.`)
+      return false
+    }
+    if (obj.shahar_tuman === 'boshqa' && !obj.other_shahar_tuman) {
+      ElMessage.warning(`Пожалуйста, введите название города/района.`)
+      return false
+    }
+    if (!obj.mijozturi) {
+      ElMessage.warning(`Пожалуйста, выберите тип клиента.`)
+      return false
+    }
+    if (!obj.phone_number) {
+      ElMessage.warning(`Пожалуйста, введите номер телефона.`)
+      return false
+    }
+    if (!obj.fullname) {
+      ElMessage.warning(`Пожалуйста, введите имя и фамилию.`)
+      return false
+    }
+    return true
   }
-  if (obj.republic === 'boshqa' && !obj.otherrepublic) {
-    ElMessage.warning(`Iltimos respublikani kiriting.`)
-    return false
-  }
-  if (!obj.viloyat) {
-    ElMessage.warning(`Iltimos viloyatni tanlang.`)
-    return false
-  }
-  if (obj.viloyat === 'boshqa' && !obj.otherviloyat) {
-    ElMessage.warning(`Iltimos viloyatni kiriting.`)
-    return false
-  }
-  if (!obj.mijozturi) {
-    ElMessage.warning(`Iltimos mijoz turini tanlang.`)
-    return false
-  }
-  if (!obj.phone_number) {
-    ElMessage.warning(`Iltimos telefon raqamni kiriting.`)
-    return false
-  }
-  if (!obj.fullname) {
-    ElMessage.warning(`Iltimos ism familiyani kiriting.`)
-    return false
-  }
-  return true
 }
 
 const createMijozPayload = (obj) => {

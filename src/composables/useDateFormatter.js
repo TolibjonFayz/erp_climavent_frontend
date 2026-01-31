@@ -1,5 +1,5 @@
 export function formatDate(dateString) {
-  if (!dateString) return 'Kiritilmagan!'
+  if (!dateString) return 'Kiritilmagan'
   const date = new Date(dateString)
 
   const months = [

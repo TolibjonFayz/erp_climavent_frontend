@@ -9,6 +9,7 @@ import VazifalarPage from '@/views/VazifalarPage.vue'
 import HomePageMijozlar from '@/views/HomePageMijozlar.vue'
 import RaqiblarPage from '@/views/RaqiblarPage.vue'
 import AddMijoz from '@/components/MijozlarVaHamkorlar/AddMijoz.vue'
+import AdminPage from '@/views/AdminPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,6 +54,12 @@ const router = createRouter({
       path: '/raqiblar',
       name: 'raqiblar',
       component: RaqiblarPage,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: AdminPage,
       meta: { requiresAuth: true },
     },
     {

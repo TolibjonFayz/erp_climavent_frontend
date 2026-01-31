@@ -7,13 +7,13 @@
         </div>
         <div class="logo-text">
           <h3>Climavent</h3>
-          <span>Xodimlar uchun panel</span>
+          <span>{{ $t('sidebarLogo') }}</span>
         </div>
       </div>
       <button
         class="toggle-btn"
         @click="toggleSidebar"
-        :title="isCollapsed ? 'Kengaytirish' : 'Qisqartirish'"
+        :title="isCollapsed ? $t('expandSidebar') : $t('collapseSidebar')"
       >
         <i class="toggle-icon" :class="{ rotated: isCollapsed }"></i>
       </button>
@@ -22,44 +22,44 @@
     <nav class="sidebar-nav">
       <ul class="nav-list">
         <li class="nav-item">
-          <a href="/" class="nav-link" :title="isCollapsed ? 'Mijozlar va hamkorlar' : ''">
+          <a href="/" class="nav-link" :title="$t('mijozlarHamkorlarTitle')">
             <i class="icon places-icon"></i>
-            <span class="nav-text">Mijozlar va hamkorlar bo'yicha ma'lumotlar</span>
+            <span class="nav-text">{{ $t('mijozlarHamkorlarText') }}</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a href="/obyekt" class="nav-link" :title="isCollapsed ? 'Obyekt' : ''">
+          <a href="/obyekt" class="nav-link" :title="$t('obyekt')">
             <i class="icon home-icon"></i>
-            <span class="nav-text">Obyekt</span>
+            <span class="nav-text">{{ $t('obyekt') }}</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a href="/raqiblar" class="nav-link" :title="isCollapsed ? 'Raqib' : ''">
+          <a href="/raqiblar" class="nav-link" :title="$t('raqib')">
             <i class="icon oppenents-icon"></i>
-            <span class="nav-text">Raqib (Kankurentlar)</span>
+            <span class="nav-text">{{ $t('raqibtext') }}</span>
           </a>
         </li>
 
         <li class="nav-item active">
-          <a href="/davomat" class="nav-link" :title="isCollapsed ? 'Davomat' : ''">
+          <a href="/davomat" class="nav-link" :title="$t('davomat')">
             <i class="icon project-icon"></i>
-            <span class="nav-text">Davomat</span>
+            <span class="nav-text">{{ $t('davomat') }}</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a href="/tasks" class="nav-link" :title="isCollapsed ? 'Vazifalar' : ''">
+          <a href="/tasks" class="nav-link" :title="$t('tasks')">
             <i class="icon tasks-icon"></i>
-            <span class="nav-text">Vazifalar</span>
+            <span class="nav-text">{{ $t('tasks') }}</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a href="/settings" class="nav-link" :title="isCollapsed ? 'Sozlamalar' : ''">
+          <a href="/settings" class="nav-link" :title="$t('settings')">
             <i class="icon calendar-icon"></i>
-            <span class="nav-text">Sozlamalar</span>
+            <span class="nav-text">{{ $t('settings') }}</span>
           </a>
         </li>
       </ul>
@@ -128,7 +128,7 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .sidebar {
-  width: 260px;
+  width: 310px;
   height: 100vh;
   background: #f8f9fb;
   border-right: 1px solid #e5e7eb;
@@ -342,13 +342,13 @@ onUnmounted(() => {
     font-size: 16px;
   }
 
-  &.places-icon::before {
-    content: '🏬';
+  &.oppenents-icon::before {
+    content: '⚔️';
     font-size: 16px;
   }
 
-  &.oppenents-icon::before {
-    content: '⚔️';
+  &.places-icon::before {
+    content: '🏬';
     font-size: 16px;
   }
 

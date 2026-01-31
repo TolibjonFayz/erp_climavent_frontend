@@ -2,93 +2,101 @@
   <div class="container">
     <div class="header-row">
       <el-icon @click="goback()"><Back /></el-icon>
-      <h2>Obyekt qo'shish</h2>
+      <h2>{{ $t('yangiObyektQoshish') }}</h2>
     </div>
 
     <!-- ASOSIY OBYEKT -->
     <el-form :model="form" label-width="auto" class="form">
-      <div class="form-section-title">Asosiy obyekt</div>
+      <div class="form-section-title">{{ $t('asosiyObyekt') }}</div>
 
-      <el-form-item label="Obyektga ketish vaqti">
+      <el-form-item :label="$t('obyektgaKetishVaqti')">
         <el-config-provider :locale="locale">
           <el-date-picker
             v-model="form.goingtime"
             type="datetime"
-            placeholder="Vaqtni tanlang"
+            :placeholder="$t('vaqtniTanlang')"
             :disabled-date="disabledDate"
             class="full-width-picker"
           />
         </el-config-provider>
       </el-form-item>
 
-      <el-form-item label="Qayerga">
-        <el-select v-model="form.where" placeholder="Tanlang" class="full-width-select">
-          <el-option label="Zavod" value="Zavod" />
-          <el-option label="Klient" value="Klient" />
-          <el-option label="Shaxsiy" value="Shaxsiy" />
-          <el-option label="Boshqa" value="boshqa" />
+      <el-form-item :label="$t('qayerga')">
+        <el-select v-model="form.where" :placeholder="$t('tanlang')" class="full-width-select">
+          <el-option :label="$t('zavod')" value="Zavod" />
+          <el-option :label="$t('klient')" value="Klient" />
+          <el-option :label="$t('shaxsiy')" value="Shaxsiy" />
+          <el-option :label="$t('boshqa')" value="boshqa" />
         </el-select>
         <el-input
           v-if="isWhereBoshqa"
           class="whereotherinput"
           v-model="form.whereother"
-          placeholder="Boshqa qayerga ketyapsiz aka?"
+          :placeholder="$t('whereotherplaceholder')"
         />
       </el-form-item>
 
-      <el-form-item label="KP yoki dogovor">
-        <el-select v-model="form.dogovororkp" placeholder="Tanlang" class="full-width-select">
-          <el-option label="KP" value="KP" />
-          <el-option label="Dogovor" value="Dogovor" />
-          <el-option label="Boshqa" value="boshqa" />
+      <el-form-item :label="$t('kpYokiDogovor')">
+        <el-select
+          v-model="form.dogovororkp"
+          :placeholder="$t('tanlang')"
+          class="full-width-select"
+        >
+          <el-option :label="$t('kp')" value="KP" />
+          <el-option :label="$t('dogovor')" value="Dogovor" />
+          <el-option :label="$t('boshqa')" value="boshqa" />
         </el-select>
         <el-input
           v-if="isDogoKpNotSelected"
           class="whereotherinput"
           :rows="2"
           v-model="form.dogokpother"
-          placeholder="Boshqa nima aka?"
+          :placeholder="$t('whereother2placeholder')"
           type="textarea"
         />
       </el-form-item>
 
-      <el-form-item label="Dogovor raqami" v-if="isDogovorSelected">
-        <el-input v-model="form.dogovornumber" placeholder="Kiriting" class="full-width-input" />
+      <el-form-item :label="$t('dogovorRaqami')" v-if="isDogovorSelected">
+        <el-input
+          v-model="form.dogovornumber"
+          :placeholder="$t('Kiriting')"
+          class="full-width-input"
+        />
       </el-form-item>
 
-      <el-form-item label="KP raqami" v-if="isKPSelected">
-        <el-input v-model="form.kpnumber" placeholder="Kiriting" class="full-width-input" />
+      <el-form-item :label="$t('kpRaqami')" v-if="isKPSelected">
+        <el-input v-model="form.kpnumber" :placeholder="$t('Kiriting')" class="full-width-input" />
       </el-form-item>
 
-      <el-form-item v-if="isDogovorSelected" label="Dogovor sanasi">
+      <el-form-item v-if="isDogovorSelected" :label="$t('dogovorSanasi')">
         <el-config-provider :locale="locale">
           <el-date-picker
             v-model="form.dogovortime"
             type="date"
-            placeholder="Vaqtni tanlang"
+            :placeholder="$t('vaqtniTanlang')"
             size="default"
             class="full-width-picker"
           />
         </el-config-provider>
       </el-form-item>
 
-      <el-form-item v-if="isKPSelected" label="KP sanasi">
+      <el-form-item v-if="isKPSelected" :label="$t('kpSanasi')">
         <el-config-provider :locale="locale">
           <el-date-picker
             v-model="form.kptime"
             type="date"
-            placeholder="Vaqtni tanlang"
+            :placeholder="$t('vaqtniTanlang')"
             size="default"
             class="full-width-picker"
           />
         </el-config-provider>
       </el-form-item>
 
-      <el-form-item v-if="isKPSelected || isDogovorSelected" label="Firma nomi">
-        <el-input v-model="form.firmanomi" placeholder="Kiriting" class="full-width-input" />
+      <el-form-item v-if="isKPSelected || isDogovorSelected" :label="$t('firmaNomi')">
+        <el-input v-model="form.firmanomi" :placeholder="$t('Kiriting')" class="full-width-input" />
       </el-form-item>
 
-      <span class="location-picker-label">Obyekt joylashuvini tanlang 👇</span>
+      <span class="location-picker-label">{{ $t('obyektjoylashuvinikiriting') }} 👇</span>
       <LocationPicker
         access-token="pk.eyJ1IjoidG9saWJqb25mYXl6IiwiYSI6ImNtY2x6amdkczBoZG0ya3NkYTI2NW8waWMifQ.yM3o-yj1ZPUGJG-gWREK6Q"
         :initial-center="{ lng: -74.006, lat: 40.7128 }"
@@ -102,7 +110,7 @@
         class="more-info-input"
         :rows="3"
         v-model="form.more_info"
-        placeholder="Qo'shimcha ma'lumotlar uchun joy..."
+        :placeholder="$t('qoshimchamalumotlarUchunJoy')"
         type="textarea"
       />
     </el-form>
@@ -111,7 +119,7 @@
     <div v-for="(obj, index) in additionalObjects" :key="index" class="additional-object-section">
       <el-form :model="obj" label-width="auto" class="form">
         <div class="form-section-header">
-          <div class="form-section-title">Qo'shimcha obyekt #{{ index + 1 }}</div>
+          <div class="form-section-title">{{ $t('qoshimchaObyekt') }} #{{ index + 1 }}</div>
           <el-button
             type="danger"
             size="small"
@@ -121,75 +129,83 @@
           />
         </div>
 
-        <el-form-item label="Obyektga ketish vaqti">
+        <el-form-item :label="$t('obyektgaKetishVaqti')">
           <el-config-provider :locale="locale">
             <el-date-picker
               v-model="obj.goingtime"
               type="datetime"
-              placeholder="Vaqtni tanlang"
+              :placeholder="$t('vaqtniTanlang')"
               :disabled-date="disabledDate"
               class="full-width-picker"
             />
           </el-config-provider>
         </el-form-item>
 
-        <el-form-item label="Qayerga">
-          <el-select v-model="obj.where" placeholder="Tanlang" class="full-width-select">
-            <el-option label="Zavod" value="Zavod" />
-            <el-option label="Klient" value="Klient" />
-            <el-option label="Shaxsiy" value="Shaxsiy" />
-            <el-option label="Boshqa" value="boshqa" />
+        <el-form-item :label="$t('qayerga')">
+          <el-select v-model="obj.where" :placeholder="$t('tanlang')" class="full-width-select">
+            <el-option :label="$t('zavod')" value="Zavod" />
+            <el-option :label="$t('klient')" value="Klient" />
+            <el-option :label="$t('shaxsiy')" value="Shaxsiy" />
+            <el-option :label="$t('boshqa')" value="boshqa" />
           </el-select>
           <el-input
             v-if="obj.where === 'boshqa'"
             class="whereotherinput"
             v-model="obj.whereother"
-            placeholder="Boshqa qayerga ketyapsiz aka?"
+            :placeholder="$t('whereotherplaceholder')"
           />
         </el-form-item>
 
-        <el-form-item label="KP yoki dogovor">
-          <el-select v-model="obj.dogovororkp" placeholder="Tanlang" class="full-width-select">
-            <el-option label="KP" value="KP" />
-            <el-option label="Dogovor" value="Dogovor" />
-            <el-option label="Boshqa" value="boshqa" />
+        <el-form-item :label="$t('kpYokiDogovor')">
+          <el-select
+            v-model="obj.dogovororkp"
+            :placeholder="$t('tanlang')"
+            class="full-width-select"
+          >
+            <el-option :label="$t('kp')" value="KP" />
+            <el-option :label="$t('dogovor')" value="Dogovor" />
+            <el-option :label="$t('boshqa')" value="boshqa" />
           </el-select>
           <el-input
             v-if="obj.dogovororkp === 'boshqa'"
             class="whereotherinput"
             :rows="2"
             v-model="obj.dogokpother"
-            placeholder="Boshqa nima aka?"
+            :placeholder="$t('whereother2placeholder')"
             type="textarea"
           />
         </el-form-item>
 
-        <el-form-item label="Dogovor raqami" v-if="obj.dogovororkp === 'Dogovor'">
-          <el-input v-model="obj.dogovornumber" placeholder="Kiriting" class="full-width-input" />
+        <el-form-item :label="$t('dogovorRaqami')" v-if="obj.dogovororkp === 'Dogovor'">
+          <el-input
+            v-model="obj.dogovornumber"
+            :placeholder="$t('Kiriting')"
+            class="full-width-input"
+          />
         </el-form-item>
 
-        <el-form-item label="KP raqami" v-if="obj.dogovororkp === 'KP'">
-          <el-input v-model="obj.kpnumber" placeholder="Kiriting" class="full-width-input" />
+        <el-form-item :label="$t('kpRaqami')" v-if="obj.dogovororkp === 'KP'">
+          <el-input v-model="obj.kpnumber" :placeholder="$t('Kiriting')" class="full-width-input" />
         </el-form-item>
 
-        <el-form-item v-if="obj.dogovororkp === 'Dogovor'" label="Dogovor sanasi">
+        <el-form-item v-if="obj.dogovororkp === 'Dogovor'" :label="$t('dogovorSanasi')">
           <el-config-provider :locale="locale">
             <el-date-picker
               v-model="obj.dogovortime"
               type="date"
-              placeholder="Vaqtni tanlang"
+              :placeholder="$t('vaqtniTanlang')"
               size="default"
               class="full-width-picker"
             />
           </el-config-provider>
         </el-form-item>
 
-        <el-form-item v-if="obj.dogovororkp === 'KP'" label="KP sanasi">
+        <el-form-item v-if="obj.dogovororkp === 'KP'" :label="$t('kpSanasi')">
           <el-config-provider :locale="locale">
             <el-date-picker
               v-model="obj.kptime"
               type="date"
-              placeholder="Vaqtni tanlang"
+              :placeholder="$t('vaqtniTanlang')"
               size="default"
               class="full-width-picker"
             />
@@ -198,12 +214,16 @@
 
         <el-form-item
           v-if="obj.dogovororkp === 'KP' || obj.dogovororkp === 'Dogovor'"
-          label="Firma nomi"
+          :label="$t('firmaNomi')"
         >
-          <el-input v-model="obj.firmanomi" placeholder="Kiriting" class="full-width-input" />
+          <el-input
+            v-model="obj.firmanomi"
+            :placeholder="$t('Kiriting')"
+            class="full-width-input"
+          />
         </el-form-item>
 
-        <span class="location-picker-label">Obyekt joylashuvini tanlang 👇</span>
+        <span class="location-picker-label">{{ $t('obyektjoylashuvinikiriting') }} 👇</span>
         <LocationPicker
           access-token="pk.eyJ1IjoidG9saWJqb25mYXl6IiwiYSI6ImNtY2x6amdkczBoZG0ya3NkYTI2NW8waWMifQ.yM3o-yj1ZPUGJG-gWREK6Q"
           :initial-center="{ lng: -74.006, lat: 40.7128 }"
@@ -217,7 +237,7 @@
           class="more-info-input"
           :rows="3"
           v-model="obj.more_info"
-          placeholder="Qo'shimcha ma'lumotlar uchun joy..."
+          :placeholder="$t('qoshimchamalumotlarUchunJoy')"
           type="textarea"
         />
       </el-form>
@@ -227,15 +247,15 @@
     <div class="add-button-container" v-if="additionalObjects.length < 5">
       <el-button type="success" plain @click="addAdditionalObject" class="add-button">
         <el-icon style="margin-right: 8px"><Plus /></el-icon>
-        <span class="button-text">Shu mijoz bo'yicha qo'shimcha obyekt qo'shish</span>
+        <span class="button-text">{{ $t('yangiObyektQoshishBtn') }}</span>
         <span class="button-text-short">Qo'shimcha obyekt</span>
       </el-button>
     </div>
 
     <!-- SAQLASH VA ORTGA TUGMALARI -->
     <div class="button-group-container">
-      <el-button :loading="loading" type="primary" @click="onSubmit">Saqlash</el-button>
-      <el-button type="warning" plain @click="goback()">Ortga</el-button>
+      <el-button :loading="loading" type="primary" @click="onSubmit">{{ $t('save') }}</el-button>
+      <el-button type="warning" plain @click="goback()">{{ $t('cancel') }}</el-button>
     </div>
   </div>
 </template>

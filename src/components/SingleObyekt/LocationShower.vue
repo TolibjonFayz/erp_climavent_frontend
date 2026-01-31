@@ -6,18 +6,20 @@
       <!-- Loading overlay -->
       <div v-if="loading" class="loading-overlay">
         <div class="spinner"></div>
-        <p>Xarita yuklanmoqda...</p>
+        <p>{{ $t('maploading') }}</p>
       </div>
     </div>
 
     <!-- Location Info Display -->
     <div v-if="displayLocation" class="location-info">
-      <h3>Joylashuv:</h3>
+      <h3>{{ $t('joylashuv') }}:</h3>
       <p>
-        <strong>Koordinatalar:</strong> {{ displayLocation.lng.toFixed(6) }},
+        <strong>{{ $t('Koordinatalar') }}:</strong> {{ displayLocation.lng.toFixed(6) }},
         {{ displayLocation.lat.toFixed(6) }}
       </p>
-      <p v-if="displayLocation.address"><strong>Manzil:</strong> {{ displayLocation.address }}</p>
+      <p v-if="displayLocation.address">
+        <strong>{{ $t('Manzil') }}:</strong> {{ displayLocation.address }}
+      </p>
     </div>
   </div>
 </template>

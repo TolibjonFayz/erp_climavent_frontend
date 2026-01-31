@@ -1,8 +1,8 @@
 <template>
   <div class="settings-container" v-loading="loading">
     <div class="header-section">
-      <h1>Shaxsiy ma'lumotlar</h1>
-      <p class="subtitle">Profilingizni boshqaring va ma'lumotlaringizni yangilang</p>
+      <h1>{{ $t('shaxsiymalumotlar') }}</h1>
+      <p class="subtitle">{{ $t('shaxsiymalumotlarSubtitle') }}</p>
     </div>
 
     <!-- Main Grid Layout -->
@@ -22,8 +22,8 @@
             </div>
           </div>
           <div class="avatar-info">
-            <h3>Profil rasmi</h3>
-            <p>JPG, PNG yoki GIF (max. 50MB)</p>
+            <h3>{{ $t('profileimage') }}</h3>
+            <p>{{ $t('profileimageInfo') }}</p>
             <el-upload
               class="avatar-uploader"
               :action="cloudinaryUrl"
@@ -34,7 +34,7 @@
               :on-error="handleAvatarError"
               v-loading="avatarUploading"
             >
-              <el-button type="primary" :icon="Upload">Yangi rasm yuklash</el-button>
+              <el-button type="primary" :icon="Upload">{{ $t('uploadAvatar') }}</el-button>
             </el-upload>
           </div>
         </div>
@@ -45,32 +45,32 @@
         <div class="card-header">
           <div class="card-title">
             <el-icon class="title-icon"><User /></el-icon>
-            <h3>Shaxsiy ma'lumotlar</h3>
+            <h3>{{ $t('shaxsiymalumotlar') }}</h3>
           </div>
           <el-button type="primary" link @click="changeUserMainInfoDialog = true" :icon="Edit">
-            Tahrirlash
+            {{ $t('edit') }}
           </el-button>
         </div>
         <div class="card-body">
           <div class="info-row">
             <div class="info-item">
-              <span class="info-label">Ism</span>
+              <span class="info-label">{{ $t('ism') }}</span>
               <span class="info-value">{{ usersStore?.currentUser?.firstname }}</span>
             </div>
             <div class="info-item">
-              <span class="info-label">Familiya</span>
+              <span class="info-label">{{ $t('familiya') }}</span>
               <span class="info-value">{{ usersStore?.currentUser?.lastname }}</span>
             </div>
           </div>
           <div class="info-row">
             <div class="info-item">
-              <span class="info-label">Telefon raqam</span>
+              <span class="info-label">{{ $t('telefonRaqam') }}</span>
               <span class="info-value">{{
                 formatPhoneNumber(usersStore?.currentUser?.phone_number)
               }}</span>
             </div>
             <div class="info-item">
-              <span class="info-label">Email</span>
+              <span class="info-label">{{ $t('email') }}</span>
               <span class="info-value">{{ usersStore?.currentUser?.email }}</span>
             </div>
           </div>
@@ -82,28 +82,66 @@
         <div class="card-header">
           <div class="card-title">
             <el-icon class="title-icon"><Lock /></el-icon>
-            <h3>Xavfsizlik</h3>
+            <h3>{{ $t('security') }}</h3>
           </div>
         </div>
         <div class="card-body">
           <div class="info-row">
             <div class="info-item" v-loading="updateUsernameLoading">
               <div>
-                <span class="info-label">Foydalanuvchi nomi: </span>
+                <span class="info-label">{{ $t('username') }}: </span>
                 <span class="info-value">{{ usersStore?.currentUser?.username }}</span>
               </div>
               <!-- <el-button type="primary" link @click="changeUsernameDialog = true" :icon="Edit">
-                O'zgartirish
+                {{$t('edit')}}
               </el-button> -->
             </div>
             <div class="info-item" v-loading="updatePasswordLoading">
               <div>
-                <span class="info-label">Maxfiy so'z: </span>
+                <span class="info-label">{{ $t('password') }}: </span>
                 <span class="info-value password">••••••••••</span>
               </div>
               <el-button type="primary" link @click="changePasswordDialog = true" :icon="Edit">
-                O'zgartirish
+                {{ $t('edit') }}
               </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Language Card -->
+      <div class="info-card language-card">
+        <div class="card-header">
+          <div class="card-title">
+            <el-icon class="title-icon"><Setting /></el-icon>
+            <h3>{{ $t('languageSettings') }}</h3>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="info-row">
+            <div class="info-item language-item" v-loading="languageLoading">
+              <div>
+                <span class="info-label">{{ $t('currentLanguage') }}</span>
+                <span class="info-value">{{ getCurrentLanguageLabel }}</span>
+              </div>
+              <el-select
+                v-model="selectedLanguage"
+                :placeholder="$t('selectLanguage')"
+                @change="handleLanguageChange"
+                class="language-select"
+              >
+                <el-option
+                  v-for="lang in languages"
+                  :key="lang.value"
+                  :label="lang.label"
+                  :value="lang.value"
+                >
+                  <div class="language-option">
+                    <span class="language-flag">{{ lang.flag }}</span>
+                    <span class="language-name">{{ lang.label }}</span>
+                  </div>
+                </el-option>
+              </el-select>
             </div>
           </div>
         </div>
@@ -115,19 +153,21 @@
           <div class="logout-info">
             <el-icon class="logout-icon"><SwitchButton /></el-icon>
             <div>
-              <h4>Tizimdan chiqish</h4>
-              <p>Hisobingizdan xavfsiz chiqish</p>
+              <h4>{{ $t('logout') }}</h4>
+              <p>{{ $t('logoutInfo') }}</p>
             </div>
           </div>
           <el-popconfirm
-            title="Tizimdan chiqmoqchimisiz?"
+            :title="$t('logoutConfirmTitle')"
             width="280"
-            confirm-button-text="Ha"
-            cancel-button-text="Yo'q"
+            :confirm-button-text="$t('yeah')"
+            :cancel-button-text="$t('no')"
             @confirm="logout"
           >
             <template #reference>
-              <el-button type="danger" size="large" :icon="SwitchButton">Chiqish</el-button>
+              <el-button type="danger" size="large" :icon="SwitchButton">{{
+                $t('logout')
+              }}</el-button>
             </template>
           </el-popconfirm>
         </div>
@@ -158,14 +198,15 @@
 </template>
 
 <script setup lang="ts">
+import { Plus, Edit, User, Lock, SwitchButton, Upload, Setting } from '@element-plus/icons-vue'
 import PersonalInfoEditDialog from '../SingleObyekt/PersonalInfoEditDialog.vue'
 import UsernameEditDialog from '../SingleObyekt/UsernameEditDialog.vue'
 import PasswordEditDialog from '../SingleObyekt/PasswordEditDialog.vue'
 import { ElNotification, ElMessage } from 'element-plus'
 import type { UploadProps } from 'element-plus'
-import { Plus, Edit, User, Lock, SwitchButton, Upload } from '@element-plus/icons-vue'
-import { useUsersStore } from '@/stores/user'
 import { onMounted, ref, computed } from 'vue'
+import { useUsersStore } from '@/stores/user'
+import i18n from '@/i18n'
 
 const changePasswordDialog = ref(false)
 const changeUsernameDialog = ref(false)
@@ -177,6 +218,59 @@ const updatePasswordLoading = ref(false)
 const loading = ref(false)
 const imageUrl = ref('')
 const avatarUploading = ref(false)
+const languageLoading = ref(false)
+
+// Cookie'dan tilni o'qish
+function getCookieLanguage(name = 'lang') {
+  const nameEQ = name + '='
+  const cookies = document.cookie.split(';')
+  for (let cookie of cookies) {
+    cookie = cookie.trim()
+    if (cookie.indexOf(nameEQ) === 0) {
+      return decodeURIComponent(cookie.substring(nameEQ.length))
+    }
+  }
+  return 'uz'
+}
+
+// Cookie'ga tilni yozish
+function setCookieLanguage(value, days = 365) {
+  const date = new Date()
+  date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000)
+  const expires = 'expires=' + date.toUTCString()
+  document.cookie = 'lang=' + encodeURIComponent(value) + ';' + expires + ';path=/'
+}
+
+// Language settings
+const selectedLanguage = ref(getCookieLanguage())
+const languages = [
+  { value: 'uz', label: "O'zbekcha", flag: '🇺🇿' },
+  { value: 'ru', label: 'Русский', flag: '🇷🇺' },
+]
+
+const getCurrentLanguageLabel = computed(() => {
+  const lang = languages.find((l) => l.value === selectedLanguage.value)
+  return lang ? `${lang.flag} ${lang.label}` : ''
+})
+
+const handleLanguageChange = (value: string) => {
+  languageLoading.value = true
+
+  // Cookie'ga tilni saqlash
+  setCookieLanguage(value)
+
+  // i18n tilini o'zgartirish
+  i18n.global.locale = value
+
+  ElNotification({
+    title: value === 'uz' ? "Til o'zgartirildi!" : 'Язык изменен!',
+    message: value === 'uz' ? "O'zbekcha tilga o'tish amalga oshirildi" : 'Русский язык установлен',
+    type: 'success',
+    duration: 2000,
+  })
+
+  languageLoading.value = false
+}
 
 const cloudName = 'dne7ddv2a'
 const uploadPreset = 'erp_climavent_uploads'
@@ -282,6 +376,14 @@ onMounted(async () => {
   const userId = localStorage.getItem('userid')
   await usersStore.getUserInfo(Number(userId))
   loading.value = false
+
+  // Add loaded class to prevent initial animations
+  setTimeout(() => {
+    const container = document.querySelector('.settings-container')
+    if (container) {
+      container.classList.add('loaded')
+    }
+  }, 0)
 })
 </script>
 
@@ -293,6 +395,25 @@ onMounted(async () => {
   min-height: 100vh;
   overflow-x: hidden;
   box-sizing: border-box;
+  opacity: 1;
+  transform: none;
+}
+
+/* Prevent animation on initial load */
+.settings-container * {
+  animation: none !important;
+  transition-delay: 0s !important;
+}
+
+/* Re-enable transitions after load */
+.settings-container.loaded * {
+  transition: all 0.3s ease;
+}
+
+.settings-container.loaded .info-card,
+.settings-container.loaded .avatar-card,
+.settings-container.loaded .logout-card {
+  transition: all 0.3s ease;
 }
 
 .header-section {
@@ -329,11 +450,11 @@ onMounted(async () => {
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
 }
 
 .avatar-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.3s ease;
 }
 
 .avatar-content {
@@ -395,12 +516,12 @@ onMounted(async () => {
   background: white;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
   overflow: hidden;
 }
 
 .info-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.3s ease;
 }
 
 .card-header {
@@ -480,9 +601,54 @@ onMounted(async () => {
   font-size: 18px;
 }
 
-/* Security Card - spans full width */
+/* Language Card */
+.language-card {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+}
+
+.language-item {
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 16px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.language-item:hover {
+  background-color: #f9fafb;
+}
+
+.language-item > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.language-select {
+  min-width: 180px;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.language-flag {
+  font-size: 18px;
+}
+
+.language-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Security Card - spans 1 column in same row as Language */
 .security-card {
-  grid-column: 1 / -1;
+  grid-column: 1 / 2;
+  grid-row: 2 / 3;
 }
 
 /* Logout Card - spans full width */
@@ -492,11 +658,11 @@ onMounted(async () => {
   border-radius: 16px;
   padding: 28px 32px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
 }
 
 .logout-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.3s ease;
 }
 
 .logout-content {
@@ -636,8 +802,25 @@ onMounted(async () => {
     padding: 22px;
   }
 
+  .language-card {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .language-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .language-select {
+    width: 100%;
+  }
+
   .security-card {
     grid-column: 1;
+    grid-row: auto;
   }
 
   .logout-card {
@@ -873,6 +1056,10 @@ onMounted(async () => {
     margin-bottom: 14px;
   }
 
+  .language-card {
+    grid-column: 1;
+  }
+
   .security-card {
     grid-column: 1;
   }
@@ -1065,6 +1252,10 @@ onMounted(async () => {
     font-size: 13px;
   }
 
+  .current-language {
+    font-size: 15px;
+  }
+
   .logout-card {
     padding: 14px;
   }
@@ -1164,6 +1355,10 @@ onMounted(async () => {
 
   .info-value {
     font-size: 12px;
+  }
+
+  .current-language {
+    font-size: 14px;
   }
 
   .logout-card {

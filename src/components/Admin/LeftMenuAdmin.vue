@@ -7,13 +7,13 @@
         </div>
         <div class="logo-text">
           <h3>Climavent</h3>
-          <span>{{ $t('sidebarLogo') }}</span>
+          <span>Xodimlar uchun panel</span>
         </div>
       </div>
       <button
         class="toggle-btn"
         @click="toggleSidebar"
-        :title="isCollapsed ? $t('expandSidebar') : $t('collapseSidebar')"
+        :title="isCollapsed ? 'Kengaytirish' : 'Qisqartirish'"
       >
         <i class="toggle-icon" :class="{ rotated: isCollapsed }"></i>
       </button>
@@ -22,44 +22,58 @@
     <nav class="sidebar-nav">
       <ul class="nav-list">
         <li class="nav-item">
-          <a href="/" class="nav-link" :title="$t('mijozlarHamkorlarTitle')">
+          <a href="/" class="nav-link" :title="isCollapsed ? 'Mijozlar va hamkorlar' : ''">
             <i class="icon places-icon"></i>
-            <span class="nav-text">{{ $t('mijozlarHamkorlarText') }}</span>
+            <span class="nav-text">Mijozlar va hamkorlar bo'yicha ma'lumotlar</span>
           </a>
         </li>
 
-        <li class="nav-item active">
-          <a href="/obyekt" class="nav-link" :title="$t('obyekt')">
+        <li class="nav-item">
+          <a href="/obyekt" class="nav-link" :title="isCollapsed ? 'Obyekt' : ''">
             <i class="icon home-icon"></i>
-            <span class="nav-text">{{ $t('obyekt') }}</span>
+            <span class="nav-text">Obyekt</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a href="/raqiblar" class="nav-link" :title="$t('raqib')">
+          <a href="/raqiblar" class="nav-link" :title="isCollapsed ? 'Raqib' : ''">
             <i class="icon oppenents-icon"></i>
-            <span class="nav-text">{{ $t('raqibtext') }}</span>
+            <span class="nav-text">Raqib (Kankurentlar)</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a href="/davomat" class="nav-link" :title="$t('davomat')">
+          <a href="/davomat" class="nav-link" :title="isCollapsed ? 'Davomat' : ''">
             <i class="icon project-icon"></i>
-            <span class="nav-text">{{ $t('davomat') }}</span>
+            <span class="nav-text">Davomat</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a href="/tasks" class="nav-link" :title="$t('tasks')">
+          <a href="/tasks" class="nav-link" :title="isCollapsed ? 'Vazifalar' : ''">
             <i class="icon tasks-icon"></i>
-            <span class="nav-text">{{ $t('tasks') }}</span>
+            <span class="nav-text">Vazifalar</span>
           </a>
         </li>
 
         <li class="nav-item">
-          <a href="/settings" class="nav-link" :title="$t('settings')">
+          <a href="/settings" class="nav-link" :title="isCollapsed ? 'Sozlamalar' : ''">
             <i class="icon calendar-icon"></i>
-            <span class="nav-text">{{ $t('settings') }}</span>
+            <span class="nav-text">Sozlamalar</span>
+          </a>
+        </li>
+
+        <li class="nav-item active" v-if="usersStore?.currentUser?.is_admin">
+          <a href="/admin" class="nav-link" :title="isCollapsed ? 'Admin' : ''">
+            <i class="icon admin-icon"></i>
+            <span class="nav-text">Admin</span>
+          </a>
+        </li>
+
+        <li class="nav-item" v-if="usersStore?.currentUser?.is_admin">
+          <a href="/admin" class="nav-link" :title="isCollapsed ? 'Boss' : ''">
+            <i class="icon boss-icon"></i>
+            <span class="nav-text">BOSS</span>
           </a>
         </li>
       </ul>
@@ -85,8 +99,8 @@
 </template>
 
 <script setup lang="ts">
-import { useUsersStore } from '@/stores/user'
 import { onMounted, ref, onUnmounted } from 'vue'
+import { useUsersStore } from '@/stores/user'
 
 const usersStore = useUsersStore()
 const loading = ref(false)
@@ -354,6 +368,16 @@ onUnmounted(() => {
 
   &.calendar-icon::before {
     content: '⚙️';
+    font-size: 16px;
+  }
+
+  &.admin-icon::before {
+    content: '🧠';
+    font-size: 16px;
+  }
+
+  &.boss-icon::before {
+    content: '🦾';
     font-size: 16px;
   }
 }

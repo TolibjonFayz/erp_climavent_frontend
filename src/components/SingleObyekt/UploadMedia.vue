@@ -1,8 +1,8 @@
 <template>
   <div class="container">
     <div class="title">
-      <h2>Rasm va videolar</h2>
-      <h3>Ushbu obyektga aloqador rasm va videolar</h3>
+      <h2>{{ $t('rasmvavideolar') }}</h2>
+      <h3>{{ $t('obyektgaRasmVaVideolar') }}</h3>
     </div>
 
     <div class="media">
@@ -23,41 +23,41 @@
       >
         <el-icon class="el-icon--upload"><upload-filled /></el-icon>
         <div class="el-upload__text">
-          Faylni bu yerga tashlang yoki <em>yuklash uchun bosing</em>
+          {{ $t('mediauloadbtn') }}
         </div>
       </el-upload>
     </div>
     <div class="uploadbtn">
       <el-button type="primary" @click="submitUpload()" :loading="uploading" size="large">
-        {{ uploading ? 'Yuklanmoqda...' : 'Yuklash' }}
+        {{ uploading ? $t('uploading') : $t('upload') }}
       </el-button>
     </div>
 
     <!-- Gallery Section -->
     <div class="gallery-section" v-if="existingMedia.length > 0">
       <div class="gallery-header">
-        <h3>Yuklangan media fayllar</h3>
+        <h3>{{ $t('uploadedmedia') }}</h3>
         <div class="filter-tabs">
           <el-button
             :type="activeFilter === 'all' ? 'primary' : 'default'"
             @click="setFilter('all')"
             size="small"
           >
-            Hammasi ({{ existingMedia.length }})
+            {{ $t('Hammasi') }} ({{ existingMedia.length }})
           </el-button>
           <el-button
             :type="activeFilter === 'image' ? 'primary' : 'default'"
             @click="setFilter('image')"
             size="small"
           >
-            Rasmlar ({{ imageCount }})
+            {{ $t('Rasmlar') }} ({{ imageCount }})
           </el-button>
           <el-button
             :type="activeFilter === 'video' ? 'primary' : 'default'"
             @click="setFilter('video')"
             size="small"
           >
-            Videolar ({{ videoCount }})
+            {{ $t('Videolar') }} ({{ videoCount }})
           </el-button>
         </div>
       </div>
@@ -159,7 +159,7 @@
           class="modal-video"
           @error="handleVideoError"
         >
-          Brauzeringiz videoni qo'llab-quvvatlamaydi.
+          {{ $t('yourbrowsersupportvideotag') }}
         </video>
       </div>
 
@@ -170,7 +170,7 @@
               {{ isImage(selectedMedia?.video_link) ? 'Rasm' : 'Video' }}
             </el-tag>
             <span class="upload-date">
-              Yuklangan: {{ formatDate(selectedMedia?.created_at) }}
+              {{ $t('malumotkiritilganvaqt') }}: {{ formatDate(selectedMedia?.created_at) }}
             </span>
           </div>
           <el-button
@@ -179,7 +179,7 @@
             :loading="deletingIds.includes(selectedMedia?.id)"
           >
             <el-icon><Delete /></el-icon>
-            O'chirish
+            {{ $t('delete') }}
           </el-button>
         </div>
       </template>
@@ -187,13 +187,13 @@
 
     <div v-if="loading" class="loading-state">
       <el-skeleton :rows="3" animated />
-      <p>Media fayllar yuklanmoqda...</p>
+      <p>{{ $t('MediaFayllarYuklanmoqda') }}</p>
     </div>
 
     <div v-if="!loading && existingMedia.length === 0" class="empty-state">
-      <el-empty description="Hali media fayllar yuklanmagan">
+      <el-empty :description="$t('nomediamauploaded')">
         <el-button type="primary" @click="() => uploadRef?.focus()">
-          Birinchi faylni yuklash
+          {{ $t('uploadfirstmedia') }}
         </el-button>
       </el-empty>
     </div>
@@ -207,9 +207,11 @@ import { useVideosStore } from '@/stores/videos'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const videosStore = useVideosStore()
 const route = useRoute()
+const { t } = useI18n()
 const cloudName = 'dne7ddv2a'
 const uploadPreset = 'erp_climavent_uploads'
 const cloudinaryUrl = computed(() => `https://api.cloudinary.com/v1_1/${cloudName}/upload`)
@@ -368,11 +370,11 @@ const deleteMedia = async (item: any) => {
 
   try {
     await ElMessageBox.confirm(
-      `"${item.video_name}" faylni o'chirishni istaysizmi?`,
-      'Tasdiqlash',
+      t('confirmDelete'),
+      t('confirmation'),
       {
-        confirmButtonText: "O'chirish",
-        cancelButtonText: 'Bekor qilish',
+        confirmButtonText: t('deleteConfirm'),
+        cancelButtonText: t('cancel'),
         type: 'warning',
       },
     )

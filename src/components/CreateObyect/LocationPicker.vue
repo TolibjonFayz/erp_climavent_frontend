@@ -18,14 +18,14 @@
           <circle cx="12" cy="10" r="3"></circle>
         </svg>
         <div v-else class="spinner"></div>
-        {{ loading ? 'Joylashuv olinmoqda...' : 'Mening joylashuvim' }}
+        {{ loading ? $t('joylashuvolinmoqda') : $t('meningjoylashuvim') }}
       </button>
     </div>
 
     <!-- Location Link Input -->
     <div class="location-input-container">
       <label for="location-link" class="input-label">
-        📍 Joylashuv havolasini joylashtiring (Google Xaritalar, Yandex Xaritalar va boshqalar)
+        {{ $t('joylashuvhavoalasinikiritish') }}
       </label>
       <div class="input-wrapper">
         <input
@@ -38,7 +38,7 @@
           @keyup.enter="parseLocationLink"
         />
         <button @click="parseLocationLink" :disabled="!locationLink || parsing" class="parse-btn">
-          {{ parsing ? 'Tahlil qilinmoqda...' : 'Tanlash' }}
+          {{ parsing ? $t('tahlilqilinmoqda') : $t('tanlash') }}
         </button>
       </div>
       <p v-if="linkError" class="error-message">{{ linkError }}</p>
@@ -46,19 +46,23 @@
 
     <!-- Selected Location Display -->
     <div v-if="selectedLocation" class="selected-location">
-      <h3>Tanlangan joylashuv:</h3>
+      <h3>{{ $t('tanlanganjoylashuv') }}:</h3>
       <p>
-        <strong>Koordinatalar:</strong> {{ selectedLocation.lng.toFixed(6) }},
+        <strong>{{ $t('Koordinatalar') }}:</strong> {{ selectedLocation.lng.toFixed(6) }},
         {{ selectedLocation.lat.toFixed(6) }}
       </p>
-      <p v-if="selectedLocation.address"><strong>Manzil:</strong> {{ selectedLocation.address }}</p>
+      <p v-if="selectedLocation.address">
+        <strong>{{ $t('Manzil') }}:</strong> {{ selectedLocation.address }}
+      </p>
       <p v-if="selectedLocation.accuracy" class="accuracy-info">
-        <strong>Aniqlik:</strong> ±{{ Math.round(selectedLocation.accuracy) }}m
-        <span v-if="selectedLocation.accuracy < 50" class="accuracy-good">📍 Yuqori aniqlik</span>
-        <span v-else-if="selectedLocation.accuracy < 100" class="accuracy-medium"
-          >📍 O'rtacha aniqlik</span
+        <strong>{{ $t('Aniqlik') }}:</strong> ±{{ Math.round(selectedLocation.accuracy) }}m
+        <span v-if="selectedLocation.accuracy < 50" class="accuracy-good"
+          >📍 {{ $t('yuqoriAniqlik') }}</span
         >
-        <span v-else class="accuracy-low">📍 Past aniqlik</span>
+        <span v-else-if="selectedLocation.accuracy < 100" class="accuracy-medium"
+          >📍 {{ $t('ortachaAniqlik') }}</span
+        >
+        <span v-else class="accuracy-low">📍 {{ $t('pastAniqlik') }}</span>
       </p>
     </div>
   </div>

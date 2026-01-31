@@ -3,18 +3,18 @@
     <div class="page-header">
       <div class="header-content">
         <el-button class="back-button" :icon="ArrowLeft" @click="goback()">
-          Ortga qaytish
+          {{ $t('back') }}
         </el-button>
         <div class="header-text">
-          <h1>Obyekt haqida batafsil ma'lumot</h1>
-          <p class="subtitle">To'liq ma'lumotlar va joylashuv</p>
+          <h1>{{ $t('obyektmaininfo') }}</h1>
+          <p class="subtitle">{{ $t('toliqmalumotvajoylashuv') }}</p>
         </div>
       </div>
     </div>
 
     <div v-loading="loading" class="content-wrapper">
       <div
-        v-for="(item, index) in comeandgoesStore.allComeAndGoesofUser.comeAndGoInsides"
+        v-for="(item, index) in currentObjectData"
         :key="index"
         class="object-card"
       >
@@ -22,34 +22,33 @@
           <div class="header-info">
             <span class="object-badge">
               <el-icon><Location /></el-icon>
-              Obyekt #{{ index + 1 }}
+              {{ $t('obyekt') }} #{{ index + 1 }}
             </span>
             <el-tag v-if="item.when_came" type="success" size="large">
               <el-icon><CircleCheck /></el-icon>
-              Yakunlangan
+              {{ $t('Yakunlangan') }}
             </el-tag>
             <el-tag v-else type="warning" size="large">
               <el-icon><Clock /></el-icon>
-              Jarayonda
+              {{ $t('Jarayonda') }}
             </el-tag>
           </div>
         </div>
 
         <div class="card-body">
           <div class="info-grid">
-            <!-- Time Information -->
             <div class="info-section">
               <h3 class="section-title">
                 <el-icon class="section-icon"><Clock /></el-icon>
-                Vaqt ma'lumotlari
+                {{ $t('vaqtmalumotlari') }}
               </h3>
               <div class="info-rows">
                 <div class="info-row">
-                  <span class="info-label">Ketish vaqti</span>
+                  <span class="info-label">{{ $t('ketilganvaqt') }}</span>
                   <span class="info-value">{{ formatDate(item.when_gone) }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">Qaytish vaqti</span>
+                  <span class="info-label">{{ $t('kelganvaqt') }}</span>
                   <div class="coming-time-wrapper">
                     <span v-if="item.when_came" class="info-value success">
                       {{ formatDate(item.when_came) }}
@@ -61,7 +60,7 @@
                       <el-date-picker
                         v-model="item.comingtime"
                         type="datetime"
-                        placeholder="Vaqtni tanlang"
+                        :placeholder="$t('vaqtniTanlang')"
                         style="width: 100%"
                         format="DD-MM-YYYY HH:mm"
                         value-format="YYYY-MM-DD HH:mm:ss"
@@ -70,7 +69,7 @@
                     <el-alert
                       v-if="isMoreThanTwoDays(item.createdAt) && !item.when_came"
                       class="late-alert"
-                      title="Obyekt ochilganidan 2 kundan keyin tahrirlay olmaysiz"
+                      :title="$t('twodayswarning')"
                       type="error"
                       :closable="false"
                       show-icon
@@ -84,37 +83,41 @@
             <div class="info-section">
               <h3 class="section-title">
                 <el-icon class="section-icon"><Document /></el-icon>
-                Obyekt ma'lumotlari
+                {{ $t('obyektinfo') }}
               </h3>
               <div class="info-rows">
                 <div class="info-row">
-                  <span class="info-label">Qayerga</span>
+                  <span class="info-label">{{ $t('qayerga') }}</span>
                   <span class="info-value">{{ item.whereto }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">Turi</span>
-                  <el-tag :type="item.dogovor_or_kp === 'Dogovor' ? 'success' : 'info'">
+                  <span class="info-label">{{ $t('turi') }}</span>
+                  <el-tag :type="item.dogovor_or_kp === $t('dogovor') ? 'success' : 'info'">
                     {{ item.dogovor_or_kp }}
                   </el-tag>
                 </div>
                 <div class="info-row">
                   <span class="info-label">
-                    {{ item.dogovor_or_kp === 'Dogovor' ? 'Dogovor raqami' : 'KP raqami' }}
+                    {{
+                      item.dogovor_or_kp === $t('dogovor') ? $t('dogovorRaqami') : $t('kpRaqami')
+                    }}
                   </span>
                   <span class="info-value">{{ item.dogovorkp_number }}</span>
                 </div>
                 <div class="info-row">
                   <span class="info-label">
-                    {{ item.dogovor_or_kp === 'Dogovor' ? 'Dogovor sanasi' : 'KP sanasi' }}
+                    {{
+                      item.dogovor_or_kp === $t('dogovor') ? $t('dogovorSanasi') : $t('kpSanasi')
+                    }}
                   </span>
-                  <span class="info-value">{{ formatDate(item.dogovorkp_date) }}</span>
+                  <span class="info-value">{{ $t(formatDate(item.dogovorkp_date)) }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">Firma nomi</span>
+                  <span class="info-label">{{ $t('kompaniyaNomi') }}</span>
                   <span class="info-value company">{{ item.company_name }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">Qo'shimcha ma'lumot</span>
+                  <span class="info-label">{{ $t('qoshimcha') }}</span>
                   <span class="info-value">{{ item.more_info }}</span>
                 </div>
               </div>
@@ -124,7 +127,7 @@
             <div class="info-section full-width">
               <h3 class="section-title">
                 <el-icon class="section-icon"><MapLocation /></el-icon>
-                Joylashuv
+                {{ $t('joylashuv') }}
               </h3>
               <div class="location-wrapper">
                 <LocationShower
@@ -148,11 +151,15 @@
               :loading="updateLoading"
               :icon="Check"
             >
-              Yangilash
+              {{ $t('Yangilash') }}
             </el-button>
-            <!-- <el-button size="large" @click="goback()" :icon="Close">Bekor qilish</el-button> -->
           </div>
         </div>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="!loading && currentObjectData.length === 0" style="text-align: center; padding: 60px 20px">
+        <el-empty :description="$t('Kiritilmagan')" />
       </div>
     </div>
   </div>
@@ -161,7 +168,7 @@
 <script setup>
 import { useComeAndGoesStore } from '@/stores/comeandgoes'
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import LocationShower from './LocationShower.vue'
 import ru from 'element-plus/dist/locale/ru.mjs'
 import { useRoute } from 'vue-router'
@@ -184,6 +191,15 @@ const updateLoading = ref(false)
 const loading = ref(false)
 const route = useRoute()
 const locale = ru
+
+// Xavfsiz computed property - comeAndGoInsides arrayi
+const currentObjectData = computed(() => {
+  const data = comeandgoesStore.allComeAndGoesofUser
+  if (data && typeof data === 'object' && Array.isArray(data.comeAndGoInsides)) {
+    return data.comeAndGoInsides
+  }
+  return []
+})
 
 const goback = () => {
   router.push('/obyekt')

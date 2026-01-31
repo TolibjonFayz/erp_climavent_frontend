@@ -3,9 +3,23 @@
     <div class="page-header">
       <div class="header-content">
         <div class="header-text">
-          <h1>Yaqinda borilgan obyektlar</h1>
-          <p class="subtitle">Barcha obyektlar va tashrif ma'lumotlari</p>
+          <h1>{{ $t('yaqindaBorilganObyektlar') }}</h1>
+          <p class="subtitle">{{ $t('barchaobyektlarmalumotlari') }}</p>
         </div>
+
+        <!-- Date Count Info -->
+        <div class="date-filters">
+          <el-tag size="large" type="success" effect="plain">
+            {{ $t('today') }}: {{ getTodayCount() }}
+          </el-tag>
+          <el-tag size="large" type="primary" effect="plain">
+            {{ $t('thisWeek') }} : {{ getWeekCount() }}
+          </el-tag>
+          <el-tag size="large" type="warning" effect="plain">
+            {{ $t('thisMonth') }}: {{ getMonthCount() }}
+          </el-tag>
+        </div>
+
         <el-button
           type="primary"
           size="large"
@@ -13,13 +27,13 @@
           :icon="Plus"
           @click="goToCreateObyekt()"
         >
-          Yangi qo'shish
+          {{ $t('yangiQoshish') }}
         </el-button>
       </div>
     </div>
 
     <div class="table-container" v-loading="loading">
-      <div class="table-wrapper" v-if="comeandgoesStore.allComeAndGoesofUser.length > 0">
+      <div class="table-wrapper" v-if="Array.isArray(comeandgoesStore.allComeAndGoesofUser) && comeandgoesStore.allComeAndGoesofUser.length > 0">
         <table class="modern-table">
           <thead>
             <tr>
@@ -27,51 +41,47 @@
               <th>
                 <div class="th-content">
                   <el-icon class="th-icon"><Location /></el-icon>
-                  Qayerga
+                  {{ $t('qayerga') }}
                 </div>
               </th>
               <th>
                 <div class="th-content">
                   <el-icon class="th-icon"><Clock /></el-icon>
-                  Ketilgan <br />
-                  vaqt
+                  {{ $t('ketilganvaqt') }}
                 </div>
               </th>
               <th>
                 <div class="th-content">
                   <el-icon class="th-icon"><Clock /></el-icon>
-                  Qaytilgan <br />
-                  vaqt
+                  {{ $t('kelganvaqt') }}
                 </div>
               </th>
               <th>
                 <div class="th-content">
                   <el-icon class="th-icon"><Document /></el-icon>
-                  Dogovor <br />
-                  yoki KP
+                  {{ $t('shartnomaKp') }}
                 </div>
               </th>
               <th>
                 <div class="th-content">
                   <el-icon class="th-icon"><MapLocation /></el-icon>
-                  Joylashuv
+                  {{ $t('joylashuv') }}
                 </div>
               </th>
               <th>
                 <div class="th-content">
                   <el-icon class="th-icon"><OfficeBuilding /></el-icon>
-                  Firma nomi
+                  {{ $t('kompaniyaNomi') }}
                 </div>
               </th>
 
               <th>
                 <div class="th-content">
                   <el-icon class="th-icon"><Clock /></el-icon>
-                  Ma'lumot <br />
-                  kiritilgan vaqt
+                  {{ $t('malumotkiritilganvaqt') }}
                 </div>
               </th>
-              <th class="table-actions">Amallar</th>
+              <th class="table-actions">{{ $t('actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -135,7 +145,7 @@
                   size="small"
                   @click="router.push({ name: 'single-obyekt', params: { id: item.id } })"
                 >
-                  Ko'proq
+                  {{ $t('viewDetails') }}
                   <el-icon class="ml-1"><ArrowRight /></el-icon>
                 </el-button>
               </td>
@@ -185,6 +195,56 @@ const handleEdit = (index, row) => {
   router.push({ name: 'single-obyekt', params: { id: row.id } })
 }
 
+// Date counting functions
+const isToday = (date) => {
+  const today = new Date()
+  const itemDate = new Date(date)
+  return (
+    itemDate.getDate() === today.getDate() &&
+    itemDate.getMonth() === today.getMonth() &&
+    itemDate.getFullYear() === today.getFullYear()
+  )
+}
+
+const isThisWeek = (date) => {
+  const today = new Date()
+  const itemDate = new Date(date)
+  const weekStart = new Date(today)
+  weekStart.setDate(today.getDate() - today.getDay()) // Start of week (Sunday)
+  weekStart.setHours(0, 0, 0, 0)
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekStart.getDate() + 6) // End of week (Saturday)
+  weekEnd.setHours(23, 59, 59, 999)
+  return itemDate >= weekStart && itemDate <= weekEnd
+}
+
+const isThisMonth = (date) => {
+  const today = new Date()
+  const itemDate = new Date(date)
+  return itemDate.getMonth() === today.getMonth() && itemDate.getFullYear() === today.getFullYear()
+}
+
+const getTodayCount = () => {
+  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser) ? comeandgoesStore.allComeAndGoesofUser : []
+  return data.filter(
+    (item) => item.createdAt && isToday(item.createdAt),
+  ).length
+}
+
+const getWeekCount = () => {
+  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser) ? comeandgoesStore.allComeAndGoesofUser : []
+  return data.filter(
+    (item) => item.createdAt && isThisWeek(item.createdAt),
+  ).length
+}
+
+const getMonthCount = () => {
+  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser) ? comeandgoesStore.allComeAndGoesofUser : []
+  return data.filter(
+    (item) => item.createdAt && isThisMonth(item.createdAt),
+  ).length
+}
+
 onMounted(async () => {
   loading.value = true
   const userId = localStorage.getItem('userid')
@@ -216,6 +276,9 @@ onMounted(async () => {
 }
 
 .header-text {
+  flex: 1;
+  min-width: 250px;
+
   h1 {
     font-size: 32px;
     font-weight: 700;
@@ -229,6 +292,20 @@ onMounted(async () => {
     color: #6b7280;
     margin: 0;
     word-break: break-word;
+  }
+}
+
+.date-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+
+  .el-tag {
+    font-size: 15px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
   }
 }
 
@@ -418,6 +495,41 @@ onMounted(async () => {
   }
 }
 
+@media (max-width: 992px) {
+  .obyekt-container {
+    padding: 20px;
+  }
+
+  .page-header {
+    margin-bottom: 24px;
+  }
+
+  .header-content {
+    gap: 20px;
+  }
+
+  .header-text {
+    min-width: 200px;
+
+    h1 {
+      font-size: 26px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+    }
+  }
+
+  .date-filters {
+    gap: 10px;
+
+    .el-tag {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .obyekt-container {
     padding: 16px;
@@ -426,9 +538,12 @@ onMounted(async () => {
   .header-content {
     flex-direction: column;
     align-items: stretch;
+    gap: 16px;
   }
 
   .header-text {
+    min-width: auto;
+
     h1 {
       font-size: 24px;
     }
@@ -438,8 +553,23 @@ onMounted(async () => {
     }
   }
 
+  .date-filters {
+    gap: 8px;
+    justify-content: center;
+    order: 2;
+
+    .el-tag {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 12px;
+      font-size: 13px;
+      text-align: center;
+    }
+  }
+
   .add-btn {
     width: 100%;
+    order: 3;
   }
 
   .table-wrapper {
@@ -452,17 +582,63 @@ onMounted(async () => {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .obyekt-container {
     padding: 12px;
   }
 
   .page-header {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+  }
+
+  .header-text {
+    h1 {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 12px;
+    }
+  }
+
+  .date-filters {
+    gap: 6px;
+
+    .el-tag {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .obyekt-container {
+    padding: 10px;
+  }
+
+  .page-header {
+    margin-bottom: 14px;
   }
 
   .header-text h1 {
-    font-size: 20px;
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .header-text .subtitle {
+    font-size: 11px;
+  }
+
+  .date-filters {
+    gap: 6px;
+
+    .el-tag {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 12px;
+      text-align: center;
+    }
   }
 
   .empty-state {
@@ -474,6 +650,27 @@ onMounted(async () => {
 
     p {
       font-size: 14px;
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .obyekt-container {
+    padding: 8px;
+  }
+
+  .header-text h1 {
+    font-size: 16px;
+  }
+
+  .header-text .subtitle {
+    font-size: 10px;
+  }
+
+  .date-filters {
+    .el-tag {
+      font-size: 11px;
+      padding: 6px 10px;
     }
   }
 }

@@ -2,54 +2,56 @@
   <el-dialog v-model="dialogVisible" title="Shaxsiy ma'lumotlar" width="500">
     <div class="demo-input-with-icon">
       <div class="input-group">
-        <span class="label">Ism</span>
+        <span class="label">{{ $t('ism') }}</span>
         <div class="input-container">
           <el-input
             style="width: 320px"
             v-model="localForm.firstname"
             class="responsive-input"
-            placeholder="Ism"
+            :placeholder="$t('ism')"
           />
         </div>
       </div>
       <div class="input-group">
-        <span class="label">Familiya</span>
+        <span class="label">{{ $t('familiya') }}</span>
         <div class="input-container">
           <el-input
             style="width: 320px"
             v-model="localForm.lastname"
             class="responsive-input"
-            placeholder="Familiya"
+            :placeholder="$t('familiya')"
           />
         </div>
       </div>
       <div class="input-group">
-        <span class="label">Telefon raqam</span>
+        <span class="label">{{ $t('telefonRaqam') }}</span>
         <div class="input-container">
           <el-input
             style="width: 320px"
             v-model="localForm.phone_number"
             class="responsive-input"
-            placeholder="Telefon raqam"
+            :placeholder="$t('telefonRaqam')"
           />
         </div>
       </div>
       <div class="input-group">
-        <span class="label">Email</span>
+        <span class="label">{{ $t('email') }}</span>
         <div class="input-container">
           <el-input
             style="width: 320px"
             v-model="localForm.email"
             class="responsive-input"
-            placeholder="Email"
+            :placeholder="$t('email')"
           />
         </div>
       </div>
     </div>
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCancel">Bekor qilish</el-button>
-        <el-button :loading="loading" type="primary" @click="handleSave"> Saqlash </el-button>
+        <el-button @click="handleCancel">{{ $t('cancel') }}</el-button>
+        <el-button :loading="loading" type="primary" @click="handleSave">
+          {{ $t('save') }}
+        </el-button>
       </div>
     </template>
   </el-dialog>
@@ -58,9 +60,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 
-// Props - Ota komponentdan keladigan ma'lumotlar
 interface Props {
-  modelValue: boolean // Dialog ochiq/yopiq holati
+  modelValue: boolean
   userInfo?: {
     firstname?: string
     lastname?: string
@@ -76,13 +77,11 @@ const props = withDefaults(defineProps<Props>(), {
   userInfo: () => ({}),
 })
 
-// Emits - Ota komponentga signal yuborish
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   save: [formData: any]
 }>()
 
-// Local state
 const dialogVisible = ref(props.modelValue)
 const localForm = ref({
   firstname: props.userInfo?.firstname || '',
@@ -91,7 +90,6 @@ const localForm = ref({
   email: props.userInfo?.email || '',
 })
 
-// Props o'zgarganda local state'ni yangilash
 watch(
   () => props.modelValue,
   (newVal) => {
@@ -114,17 +112,14 @@ watch(
   { deep: true },
 )
 
-// Dialog yopilganda ota komponentga signal yuborish
 watch(dialogVisible, (newVal) => {
   emit('update:modelValue', newVal)
 })
 
-// Bekor qilish tugmasi
 const handleCancel = () => {
   dialogVisible.value = false
 }
 
-// Saqlash tugmasi
 const handleSave = () => {
   emit('save', localForm.value)
 }
@@ -164,7 +159,6 @@ const handleSave = () => {
   box-sizing: border-box;
 }
 
-/* Tablet - 1024px */
 @media (max-width: 1024px) {
   .input-group {
     margin-bottom: 1.25rem;
@@ -181,7 +175,6 @@ const handleSave = () => {
   }
 }
 
-/* iPad and Tablets - 768px to 1023px */
 @media (max-width: 1023px) {
   .input-container {
     flex-direction: column;
@@ -194,7 +187,6 @@ const handleSave = () => {
   }
 }
 
-/* Mobile Landscape - 640px to 767px */
 @media (max-width: 767px) and (min-width: 641px) {
   .input-group {
     margin-bottom: 1.2rem;
@@ -215,7 +207,6 @@ const handleSave = () => {
   }
 }
 
-/* Mobile - 480px to 640px */
 @media (max-width: 640px) {
   .demo-input-with-icon {
     width: 100%;
@@ -243,7 +234,6 @@ const handleSave = () => {
   }
 }
 
-/* Small Mobile - 380px to 479px */
 @media (max-width: 479px) {
   .input-group {
     margin-bottom: 0.9rem;
@@ -259,7 +249,6 @@ const handleSave = () => {
   }
 }
 
-/* Very Small Mobile - 320px to 379px */
 @media (max-width: 379px) {
   .input-group {
     margin-bottom: 0.8rem;

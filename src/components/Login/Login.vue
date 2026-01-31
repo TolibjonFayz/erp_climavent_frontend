@@ -7,29 +7,26 @@
 
       <div class="login-form">
         <img class="logo" src="/biglogo.png" />
-        <p>Tizimga kirish uchun login va parolingizni kiriting!</p>
+        <p>{{ $t('loginPageHeader') }}</p>
         <form @submit.prevent="handleLogin">
-          <el-input v-model="username" style="width: 240px" placeholder="Login" />
-          <el-alert
-            v-if="isloginEnterd"
-            title="Loginingizni kiriting"
-            type="error"
-            :closable="false"
-          />
+          <el-input v-model="username" style="width: 240px" :placeholder="$t('login')" />
+          <el-alert v-if="isloginEnterd" :title="$t('loginError')" type="error" :closable="false" />
           <el-input
             v-model="password"
             style="width: 240px"
-            placeholder="Parol"
+            :placeholder="$t('password')"
             type="password"
             show-password
           />
           <el-alert
             v-if="isPasswordEntered"
-            title="Maxfiy kodni kiriting"
+            :title="$t('passwordError')"
             type="error"
             :closable="false"
           />
-          <el-button :loading="loading" type="primary" native-type="submit">Kirish</el-button>
+          <el-button :loading="loading" type="primary" native-type="submit">{{
+            $t('loginBtn')
+          }}</el-button>
         </form>
       </div>
     </div>
@@ -48,19 +45,34 @@ const username = ref('')
 const password = ref('')
 const loading = ref(false)
 
+function getCookie(name) {
+  const cookies = document.cookie.split('; ')
+  for (const cookie of cookies) {
+    const [cookieName, cookieValue] = cookie.split('=')
+    if (cookieName === name) {
+      return decodeURIComponent(cookieValue)
+    }
+  }
+  return 'uz'
+}
+const lang = getCookie('lang')
+
 const handleLogin = async () => {
   loading.value = true
   // Check if username and password are entered
   if (!username.value) {
     isloginEnterd.value = true
+    loading.value = false
     if (!password.value) {
       isPasswordEntered.value = true
+      loading.value = false
     } else {
       isPasswordEntered.value = false
     }
   } else if (!password.value) {
     isPasswordEntered.value = true
     isloginEnterd.value = false
+    loading.value = false
   } else {
     isloginEnterd.value = false
     isPasswordEntered.value = false
@@ -79,12 +91,21 @@ const handleLogin = async () => {
         window.location.href = '/'
       })
       .catch((error) => {
-        ElNotification({
-          title: 'Xatolik',
-          message: error.response.data.message || 'Login failed',
-          type: 'error',
-        })
-        loading.value = false
+        if (lang == 'uz') {
+          ElNotification({
+            title: 'Xatolik',
+            message: error.response.data.message || 'Login amalga oshmadi',
+            type: 'error',
+          })
+          loading.value = false
+        } else {
+          ElNotification({
+            title: 'Ошибка',
+            message: error.response.data.messageRu || 'Логин не удался',
+            type: 'error',
+          })
+          loading.value = false
+        }
       })
   }
 }

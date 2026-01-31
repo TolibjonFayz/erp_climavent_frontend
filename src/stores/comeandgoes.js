@@ -33,10 +33,16 @@ export const useComeAndGoesStore = defineStore('comeandgoes', {
         this.isLoading = true
         this.error = null
         let res = await comeandgoes.getAllComeAndGoOfUserById(id)
-        this.allComeAndGoesofUser = res.data || res
+        // Xavfsiz: agar array bo'lmasa, bo'sh array qo'y
+        this.allComeAndGoesofUser = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res)
+            ? res
+            : []
         return res
       } catch (error) {
         this.error = error.message || 'Get Come and Go of user failed'
+        this.allComeAndGoesofUser = [] // Xato vaqtida bo'sh array
         console.log(error)
         throw error
       } finally {
@@ -49,10 +55,12 @@ export const useComeAndGoesStore = defineStore('comeandgoes', {
         this.isLoading = true
         this.error = null
         let res = await comeandgoes.getComeAndGoById(id)
+        // Bitta object - direct store qil
         this.allComeAndGoesofUser = res.data || res
         return res
       } catch (error) {
         this.error = error.message || 'Get Come and Go of user failed'
+        this.allComeAndGoesofUser = null // Xato vaqtida null
         console.log(error)
         throw error
       } finally {

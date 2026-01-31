@@ -1,6 +1,5 @@
 <template>
   <div class="partners-table-container">
-    <!-- Table Header -->
     <div class="partner-table-header">
       <div class="header-cell cell-index">
         <span class="header-text">#</span>
@@ -8,42 +7,42 @@
 
       <div class="header-cell cell-name">
         <el-icon><User /></el-icon>
-        <span class="header-text">ISM</span>
+        <span class="header-text">{{ $t('ism') }}</span>
       </div>
 
       <div class="header-cell cell-phone">
         <el-icon><Phone /></el-icon>
-        <span class="header-text">TELEFON</span>
+        <span class="header-text">{{ $t('telefon') }}</span>
       </div>
 
       <div class="header-cell cell-phone-extra">
         <el-icon><Phone /></el-icon>
-        <span class="header-text">QO'SHIMCHA</span>
+        <span class="header-text">{{ $t('qoshimcha') }}</span>
       </div>
 
       <div class="header-cell cell-republic">
         <el-icon><Location /></el-icon>
-        <span class="header-text">RESPUBLIKA</span>
+        <span class="header-text">{{ $t('respublika') }}</span>
       </div>
 
       <div class="header-cell cell-region">
         <el-icon><Location /></el-icon>
-        <span class="header-text">VILOYAT</span>
+        <span class="header-text">{{ $t('viloyat') }}</span>
       </div>
 
       <div class="header-cell cell-district">
         <el-icon><Location /></el-icon>
-        <span class="header-text">TUMAN</span>
+        <span class="header-text">{{ $t('tuman') }}</span>
       </div>
 
       <div class="header-cell cell-type">
         <el-icon><OfficeBuilding /></el-icon>
-        <span class="header-text">TURI</span>
+        <span class="header-text">{{ $t('turi') }}</span>
       </div>
 
       <div class="header-cell cell-inn">
         <el-icon><Document /></el-icon>
-        <span class="header-text">INN</span>
+        <span class="header-text">{{ $t('inn') }}</span>
       </div>
     </div>
 
@@ -93,7 +92,7 @@
     <!-- Empty State -->
     <div v-if="!partners || partners.length === 0" class="empty-state">
       <el-icon class="empty-icon"><Document /></el-icon>
-      <p class="empty-text">Hozircha mijozlar yo'q</p>
+      <p class="empty-text">{{ $t('hozirchamijozlaryoq') }}</p>
     </div>
   </div>
 </template>

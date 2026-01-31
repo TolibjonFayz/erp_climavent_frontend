@@ -1,25 +1,25 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="Maxfiy so'zni o'zgartirish" width="500">
+  <el-dialog v-model="dialogVisible" :title="$t('changePasswordTitle')" width="500">
     <div class="demo-input-with-icon">
       <div class="input-group">
-        <span class="label">Maxfiy so'z</span>
+        <span class="label">{{ $t('password') }}</span>
         <div class="input-container">
           <el-input
             v-model="localForm.password"
             type="password"
-            placeholder="Maxfiy so'z kiriting"
+            :placeholder="$t('enterPassword')"
             show-password
           />
         </div>
       </div>
 
       <div class="input-group">
-        <span class="label">Maxfiy so'zni tasdiqlang</span>
+        <span class="label">{{ $t('confirmPassword') }}</span>
         <div class="input-container">
           <el-input
             v-model="localForm.confirmPassword"
             type="password"
-            placeholder="Maxfiy so'zni tasdiqlang"
+            :placeholder="$t('confirmPassword')"
             show-password
           />
         </div>
@@ -36,8 +36,10 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleCancel">Bekor qilish</el-button>
-        <el-button :loading="loading" type="primary" @click="handleSave"> Saqlash </el-button>
+        <el-button @click="handleCancel">{{ $t('cancel') }}</el-button>
+        <el-button :loading="loading" type="primary" @click="handleSave">
+          {{ $t('save') }}
+        </el-button>
       </div>
     </template>
   </el-dialog>
