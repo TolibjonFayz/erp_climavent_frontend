@@ -127,10 +127,12 @@ const getTypeTag = (type) => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   -webkit-overflow-scrolling: touch;
 
+  @media (max-width: 1024px) {
+    border-radius: 8px;
+  }
+
   @media (max-width: 768px) {
     border-radius: 8px;
-    margin: 0 -8px;
-    width: calc(100% + 16px);
   }
 }
 
@@ -166,15 +168,27 @@ const getTypeTag = (type) => {
   }
 
   @media (max-width: 992px) {
-    grid-template-columns: 30px 140px 110px 110px 100px 100px 100px 90px 80px;
+    grid-template-columns: 35px 140px 110px 110px 100px 100px 100px 90px 80px;
     gap: 8px;
-    padding: 10px;
+    padding: 10px 12px;
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 30px 120px 100px 100px 90px 90px 90px 80px 70px;
+    grid-template-columns: 35px 120px 100px 100px 90px 90px 90px 80px 70px;
     padding: 10px 12px;
-    gap: 8px;
+    gap: 6px;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 30px 100px 90px 90px 80px 80px 80px 70px 60px;
+    padding: 10px;
+    gap: 6px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 28px 85px 75px 75px 70px 70px 70px 60px 55px;
+    padding: 8px 10px;
+    gap: 5px;
   }
 }
 
@@ -194,6 +208,16 @@ const getTypeTag = (type) => {
     gap: 5px;
   }
 
+  @media (max-width: 768px) {
+    font-size: 10px;
+    gap: 4px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 9px;
+    gap: 3px;
+  }
+
   .el-icon {
     font-size: 14px;
     color: #409eff;
@@ -201,6 +225,14 @@ const getTypeTag = (type) => {
 
     @media (max-width: 1400px) {
       font-size: 13px;
+    }
+
+    @media (max-width: 768px) {
+      font-size: 12px;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 11px;
     }
   }
 }
@@ -257,15 +289,27 @@ const getTypeTag = (type) => {
   }
 
   @media (max-width: 992px) {
-    grid-template-columns: 30px 140px 110px 110px 100px 100px 100px 90px 80px;
+    grid-template-columns: 35px 140px 110px 110px 100px 100px 100px 90px 80px;
     gap: 8px;
-    padding: 8px 10px;
+    padding: 8px 12px;
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 30px 120px 100px 100px 90px 90px 90px 80px 70px;
+    grid-template-columns: 35px 120px 100px 100px 90px 90px 90px 80px 70px;
     padding: 8px 12px;
-    gap: 8px;
+    gap: 6px;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 30px 100px 90px 90px 80px 80px 80px 70px 60px;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 28px 85px 75px 75px 70px 70px 70px 60px 55px;
+    padding: 6px 10px;
+    gap: 5px;
   }
 }
 
@@ -298,6 +342,18 @@ const getTypeTag = (type) => {
     height: 24px;
     font-size: 12px;
   }
+
+  @media (max-width: 768px) {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  @media (max-width: 480px) {
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
+  }
 }
 
 .cell-value {
@@ -314,6 +370,10 @@ const getTypeTag = (type) => {
   @media (max-width: 768px) {
     font-size: 12px;
   }
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+  }
 }
 
 // ========== EMPTY STATE ==========
@@ -328,6 +388,10 @@ const getTypeTag = (type) => {
   @media (max-width: 768px) {
     padding: 40px 20px;
   }
+
+  @media (max-width: 480px) {
+    padding: 30px 15px;
+  }
 }
 
 .empty-icon {
@@ -338,6 +402,11 @@ const getTypeTag = (type) => {
   @media (max-width: 768px) {
     font-size: 48px;
   }
+
+  @media (max-width: 480px) {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
 }
 
 .empty-text {
@@ -347,6 +416,10 @@ const getTypeTag = (type) => {
 
   @media (max-width: 768px) {
     font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 13px;
   }
 }
 </style>

@@ -45,6 +45,7 @@
   "mijozlarVaHamkorlar": "Mijozlar va hamkorlar",
   "mijozlarHamkorlarTable": "Barcha mijozlar va hamkorlar ro'yxati",
   "yangikitilganlar": "Yangi kiritilganlar:",
+  "yangikitilganlarTafsili": "Barcha obyektlar va tashrifiyotlar",
   "today": "Bugun",
   "thisWeek": "Shu hafta",
   "thisMonth": "Shu oy",
@@ -200,6 +201,5 @@
   "delete": "O'chirish",
   "confirmDelete": "Faylni o'chirishni istaysizmi?",
   "confirmation": "Tasdiqlash",
-  "deleteConfirm": "O'chirish",
-  "cancel": "Bekor qilish"
+  "deleteConfirm": "O'chirish"
 }

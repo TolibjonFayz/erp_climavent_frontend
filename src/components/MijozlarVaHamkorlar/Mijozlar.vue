@@ -1,26 +1,24 @@
 <template>
   <div class="mijozlar-container" v-loading="loading">
     <div class="page-header">
-      <div class="header-content">
-        <div class="header-text">
-          <h1>{{ $t('mijozlarVaHamkorlar') }}</h1>
-          <p class="subtitle">{{ $t('mijozlarHamkorlarTable') }}</p>
-        </div>
+      <div class="header-main">
+        <div class="header-top">
+          <div class="header-text">
+            <h1>{{ $t('mijozlarVaHamkorlar') }}</h1>
+            <p class="subtitle">{{ $t('mijozlarHamkorlarTable') }}</p>
+          </div>
 
-        <div class="date-filters">
-          <span>{{ $t('yangikitilganlar') }}</span>
-          <el-tag size="large" type="success" effect="plain">
-            {{ $t('today') }}: {{ getTodayCount() }}
-          </el-tag>
-          <el-tag size="large" type="primary" effect="plain">
-            {{ $t('thisWeek') }}: {{ getWeekCount() }}
-          </el-tag>
-          <el-tag size="large" type="warning" effect="plain">
-            {{ $t('thisMonth') }}: {{ getMonthCount() }}
-          </el-tag>
-          <el-tag size="large" type="info" effect="plain">
-            {{ $t('total') }}: {{ getAllCount() }}
-          </el-tag>
+          <div class="statistics-tags-horizontal">
+            <el-tag size="large" type="success" effect="plain">
+              {{ $t('today') }}: {{ getTodayCount() }}
+            </el-tag>
+            <el-tag size="large" type="primary" effect="plain">
+              {{ $t('thisWeek') }}: {{ getWeekCount() }}
+            </el-tag>
+            <el-tag size="large" type="warning" effect="plain">
+              {{ $t('thisMonth') }}: {{ getMonthCount() }}
+            </el-tag>
+          </div>
         </div>
       </div>
     </div>
@@ -341,6 +339,19 @@ onMounted(async () => {
   margin-bottom: 32px;
 }
 
+.header-main {
+  margin-bottom: 24px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
 .header-content {
   display: flex;
   justify-content: space-between;
@@ -366,6 +377,39 @@ onMounted(async () => {
     color: #6b7280;
     margin: 0;
     word-break: break-word;
+  }
+}
+
+.statistics-tags-horizontal {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+
+  .el-tag {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+}
+
+.statistics-header {
+  margin-bottom: 18px;
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+  }
+
+  .statistics-subtitle {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0;
   }
 }
 
@@ -491,8 +535,15 @@ onMounted(async () => {
     margin-bottom: 24px;
   }
 
-  .header-content {
-    gap: 20px;
+  .header-main {
+    margin-bottom: 20px;
+  }
+
+  .header-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    margin-bottom: 18px;
   }
 
   .header-text {
@@ -507,12 +558,12 @@ onMounted(async () => {
     }
   }
 
-  .date-filters {
-    gap: 10px;
+  .statistics-tags-horizontal {
+    justify-content: flex-start;
 
     .el-tag {
-      padding: 8px 16px;
-      font-size: 14px;
+      padding: 8px 14px;
+      font-size: 13px;
     }
   }
 
@@ -549,10 +600,15 @@ onMounted(async () => {
     margin-bottom: 18px;
   }
 
-  .header-content {
+  .header-main {
+    margin-bottom: 16px;
+  }
+
+  .header-top {
     flex-direction: column;
     align-items: stretch;
-    gap: 16px;
+    gap: 14px;
+    margin-bottom: 16px;
   }
 
   .header-text {
@@ -567,24 +623,19 @@ onMounted(async () => {
     }
   }
 
-  .date-filters {
+  .statistics-tags-horizontal {
     gap: 8px;
-    justify-content: center;
+    justify-content: flex-start;
 
     .el-tag {
-      flex: 1;
-      min-width: 0;
       padding: 8px 12px;
-      font-size: 13px;
-      text-align: center;
+      font-size: 12px;
     }
   }
 
   .modern-tabs {
     padding: 16px;
     border-radius: 12px;
-    margin: 0 -16px;
-    width: calc(100% + 32px);
   }
 
   :deep(.el-tabs__item) {
@@ -615,6 +666,17 @@ onMounted(async () => {
     margin-bottom: 16px;
   }
 
+  .header-main {
+    margin-bottom: 14px;
+  }
+
+  .header-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
   .header-text h1 {
     font-size: 20px;
     margin-bottom: 6px;
@@ -625,20 +687,23 @@ onMounted(async () => {
     margin-bottom: 10px;
   }
 
-  .date-filters {
-    gap: 6px;
+  .statistics-tags-horizontal {
+    gap: 8px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
 
     .el-tag {
-      padding: 6px 10px;
-      font-size: 12px;
+      padding: 8px 10px;
+      font-size: 11px;
+      flex: 1;
+      min-width: 90px;
+      text-align: center;
     }
   }
 
   .modern-tabs {
     padding: 12px;
     border-radius: 10px;
-    margin: 0 -12px;
-    width: calc(100% + 24px);
   }
 
   :deep(.el-tabs__item) {
@@ -668,6 +733,17 @@ onMounted(async () => {
     margin-bottom: 14px;
   }
 
+  .header-main {
+    margin-bottom: 12px;
+  }
+
+  .header-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
   .header-text h1 {
     font-size: 18px;
     margin-bottom: 4px;
@@ -678,22 +754,25 @@ onMounted(async () => {
     margin-bottom: 8px;
   }
 
-  .date-filters {
-    gap: 6px;
+  .statistics-tags-horizontal {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    justify-content: stretch;
 
     .el-tag {
-      flex: 1;
-      padding: 8px 12px;
-      font-size: 12px;
+      padding: 10px 8px;
+      font-size: 11px;
       text-align: center;
+      white-space: normal;
+      height: auto;
+      line-height: 1.2;
     }
   }
 
   .modern-tabs {
     padding: 10px;
     border-radius: 8px;
-    margin: 0 -10px;
-    width: calc(100% + 20px);
   }
 
   :deep(.el-tabs__item) {
@@ -731,10 +810,13 @@ onMounted(async () => {
     font-size: 10px;
   }
 
-  .date-filters {
+  .statistics-tags-horizontal {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+
     .el-tag {
-      font-size: 11px;
-      padding: 6px 10px;
+      padding: 8px 6px;
+      font-size: 10px;
     }
   }
 
@@ -743,3 +825,4 @@ onMounted(async () => {
   }
 }
 </style>
+

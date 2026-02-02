@@ -45,6 +45,7 @@
   "mijozlarVaHamkorlar": "Клиенты и партнеры",
   "mijozlarHamkorlarTable": "Список всех клиентов и партнеров",
   "yangikitilganlar": "Новые записи:",
+  "yangikitilganlarTafsili": "Статистика по новым партнерам и клиентам",
   "today": "Сегодня",
   "thisWeek": "На этой неделе",
   "thisMonth": "В этом месяце",
@@ -200,6 +201,5 @@
   "delete": "Удалить",
   "confirmDelete": "Вы уверены, что хотите удалить файл?",
   "confirmation": "Подтверждение",
-  "deleteConfirm": "Удалить",
-  "cancel": "Отмена"
+  "deleteConfirm": "Удалить"
 }
