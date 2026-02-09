@@ -52,7 +52,7 @@
                   <span class="info-value">{{ partnerData.inn || "Yo'q" }}</span>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">{{ $t('qoshimcha') }}</span>
+                  <span class="info-label">{{ $t('qoshimchaIzoh') }}</span>
                   <div class="more-info-wrapper">
                     <span class="info-value">{{ partnerData.more_info || "Yo'q" }}</span>
                     <el-button
@@ -144,7 +144,7 @@
     <!-- Edit Dialog -->
     <el-dialog
       v-model="editDialogVisible"
-      title="Tahrirlash"
+      :title="$t('edit')"
       :width="dialogWidth"
       :close-on-click-modal="false"
       class="edit-dialog"
@@ -152,62 +152,62 @@
       <div v-if="!canEdit" class="edit-warning">
         <el-alert
           type="error"
-          :title="`Bu hamkor ${getCreatedDaysAgo()} kun oldin yaratilgan. Faqat bir kun ichida tahrir qilsa bo'ladi!`"
+          :title="$t('vaqt_chegarasi_xabari', { days: getCreatedDaysAgo() })"
           :closable="false"
           show-icon
         />
       </div>
 
-      <el-form v-else ref="editFormRef" :model="editForm" label-width="150px" class="edit-form">
-        <el-form-item label="F.I.O" prop="fullname">
-          <el-input v-model="editForm.fullname" placeholder="F.I.O ni kiriting" />
+      <el-form v-else ref="editFormRef" :model="editForm" :label-width="formLabelWidth" class="edit-form">
+        <el-form-item :label="$t('form_toliqFIO')" prop="fullname">
+          <el-input v-model="editForm.fullname" :placeholder="$t('form_toliqFIO_placeholder')" />
         </el-form-item>
 
-        <el-form-item label="Mijoz turi" prop="mijozturi">
-          <el-input v-model="editForm.mijozturi" placeholder="Mijoz turini kiriting" />
+        <el-form-item :label="$t('form_mijozTuri')" prop="mijozturi">
+          <el-input v-model="editForm.mijozturi" :placeholder="$t('form_mijozTuri_placeholder')" />
         </el-form-item>
 
-        <el-form-item label="INN" prop="inn">
-          <el-input v-model="editForm.inn" placeholder="INN ni kiriting" />
+        <el-form-item :label="$t('form_inn')" prop="inn">
+          <el-input v-model="editForm.inn" :placeholder="$t('form_inn_placeholder')" />
         </el-form-item>
 
-        <el-form-item label="Telefon raqami" prop="phone_number">
-          <el-input v-model="editForm.phone_number" placeholder="Telefon raqamini kiriting" />
+        <el-form-item :label="$t('form_telefonRaqami')" prop="phone_number">
+          <el-input v-model="editForm.phone_number" :placeholder="$t('form_telefonRaqami_placeholder')" />
         </el-form-item>
 
-        <el-form-item label="Qo'shimcha telefon" prop="additional_phone_number">
+        <el-form-item :label="$t('form_qoshimchaTelefon')" prop="additional_phone_number">
           <el-input
             v-model="editForm.additional_phone_number"
-            placeholder="Qo'shimcha telefon kiriting"
+            :placeholder="$t('form_qoshimchaTelefon_placeholder')"
           />
         </el-form-item>
 
-        <el-form-item label="Respublika" prop="republic">
-          <el-input v-model="editForm.republic" placeholder="Respublikani kiriting" />
+        <el-form-item :label="$t('form_respublika')" prop="republic">
+          <el-input v-model="editForm.republic" :placeholder="$t('form_respublika_placeholder')" />
         </el-form-item>
 
-        <el-form-item label="Viloyat" prop="viloyat">
-          <el-input v-model="editForm.viloyat" placeholder="Viloyatni kiriting" />
+        <el-form-item :label="$t('form_viloyat')" prop="viloyat">
+          <el-input v-model="editForm.viloyat" :placeholder="$t('form_viloyat_placeholder')" />
         </el-form-item>
 
-        <el-form-item label="Shahar/Tuman" prop="shahar_tuman">
-          <el-input v-model="editForm.shahar_tuman" placeholder="Shahar/Tumanни kiriting" />
+        <el-form-item :label="$t('form_shaharTuman')" prop="shahar_tuman">
+          <el-input v-model="editForm.shahar_tuman" :placeholder="$t('form_shaharTuman_placeholder')" />
         </el-form-item>
 
-        <el-form-item label="Qo'shimcha ma'lumot" prop="more_info">
+        <el-form-item :label="$t('form_qoshimchamalumot')" prop="more_info">
           <el-input
             v-model="editForm.more_info"
             type="textarea"
-            placeholder="Qo'shimcha ma'lumot kiriting"
+            :placeholder="$t('form_qoshimchamalumot_placeholder')"
             rows="4"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="editDialogVisible = false">Bekor qilish</el-button>
+        <el-button @click="editDialogVisible = false">{{ $t('bekor_qilish') }}</el-button>
         <el-button v-if="canEdit" type="primary" :loading="editLoading" @click="handleSaveEdit">
-          Saqlash
+          {{ $t('saqlash') }}
         </el-button>
       </template>
     </el-dialog>
@@ -215,17 +215,17 @@
     <!-- More Info Edit Dialog -->
     <el-dialog
       v-model="moreInfoDialogVisible"
-      title="Qo'shimcha ma'lumot"
+      :title="$t('form_qoshimchamalumot')"
       :width="dialogWidth"
       :close-on-click-modal="false"
       class="more-info-dialog"
     >
-      <el-form ref="moreInfoFormRef" :model="moreInfoForm" label-width="120px" class="edit-form">
-        <el-form-item label="Qo'shimcha ma'lumot" prop="more_info">
+      <el-form ref="moreInfoFormRef" :model="moreInfoForm" :label-width="formLabelWidth" class="edit-form">
+        <el-form-item :label="$t('form_qoshimchamalumot')" prop="more_info">
           <el-input
             v-model="moreInfoForm.more_info"
             type="textarea"
-            placeholder="Qo'shimcha ma'lumotni kiriting"
+            :placeholder="$t('form_qoshimchamalumot_placeholder')"
             rows="8"
             show-word-limit
             maxlength="1000"
@@ -234,9 +234,9 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="moreInfoDialogVisible = false">Bekor qilish</el-button>
+        <el-button @click="moreInfoDialogVisible = false">{{ $t('bekor_qilish') }}</el-button>
         <el-button type="primary" :loading="moreInfoLoading" @click="handleSaveMoreInfo">
-          Saqlash
+          {{ $t('saqlash') }}
         </el-button>
       </template>
     </el-dialog>
@@ -304,6 +304,16 @@ const dialogWidth = computed(() => {
   if (width < 768) return '85%'
   if (width < 1024) return '70%'
   return '50%'
+})
+
+// Responsive form label width
+const formLabelWidth = computed(() => {
+  if (typeof window === 'undefined') return '120px'
+  const width = window.innerWidth
+  if (width < 480) return 'auto'
+  if (width < 768) return '100px'
+  if (width < 1024) return '110px'
+  return '150px'
 })
 
 // Get how many days ago created
@@ -396,18 +406,18 @@ const openEditDialog = () => {
 
 const handleSaveEdit = async () => {
   if (!canEdit.value) {
-    ElMessage.error('Tahrirlashning vaqti tugagan!')
+    ElMessage.error($t('vaqt_tugagan'))
     return
   }
 
   editLoading.value = true
   try {
     await partnersStore.updateOnePartner(editForm.value, route.params.id)
-    ElMessage.success('Hamkor muvaffaqiyatli tahrirlandi')
+    ElMessage.success($t('hamkor_yangilandi'))
     editDialogVisible.value = false
     await partnersStore.getOnePartner(route.params.id)
   } catch (error) {
-    ElMessage.error('Tahrirlashda xatolik yuz berdi')
+    ElMessage.error($t('yangilash_error'))
     console.error(error)
   } finally {
     editLoading.value = false
@@ -428,13 +438,13 @@ const handleSaveMoreInfo = async () => {
   try {
     await partnersStore.updateOnePartner(
       { more_info: moreInfoForm.value.more_info },
-      route.params.id
+      route.params.id,
     )
-    ElMessage.success("Qo'shimcha ma'lumot muvaffaqiyatli yangilandi")
+    ElMessage.success($t('yangilash_success'))
     moreInfoDialogVisible.value = false
     await partnersStore.getOnePartner(route.params.id)
   } catch (error) {
-    ElMessage.error("Yangilashda xatolik yuz berdi")
+    ElMessage.error($t('yangilash_error'))
     console.error(error)
   } finally {
     moreInfoLoading.value = false
@@ -446,7 +456,7 @@ onMounted(async () => {
   try {
     await partnersStore.getOnePartner(route.params.id)
   } catch (error) {
-    ElMessage.error("Mijoz ma'lumotlarini yuklashda xatolik yuz berdi")
+    ElMessage.error($t('yangilash_error'))
   } finally {
     loading.value = false
   }
@@ -736,6 +746,9 @@ onMounted(async () => {
     .el-form-item__label {
       font-weight: 500;
       color: #1f2937;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow-wrap: break-word;
     }
 
     .el-input__wrapper {
@@ -752,6 +765,8 @@ onMounted(async () => {
 
     textarea {
       resize: vertical;
+      font-size: 14px;
+      line-height: 1.5;
     }
   }
 }
@@ -881,6 +896,8 @@ onMounted(async () => {
     :deep(.el-form-item__label) {
       width: 100% !important;
       margin-bottom: 8px !important;
+      word-wrap: break-word;
+      white-space: normal;
     }
 
     :deep(.el-form-item__content) {
@@ -1175,6 +1192,9 @@ onMounted(async () => {
       display: block !important;
       text-align: left;
       padding: 0 !important;
+      word-wrap: break-word;
+      white-space: normal;
+      overflow-wrap: break-word;
     }
 
     :deep(.el-form-item__content) {
