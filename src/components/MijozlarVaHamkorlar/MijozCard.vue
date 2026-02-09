@@ -44,6 +44,11 @@
         <el-icon><Document /></el-icon>
         <span class="header-text">{{ $t('inn') }}</span>
       </div>
+
+      <div class="header-cell cell-actions">
+        <el-icon><OfficeBuilding /></el-icon>
+        <span class="header-text">{{ $t('amallar') || 'Amallar' }}</span>
+      </div>
     </div>
 
     <!-- Table Body -->
@@ -86,6 +91,18 @@
         <div class="table-cell cell-inn">
           <span class="cell-value">{{ partner.inn || '-' }}</span>
         </div>
+
+        <div class="table-cell cell-actions">
+          <el-button
+            link
+            type="primary"
+            size="small"
+            @click="router.push({ name: 'single-mijoz', params: { id: partner.id } })"
+          >
+            {{ $t('viewDetails') }}
+            <el-icon class="ml-1"><ArrowRight /></el-icon>
+          </el-button>
+        </div>
       </div>
     </div>
 
@@ -98,6 +115,7 @@
 </template>
 
 <script setup>
+import router from '@/router'
 import { User, Phone, Location, OfficeBuilding, Document } from '@element-plus/icons-vue'
 
 const props = defineProps({
@@ -139,7 +157,7 @@ const getTypeTag = (type) => {
 // ========== HEADER STYLES ==========
 .partner-table-header {
   display: grid;
-  grid-template-columns: 50px 1.2fr 1fr 1fr 0.9fr 0.9fr 0.9fr 0.8fr 0.8fr;
+  grid-template-columns: 50px 1.2fr 1fr 1fr 0.9fr 0.9fr 0.9fr 0.8fr 0.8fr 0.7fr;
   align-items: center;
   padding: 14px 16px;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
@@ -151,42 +169,42 @@ const getTypeTag = (type) => {
   min-width: max-content;
 
   @media (max-width: 1600px) {
-    grid-template-columns: 45px 1.1fr 0.9fr 0.9fr 0.85fr 0.85fr 0.85fr 0.75fr 0.75fr;
+    grid-template-columns: 45px 1.1fr 0.9fr 0.9fr 0.85fr 0.85fr 0.85fr 0.75fr 0.75fr 0.65fr;
     gap: 10px;
   }
 
   @media (max-width: 1400px) {
-    grid-template-columns: 40px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
+    grid-template-columns: 40px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr 0.6fr;
     gap: 10px;
     padding: 12px 14px;
   }
 
   @media (max-width: 1200px) {
-    grid-template-columns: 35px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
+    grid-template-columns: 35px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr 0.6fr;
     gap: 8px;
     padding: 12px;
   }
 
   @media (max-width: 992px) {
-    grid-template-columns: 35px 140px 110px 110px 100px 100px 100px 90px 80px;
+    grid-template-columns: 35px 140px 110px 110px 100px 100px 100px 90px 80px 75px;
     gap: 8px;
     padding: 10px 12px;
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 35px 120px 100px 100px 90px 90px 90px 80px 70px;
+    grid-template-columns: 35px 120px 100px 100px 90px 90px 90px 80px 70px 65px;
     padding: 10px 12px;
     gap: 6px;
   }
 
   @media (max-width: 640px) {
-    grid-template-columns: 30px 100px 90px 90px 80px 80px 80px 70px 60px;
+    grid-template-columns: 30px 100px 90px 90px 80px 80px 80px 70px 60px 55px;
     padding: 10px;
     gap: 6px;
   }
 
   @media (max-width: 480px) {
-    grid-template-columns: 28px 85px 75px 75px 70px 70px 70px 60px 55px;
+    grid-template-columns: 28px 85px 75px 75px 70px 70px 70px 60px 55px 50px;
     padding: 8px 10px;
     gap: 5px;
   }
@@ -245,6 +263,10 @@ const getTypeTag = (type) => {
   }
 }
 
+.header-cell.cell-actions {
+  justify-content: center;
+}
+
 .header-text {
   white-space: nowrap;
   overflow: hidden;
@@ -258,7 +280,7 @@ const getTypeTag = (type) => {
 
 .partner-table-row {
   display: grid;
-  grid-template-columns: 50px 1.2fr 1fr 1fr 0.9fr 0.9fr 0.9fr 0.8fr 0.8fr;
+  grid-template-columns: 50px 1.2fr 1fr 1fr 0.9fr 0.9fr 0.9fr 0.8fr 0.8fr 0.7fr;
   align-items: center;
   padding: 12px 16px;
   background: #ffffff;
@@ -272,42 +294,42 @@ const getTypeTag = (type) => {
   }
 
   @media (max-width: 1600px) {
-    grid-template-columns: 45px 1.1fr 0.9fr 0.9fr 0.85fr 0.85fr 0.85fr 0.75fr 0.75fr;
+    grid-template-columns: 45px 1.1fr 0.9fr 0.9fr 0.85fr 0.85fr 0.85fr 0.75fr 0.75fr 0.65fr;
     gap: 10px;
   }
 
   @media (max-width: 1400px) {
-    grid-template-columns: 40px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
+    grid-template-columns: 40px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr 0.6fr;
     gap: 10px;
     padding: 10px 14px;
   }
 
   @media (max-width: 1200px) {
-    grid-template-columns: 35px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr;
+    grid-template-columns: 35px 1fr 0.9fr 0.9fr 0.8fr 0.8fr 0.8fr 0.7fr 0.7fr 0.6fr;
     gap: 8px;
     padding: 10px 12px;
   }
 
   @media (max-width: 992px) {
-    grid-template-columns: 35px 140px 110px 110px 100px 100px 100px 90px 80px;
+    grid-template-columns: 35px 140px 110px 110px 100px 100px 100px 90px 80px 75px;
     gap: 8px;
     padding: 8px 12px;
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 35px 120px 100px 100px 90px 90px 90px 80px 70px;
+    grid-template-columns: 35px 120px 100px 100px 90px 90px 90px 80px 70px 65px;
     padding: 8px 12px;
     gap: 6px;
   }
 
   @media (max-width: 640px) {
-    grid-template-columns: 30px 100px 90px 90px 80px 80px 80px 70px 60px;
+    grid-template-columns: 30px 100px 90px 90px 80px 80px 80px 70px 60px 55px;
     padding: 8px 10px;
     gap: 6px;
   }
 
   @media (max-width: 480px) {
-    grid-template-columns: 28px 85px 75px 75px 70px 70px 70px 60px 55px;
+    grid-template-columns: 28px 85px 75px 75px 70px 70px 70px 60px 55px 50px;
     padding: 6px 10px;
     gap: 5px;
   }
@@ -322,6 +344,21 @@ const getTypeTag = (type) => {
 
 .table-cell.cell-index {
   justify-content: center;
+}
+
+.table-cell.cell-actions {
+  justify-content: center;
+  gap: 8px;
+
+  .el-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    &:hover {
+      color: #0066cc;
+    }
+  }
 }
 
 .index-number {

@@ -176,6 +176,7 @@
   "obyektjoylashuvinikiriting": "Введите местоположение объекта",
   "back": "Назад",
   "obyektmaininfo": "Подробная информация об объекте",
+  "mijozmaininfo": "Подробная информация о клиенте",
   "toliqmalumotvajoylashuv": "Полная информация и местоположение",
   "Yakunlangan": "Завершено",
   "Jarayonda": "В процессе",
@@ -201,5 +202,11 @@
   "delete": "Удалить",
   "confirmDelete": "Вы уверены, что хотите удалить файл?",
   "confirmation": "Подтверждение",
-  "deleteConfirm": "Удалить"
+  "deleteConfirm": "Удалить",
+  "toliqmalumot": "Подробная информация о клиенте или партнере",
+  "shaxsiymalumot": "Персональная информация",
+  "manzilmalumoti": "Адресная информация",
+  "aloqamalumoti": "Контактная информация",
+  "hamkorturı": "Тип партнера",
+  "toliqFIO": "Имя, фамилия"
 }

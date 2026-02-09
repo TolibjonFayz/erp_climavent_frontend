@@ -176,6 +176,7 @@
   "obyektjoylashuvinikiriting": "Obyekt joylashuvini kiriting",
   "back": "Ortga qaytish",
   "obyektmaininfo": "Obyekt haqida batafsil ma'lumot",
+  "mijozmaininfo": "Mijoz haqida batafsil ma'lumot",
   "toliqmalumotvajoylashuv": "To'liq ma'lumotlar va joylashuv",
   "Yakunlangan": "Yakunlangan",
   "Jarayonda": "Jarayonda",
@@ -201,5 +202,12 @@
   "delete": "O'chirish",
   "confirmDelete": "Faylni o'chirishni istaysizmi?",
   "confirmation": "Tasdiqlash",
-  "deleteConfirm": "O'chirish"
+  "deleteConfirm": "O'chirish",
+  "toliqmalumot": "Mijoz yoki hamkor haqida batafsil ma'lumotlar",
+  "shaxsiymalumot": "Shaxsiy ma'lumotlar",
+  "manzilmalumoti": "Manzil ma'lumotlari",
+  "aloqamalumoti": "Aloqa ma'lumotlari",
+  "hamkorturi": "Hamkor turi",
+  "qoshimchaTelefon": "Qo'shimcha telefon",
+  "toliqFIO": "To'liq ism familiya"
 }

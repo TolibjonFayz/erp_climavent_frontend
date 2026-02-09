@@ -10,6 +10,7 @@ import HomePageMijozlar from '@/views/HomePageMijozlar.vue'
 import RaqiblarPage from '@/views/RaqiblarPage.vue'
 import AddMijoz from '@/components/MijozlarVaHamkorlar/AddMijoz.vue'
 import AdminPage from '@/views/AdminPage.vue'
+import SingleMijozPage from '@/views/SingleMijozPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -77,6 +78,12 @@ const router = createRouter({
       path: '/single-obyekt/:id',
       name: 'single-obyekt',
       component: SingleObyektPage,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/single-mijoz/:id',
+      name: 'single-mijoz',
+      component: SingleMijozPage,
       meta: { requiresAuth: true },
     },
   ],
