@@ -113,6 +113,49 @@
         :placeholder="$t('qoshimchamalumotlarUchunJoy')"
         type="textarea"
       />
+
+      <!-- MEDIA UPLOAD SECTION - INTEGRATED -->
+      <div class="upload-media-section">
+        <div class="section-header">
+          <h3>{{ $t('rasmvavideolar') }}</h3>
+          <p class="section-description">{{ $t('obyektgaRasmVaVideolar') }}</p>
+        </div>
+
+        <el-upload
+          ref="uploadRef"
+          class="upload-area"
+          drag
+          :action="cloudinaryUrl"
+          :data="uploadData"
+          multiple
+          :auto-upload="false"
+          :before-upload="beforeUpload"
+          :on-success="handleUploadSuccess"
+          :on-error="handleUploadError"
+          :accept="acceptedTypes"
+          list-type="picture-card"
+          :limit="10"
+          v-model:file-list="mediaFileList"
+        >
+          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+          <div class="el-upload__text">
+            {{ $t('mediauloadbtn') }}
+            <template v-if="mediaFileList.length > 0">
+              <br />
+              <span class="file-count">{{ mediaFileList.length }} fayl tanlandi</span>
+            </template>
+          </div>
+        </el-upload>
+
+        <div v-if="mediaFileList.length > 0" class="upload-info">
+          <el-alert
+            :title="`${mediaFileList.length} ta fayl yuklashga tayyor`"
+            type="info"
+            :closable="false"
+            show-icon
+          />
+        </div>
+      </div>
     </el-form>
 
     <!-- QO'SHIMCHA OBYEKTLAR -->
@@ -263,21 +306,39 @@
 <script setup>
 import { useComeAndGoesStore } from '@/stores/comeandgoes'
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
+import { useVideosStore } from '@/stores/videos'
 import LocationPicker from './LocationPicker.vue'
+import { UploadFilled } from '@element-plus/icons-vue'
 import ru from 'element-plus/dist/locale/ru.mjs'
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Delete, Plus } from '@element-plus/icons-vue'
 import router from '@/router'
 
 const comeandgoesStore = useComeAndGoesStore()
 const comeandgoInsideStore = useComeAndGoInsideStore()
+const videosStore = useVideosStore()
+
 const isDogoKpNotSelected = ref(false)
 const isDogovorSelected = ref(false)
 const isWhereBoshqa = ref(false)
 const isKPSelected = ref(false)
 const loading = ref(false)
 const locale = ru
+
+// MEDIA UPLOAD STATES
+const uploadRef = ref()
+const mediaFileList = ref([])
+const uploadedMediaData = ref([])
+const cloudName = 'dne7ddv2a'
+const uploadPreset = 'erp_climavent_uploads'
+const cloudinaryUrl = computed(() => `https://api.cloudinary.com/v1_1/${cloudName}/upload`)
+const uploadData = ref({
+  upload_preset: uploadPreset,
+  folder: 'website-uploads',
+  tags: 'user-upload,media',
+})
+const acceptedTypes = '.jpg,.jpeg,.png,.gif,.mp4,.webm,.mov,.avi,.mkv'
 
 const form = reactive({
   goingtime: '',
@@ -348,6 +409,102 @@ const disabledDate = (time) => {
   return time.getTime() < sevenDaysAgo.getTime() || time.getTime() > twoDaysLater.getTime()
 }
 
+// MEDIA UPLOAD HANDLERS
+const beforeUpload = (file) => {
+  console.log('🔍 Validating file:', file.name)
+
+  const isValidType = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'video/mp4',
+    'video/webm',
+    'video/quicktime',
+    'video/x-msvideo',
+    'video/x-matroska',
+  ].includes(file.type)
+
+  const isValidSize = file.size / 1024 / 1024 < 200
+
+  if (!isValidType) {
+    ElMessage.error('Faqat rasm va video fayllar qabul qilinadi!')
+    return false
+  }
+  if (!isValidSize) {
+    ElMessage.error("Fayl hajmi 200MB dan kam bo'lishi kerak!")
+    return false
+  }
+
+  console.log('✅ File validated:', file.name)
+  return true
+}
+
+const handleUploadSuccess = (response, file) => {
+  console.log('✅ Cloudinary SUCCESS:', file.name, response)
+
+  const mediaData = {
+    url: response.secure_url,
+    public_id: response.public_id,
+    resource_type: response.resource_type,
+    format: response.format,
+    filename: file.name,
+    size: response.bytes,
+    width: response.width,
+    height: response.height,
+  }
+
+  uploadedMediaData.value.push(mediaData)
+  console.log('📊 Total uploaded to Cloudinary:', uploadedMediaData.value.length)
+}
+
+const handleUploadError = (error, file) => {
+  console.error('❌ Cloudinary upload failed:', file.name, error)
+  ElMessage.error(`${file.name} yuklashda xatolik yuz berdi!`)
+}
+
+// UPLOAD MEDIA TO DATABASE
+const uploadMediaToDatabase = async (comeAndGoId) => {
+  console.log('💾 Starting database save...')
+  console.log('💾 Media data to save:', uploadedMediaData.value)
+
+  if (uploadedMediaData.value.length === 0) {
+    console.log('ℹ️ No media to save to database')
+    return { success: true, count: 0 }
+  }
+
+  try {
+    const savePromises = uploadedMediaData.value.map(async (mediaData, index) => {
+      const payload = {
+        video_link: mediaData.url,
+        video_name: mediaData.filename,
+        user_id: Number(localStorage.getItem('userid')),
+        comeandgo_id: comeAndGoId,
+      }
+
+      console.log(`💾 Saving media ${index + 1}/${uploadedMediaData.value.length}:`, payload)
+
+      const result = await videosStore.createVideo(payload)
+
+      console.log(`✅ Saved media ${index + 1}:`, result)
+
+      return result
+    })
+
+    await Promise.all(savePromises)
+
+    console.log('🎉 All media saved to database!')
+
+    return {
+      success: true,
+      count: uploadedMediaData.value.length,
+    }
+  } catch (error) {
+    console.error('❌ Database save failed:', error)
+    throw error
+  }
+}
+
 const validateObject = (obj, objectName) => {
   if (!obj.goingtime) {
     ElMessage.warning(`${objectName}: Iltimos, obyektga ketish vaqtini tanlang.`)
@@ -393,6 +550,9 @@ const createInsidePayload = (obj) => {
 }
 
 const onSubmit = async () => {
+  console.log('🎯 SUBMIT STARTED')
+  console.log('📁 Media files selected:', mediaFileList.value.length)
+
   if (!validateObject(form, 'Asosiy obyekt')) {
     return
   }
@@ -406,6 +566,9 @@ const onSubmit = async () => {
   loading.value = true
 
   try {
+    console.log('1️⃣ Creating parent ComeAndGoes...')
+
+    // 1. Parent obyekt yaratish
     const parentPayload = {
       user_id: Number(localStorage.getItem('userid')),
     }
@@ -413,29 +576,97 @@ const onSubmit = async () => {
 
     const comeAndGoId = parentResponse?.newCGO?.id
 
+    console.log('✅ Parent created with ID:', comeAndGoId)
+
     if (!comeAndGoId) {
       throw new Error('ComeAndGoes ID olinmadi')
     }
 
+    console.log('2️⃣ Creating main inside obyekt...')
+
+    // 2. Main inside obyekt yaratish
     const mainInsidePayload = {
       ...createInsidePayload(form),
       come_and_go_father_id: comeAndGoId,
     }
     await comeandgoInsideStore.createComeAndGoInside(mainInsidePayload)
 
-    for (let i = 0; i < additionalObjects.value.length; i++) {
-      const additionalInsidePayload = {
-        ...createInsidePayload(additionalObjects.value[i]),
-        come_and_go_father_id: comeAndGoId,
+    console.log('✅ Main inside obyekt created')
+
+    // 3. Qo'shimcha obyektlarni yaratish
+    if (additionalObjects.value.length > 0) {
+      console.log(`3️⃣ Creating ${additionalObjects.value.length} additional obyekts...`)
+
+      for (let i = 0; i < additionalObjects.value.length; i++) {
+        const additionalInsidePayload = {
+          ...createInsidePayload(additionalObjects.value[i]),
+          come_and_go_father_id: comeAndGoId,
+        }
+        await comeandgoInsideStore.createComeAndGoInside(additionalInsidePayload)
+        console.log(`✅ Additional obyekt ${i + 1} created`)
       }
-      await comeandgoInsideStore.createComeAndGoInside(additionalInsidePayload)
     }
 
-    ElMessage.success('Barcha obyektlar muvaffaqiyatli saqlandi!')
+    // 4. Media fayllarni yuklash
+    let mediaUploadCount = 0
+
+    if (mediaFileList.value.length > 0) {
+      console.log('4️⃣ Media files detected:', mediaFileList.value.length)
+      console.log('📤 Uploading to Cloudinary...')
+
+      // Reset uploaded data
+      uploadedMediaData.value = []
+
+      // Trigger Cloudinary upload
+      if (uploadRef.value) {
+        uploadRef.value.submit()
+
+        // Wait for Cloudinary uploads to complete
+        const maxWait = 60000 // 60 seconds
+        const checkInterval = 500
+        let waited = 0
+
+        while (uploadedMediaData.value.length < mediaFileList.value.length && waited < maxWait) {
+          await new Promise((resolve) => setTimeout(resolve, checkInterval))
+          waited += checkInterval
+          console.log(
+            `⏳ Waiting for Cloudinary... ${uploadedMediaData.value.length}/${mediaFileList.value.length} (${waited}ms)`,
+          )
+        }
+
+        if (uploadedMediaData.value.length < mediaFileList.value.length) {
+          console.warn('⚠️ Not all files uploaded to Cloudinary in time')
+          ElMessage.warning(
+            `Faqat ${uploadedMediaData.value.length}/${mediaFileList.value.length} media fayl yuklandi`,
+          )
+        } else {
+          console.log('✅ All files uploaded to Cloudinary')
+        }
+
+        // Save to database
+        if (uploadedMediaData.value.length > 0) {
+          console.log('5️⃣ Saving media to database...')
+          const dbResult = await uploadMediaToDatabase(comeAndGoId)
+          mediaUploadCount = dbResult.count
+          console.log('✅ Media saved to database:', mediaUploadCount)
+        }
+      }
+    } else {
+      console.log('ℹ️ No media files selected')
+    }
+
+    // Success message
+    if (mediaUploadCount > 0) {
+      ElMessage.success(`Barcha obyektlar va ${mediaUploadCount} ta media muvaffaqiyatli saqlandi!`)
+    } else {
+      ElMessage.success('Barcha obyektlar muvaffaqiyatli saqlandi!')
+    }
+
+    console.log('🎉 ALL DONE! Redirecting...')
     router.push('/obyekt')
   } catch (error) {
+    console.error('❌ ERROR:', error)
     ElMessage.error('Xatolik yuz berdi: ' + (error.message || "Iltimos, qaytadan urinib ko'ring."))
-    console.error('Error saving objects:', error)
   } finally {
     loading.value = false
   }
@@ -738,6 +969,131 @@ watch(
 
 .whereotherinput {
   padding-top: 5px;
+}
+
+// MEDIA UPLOAD STYLES
+:deep(.el-upload-list--picture-card) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.upload-media-section {
+  margin-top: 32px;
+  padding: 24px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #d0d7de;
+
+  @media (max-width: 768px) {
+    margin-top: 24px;
+    padding: 16px;
+  }
+
+  .section-header {
+    margin-bottom: 20px;
+
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+      margin: 0 0 8px 0;
+
+      @media (max-width: 768px) {
+        font-size: 16px;
+      }
+    }
+
+    .section-description {
+      font-size: 14px;
+      color: #606266;
+      margin: 0;
+
+      @media (max-width: 768px) {
+        font-size: 13px;
+      }
+    }
+  }
+
+  .upload-area {
+    width: 100%;
+
+    :deep(.el-upload.el-upload--picture-card) {
+      width: 100% !important;
+      height: auto !important;
+      display: block !important;
+      border: 0 !important; /* tashqi kvadrat border kerakmas */
+      background: transparent !important;
+    }
+
+    /* draggerning o'zini dropzone ko'rinishiga keltiramiz */
+    :deep(.el-upload--picture-card .el-upload-dragger) {
+      width: 100% !important;
+      height: auto !important;
+      min-height: 180px;
+      padding: 24px 16px !important;
+      box-sizing: border-box;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 10px;
+    }
+
+    /* icon + text markazda, tartibli */
+    :deep(.el-upload--picture-card .el-icon--upload) {
+      margin-bottom: 10px;
+    }
+
+    :deep(.el-upload--picture-card .el-upload__text) {
+      text-align: center;
+      line-height: 1.3;
+      white-space: normal;
+      max-width: 360px;
+    }
+
+    .el-upload__text {
+      font-size: 14px;
+      color: #606266;
+
+      @media (max-width: 768px) {
+        font-size: 13px;
+      }
+
+      .file-count {
+        color: #409eff;
+        font-weight: 600;
+        font-size: 13px;
+      }
+    }
+  }
+
+  .upload-info {
+    margin-top: 16px;
+
+    @media (max-width: 768px) {
+      margin-top: 12px;
+    }
+  }
+}
+
+:deep(.el-upload-list) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+  }
+}
+
+:deep(.el-upload-list__item) {
+  margin: 0;
 }
 
 // Full width classes for responsive inputs
