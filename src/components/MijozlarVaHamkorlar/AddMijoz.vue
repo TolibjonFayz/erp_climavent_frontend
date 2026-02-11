@@ -5,8 +5,8 @@
       <h2>{{ $t('yangiMijozQoshishText') }}</h2>
     </div>
 
-    <el-form :model="form" label-width="auto" class="form">
-      <el-form-item :label="$t('respublika')">
+    <el-form :model="form" :rules="rules" ref="formRef" label-width="auto" class="form">
+      <el-form-item :label="$t('respublika')" prop="republic" required>
         <el-select
           v-model="form.republic"
           filterable
@@ -33,7 +33,7 @@
         />
       </el-form-item>
 
-      <el-form-item :label="$t('viloyat')">
+      <el-form-item :label="$t('viloyat')" prop="viloyat" required>
         <el-select
           v-model="form.viloyat"
           filterable
@@ -66,7 +66,7 @@
         />
       </el-form-item>
 
-      <el-form-item :label="$t('shaharTuman')">
+      <el-form-item :label="$t('shaharTuman')" prop="shahar_tuman" required>
         <el-select
           v-model="form.shahar_tuman"
           filterable
@@ -97,7 +97,7 @@
         />
       </el-form-item>
 
-      <el-form-item :label="$t('mijozTuri')">
+      <el-form-item :label="$t('mijozTuri')" prop="mijozturi" required>
         <el-radio-group v-model="form.mijozturi" class="responsive-radio-group">
           <el-radio value="Yuridik shaxs">{{ $t('yuridikShaxs') }}</el-radio>
           <el-radio value="Jismoniy shaxs">{{ $t('jismoniyShaxs') }}</el-radio>
@@ -108,7 +108,7 @@
         <el-input v-model="form.inn" :placeholder="$t('tanlang')" class="full-width-input" />
       </el-form-item>
 
-      <el-form-item :label="$t('telefon')">
+      <el-form-item :label="$t('telefon')" prop="phone_number" required>
         <el-input
           v-model="form.phone_number"
           :placeholder="$t('tanlang')"
@@ -123,7 +123,8 @@
           class="full-width-input"
         />
       </el-form-item>
-      <el-form-item :label="$t('ismFamiliya')">
+
+      <el-form-item :label="$t('ismFamiliya')" prop="fullname" required>
         <el-input v-model="form.fullname" :placeholder="$t('tanlang')" class="full-width-input" />
       </el-form-item>
     </el-form>
@@ -137,7 +138,7 @@
 
 <script setup>
 import { usePartnersStore } from '@/stores/partners'
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
 
@@ -146,6 +147,7 @@ const isBoshqaRespublika = ref(false)
 const isBoshqaViloyat = ref(false)
 const isBoshqaShaharTuman = ref(false)
 const loading = ref(false)
+const formRef = ref()
 
 function getCookie(name) {
   const cookies = document.cookie.split('; ')
@@ -173,85 +175,107 @@ const form = reactive({
   fullname: '',
 })
 
-const validateObject = (obj) => {
-  if (lang === 'uz') {
-    if (!obj.republic) {
-      ElMessage.warning(`Iltimos respublikani tanlang.`)
-      return false
-    }
-    if (obj.republic === 'boshqa' && !obj.otherrepublic) {
-      ElMessage.warning(`Iltimos respublikani kiriting.`)
-      return false
-    }
-    if (!obj.viloyat) {
-      ElMessage.warning(`Iltimos viloyatni tanlang.`)
-      return false
-    }
-    if (obj.viloyat === 'boshqa' && !obj.otherviloyat) {
-      ElMessage.warning(`Iltimos viloyatni kiriting.`)
-      return false
-    }
-    if (!obj.shahar_tuman) {
-      ElMessage.warning(`Iltimos shahar/tumanni tanlang.`)
-      return false
-    }
-    if (obj.shahar_tuman === 'boshqa' && !obj.other_shahar_tuman) {
-      ElMessage.warning(`Iltimos shahar/tuman nomini kiriting.`)
-      return false
-    }
-    if (!obj.mijozturi) {
-      ElMessage.warning(`Iltimos mijoz turini tanlang.`)
-      return false
-    }
-    if (!obj.phone_number) {
-      ElMessage.warning(`Iltimos telefon raqamni kiriting.`)
-      return false
-    }
-    if (!obj.fullname) {
-      ElMessage.warning(`Iltimos ism familiyani kiriting.`)
-      return false
-    }
-    return true
-  } else if (lang === 'ru') {
-    if (!obj.republic) {
-      ElMessage.warning(`Пожалуйста, выберите республику.`)
-      return false
-    }
-    if (obj.republic === 'boshqa' && !obj.otherrepublic) {
-      ElMessage.warning(`Пожалуйста, введите республику.`)
-      return false
-    }
-    if (!obj.viloyat) {
-      ElMessage.warning(`Пожалуйста, выберите область.`)
-      return false
-    }
-    if (obj.viloyat === 'boshqa' && !obj.otherviloyat) {
-      ElMessage.warning(`Пожалуйста, введите область.`)
-      return false
-    }
-    if (!obj.shahar_tuman) {
-      ElMessage.warning(`Пожалуйста, выберите город/район.`)
-      return false
-    }
-    if (obj.shahar_tuman === 'boshqa' && !obj.other_shahar_tuman) {
-      ElMessage.warning(`Пожалуйста, введите название города/района.`)
-      return false
-    }
-    if (!obj.mijozturi) {
-      ElMessage.warning(`Пожалуйста, выберите тип клиента.`)
-      return false
-    }
-    if (!obj.phone_number) {
-      ElMessage.warning(`Пожалуйста, введите номер телефона.`)
-      return false
-    }
-    if (!obj.fullname) {
-      ElMessage.warning(`Пожалуйста, введите имя и фамилию.`)
-      return false
-    }
-    return true
-  }
+// Validation messages
+const messages = {
+  uz: {
+    republic: 'Iltimos respublikani tanlang',
+    otherrepublic: 'Iltimos respublikani kiriting',
+    viloyat: 'Iltimos viloyatni tanlang',
+    otherviloyat: 'Iltimos viloyatni kiriting',
+    shahar_tuman: 'Iltimos shahar/tumanni tanlang',
+    other_shahar_tuman: 'Iltimos shahar/tuman nomini kiriting',
+    mijozturi: 'Iltimos mijoz turini tanlang',
+    phone_number: 'Iltimos telefon raqamni kiriting',
+    fullname: 'Iltimos ism familiyani kiriting',
+  },
+  ru: {
+    republic: 'Пожалуйста, выберите республику',
+    otherrepublic: 'Пожалуйста, введите республику',
+    viloyat: 'Пожалуйста, выберите область',
+    otherviloyat: 'Пожалуйста, введите область',
+    shahar_tuman: 'Пожалуйста, выберите город/район',
+    other_shahar_tuman: 'Пожалуйста, введите название города/района',
+    mijozturi: 'Пожалуйста, выберите тип клиента',
+    phone_number: 'Пожалуйста, введите номер телефона',
+    fullname: 'Пожалуйста, введите имя и фамилию',
+  },
 }
+
+// Validation rules
+const rules = computed(() => ({
+  republic: [
+    {
+      required: true,
+      message: messages[lang].republic,
+      trigger: 'change',
+    },
+    {
+      validator: (rule, value, callback) => {
+        if (value === 'boshqa' && !form.otherrepublic) {
+          callback(new Error(messages[lang].otherrepublic))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change',
+    },
+  ],
+  viloyat: [
+    {
+      required: true,
+      message: messages[lang].viloyat,
+      trigger: 'change',
+    },
+    {
+      validator: (rule, value, callback) => {
+        if (value === 'boshqa' && !form.otherviloyat) {
+          callback(new Error(messages[lang].otherviloyat))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change',
+    },
+  ],
+  shahar_tuman: [
+    {
+      required: true,
+      message: messages[lang].shahar_tuman,
+      trigger: 'change',
+    },
+    {
+      validator: (rule, value, callback) => {
+        if (value === 'boshqa' && !form.other_shahar_tuman) {
+          callback(new Error(messages[lang].other_shahar_tuman))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change',
+    },
+  ],
+  mijozturi: [
+    {
+      required: true,
+      message: messages[lang].mijozturi,
+      trigger: 'change',
+    },
+  ],
+  phone_number: [
+    {
+      required: true,
+      message: messages[lang].phone_number,
+      trigger: 'blur',
+    },
+  ],
+  fullname: [
+    {
+      required: true,
+      message: messages[lang].fullname,
+      trigger: 'blur',
+    },
+  ],
+}))
 
 const createMijozPayload = (obj) => {
   return {
@@ -269,12 +293,12 @@ const createMijozPayload = (obj) => {
 }
 
 const onSubmit = async () => {
-  if (!validateObject(form)) {
-    return
-  }
-  loading.value = true
+  if (!formRef.value) return
 
   try {
+    await formRef.value.validate()
+    loading.value = true
+
     const mainPayload = {
       ...createMijozPayload(form),
     }
@@ -283,8 +307,12 @@ const onSubmit = async () => {
     ElMessage.success('Barcha malumotlar muvaffaqiyatli saqlandi!')
     router.push('/')
   } catch (error) {
-    ElMessage.error('Xatolik yuz berdi: ' + (error.message || "Iltimos, qaytadan urinib ko'ring."))
-    console.error('Error saving objects:', error)
+    if (error !== false) {
+      ElMessage.error(
+        'Xatolik yuz berdi: ' + (error.message || "Iltimos, qaytadan urinib ko'ring."),
+      )
+      console.error('Error saving objects:', error)
+    }
   } finally {
     loading.value = false
   }

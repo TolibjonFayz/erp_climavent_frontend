@@ -6,22 +6,23 @@
     </div>
 
     <!-- ASOSIY OBYEKT -->
-    <el-form :model="form" label-width="auto" class="form">
+    <el-form :model="form" :rules="formRules" ref="formRef" class="form">
       <div class="form-section-title">{{ $t('asosiyObyekt') }}</div>
 
-      <el-form-item :label="$t('obyektgaKetishVaqti')">
+      <el-form-item :label="$t('obyektgaKetishVaqti')" prop="goingtime" required>
         <el-config-provider :locale="locale">
           <el-date-picker
             v-model="form.goingtime"
             type="datetime"
             :placeholder="$t('vaqtniTanlang')"
             :disabled-date="disabledDate"
+            format="YYYY-MM-DD HH:mm"
             class="full-width-picker"
           />
         </el-config-provider>
       </el-form-item>
 
-      <el-form-item :label="$t('qayerga')">
+      <el-form-item :label="$t('qayerga')" prop="where" required>
         <el-select v-model="form.where" :placeholder="$t('tanlang')" class="full-width-select">
           <el-option :label="$t('zavod')" value="Zavod" />
           <el-option :label="$t('klient')" value="Klient" />
@@ -36,7 +37,7 @@
         />
       </el-form-item>
 
-      <el-form-item :label="$t('kpYokiDogovor')">
+      <el-form-item :label="$t('kpYokiDogovor')" prop="dogovororkp" required>
         <el-select
           v-model="form.dogovororkp"
           :placeholder="$t('tanlang')"
@@ -56,7 +57,12 @@
         />
       </el-form-item>
 
-      <el-form-item :label="$t('dogovorRaqami')" v-if="isDogovorSelected">
+      <el-form-item
+        :label="$t('dogovorRaqami')"
+        v-if="isDogovorSelected"
+        prop="dogovornumber"
+        required
+      >
         <el-input
           v-model="form.dogovornumber"
           :placeholder="$t('Kiriting')"
@@ -64,11 +70,16 @@
         />
       </el-form-item>
 
-      <el-form-item :label="$t('kpRaqami')" v-if="isKPSelected">
+      <el-form-item :label="$t('kpRaqami')" v-if="isKPSelected" prop="kpnumber" required>
         <el-input v-model="form.kpnumber" :placeholder="$t('Kiriting')" class="full-width-input" />
       </el-form-item>
 
-      <el-form-item v-if="isDogovorSelected" :label="$t('dogovorSanasi')">
+      <el-form-item
+        v-if="isDogovorSelected"
+        :label="$t('dogovorSanasi')"
+        prop="dogovortime"
+        required
+      >
         <el-config-provider :locale="locale">
           <el-date-picker
             v-model="form.dogovortime"
@@ -80,7 +91,7 @@
         </el-config-provider>
       </el-form-item>
 
-      <el-form-item v-if="isKPSelected" :label="$t('kpSanasi')">
+      <el-form-item v-if="isKPSelected" :label="$t('kpSanasi')" prop="kptime" required>
         <el-config-provider :locale="locale">
           <el-date-picker
             v-model="form.kptime"
@@ -92,11 +103,20 @@
         </el-config-provider>
       </el-form-item>
 
-      <el-form-item v-if="isKPSelected || isDogovorSelected" :label="$t('firmaNomi')">
+      <el-form-item
+        v-if="isKPSelected || isDogovorSelected"
+        :label="$t('firmaNomi')"
+        prop="firmanomi"
+        required
+      >
         <el-input v-model="form.firmanomi" :placeholder="$t('Kiriting')" class="full-width-input" />
       </el-form-item>
 
-      <span class="location-picker-label">{{ $t('obyektjoylashuvinikiriting') }} 👇</span>
+      <el-form-item prop="location">
+        <template #label>
+          <span class="location-picker-label">{{ $t('obyektjoylashuvinikiriting') }} 👇</span>
+        </template>
+      </el-form-item>
       <LocationPicker
         access-token="pk.eyJ1IjoidG9saWJqb25mYXl6IiwiYSI6ImNtY2x6amdkczBoZG0ya3NkYTI2NW8waWMifQ.yM3o-yj1ZPUGJG-gWREK6Q"
         :initial-center="{ lng: -74.006, lat: 40.7128 }"
@@ -105,14 +125,16 @@
         @current-location="handleLocationSelected"
         @link-parsed="handleLocationSelected"
       />
-
-      <el-input
-        class="more-info-input"
-        :rows="3"
-        v-model="form.more_info"
-        :placeholder="$t('qoshimchamalumotlarUchunJoy')"
-        type="textarea"
-      />
+      <br />
+      <el-form-item :label="$t('qoshimchamalumotlarUchunJoy')">
+        <el-input
+          class="more-info-input"
+          :rows="3"
+          v-model="form.more_info"
+          :placeholder="$t('qoshimchamalumotlarUchunJoy')"
+          type="textarea"
+        />
+      </el-form-item>
 
       <!-- MEDIA UPLOAD SECTION - INTEGRATED -->
       <div class="upload-media-section">
@@ -160,7 +182,12 @@
 
     <!-- QO'SHIMCHA OBYEKTLAR -->
     <div v-for="(obj, index) in additionalObjects" :key="index" class="additional-object-section">
-      <el-form :model="obj" label-width="auto" class="form">
+      <el-form
+        :model="obj"
+        :rules="getAdditionalFormRules(obj)"
+        :ref="(el) => setAdditionalFormRef(el, index)"
+        class="form"
+      >
         <div class="form-section-header">
           <div class="form-section-title">{{ $t('qoshimchaObyekt') }} #{{ index + 1 }}</div>
           <el-button
@@ -172,11 +199,12 @@
           />
         </div>
 
-        <el-form-item :label="$t('obyektgaKetishVaqti')">
+        <el-form-item :label="$t('obyektgaKetishVaqti')" prop="goingtime" required>
           <el-config-provider :locale="locale">
             <el-date-picker
               v-model="obj.goingtime"
               type="datetime"
+              format="YYYY-MM-DD HH:mm"
               :placeholder="$t('vaqtniTanlang')"
               :disabled-date="disabledDate"
               class="full-width-picker"
@@ -184,7 +212,7 @@
           </el-config-provider>
         </el-form-item>
 
-        <el-form-item :label="$t('qayerga')">
+        <el-form-item :label="$t('qayerga')" prop="where" required>
           <el-select v-model="obj.where" :placeholder="$t('tanlang')" class="full-width-select">
             <el-option :label="$t('zavod')" value="Zavod" />
             <el-option :label="$t('klient')" value="Klient" />
@@ -199,7 +227,7 @@
           />
         </el-form-item>
 
-        <el-form-item :label="$t('kpYokiDogovor')">
+        <el-form-item :label="$t('kpYokiDogovor')" prop="dogovororkp" required>
           <el-select
             v-model="obj.dogovororkp"
             :placeholder="$t('tanlang')"
@@ -219,7 +247,12 @@
           />
         </el-form-item>
 
-        <el-form-item :label="$t('dogovorRaqami')" v-if="obj.dogovororkp === 'Dogovor'">
+        <el-form-item
+          :label="$t('dogovorRaqami')"
+          v-if="obj.dogovororkp === 'Dogovor'"
+          prop="dogovornumber"
+          required
+        >
           <el-input
             v-model="obj.dogovornumber"
             :placeholder="$t('Kiriting')"
@@ -227,11 +260,21 @@
           />
         </el-form-item>
 
-        <el-form-item :label="$t('kpRaqami')" v-if="obj.dogovororkp === 'KP'">
+        <el-form-item
+          :label="$t('kpRaqami')"
+          v-if="obj.dogovororkp === 'KP'"
+          prop="kpnumber"
+          required
+        >
           <el-input v-model="obj.kpnumber" :placeholder="$t('Kiriting')" class="full-width-input" />
         </el-form-item>
 
-        <el-form-item v-if="obj.dogovororkp === 'Dogovor'" :label="$t('dogovorSanasi')">
+        <el-form-item
+          v-if="obj.dogovororkp === 'Dogovor'"
+          :label="$t('dogovorSanasi')"
+          prop="dogovortime"
+          required
+        >
           <el-config-provider :locale="locale">
             <el-date-picker
               v-model="obj.dogovortime"
@@ -243,7 +286,12 @@
           </el-config-provider>
         </el-form-item>
 
-        <el-form-item v-if="obj.dogovororkp === 'KP'" :label="$t('kpSanasi')">
+        <el-form-item
+          v-if="obj.dogovororkp === 'KP'"
+          :label="$t('kpSanasi')"
+          prop="kptime"
+          required
+        >
           <el-config-provider :locale="locale">
             <el-date-picker
               v-model="obj.kptime"
@@ -258,6 +306,8 @@
         <el-form-item
           v-if="obj.dogovororkp === 'KP' || obj.dogovororkp === 'Dogovor'"
           :label="$t('firmaNomi')"
+          prop="firmanomi"
+          required
         >
           <el-input
             v-model="obj.firmanomi"
@@ -266,7 +316,11 @@
           />
         </el-form-item>
 
-        <span class="location-picker-label">{{ $t('obyektjoylashuvinikiriting') }} 👇</span>
+        <el-form-item prop="location" required>
+          <template #label>
+            <span class="location-picker-label">{{ $t('obyektjoylashuvinikiriting') }} 👇</span>
+          </template>
+        </el-form-item>
         <LocationPicker
           access-token="pk.eyJ1IjoidG9saWJqb25mYXl6IiwiYSI6ImNtY2x6amdkczBoZG0ya3NkYTI2NW8waWMifQ.yM3o-yj1ZPUGJG-gWREK6Q"
           :initial-center="{ lng: -74.006, lat: 40.7128 }"
@@ -276,13 +330,15 @@
           @link-parsed="(location) => handleAdditionalLocationSelected(index, location)"
         />
 
-        <el-input
-          class="more-info-input"
-          :rows="3"
-          v-model="obj.more_info"
-          :placeholder="$t('qoshimchamalumotlarUchunJoy')"
-          type="textarea"
-        />
+        <el-form-item :label="$t('qoshimchamalumotlarUchunJoy')">
+          <el-input
+            class="more-info-input"
+            :rows="3"
+            v-model="obj.more_info"
+            :placeholder="$t('qoshimchamalumotlarUchunJoy')"
+            type="textarea"
+          />
+        </el-form-item>
       </el-form>
     </div>
 
@@ -304,6 +360,7 @@
 </template>
 
 <script setup>
+// Script qismi bir xil qoladi - o'zgarish yo'q
 import { useComeAndGoesStore } from '@/stores/comeandgoes'
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { useVideosStore } from '@/stores/videos'
@@ -326,7 +383,15 @@ const isKPSelected = ref(false)
 const loading = ref(false)
 const locale = ru
 
-// MEDIA UPLOAD STATES
+const formRef = ref()
+const additionalFormRefs = ref([])
+
+const setAdditionalFormRef = (el, index) => {
+  if (el) {
+    additionalFormRefs.value[index] = el
+  }
+}
+
 const uploadRef = ref()
 const mediaFileList = ref([])
 const uploadedMediaData = ref([])
@@ -357,6 +422,76 @@ const form = reactive({
   more_info: '',
 })
 
+const formRules = reactive({
+  goingtime: [
+    { required: true, message: 'Iltimos, obyektga ketish vaqtini tanlang', trigger: 'change' },
+  ],
+  where: [
+    { required: true, message: 'Iltimos, qayerga ketayotganingizni tanlang', trigger: 'change' },
+  ],
+  dogovororkp: [
+    { required: true, message: 'Iltimos, Dogovor yoki KP ni tanlang', trigger: 'change' },
+  ],
+  dogovornumber: [
+    { required: true, message: 'Iltimos, dogovor raqamini kiriting', trigger: 'blur' },
+  ],
+  kpnumber: [{ required: true, message: 'Iltimos, KP raqamini kiriting', trigger: 'blur' }],
+  dogovortime: [
+    { required: true, message: 'Iltimos, dogovor sanasini tanlang', trigger: 'change' },
+  ],
+  kptime: [{ required: true, message: 'Iltimos, KP sanasini tanlang', trigger: 'change' }],
+  firmanomi: [{ required: true, message: 'Iltimos, firma nomini kiriting', trigger: 'blur' }],
+  location: [
+    {
+      required: true,
+      validator: (rule, value, callback) => {
+        if (!form.lat || !form.lang) {
+          callback(new Error('Iltimos, joylashuvni tanlang'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change',
+    },
+  ],
+})
+
+const getAdditionalFormRules = (obj) => {
+  return {
+    goingtime: [
+      { required: true, message: 'Iltimos, obyektga ketish vaqtini tanlang', trigger: 'change' },
+    ],
+    where: [
+      { required: true, message: 'Iltimos, qayerga ketayotganingizni tanlang', trigger: 'change' },
+    ],
+    dogovororkp: [
+      { required: true, message: 'Iltimos, Dogovor yoki KP ni tanlang', trigger: 'change' },
+    ],
+    dogovornumber: [
+      { required: true, message: 'Iltimos, dogovor raqamini kiriting', trigger: 'blur' },
+    ],
+    kpnumber: [{ required: true, message: 'Iltimos, KP raqamini kiriting', trigger: 'blur' }],
+    dogovortime: [
+      { required: true, message: 'Iltimos, dogovor sanasini tanlang', trigger: 'change' },
+    ],
+    kptime: [{ required: true, message: 'Iltimos, KP sanasini tanlang', trigger: 'change' }],
+    firmanomi: [{ required: true, message: 'Iltimos, firma nomini kiriting', trigger: 'blur' }],
+    location: [
+      {
+        required: true,
+        validator: (rule, value, callback) => {
+          if (!obj.lat || !obj.lang) {
+            callback(new Error('Iltimos, joylashuvni tanlang'))
+          } else {
+            callback()
+          }
+        },
+        trigger: 'change',
+      },
+    ],
+  }
+}
+
 const additionalObjects = ref([])
 
 const createEmptyObject = () => ({
@@ -386,18 +521,25 @@ const addAdditionalObject = () => {
 
 const removeAdditionalObject = (index) => {
   additionalObjects.value.splice(index, 1)
+  additionalFormRefs.value.splice(index, 1)
 }
 
 const handleLocationSelected = (location) => {
   form.lang = location.lng
   form.lat = location.lat
   form.locationname = location.address || ''
+  if (formRef.value) {
+    formRef.value.validateField('location')
+  }
 }
 
 const handleAdditionalLocationSelected = (index, location) => {
   additionalObjects.value[index].lang = location.lng
   additionalObjects.value[index].lat = location.lat
   additionalObjects.value[index].locationname = location.address || ''
+  if (additionalFormRefs.value[index]) {
+    additionalFormRefs.value[index].validateField('location')
+  }
 }
 
 const disabledDate = (time) => {
@@ -409,7 +551,6 @@ const disabledDate = (time) => {
   return time.getTime() < sevenDaysAgo.getTime() || time.getTime() > twoDaysLater.getTime()
 }
 
-// MEDIA UPLOAD HANDLERS
 const beforeUpload = (file) => {
   console.log('🔍 Validating file:', file.name)
 
@@ -463,7 +604,6 @@ const handleUploadError = (error, file) => {
   ElMessage.error(`${file.name} yuklashda xatolik yuz berdi!`)
 }
 
-// UPLOAD MEDIA TO DATABASE
 const uploadMediaToDatabase = async (comeAndGoId) => {
   console.log('💾 Starting database save...')
   console.log('💾 Media data to save:', uploadedMediaData.value)
@@ -505,34 +645,6 @@ const uploadMediaToDatabase = async (comeAndGoId) => {
   }
 }
 
-const validateObject = (obj, objectName) => {
-  if (!obj.goingtime) {
-    ElMessage.warning(`${objectName}: Iltimos, obyektga ketish vaqtini tanlang.`)
-    return false
-  }
-  if (!obj.where) {
-    ElMessage.warning(`${objectName}: Iltimos, qayerga ketayotganingizni tanlang.`)
-    return false
-  }
-  if (obj.where === 'boshqa' && !obj.whereother) {
-    ElMessage.warning(`${objectName}: Iltimos, boshqa qayerga ketayotganingizni kiriting.`)
-    return false
-  }
-  if (!obj.dogovororkp) {
-    ElMessage.warning(`${objectName}: Iltimos, Dogovor yoki KP ni tanlang.`)
-    return false
-  }
-  if (obj.dogovororkp === 'boshqa' && !obj.dogokpother) {
-    ElMessage.warning(`${objectName}: Iltimos, boshqa nima ekanligini kiriting.`)
-    return false
-  }
-  if (!obj.lat || !obj.lang) {
-    ElMessage.warning(`${objectName}: Iltimos, joylashuvni tanlang.`)
-    return false
-  }
-  return true
-}
-
 const createInsidePayload = (obj) => {
   return {
     when_gone: obj.goingtime,
@@ -553,22 +665,45 @@ const onSubmit = async () => {
   console.log('🎯 SUBMIT STARTED')
   console.log('📁 Media files selected:', mediaFileList.value.length)
 
-  if (!validateObject(form, 'Asosiy obyekt')) {
+  let isMainFormValid = false
+  try {
+    await formRef.value.validate()
+    isMainFormValid = true
+    console.log('✅ Main form validated')
+  } catch (error) {
+    console.log('❌ Main form validation failed:', error)
+    ElMessage.error("Asosiy obyekt: Iltimos, barcha majburiy maydonlarni to'ldiring")
     return
   }
 
-  for (let i = 0; i < additionalObjects.value.length; i++) {
-    if (!validateObject(additionalObjects.value[i], `Qo'shimcha obyekt #${i + 1}`)) {
-      return
+  if (additionalObjects.value.length > 0) {
+    console.log(`🔍 Validating ${additionalFormRefs.value.length} additional forms...`)
+
+    for (let i = 0; i < additionalFormRefs.value.length; i++) {
+      if (!additionalFormRefs.value[i]) {
+        console.warn(`⚠️ Form ref ${i} is null`)
+        continue
+      }
+
+      try {
+        await additionalFormRefs.value[i].validate()
+        console.log(`✅ Additional form ${i + 1} validated`)
+      } catch (error) {
+        console.log(`❌ Additional form ${i + 1} validation failed:`, error)
+        ElMessage.error(
+          `Qo'shimcha obyekt #${i + 1}: Iltimos, barcha majburiy maydonlarni to'ldiring`,
+        )
+        return
+      }
     }
   }
 
+  console.log('✅ All forms validated successfully')
   loading.value = true
 
   try {
     console.log('1️⃣ Creating parent ComeAndGoes...')
 
-    // 1. Parent obyekt yaratish
     const parentPayload = {
       user_id: Number(localStorage.getItem('userid')),
     }
@@ -584,16 +719,15 @@ const onSubmit = async () => {
 
     console.log('2️⃣ Creating main inside obyekt...')
 
-    // 2. Main inside obyekt yaratish
     const mainInsidePayload = {
       ...createInsidePayload(form),
       come_and_go_father_id: comeAndGoId,
     }
+    console.log('📤 Main payload:', mainInsidePayload)
     await comeandgoInsideStore.createComeAndGoInside(mainInsidePayload)
 
     console.log('✅ Main inside obyekt created')
 
-    // 3. Qo'shimcha obyektlarni yaratish
     if (additionalObjects.value.length > 0) {
       console.log(`3️⃣ Creating ${additionalObjects.value.length} additional obyekts...`)
 
@@ -602,27 +736,24 @@ const onSubmit = async () => {
           ...createInsidePayload(additionalObjects.value[i]),
           come_and_go_father_id: comeAndGoId,
         }
+        console.log(`📤 Additional payload ${i + 1}:`, additionalInsidePayload)
         await comeandgoInsideStore.createComeAndGoInside(additionalInsidePayload)
         console.log(`✅ Additional obyekt ${i + 1} created`)
       }
     }
 
-    // 4. Media fayllarni yuklash
     let mediaUploadCount = 0
 
     if (mediaFileList.value.length > 0) {
       console.log('4️⃣ Media files detected:', mediaFileList.value.length)
       console.log('📤 Uploading to Cloudinary...')
 
-      // Reset uploaded data
       uploadedMediaData.value = []
 
-      // Trigger Cloudinary upload
       if (uploadRef.value) {
         uploadRef.value.submit()
 
-        // Wait for Cloudinary uploads to complete
-        const maxWait = 60000 // 60 seconds
+        const maxWait = 60000
         const checkInterval = 500
         let waited = 0
 
@@ -643,7 +774,6 @@ const onSubmit = async () => {
           console.log('✅ All files uploaded to Cloudinary')
         }
 
-        // Save to database
         if (uploadedMediaData.value.length > 0) {
           console.log('5️⃣ Saving media to database...')
           const dbResult = await uploadMediaToDatabase(comeAndGoId)
@@ -655,7 +785,6 @@ const onSubmit = async () => {
       console.log('ℹ️ No media files selected')
     }
 
-    // Success message
     if (mediaUploadCount > 0) {
       ElMessage.success(`Barcha obyektlar va ${mediaUploadCount} ta media muvaffaqiyatli saqlandi!`)
     } else {
@@ -707,6 +836,34 @@ watch(
 </script>
 
 <style scoped lang="scss">
+:deep(.el-form-item.is-required:not(.is-no-asterisk)) {
+  > .el-form-item__label:before {
+    content: '*';
+    color: var(--el-color-danger);
+    margin-right: 4px;
+  }
+}
+
+:deep(.el-form-item.is-error) {
+  .el-input__wrapper {
+    box-shadow: 0 0 0 1px var(--el-color-danger) inset;
+  }
+
+  .el-select .el-input__wrapper {
+    box-shadow: 0 0 0 1px var(--el-color-danger) inset;
+  }
+
+  .el-textarea__inner {
+    box-shadow: 0 0 0 1px var(--el-color-danger) inset;
+  }
+
+  .el-date-editor {
+    .el-input__wrapper {
+      box-shadow: 0 0 0 1px var(--el-color-danger) inset;
+    }
+  }
+}
+
 .container {
   display: flex;
   justify-content: center;
@@ -803,22 +960,15 @@ watch(
     font-size: 14px;
     display: block;
     font-weight: 400;
-    margin-bottom: 10px;
     color: #606266;
 
     @media (max-width: 480px) {
       font-size: 13px;
-      margin-bottom: 8px;
     }
   }
 
   .more-info-input {
-    margin-top: 16px;
     width: 100%;
-
-    @media (max-width: 480px) {
-      margin-top: 12px;
-    }
   }
 }
 
@@ -971,7 +1121,6 @@ watch(
   padding-top: 5px;
 }
 
-// MEDIA UPLOAD STYLES
 :deep(.el-upload-list--picture-card) {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -1023,11 +1172,10 @@ watch(
       width: 100% !important;
       height: auto !important;
       display: block !important;
-      border: 0 !important; /* tashqi kvadrat border kerakmas */
+      border: 0 !important;
       background: transparent !important;
     }
 
-    /* draggerning o'zini dropzone ko'rinishiga keltiramiz */
     :deep(.el-upload--picture-card .el-upload-dragger) {
       width: 100% !important;
       height: auto !important;
@@ -1043,7 +1191,6 @@ watch(
       border-radius: 10px;
     }
 
-    /* icon + text markazda, tartibli */
     :deep(.el-upload--picture-card .el-icon--upload) {
       margin-bottom: 10px;
     }
@@ -1096,58 +1243,40 @@ watch(
   margin: 0;
 }
 
-// Full width classes for responsive inputs
-.full-width-picker {
-  width: 100% !important;
-
-  @media (max-width: 768px) {
-    width: 100% !important;
-  }
-}
-
-.full-width-select {
-  width: 100%;
-}
-
+// ASOSIY TUZATISH - label-width ni olib tashladik
+.full-width-picker,
+.full-width-select,
 .full-width-input {
-  width: 100%;
+  width: 100% !important;
 }
 
-// Override Element Plus label width on mobile
+// Element Plus form item layout override
 :deep(.el-form-item__label) {
+  text-align: left;
+  display: block;
+  margin-bottom: 8px;
+
   @media (max-width: 768px) {
-    width: 100% !important;
-    text-align: left !important;
     margin-bottom: 8px;
   }
 }
 
 :deep(.el-form-item__content) {
-  @media (max-width: 768px) {
-    margin-left: 0 !important;
-    width: 100%;
-  }
-}
-
-// Make date pickers responsive
-:deep(.el-date-editor) {
-  width: 100% !important;
-
-  @media (max-width: 768px) {
-    width: 100% !important;
-  }
-}
-
-// Make selects responsive
-:deep(.el-select) {
   width: 100%;
+  display: block;
 }
 
-// Responsive form layout
-:deep(.el-form-item) {
-  @media (max-width: 768px) {
-    display: flex;
-    flex-direction: column;
-  }
+:deep(.el-date-editor),
+:deep(.el-select),
+:deep(.el-input),
+:deep(.el-textarea) {
+  width: 100% !important;
+}
+
+:deep(.el-date-editor .el-input__wrapper),
+:deep(.el-select .el-input__wrapper),
+:deep(.el-input__wrapper),
+:deep(.el-textarea__inner) {
+  width: 100% !important;
 }
 </style>
