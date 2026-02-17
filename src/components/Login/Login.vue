@@ -1,33 +1,72 @@
 <template>
   <div class="login-page">
-    <div class="login-box">
+    <div class="login-container">
+      <!-- Left Side - Illustration -->
       <div class="login-illustration">
-        <img src="@/assets/man.png" alt="Man Illustration" />
+        <div class="brand-logo">
+          <img src="/biglogo.png" alt="Logo" />
+        </div>
+        <div class="illustration-content">
+          <img src="@/assets/login-illustration.svg" alt="Login Illustration" />
+        </div>
       </div>
 
-      <div class="login-form">
-        <img class="logo" src="/biglogo.png" />
-        <p>{{ $t('loginPageHeader') }}</p>
-        <form @submit.prevent="handleLogin">
-          <el-input v-model="username" style="width: 240px" :placeholder="$t('login')" />
-          <el-alert v-if="isloginEnterd" :title="$t('loginError')" type="error" :closable="false" />
-          <el-input
-            v-model="password"
-            style="width: 240px"
-            :placeholder="$t('password')"
-            type="password"
-            show-password
-          />
-          <el-alert
-            v-if="isPasswordEntered"
-            :title="$t('passwordError')"
-            type="error"
-            :closable="false"
-          />
-          <el-button :loading="loading" type="primary" native-type="submit">{{
-            $t('loginBtn')
-          }}</el-button>
-        </form>
+      <!-- Right Side - Form -->
+      <div class="login-form-section">
+        <div class="form-wrapper">
+          <div class="form-header">
+            <h1>{{ $t('loginPageHeader') }}</h1>
+            <p class="subtitle">{{ $t('adminDashboardSubtitle') }}</p>
+          </div>
+
+          <form @submit.prevent="handleLogin" class="login-form">
+            <div class="form-group">
+              <label>{{ $t('login') }}</label>
+              <el-input
+                v-model="username"
+                :placeholder="$t('login')"
+                size="large"
+                class="modern-input"
+              />
+              <el-alert
+                v-if="isloginEnterd"
+                :title="$t('loginError')"
+                type="error"
+                :closable="false"
+                class="field-error"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>{{ $t('password') }}</label>
+              <el-input
+                v-model="password"
+                :placeholder="$t('password')"
+                type="password"
+                show-password
+                size="large"
+                class="modern-input"
+              />
+              <el-alert
+                v-if="isPasswordEntered"
+                :title="$t('passwordError')"
+                type="error"
+                :closable="false"
+                class="field-error"
+              />
+            </div>
+
+            <el-button
+              :loading="loading"
+              type="primary"
+              native-type="submit"
+              size="large"
+              class="submit-btn"
+            >
+              {{ $t('loginBtn') }}
+            </el-button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -112,107 +151,252 @@ const handleLogin = async () => {
 </script>
 
 <style lang="scss" scoped>
-.el-alert {
-  margin: -10px 0 0;
-  height: 25px;
-  .el-alert__title {
-    font-size: 12px !important;
-  }
-}
-
 .login-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f5f7fa 100%);
   display: flex;
-  justify-content: center;
   align-items: center;
-  background: #ffffff;
-  height: 100vh;
+  justify-content: center;
   padding: 20px;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
 }
 
-.login-box {
-  display: flex;
+.login-container {
+  display: grid;
+  grid-template-columns: 45% 55%;
   width: 100%;
-  max-width: 800px;
-  min-height: 500px;
-  height: auto;
-  background: white;
-  border-radius: 16px;
+  max-width: 1100px;
+  min-height: 600px;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+  }
 }
 
 .login-illustration {
-  background-color: #409eff;
-  width: 35%;
+  background: linear-gradient(135deg, #409eff 0%, #5dade2 100%);
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: pulse 15s ease-in-out infinite;
+  }
+
+  .brand-logo {
+    position: relative;
+    z-index: 2;
+    align-self: flex-start;
+
+    img {
+      width: 160px;
+      height: auto;
+      filter: brightness(0) invert(1);
+    }
+  }
+
+  .illustration-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    flex: 1;
+
+    img {
+      width: 85%;
+      height: auto;
+      max-width: 450px;
+      filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.15));
+    }
+  }
+
+  @media (max-width: 968px) {
+    padding: 30px;
+    min-height: 250px;
+
+    .brand-logo img {
+      width: 120px;
+    }
+
+    .illustration-content img {
+      width: 70%;
+      max-width: 280px;
+    }
+  }
+}
+
+.login-form-section {
+  padding: 60px 50px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #ffffff;
 
-  img {
-    position: absolute;
-    width: 95%;
-    height: auto;
+  @media (max-width: 968px) {
+    padding: 40px 30px;
   }
 
-  @media (max-width: 768px) {
-    display: none;
+  @media (max-width: 480px) {
+    padding: 30px 20px;
+  }
+}
+
+.form-wrapper {
+  width: 100%;
+  max-width: 420px;
+}
+
+.form-header {
+  margin-bottom: 40px;
+  text-align: center;
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: #7f8c8d;
+    margin: 0;
+    font-weight: 400;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 30px;
+
+    h1 {
+      font-size: 24px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+    }
   }
 }
 
 .login-form {
-  flex: 1;
-  padding: clamp(20px, 5vw, 50px);
-  text-align: center;
-  justify-content: center;
-  align-items: center;
   display: flex;
   flex-direction: column;
+  gap: 24px;
+}
 
-  .logo {
-    width: clamp(120px, 12vw, 180px);
-    margin-bottom: 20px;
-  }
+.form-group {
+  position: relative;
 
-  p {
-    color: #555;
-    font-size: clamp(12px, 2vw, 14px);
-    margin-bottom: 20px;
-    padding: 0 10px;
-  }
-
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 100%;
-    max-width: 240px;
-
-    .el-input {
-      width: 100% !important;
-    }
-
-    .el-button {
-      width: 100%;
-    }
+  label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 8px;
   }
 }
 
-@media (max-width: 768px) {
-  .login-box {
-    min-height: auto;
+.field-error {
+  margin-top: 8px;
+  border-radius: 6px;
+
+  :deep(.el-alert__title) {
+    font-size: 12px !important;
   }
 }
 
-@media (max-width: 480px) {
-  .login-box {
-    box-shadow: none;
+.submit-btn {
+  margin-top: 8px;
+  width: 100%;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 10px;
+  background: #409eff;
+  border-color: #409eff;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #66b1ff;
+    border-color: #66b1ff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(64, 158, 255, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Element Plus Input Overrides
+:deep(.modern-input) {
+  .el-input__wrapper {
+    border-radius: 10px;
+    padding: 8px 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e6ed;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #409eff;
+    }
+
+    &.is-focus {
+      border-color: #409eff;
+      box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
+    }
+  }
+
+  .el-input__inner {
+    font-size: 15px;
+    color: #2c3e50;
+
+    &::placeholder {
+      color: #adb5bd;
+    }
   }
 }
 </style>
 
 <style lang="scss">
 .el-alert__title {
-  font-size: 11px !important;
+  font-size: 12px !important;
+}
+
+.el-button.is-loading {
+  pointer-events: none;
 }
 </style>

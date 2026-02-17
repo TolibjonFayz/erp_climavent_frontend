@@ -1,10 +1,4 @@
 {
-  "loginPageHeader": "Введите ваш логин и пароль для входа в систему!",
-  "loginError": "Введите ваш логин",
-  "passwordError": "Введите ваш пароль",
-  "login": "Логин",
-  "password": "Пароль",
-  "loginBtn": "Войти",
   "sidebarLogo": "Панель для сотрудников",
   "expandSidebar": "Развернуть боковую панель",
   "collapseSidebar": "Свернуть боковую панель",
@@ -235,5 +229,20 @@
   "form_shaharTuman_placeholder": "Введите город/район",
   "form_qoshimchamalumot": "Дополнительная информация",
   "form_qoshimchamalumot_placeholder": "Введите дополнительную информацию",
-  "vaqt_chegarasi_xabari": "Этот партнер был создан {days} дней назад. Редактировать можно только в течение одного дня!"
+  "vaqt_chegarasi_xabari": "Этот партнер был создан {days} дней назад. Редактировать можно только в течение одного дня!",
+  "loginPageHeader": "Добро пожаловать в систему Climavent",
+  "adminDashboardSubtitle": "Панель Управления",
+  "login": "Логин",
+  "password": "Пароль",
+  "loginBtn": "Войти",
+  "loginError": "Логин не введен",
+  "passwordError": "Пароль не введен",
+  "welcomeBack": "Рады видеть вас снова!",
+  "pleaseLogin": "Пожалуйста, войдите в систему",
+  "forgotPassword": "Забыли пароль?",
+  "rememberMe": "Запомнить меня",
+  "createAccount": "Создать новый аккаунт",
+  "loginSuccess": "Успешный вход!",
+  "loginFailed": "Вход не выполнен",
+  "invalidCredentials": "Неверный логин или пароль"
 }

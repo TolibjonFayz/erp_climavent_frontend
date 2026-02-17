@@ -1,10 +1,4 @@
 {
-  "loginPageHeader": "Tizimga kirish uchun login va parolingizni kiriting!",
-  "loginError": "Loginingizni kiriting",
-  "passwordError": "Maxfiy kodni kiriting",
-  "login": "Login",
-  "password": "Maxfiy kod",
-  "loginBtn": "Kirish",
   "sidebarLogo": "Xodimlar uchun panel",
   "expandSidebar": "Kengaytirish",
   "collapseSidebar": "Qisqartirish",
@@ -236,5 +230,20 @@
   "form_shaharTuman_placeholder": "Shahar/Tumanни kiriting",
   "form_qoshimchamalumot": "Qo'shimcha ma'lumot",
   "form_qoshimchamalumot_placeholder": "Qo'shimcha ma'lumot kiriting",
-  "vaqt_chegarasi_xabari": "Bu hamkor {days} kun oldin yaratilgan. Faqat bir kun ichida tahrir qilsa bo'ladi!"
+  "vaqt_chegarasi_xabari": "Bu hamkor {days} kun oldin yaratilgan. Faqat bir kun ichida tahrir qilsa bo'ladi!",
+  "loginPageHeader": "Climavent tizimiga xush kelibsiz",
+  "adminDashboardSubtitle": "Boshqaruv Paneli",
+  "login": "Login",
+  "password": "Parol",
+  "loginBtn": "Kirish",
+  "loginError": "Login kiritilmagan",
+  "passwordError": "Parol kiritilmagan",
+  "welcomeBack": "Qaytganingizdan xursandmiz!",
+  "pleaseLogin": "Iltimos, tizimga kiring",
+  "forgotPassword": "Parolni unutdingizmi?",
+  "rememberMe": "Meni eslab qol",
+  "createAccount": "Yangi hisob yaratish",
+  "loginSuccess": "Muvaffaqiyatli kirildi!",
+  "loginFailed": "Kirish amalga oshmadi",
+  "invalidCredentials": "Login yoki parol noto'g'ri"
 }

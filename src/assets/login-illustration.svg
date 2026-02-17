@@ -1,0 +1,69 @@
+<svg width="400" height="500" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="200" cy="250" r="180" fill="#E3F2FD" opacity="0.3"/>
+  
+  <!-- Phone/Device Frame -->
+  <rect x="120" y="100" width="160" height="300" rx="20" fill="white" stroke="#409EFF" stroke-width="3"/>
+  
+  <!-- Screen -->
+  <rect x="135" y="120" width="130" height="220" rx="10" fill="#F5F7FA"/>
+  
+  <!-- Lock Icon Circle -->
+  <circle cx="200" cy="180" r="35" fill="#409EFF"/>
+  
+  <!-- Lock Icon -->
+  <g transform="translate(185, 165)">
+    <!-- Lock Body -->
+    <rect x="5" y="18" width="20" height="22" rx="2" fill="white"/>
+    <!-- Lock Shackle -->
+    <path d="M 10 18 Q 10 10, 15 10 Q 20 10, 20 18" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- Keyhole -->
+    <circle cx="15" cy="26" r="2.5" fill="#409EFF"/>
+    <rect x="13.5" y="26" width="3" height="5" fill="#409EFF"/>
+  </g>
+  
+  <!-- Input Fields -->
+  <rect x="145" y="230" width="110" height="12" rx="4" fill="white"/>
+  <rect x="145" y="250" width="110" height="12" rx="4" fill="white"/>
+  
+  <!-- Button -->
+  <rect x="155" y="275" width="90" height="18" rx="9" fill="#409EFF"/>
+  
+  <!-- Dots on phone bottom -->
+  <circle cx="200" cy="370" r="4" fill="#BFC9D4"/>
+  
+  <!-- Floating Elements -->
+  <!-- Shield Icon -->
+  <g transform="translate(60, 150)">
+    <path d="M 20 0 L 30 5 L 30 20 Q 30 30, 20 35 Q 10 30, 10 20 L 10 5 Z" fill="#66B1FF" opacity="0.6"/>
+    <path d="M 15 18 L 18 21 L 25 14" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Key Icon -->
+  <g transform="translate(300, 280)">
+    <circle cx="8" cy="8" r="6" fill="#5DADE2" opacity="0.6"/>
+    <rect x="12" y="6" width="15" height="4" rx="2" fill="#5DADE2" opacity="0.6"/>
+    <rect x="23" y="3" width="2" height="4" fill="#5DADE2" opacity="0.6"/>
+    <rect x="23" y="7" width="2" height="4" fill="#5DADE2" opacity="0.6"/>
+  </g>
+  
+  <!-- Check Mark Circle -->
+  <g transform="translate(320, 180)">
+    <circle cx="15" cy="15" r="12" fill="#52C41A" opacity="0.6"/>
+    <path d="M 10 15 L 13 18 L 20 11" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Fingerprint Icon -->
+  <g transform="translate(70, 280)">
+    <path d="M 15 8 Q 18 5, 21 8" stroke="#409EFF" stroke-width="2" fill="none" opacity="0.5"/>
+    <path d="M 13 12 Q 18 7, 23 12" stroke="#409EFF" stroke-width="2" fill="none" opacity="0.5"/>
+    <path d="M 11 16 Q 18 9, 25 16" stroke="#409EFF" stroke-width="2" fill="none" opacity="0.5"/>
+    <path d="M 13 20 Q 18 15, 23 20" stroke="#409EFF" stroke-width="2" fill="none" opacity="0.5"/>
+  </g>
+  
+  <!-- Decorative Dots -->
+  <circle cx="90" cy="380" r="3" fill="#409EFF" opacity="0.3"/>
+  <circle cx="310" cy="120" r="4" fill="#66B1FF" opacity="0.3"/>
+  <circle cx="80" cy="100" r="3" fill="#5DADE2" opacity="0.3"/>
+  <circle cx="330" cy="350" r="3" fill="#409EFF" opacity="0.3"/>
+</svg>
