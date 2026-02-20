@@ -1,322 +1,303 @@
 <template>
-  <div class="admin-container" v-loading="loading">
-    <!-- Header with Gradient Background -->
-    <div class="admin-header-wrapper">
-      <div class="admin-header-bg">
-        <div class="floating-orb orb-1"></div>
-        <div class="floating-orb orb-2"></div>
-        <div class="floating-orb orb-3"></div>
+  <div class="admin-wrap" v-loading="loading">
+    <header class="adm-header">
+      <div class="adm-header__bg">
+        <span class="orb orb-1"></span>
+        <span class="orb orb-2"></span>
+        <span class="orb orb-3"></span>
       </div>
-      <div class="admin-header">
-        <div class="header-content">
-          <div class="header-icon">
-            <div class="icon-circle">
-              <i class="el-icon-management"></i>
-            </div>
-          </div>
-          <div class="header-text">
-            <h1 class="admin-title">Admin Panel</h1>
-            <p class="admin-subtitle">
-              Tizim boshqaruvchisining paneli • Barcha ma'lumotlar bir joyda
-            </p>
+      <div class="adm-header__inner">
+        <div class="adm-header__left">
+          <div class="adm-logo"><i class="el-icon-management"></i></div>
+          <div>
+            <h1 class="adm-title">Admin Panel</h1>
+            <p class="adm-sub">Tizim boshqaruvchisining paneli · Barcha ma'lumotlar bir joyda</p>
           </div>
         </div>
-        <div class="header-stats">
-          <div class="stat-badge" style="animation-delay: 0.1s">
-            <div class="stat-icon">
-              <i class="el-icon-user"></i>
-            </div>
-            <span class="badge-value">{{ totalPartners }}</span>
-            <span class="badge-label">Hamkorlar</span>
+        <div class="adm-header__stats">
+          <div class="stat-chip" style="animation-delay: 0.1s">
+            <i class="el-icon-user chip-icon"></i>
+            <span class="chip-val">{{ Math.round(uAnim) }}</span>
+            <span class="chip-lbl">Foydalanuvchilar</span>
           </div>
-          <div class="stat-badge" style="animation-delay: 0.2s">
-            <div class="stat-icon">
-              <i class="el-icon-office-building"></i>
-            </div>
-            <span class="badge-value">{{ totalObjects }}</span>
-            <span class="badge-label">Obyektlar</span>
+          <div class="stat-chip" style="animation-delay: 0.2s">
+            <i class="el-icon-office-building chip-icon"></i>
+            <span class="chip-val">{{ Math.round(oAnim) }}</span>
+            <span class="chip-lbl">Obyektlar</span>
           </div>
-          <div class="stat-badge" style="animation-delay: 0.3s">
-            <div class="stat-icon">
-              <i class="el-icon-s-custom"></i>
-            </div>
-            <span class="badge-value">{{ totalUsers }}</span>
-            <span class="badge-label">Foydalanuvchilar</span>
+          <div class="stat-chip" style="animation-delay: 0.3s">
+            <i class="el-icon-s-custom chip-icon"></i>
+            <span class="chip-val">{{ Math.round(pAnim) }}</span>
+            <span class="chip-lbl">Hamkorlar</span>
           </div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <!-- Tabs Navigation -->
-    <el-tabs v-model="activeTab" class="admin-tabs">
-      <el-tab-pane name="users">
-        <template #label>
-          <span class="tab-label">
-            <i class="el-icon-user"></i>
-            Foydalanuvchilar
-          </span>
-        </template>
-        <div class="tab-content">
-          <div class="section-header">
-            <div class="section-title-wrapper">
-              <div class="title-accent"></div>
-              <h2>Barcha foydalanuvchilar</h2>
+    <div class="adm-body">
+      <!-- SIDEBAR -->
+      <aside class="adm-sidebar">
+        <nav class="adm-nav">
+          <button
+            v-for="tab in tabs"
+            :key="tab.name"
+            class="adm-nav__item"
+            :class="{ 'is-active': activeTab === tab.name }"
+            @click="activeTab = tab.name"
+          >
+            <span class="adm-nav__icon"><i :class="tab.icon"></i></span>
+            <span class="adm-nav__lbl">{{ tab.label }}</span>
+          </button>
+        </nav>
+
+        <div class="adm-sidebar__footer">
+          <div class="adm-user">
+            <div class="adm-user__av"><i class="el-icon-user-solid"></i></div>
+            <div>
+              <span class="adm-user__name">Administrator</span>
+              <span class="adm-user__role">Super Admin</span>
             </div>
           </div>
+        </div>
+      </aside>
 
-          <div class="table-container" v-loading="usersLoading">
-            <el-table :data="filteredUsersList" stripe border style="width: 100%">
+      <!-- MAIN -->
+      <main class="adm-main">
+        <!-- Foydalanuvchilar -->
+        <div v-if="activeTab === 'users'" class="adm-page">
+          <div class="page-head">
+            <span class="page-accent"></span>
+            <h2 class="page-title">Barcha foydalanuvchilar</h2>
+          </div>
+          <div class="tbl-wrap" v-loading="usersLoading">
+            <el-table :data="usersStore.allUsers" stripe border style="width: 100%">
               <el-table-column prop="id" label="ID" width="75" />
-              <el-table-column prop="username" label="Foydalanuvchi nomi" min-width="150" />
-              <el-table-column prop="first_name" label="Ismi" min-width="150" />
-              <el-table-column prop="last_name" label="Familiyasi" min-width="150" />
-              <el-table-column prop="phone" label="Telefon" min-width="200" />
-              <el-table-column prop="email" label="Email" min-width="200" />
-              <el-table-column prop="role" label="Rol" width="120">
+              <el-table-column prop="username" label="Foydalanuvchi nomi" min-width="120" />
+              <el-table-column prop="firstname" label="Ismi" min-width="120" />
+              <el-table-column prop="lastname" label="Familiyasi" min-width="120" />
+              <el-table-column prop="phone_number" label="Telefon" min-width="120" />
+              <el-table-column prop="email" label="Email" min-width="120" />
+              <el-table-column label="Rol" width="250">
                 <template #default="{ row }">
-                  <el-tag :type="row.role === 'admin' ? 'danger' : 'success'">
-                    {{ row.role }}
+                  <el-tag :type="row.is_admin ? 'success' : 'warning'">
+                    {{ row.is_admin ? 'Admin' : 'Foydalanuvchi' }}
                   </el-tag>
                 </template>
               </el-table-column>
             </el-table>
           </div>
         </div>
-      </el-tab-pane>
 
-      <el-tab-pane name="partners">
-        <template #label>
-          <span class="tab-label">
-            <i class="el-icon-data-analysis"></i>
-            Hamkorlar
-          </span>
-        </template>
-        <div class="tab-content">
-          <div class="section-header">
-            <div class="section-title-wrapper">
-              <div class="title-accent"></div>
-              <h2>Hamkorlar va mijozlar</h2>
-            </div>
+        <!-- Hamkorlar -->
+        <div v-if="activeTab === 'partners'" class="adm-page">
+          <div class="page-head">
+            <span class="page-accent"></span>
+            <h2 class="page-title">Hamkorlar va mijozlar</h2>
           </div>
-
-          <div class="toolbar">
+          <div class="adm-toolbar">
             <el-input
-              v-model="partnersSearchQuery"
-              placeholder="Qidiruv (nomi, telefon, email)..."
+              v-model="partnersSearch"
+              placeholder="Qidiruv (nomi, telefon)..."
               :prefix-icon="Search"
               clearable
-              class="search-input"
+              class="adm-search"
             />
             <el-select
-              v-model="partnersFilterType"
-              placeholder="Turi bo'yicha filter"
+              v-model="partnersType"
+              placeholder="Turi bo'yicha"
               clearable
-              class="filter-select"
+              class="adm-select"
             >
               <el-option label="Doimiy mijoz" value="Doimiy mijoz" />
               <el-option label="Montajnik" value="Montajnik" />
               <el-option label="Quruvchi" value="Quruvchi" />
             </el-select>
-            <el-button @click="handleResetPartnersFilter" class="reset-btn">
-              <i class="el-icon-refresh-left"></i>
-              Tozalash
+            <el-button class="adm-reset-btn" @click="handleResetPartners">
+              <i class="el-icon-refresh-left"></i> Tozalash
             </el-button>
           </div>
-
-          <div class="table-container" v-loading="partnersLoading">
-            <el-table :data="filteredPartnersList" stripe border style="width: 100%">
+          <div class="tbl-wrap" v-loading="partnersLoading">
+            <el-table :data="partnersStore.allPartners" stripe border style="width: 100%">
               <el-table-column prop="id" label="ID" width="80" />
-              <el-table-column prop="type" label="Turi" min-width="130">
+              <el-table-column prop="partner_type" label="Turi" min-width="120" />
+              <el-table-column label="Kim qo'shgan" min-width="140">
+                <template #default="{ row }"
+                  ><el-tag>{{ row.user.firstname }}</el-tag></template
+                >
+              </el-table-column>
+              <el-table-column label="Username" min-width="160">
+                <template #default="{ row }"
+                  ><el-tag>{{ row.user.username }}</el-tag></template
+                >
+              </el-table-column>
+              <el-table-column prop="fullname" label="Nomi" min-width="130" />
+              <el-table-column prop="phone_number" label="Telefon" min-width="150" />
+              <el-table-column
+                prop="additional_phone_number"
+                label="Qo'shimcha tel"
+                min-width="150"
+              />
+              <el-table-column label="Manzil" min-width="160">
                 <template #default="{ row }">
-                  <el-tag>{{ row.type }}</el-tag>
+                  <el-tag
+                    >{{ row.user.republic }} {{ row.user.viloyat }}
+                    {{ row.user.shahar_tuman }}</el-tag
+                  >
                 </template>
               </el-table-column>
-              <el-table-column prop="who" label="Kim qo'shgan" min-width="130" />
-              <el-table-column prop="name" label="Nomi" min-width="130" />
-              <el-table-column prop="phone" label="Telefon" min-width="130" />
-              <el-table-column prop="addphone" label="Qo'shimcha telefon" min-width="130" />
-              <el-table-column prop="address" label="Manzil" min-width="130" />
-              <el-table-column prop="yorjshaxs" label="Yuridik / Jismoniy" min-width="100" />
-              <el-table-column prop="inn" label="Inn" min-width="100" />
+              <el-table-column prop="mijozturi" label="Yuridik/Jismoniy" min-width="130" />
+              <el-table-column prop="inn" label="INN" min-width="110" />
             </el-table>
           </div>
         </div>
-      </el-tab-pane>
 
-      <el-tab-pane name="objects">
-        <template #label>
-          <span class="tab-label">
-            <i class="el-icon-data-analysis"></i>
-            Obyektlar
-          </span>
-        </template>
-        <div class="tab-content">
-          <div class="section-header">
-            <div class="section-title-wrapper">
-              <div class="title-accent"></div>
-              <h2>Obyektlar</h2>
-            </div>
+        <!-- Obyektlar -->
+        <div v-if="activeTab === 'objects'" class="adm-page">
+          <div class="page-head">
+            <span class="page-accent"></span>
+            <h2 class="page-title">Obyektlar</h2>
           </div>
-
-          <div class="toolbar">
+          <div class="adm-toolbar">
             <el-input
-              v-model="objectsSearchQuery"
-              placeholder="Qidiruv (firma)..."
+              v-model="objectsSearch"
+              placeholder="Qidiruv (firma nomi)..."
               :prefix-icon="Search"
               clearable
-              class="search-input"
+              class="adm-search"
             />
-            <el-button @click="handleResetObjectsFilter" class="reset-btn">
-              <i class="el-icon-refresh-left"></i>
-              Tozalash
+            <el-button class="adm-reset-btn" @click="handleResetObjects">
+              <i class="el-icon-refresh-left"></i> Tozalash
             </el-button>
           </div>
-
-          <div class="table-container" v-loading="objectsLoading">
-            <el-table :data="filteredObjectsList" stripe border style="width: 100%">
+          <div class="tbl-wrap" v-loading="objectsLoading">
+            <el-table
+              :data="comeandgoInsideStore.allComeAndGoInsides"
+              stripe
+              border
+              style="width: 100%"
+            >
               <el-table-column prop="id" label="ID" width="80" />
-              <el-table-column prop="where" label="Qayerga" min-width="130">
+              <el-table-column prop="whereto" label="Qayerga" min-width="120" />
+              <el-table-column prop="who" label="Kim qo'shgan" min-width="130">
                 <template #default="{ row }">
-                  <el-tag>{{ row.where }}</el-tag>
+                  {{ row.come_and_go_father?.user?.username }}
                 </template>
               </el-table-column>
-              <el-table-column prop="who" label="Kim qo'shgan" min-width="130" />
-              <el-table-column prop="gonetime" label="Ketilgan vaqt" min-width="130" />
-              <el-table-column prop="cametime" label="Qaytilgan vaqt" min-width="130" />
-              <el-table-column prop="dogovororkp" label="Dogovor yoki KP" min-width="130" />
-              <el-table-column prop="address" label="Manzil" min-width="130" />
-              <el-table-column prop="firmanomi" label="Firma nomi" min-width="130" />
-              <el-table-column
-                prop="createdtime"
-                label="Ma'lumotlar kiritilgan vaqt"
-                min-width="130"
-              />
+              <el-table-column prop="when_gone" label="Ketilgan vaqt" min-width="150">
+                <template #default="{ row }">
+                  {{ formatDate(row.when_gone) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="when_came" label="Qaytilgan vaqt" min-width="150">
+                <template #default="{ row }">
+                  {{ formatDate(row.when_came) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="dogovor_or_kp" label="Dogovor / KP" min-width="130" />
+              <el-table-column prop="locationname" label="Manzil" min-width="130" />
+              <el-table-column prop="company_name" label="Firma nomi" min-width="140" />
+              <el-table-column prop="createdAt" label="Kiritilgan vaqt" min-width="140">
+                <template #default="{ row }">
+                  {{ formatDate(row.createdAt) }}
+                </template>
+              </el-table-column>
             </el-table>
           </div>
         </div>
-      </el-tab-pane>
 
-      <el-tab-pane name="settings">
-        <template #label>
-          <span class="tab-label">
-            <i class="el-icon-setting"></i>
-            Sozlamalar
-          </span>
-        </template>
-        <div class="tab-content">
-          <div class="settings-section">
-            <div class="section-title-wrapper">
-              <div class="title-accent"></div>
-              <h2 class="section-title">Tizim sozlamalari</h2>
-            </div>
-
-            <!-- Export Data -->
-            <div class="settings-card">
-              <div class="card-icon">
-                <i class="el-icon-download"></i>
-              </div>
-              <h3>Ma'lumotlarni eksport qilish</h3>
-              <p class="setting-description">Barcha ma'lumotlarni EXCEL formatida yuklab olish</p>
-              <div class="export-buttons">
-                <el-button @click="handleExportPartners" class="export-btn">
-                  <i class="el-icon-user"></i>
-                  Hamkorlar
-                </el-button>
-                <el-button @click="handleExportObjects" class="export-btn">
-                  <i class="el-icon-office-building"></i>
-                  Obyektlar
-                </el-button>
-              </div>
+        <!-- Sozlamalar -->
+        <div v-if="activeTab === 'settings'" class="adm-page">
+          <div class="page-head">
+            <span class="page-accent"></span>
+            <h2 class="page-title">Tizim sozlamalari</h2>
+          </div>
+          <div class="settings-card">
+            <div class="sc-icon"><i class="el-icon-download"></i></div>
+            <h3 class="sc-title">Ma'lumotlarni eksport qilish</h3>
+            <p class="sc-desc">Barcha ma'lumotlarni EXCEL formatida yuklab olish</p>
+            <div class="sc-btns">
+              <el-button class="sc-btn" @click="handleExportPartners">
+                <i class="el-icon-user"></i> Hamkorlar
+              </el-button>
+              <el-button class="sc-btn" @click="handleExportObjects">
+                <i class="el-icon-office-building"></i> Obyektlar
+              </el-button>
             </div>
           </div>
         </div>
-      </el-tab-pane>
-    </el-tabs>
+      </main>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
+import { usePartnersStore } from '@/stores/partners'
 import { Search } from '@element-plus/icons-vue'
 import { ref, computed, onMounted } from 'vue'
 import { useUsersStore } from '@/stores/user'
+import { useTransition } from '@vueuse/core'
 import { ElMessage } from 'element-plus'
+import router from '@/router'
 
+const comeandgoInsideStore = useComeAndGoInsideStore()
+const partnersStore = usePartnersStore()
 const usersStore = useUsersStore()
+
 const activeTab = ref('users')
 const loading = ref(false)
 const usersLoading = ref(false)
 const partnersLoading = ref(false)
 const objectsLoading = ref(false)
 
-const partnersSearchQuery = ref('')
-const partnersFilterType = ref('')
-const objectsSearchQuery = ref('')
+function formatDate(isoString) {
+  if (!isoString) return 'Kiritilmagan'
 
-const usersList = ref([
-  {
-    id: 1,
-    username: 'admin',
-    first_name: 'Admin',
-    last_name: 'User',
-    email: 'admin@climavent.com',
-    phone: '+998901234567',
-    role: 'admin',
-  },
-  {
-    id: 2,
-    username: 'john_doe',
-    first_name: 'John',
-    last_name: 'Doe',
-    email: 'john@climavent.com',
-    phone: '+998901234568',
-    role: 'user',
-  },
-  {
-    id: 3,
-    username: 'jane_smith',
-    first_name: 'Jane',
-    last_name: 'Smith',
-    email: 'jane@climavent.com',
-    phone: '+998901234569',
-    role: 'user',
-  },
-])
+  const date = new Date(isoString)
 
-const partnersList = ref([
-  {
-    id: 1,
-    name: 'Toshkent Qurilish',
-    phone: '+998901234567',
-    addphone: '+998901234567',
-    type: 'Quruvchi',
-    address: 'Toshkent, Yunusabad tumani',
-    who: 'Admin',
-    yorjshaxs: 'Yuridik',
-    inn: '123456789',
-  },
-  {
-    id: 2,
-    name: 'Samarqand Montaj',
-    phone: '+998902345678',
-    addphone: '+998902345678',
-    type: 'Montajnik',
-    address: "Samarqand, Registon ko'chasi",
-    who: 'Admin',
-    yorjshaxs: 'Yuridik',
-    inn: '987654321',
-  },
-  {
-    id: 3,
-    name: 'Bukhoro Mijoz',
-    phone: '+998903456789',
-    addphone: '+998903456789',
-    type: 'Doimiy mijoz',
-    address: "Buxoro, Ark ko'chasi",
-    who: 'Admin',
-    yorjshaxs: 'Jismoniy',
-    inn: '456789123',
-  },
-])
+  const year = date.getFullYear()
+
+  const months = [
+    'yanvar',
+    'fevral',
+    'mart',
+    'aprel',
+    'may',
+    'iyun',
+    'iyul',
+    'avgust',
+    'sentabr',
+    'oktabr',
+    'noyabr',
+    'dekabr',
+  ]
+  const month = months[date.getMonth()]
+  const day = date.getDate()
+
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${year} / ${day}-${month} / ${hours}:${minutes}`
+}
+
+const tabs = [
+  { name: 'users', label: 'Foydalanuvchilar', icon: 'el-icon-user' },
+  { name: 'partners', label: 'Hamkorlar', icon: 'el-icon-s-custom' },
+  { name: 'objects', label: 'Obyektlar', icon: 'el-icon-office-building' },
+  { name: 'settings', label: 'Sozlamalar', icon: 'el-icon-setting' },
+]
+
+// Animated counters
+const uSrc = ref(0),
+  oSrc = ref(0),
+  pSrc = ref(0)
+const uAnim = useTransition(uSrc, { duration: 1400 })
+const oAnim = useTransition(oSrc, { duration: 1400 })
+const pAnim = useTransition(pSrc, { duration: 1400 })
+
+const partnersSearch = ref('')
+const partnersType = ref('')
+const objectsSearch = ref('')
 
 const objectsList = ref([
   {
@@ -332,630 +313,626 @@ const objectsList = ref([
   },
 ])
 
-// Statistics computed values
-const totalUsers = computed(() => usersList.value.length)
-const totalPartners = computed(() => partnersList.value.length)
-const totalObjects = computed(() => objectsList.value.length)
+const filteredObjects = computed(() =>
+  objectsList.value.filter(
+    (o) =>
+      !objectsSearch.value || o.firmanomi.toLowerCase().includes(objectsSearch.value.toLowerCase()),
+  ),
+)
 
-// Filtered Users
-const filteredUsersList = computed(() => {
-  return usersList.value
-})
+const handleExportPartners = () => ElMessage.success('Hamkorlar eksport qilindi!')
+const handleExportObjects = () => ElMessage.success('Obyektlar eksport qilindi!')
+const handleResetPartners = () => {
+  partnersSearch.value = ''
+  partnersType.value = ''
+}
+const handleResetObjects = () => {
+  objectsSearch.value = ''
+}
 
-// Filtered Partners
-const filteredPartnersList = computed(() => {
-  return partnersList.value.filter((partner) => {
-    const matchesSearch =
-      !partnersSearchQuery.value ||
-      partner.name.toLowerCase().includes(partnersSearchQuery.value.toLowerCase()) ||
-      partner.phone.includes(partnersSearchQuery.value)
-
-    const matchesType = !partnersFilterType.value || partner.type === partnersFilterType.value
-
-    return matchesSearch && matchesType
-  })
-})
-
-// Filtered Objects
-const filteredObjectsList = computed(() => {
-  return objectsList.value.filter((object) => {
-    const matchesSearch =
-      !objectsSearchQuery.value ||
-      object.firmanomi.toLowerCase().includes(objectsSearchQuery.value.toLowerCase())
-
-    return matchesSearch
-  })
-})
-
-// Load all data
-const loadAllData = async () => {
+onMounted(async () => {
   try {
     loading.value = true
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  } catch (error) {
-    ElMessage.error("Ma'lumotlarni yuklash xatosi: " + error.message)
+    await usersStore.getUserInfo(Number(localStorage.getItem('userid')))
+    if (!usersStore.currentUser.is_admin) {
+      router.push('/')
+      return
+    }
+    await Promise.all([
+      usersStore.getAllUsers(),
+      partnersStore.getAllPartners(),
+      comeandgoInsideStore.getAllComeAndGoInside(),
+    ])
+    uSrc.value = usersStore.allUsers.length
+    pSrc.value = partnersStore.allPartners.length
+    oSrc.value = comeandgoInsideStore.allComeAndGoInsides.length
+  } catch (e) {
+    ElMessage.error('Yuklashda xatolik: ' + e.message)
   } finally {
     loading.value = false
   }
-}
-
-// Filter reset handlers
-const handleResetPartnersFilter = () => {
-  partnersSearchQuery.value = ''
-  partnersFilterType.value = ''
-}
-
-const handleResetObjectsFilter = () => {
-  objectsSearchQuery.value = ''
-}
-
-// Export handlers
-const handleExportPartners = () => {
-  ElMessage.success('Hamkorlar eksport qilindi!')
-}
-
-const handleExportObjects = () => {
-  ElMessage.success('Obyektlar eksport qilindi!')
-}
-
-// Mount
-onMounted(async () => {
-  await usersStore.getUserInfo(Number(localStorage.getItem('userid')))
-  loadAllData()
 })
 </script>
 
 <style lang="scss" scoped>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
-.admin-container {
+// ─── Element Plus ko'k ranglar ────────────────────────────
+$blue: #409eff; // El Plus primary
+$blue-d: #337ecc; // El Plus primary-dark-2
+$blue-l: #a0cfff; // El Plus primary-light-3
+$blue-bg: #ecf5ff; // El Plus primary-light-9
+
+$text-primary: #303133; // El Plus text primary
+$text-regular: #606266; // El Plus text regular
+$text-secondary: #909399; // El Plus text secondary
+
+$border: #dcdfe6; // El Plus border
+$bg-page: #f0f2f5; // sahifa foni — juda ochiq kulrang
+$bg-white: #ffffff;
+
+$sw: 220px; // sidebar width
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
   padding: 0;
-  background:
-    radial-gradient(circle at 20% 50%, rgba(64, 158, 255, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(103, 194, 58, 0.03) 0%, transparent 50%),
-    linear-gradient(135deg, #f8f9fb 0%, #e8ecf1 100%);
-  min-height: 100vh;
-  width: 100%;
-  height: 100%;
+}
+
+.admin-wrap {
+  font-family: 'Plus Jakarta Sans', sans-serif;
   display: flex;
   flex-direction: column;
-  font-family: 'Outfit', sans-serif;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: $bg-page;
+}
+
+.adm-header {
   position: relative;
+  flex-shrink: 0;
+  width: 100%;
+  // Ochroq, El Plus ko'ki asosidagi gradient
+  background: linear-gradient(115deg, #2a7ae2 0%, #409eff 55%, #66b1ff 100%);
+  padding: 28px 40px 24px;
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(64, 158, 255, 0.28);
 
-  &::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image:
-      linear-gradient(rgba(64, 158, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(64, 158, 255, 0.03) 1px, transparent 1px);
-    background-size: 60px 60px;
+  &__bg {
+    position: absolute;
+    inset: 0;
     pointer-events: none;
-    z-index: 0;
-  }
-
-  // Header Wrapper with Gradient
-  .admin-header-wrapper {
-    position: relative;
-    background: linear-gradient(135deg, #409eff 0%, #3a8ee6 50%, #3680d9 100%);
-    padding: 60px 40px 50px;
-    color: white;
-    overflow: hidden;
-    flex-shrink: 0;
-    box-shadow: 0 10px 40px rgba(64, 158, 255, 0.2);
-
-    .admin-header-bg {
+    .orb {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      overflow: hidden;
-
-      .floating-orb {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(60px);
-        opacity: 0.3;
-        animation: float 20s infinite ease-in-out;
-
-        &.orb-1 {
-          width: 400px;
-          height: 400px;
-          background: radial-gradient(circle, rgba(139, 92, 246, 0.6) 0%, transparent 70%);
-          top: -100px;
-          right: -100px;
-          animation-delay: 0s;
-        }
-
-        &.orb-2 {
-          width: 300px;
-          height: 300px;
-          background: radial-gradient(circle, rgba(59, 130, 246, 0.5) 0%, transparent 70%);
-          bottom: -50px;
-          left: 10%;
-          animation-delay: -7s;
-        }
-
-        &.orb-3 {
-          width: 250px;
-          height: 250px;
-          background: radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, transparent 70%);
-          top: 50%;
-          left: 50%;
-          animation-delay: -14s;
-        }
-      }
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.18;
+      animation: orbFloat 18s ease-in-out infinite;
     }
-
-    .admin-header {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      .header-content {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-
-        .header-icon {
-          .icon-circle {
-            width: 72px;
-            height: 72px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            animation: float 3s infinite ease-in-out;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-          }
-        }
-
-        .header-text {
-          .admin-title {
-            font-size: 42px;
-            font-weight: 800;
-            margin: 0;
-            letter-spacing: -1.5px;
-            background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-          }
-
-          .admin-subtitle {
-            font-size: 15px;
-            margin: 10px 0 0 0;
-            opacity: 0.85;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-          }
-        }
-      }
-
-      .header-stats {
-        display: flex;
-        gap: 16px;
-
-        .stat-badge {
-          background: rgba(255, 255, 255, 0.12);
-          backdrop-filter: blur(20px);
-          padding: 20px 24px;
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          text-align: center;
-          min-width: 140px;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          animation: slideInFromRight 0.6s ease-out both;
-          position: relative;
-          overflow: hidden;
-
-          &::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: left 0.5s;
-          }
-
-          &:hover {
-            transform: translateY(-4px);
-            background: rgba(255, 255, 255, 0.18);
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-
-            &::before {
-              left: 100%;
-            }
-          }
-
-          .stat-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-            opacity: 0.9;
-          }
-
-          .badge-value {
-            display: block;
-            font-size: 32px;
-            font-weight: 800;
-            font-family: 'Space Mono', monospace;
-            margin: 8px 0;
-          }
-
-          .badge-label {
-            display: block;
-            font-size: 11px;
-            opacity: 0.8;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-        }
-      }
+    .orb-1 {
+      width: 340px;
+      height: 340px;
+      background: #a0cfff;
+      top: -120px;
+      right: -40px;
+      animation-delay: 0s;
+    }
+    .orb-2 {
+      width: 220px;
+      height: 220px;
+      background: #ecf5ff;
+      bottom: -60px;
+      left: 5%;
+      animation-delay: -6s;
+    }
+    .orb-3 {
+      width: 180px;
+      height: 180px;
+      background: #79bbff;
+      top: 40%;
+      left: 44%;
+      animation-delay: -12s;
     }
   }
 
-  // Tabs
-  .admin-tabs {
-    margin: 30px;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: white;
+  &__inner {
     position: relative;
     z-index: 1;
-
-    :deep(.el-tabs__header) {
-      background: white;
-      border-bottom: 2px solid #f1f3f9;
-      padding: 0 30px;
-      margin: 0;
-      flex-shrink: 0;
-    }
-
-    :deep(.el-tabs__nav-wrap::after) {
-      display: none;
-    }
-
-    :deep(.el-tabs__active-bar) {
-      background: linear-gradient(90deg, #409eff 0%, #3a8ee6 100%);
-      height: 3px;
-      border-radius: 3px 3px 0 0;
-    }
-
-    :deep(.el-tabs__item) {
-      color: #64748b;
-      font-weight: 600;
-      padding: 0 28px;
-      font-size: 15px;
-      transition: all 0.3s;
-
-      &:hover {
-        color: #409eff;
-      }
-
-      &.is-active {
-        color: #409eff;
-      }
-    }
-
-    :deep(.el-tabs__content) {
-      background: white;
-      padding: 36px;
-      border-radius: 0 0 20px 20px;
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .tab-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 15px;
-
-      i {
-        font-size: 18px;
-      }
-    }
-  }
-
-  .tab-content {
-    animation: fadeSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 100%;
-  }
-
-  // Section Headers
-  .section-header {
-    margin-bottom: 30px;
-
-    .section-title-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-
-      .title-accent {
-        width: 5px;
-        height: 36px;
-        background: linear-gradient(180deg, #409eff 0%, #3a8ee6 100%);
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
-      }
-
-      h2 {
-        margin: 0;
-        font-size: 28px;
-        font-weight: 700;
-        color: #1e293b;
-        letter-spacing: -0.5px;
-      }
-    }
-  }
-
-  // Toolbar
-  .toolbar {
     display: flex;
-    gap: 14px;
-    margin-bottom: 28px;
-    flex-wrap: wrap;
     align-items: center;
-
-    .search-input {
-      flex: 1;
-      min-width: 280px;
-
-      :deep(.el-input__wrapper) {
-        background: #f8f9fb;
-        border: 2px solid transparent;
-        border-radius: 12px;
-        padding: 8px 16px;
-        transition: all 0.3s;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-
-        &:hover {
-          border-color: #409eff;
-          background: white;
-        }
-
-        &.is-focus {
-          border-color: #409eff;
-          background: white;
-          box-shadow: 0 4px 16px rgba(64, 158, 255, 0.15);
-        }
-      }
-    }
-
-    .filter-select {
-      min-width: 200px;
-
-      :deep(.el-input__wrapper) {
-        border-radius: 12px;
-        background: #f8f9fb;
-        border: 2px solid transparent;
-        transition: all 0.3s;
-
-        &:hover {
-          border-color: #409eff;
-          background: white;
-        }
-      }
-    }
-
-    .reset-btn {
-      background: white;
-      border: 2px solid #e2e8f0;
-      color: #64748b;
-      padding: 12px 24px;
-      border-radius: 12px;
-      font-weight: 600;
-      transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      &:hover {
-        border-color: #409eff;
-        color: #409eff;
-        background: #ecf5ff;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
-      }
-
-      i {
-        font-size: 16px;
-      }
-    }
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
   }
 
-  // Table Container
-  .table-container {
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-    border: 1px solid #f1f3f9;
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  &__stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
 
-    :deep(.el-table) {
-      background: white;
+.adm-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+  animation: logoFloat 4s ease-in-out infinite;
+}
 
-      td {
-        padding: 18px 16px !important;
-        border-color: #f1f3f9;
-      }
+.adm-title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
 
-      th {
-        background: linear-gradient(180deg, #f8f9fb 0%, #f1f3f9 100%) !important;
-        padding: 18px 16px !important;
-        font-weight: 700;
-        color: #1e293b;
-        border-color: #e2e8f0;
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 0.5px;
+.adm-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.82);
+  margin-top: 4px;
+  font-weight: 400;
+}
 
-        .cell {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-      }
+.stat-chip {
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  padding: 13px 18px;
+  min-width: 110px;
+  text-align: center;
+  animation: slideRight 0.5s ease-out both;
+  transition: all 0.3s;
+  cursor: default;
 
-      tbody tr {
-        transition: all 0.2s;
-
-        &:hover {
-          background: #f8f9fb !important;
-          transform: scale(1.001);
-        }
-      }
-    }
-
-    .el-tag {
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 13px;
-      font-weight: 600;
-      border: none;
-    }
+  &:hover {
+    background: rgba(255, 255, 255, 0.32);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
   }
 
-  // Settings Section
-  .settings-section {
-    display: grid;
-    gap: 32px;
+  .chip-icon {
+    display: block;
+    font-size: 18px;
+    opacity: 0.85;
+    margin-bottom: 3px;
+  }
+  .chip-val {
+    display: block;
+    font-size: 24px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 3px 0;
+  }
+  .chip-lbl {
+    display: block;
+    font-size: 9px;
+    opacity: 0.78;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+}
 
-    .section-title-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+.adm-body {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
 
-      .title-accent {
-        width: 5px;
-        height: 32px;
-        background: linear-gradient(180deg, #409eff 0%, #3a8ee6 100%);
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+.adm-sidebar {
+  width: $sw;
+  min-width: $sw;
+  flex-shrink: 0;
+  background: $bg-white;
+  border-right: 1px solid $border;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 11px 14px;
+  box-shadow: 2px 0 8px rgba(64, 158, 255, 0.06);
+}
+
+.adm-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: transparent;
+    text-align: left;
+    transition: background 0.18s;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%) scaleY(0);
+      width: 3px;
+      height: 50%;
+      border-radius: 0 3px 3px 0;
+      background: $blue;
+      transition: transform 0.18s;
+    }
+
+    &:hover {
+      background: $blue-bg;
+      .adm-nav__icon {
+        background: $blue-bg;
+        color: $blue;
+        border-color: $blue-l;
       }
-
-      .section-title {
-        margin: 0;
-        font-size: 28px;
-        font-weight: 700;
-        color: #1e293b;
-        letter-spacing: -0.5px;
+      .adm-nav__lbl {
+        color: $blue;
       }
     }
 
-    .settings-card {
-      background: linear-gradient(135deg, #ffffff 0%, #f8f9fb 100%);
-      padding: 36px;
-      border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
-      border: 2px solid #f1f3f9;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-
+    &.is-active {
+      background: $blue-bg;
       &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: linear-gradient(90deg, #409eff 0%, #3a8ee6 50%, #10b981 100%);
+        transform: translateY(-50%) scaleY(1);
       }
-
-      &:hover {
-        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.1);
-        transform: translateY(-4px);
+      .adm-nav__icon {
+        background: $blue;
+        color: #fff;
+        box-shadow: 0 4px 12px rgba($blue, 0.32);
+        border-color: $blue;
       }
-
-      .card-icon {
-        width: 64px;
-        height: 64px;
-        border-radius: 16px;
-        background: linear-gradient(135deg, #409eff 0%, #3a8ee6 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        color: white;
-        margin-bottom: 24px;
-        box-shadow: 0 8px 24px rgba(64, 158, 255, 0.3);
-      }
-
-      h3 {
-        margin: 0 0 12px 0;
-        font-size: 22px;
+      .adm-nav__lbl {
+        color: $blue-d;
         font-weight: 700;
-        color: #1e293b;
       }
+    }
+  }
 
-      .setting-description {
-        margin: 0 0 28px 0;
-        color: #64748b;
-        font-size: 15px;
-        line-height: 1.6;
+  &__icon {
+    width: 33px;
+    height: 33px;
+    border-radius: 8px;
+    background: #f5f7fa;
+    border: 1px solid $border;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    color: $text-secondary;
+    flex-shrink: 0;
+    transition: all 0.18s;
+  }
+
+  &__lbl {
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-regular;
+    transition: color 0.18s;
+    white-space: nowrap;
+  }
+}
+
+.adm-sidebar__footer {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid $border;
+}
+
+.adm-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  background: $blue-bg;
+  border: 1px solid $blue-l;
+
+  &__av {
+    width: 33px;
+    height: 33px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, $blue-d, $blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #fff;
+    box-shadow: 0 3px 8px rgba($blue, 0.28);
+    flex-shrink: 0;
+  }
+  &__name {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: $text-primary;
+  }
+  &__role {
+    display: block;
+    font-size: 10px;
+    color: $blue;
+    font-weight: 600;
+  }
+}
+
+.adm-main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 30px 34px;
+  background: $bg-page;
+}
+
+.adm-page {
+  animation: fadeUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+
+  .page-accent {
+    width: 4px;
+    height: 26px;
+    border-radius: 5px;
+    flex-shrink: 0;
+    background: linear-gradient(180deg, $blue-d, $blue);
+    box-shadow: 0 3px 8px rgba($blue, 0.3);
+  }
+  .page-title {
+    font-size: 21px;
+    font-weight: 800;
+    color: $text-primary;
+    letter-spacing: -0.3px;
+  }
+}
+
+.adm-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+
+  .adm-search {
+    flex: 1;
+    min-width: 230px;
+    :deep(.el-input__wrapper) {
+      background: $bg-white;
+      border: 1.5px solid $border;
+      border-radius: 10px;
+      padding: 7px 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s;
+      &:hover,
+      &.is-focus {
+        border-color: $blue;
+        box-shadow: 0 3px 10px rgba($blue, 0.14);
       }
+    }
+  }
 
-      .export-buttons {
-        display: flex;
-        gap: 14px;
-        flex-wrap: wrap;
-
-        .export-btn {
-          flex: 1;
-          min-width: 180px;
-          background: white;
-          border: 2px solid #e2e8f0;
-          color: #1e293b;
-          padding: 16px 28px;
-          border-radius: 12px;
-          font-weight: 600;
-          font-size: 15px;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-
-          i {
-            font-size: 18px;
-          }
-
-          &:hover {
-            background: linear-gradient(135deg, #409eff 0%, #3a8ee6 100%);
-            color: white;
-            border-color: transparent;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(64, 158, 255, 0.3);
-          }
-        }
+  .adm-select {
+    min-width: 175px;
+    :deep(.el-input__wrapper) {
+      border-radius: 10px;
+      background: $bg-white;
+      border: 1.5px solid $border;
+      transition: all 0.2s;
+      &:hover {
+        border-color: $blue;
       }
+    }
+  }
+
+  .adm-reset-btn {
+    background: $bg-white;
+    border: 1.5px solid $border;
+    color: $text-regular;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13.5px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    &:hover {
+      border-color: $blue;
+      color: $blue;
+      background: $blue-bg;
     }
   }
 }
 
-// Animations
-@keyframes fadeSlideIn {
+.tbl-wrap {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid $border;
+
+  :deep(.el-table) {
+    background: $bg-white;
+    td {
+      padding: 13px !important;
+      border-color: #f0f2f5;
+      color: $text-regular;
+    }
+    th {
+      background: linear-gradient(180deg, #f5f7fa, #f0f2f5) !important;
+      padding: 13px !important;
+      font-weight: 700;
+      color: $text-primary;
+      border-color: $border;
+      text-transform: uppercase;
+      font-size: 10.5px;
+      letter-spacing: 0.7px;
+    }
+    tbody tr {
+      transition: background 0.12s;
+      &:hover {
+        background: $blue-bg !important;
+      }
+    }
+  }
+
+  .el-tag {
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+  }
+}
+
+.settings-card {
+  background: $bg-white;
+  padding: 34px;
+  border-radius: 16px;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.05);
+  border: 1px solid $border;
+  max-width: 560px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.28s;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, $blue-d, $blue, $blue-l);
+  }
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba($blue, 0.12);
+    border-color: $blue-l;
+  }
+
+  .sc-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, $blue-d, $blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #fff;
+    margin-bottom: 16px;
+    box-shadow: 0 5px 14px rgba($blue, 0.28);
+  }
+  .sc-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: $text-primary;
+    margin-bottom: 8px;
+  }
+  .sc-desc {
+    font-size: 13.5px;
+    color: $text-secondary;
+    line-height: 1.6;
+    margin-bottom: 22px;
+  }
+  .sc-btns {
+    display: flex;
+    gap: 11px;
+    flex-wrap: wrap;
+  }
+  .sc-btn {
+    flex: 1;
+    min-width: 155px;
+    background: $blue-bg;
+    border: 1.5px solid $blue-l;
+    color: $blue-d;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13.5px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.22s;
+    &:hover {
+      background: $blue;
+      color: #fff;
+      border-color: $blue;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba($blue, 0.26);
+    }
+  }
+}
+
+@keyframes orbFloat {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  33% {
+    transform: translate(-18px, -22px) rotate(5deg);
+  }
+  66% {
+    transform: translate(10px, -8px) rotate(-4deg);
+  }
+}
+@keyframes logoFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes slideRight {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -963,148 +940,75 @@ onMounted(async () => {
   }
 }
 
-@keyframes slideInFromRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  25% {
-    transform: translateY(-20px) rotate(5deg);
-  }
-  50% {
-    transform: translateY(0) rotate(0deg);
-  }
-  75% {
-    transform: translateY(-10px) rotate(-5deg);
-  }
-}
-
-// Responsive Design
 @media (max-width: 1024px) {
-  .admin-container {
-    .admin-header-wrapper {
-      padding: 40px 30px;
-
-      .admin-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 24px;
-
-        .header-stats {
-          width: 100%;
-          gap: 12px;
-
-          .stat-badge {
-            flex: 1;
-            min-width: auto;
-          }
-        }
-      }
+  .adm-header {
+    padding: 22px 24px 18px;
+  }
+  .adm-header__inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .adm-header__stats {
+    width: 100%;
+    .stat-chip {
+      flex: 1;
+      min-width: 80px;
+      padding: 11px;
     }
-
-    .admin-tabs {
-      margin: 20px;
-    }
+  }
+  .adm-sidebar {
+    width: 190px;
+    min-width: 190px;
+  }
+  .adm-main {
+    padding: 22px 20px;
   }
 }
 
-@media (max-width: 768px) {
-  .admin-container {
-    .admin-header-wrapper {
-      padding: 30px 20px;
-
-      .admin-header {
-        .header-content {
-          gap: 16px;
-
-          .header-icon .icon-circle {
-            width: 56px;
-            height: 56px;
-            font-size: 28px;
-          }
-
-          .header-text {
-            .admin-title {
-              font-size: 28px;
-            }
-          }
-        }
-
-        .header-stats {
-          width: 100%;
-          flex-wrap: wrap;
-        }
+@media (max-width: 640px) {
+  .admin-wrap {
+    height: auto;
+    overflow: auto;
+  }
+  .adm-body {
+    flex-direction: column;
+    overflow: visible;
+    min-height: unset;
+  }
+  .adm-sidebar {
+    width: 100%;
+    min-width: unset;
+    flex-shrink: 0;
+    padding: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-bottom: 1px solid $border;
+    .adm-nav {
+      flex-direction: row;
+      flex: unset;
+      gap: 6px;
+      min-width: max-content;
+    }
+    .adm-nav__item {
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px 12px;
+      min-width: 68px;
+      &::before {
+        display: none;
+      }
+      .adm-nav__lbl {
+        font-size: 9.5px;
       }
     }
-
-    .admin-tabs {
-      margin: 15px;
-      :deep(.el-tabs__item) {
-        padding: 0 14px;
-        font-size: 13px;
-      }
-    }
-
-    .settings-section {
-      gap: 20px;
-
-      .settings-card {
-        padding: 24px;
-
-        .export-buttons .export-btn {
-          min-width: 100%;
-        }
-      }
+    .adm-sidebar__footer {
+      display: none;
     }
   }
-}
-
-@media (max-width: 480px) {
-  .admin-container {
-    .admin-header-wrapper {
-      padding: 24px 16px;
-
-      .admin-header {
-        .header-content {
-          .header-text .admin-title {
-            font-size: 24px;
-          }
-        }
-
-        .header-stats {
-          .stat-badge {
-            padding: 16px;
-
-            .badge-value {
-              font-size: 24px;
-            }
-
-            .badge-label {
-              font-size: 10px;
-            }
-          }
-        }
-      }
-    }
-
-    .admin-tabs {
-      margin: 12px;
-      :deep(.el-tabs__item) {
-        padding: 0 10px;
-        font-size: 12px;
-      }
-    }
+  .adm-main {
+    overflow: visible;
+    padding: 16px 12px;
   }
 }
 </style>

@@ -4,6 +4,7 @@ import users from '@/api/apiUsers'
 export const useUsersStore = defineStore('users', {
   state: () => ({
     currentUser: null,
+    allUsers: [],
     isLoading: false,
     error: null,
     isAuthenticated: false,
@@ -38,6 +39,23 @@ export const useUsersStore = defineStore('users', {
         this.error = error.message || 'Failed to fetch user'
         this.isAuthenticated = false
         this.currentUser = null
+        console.log(error)
+        throw error
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async getAllUsers(id) {
+      try {
+        this.isLoading = true
+        this.error = null
+        let res = await users.getAllUsers()
+        this.allUsers = res.data || res
+        return res
+      } catch (error) {
+        this.error = error.message || 'Failed to fetch user'
+        this.isAuthenticated = false
         console.log(error)
         throw error
       } finally {

@@ -5,7 +5,7 @@ export const useComeAndGoInsideStore = defineStore('comeandgoInside', {
   state: () => ({
     isLoading: false,
     error: null,
-    allComeAndGoInsidesofUser: [],
+    allComeAndGoInsides: [],
     comeandgoInsideById: null,
   }),
   actions: {
@@ -14,10 +14,41 @@ export const useComeAndGoInsideStore = defineStore('comeandgoInside', {
         this.isLoading = true
         this.error = null
         let res = await comeandgoInside.createComeAndGoInside(payload)
-        this.allComeAndGoInsidesofUser.push(res.data || res) // Update local state with the new item
         return res
       } catch (error) {
         this.error = error.message || 'Create Come and Go Inside failed'
+        console.log(error)
+        throw error
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async getComeAndGoInsideById(id) {
+      try {
+        this.isLoading = true
+        this.error = null
+        let res = await comeandgoInside.getComeAndGoInsideById(id)
+        this.comeandgoInsideById = res.data || res
+        return res
+      } catch (error) {
+        this.error = error.message || 'Get come and go inside by id failed'
+        console.log(error)
+        throw error
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async getAllComeAndGoInside() {
+      try {
+        this.isLoading = true
+        this.error = null
+        let res = await comeandgoInside.getAllComeAndGoInside()
+        this.allComeAndGoInsides = res.data || res
+        return res
+      } catch (error) {
+        this.error = error.message || 'Get all come and go insides failed'
         console.log(error)
         throw error
       } finally {

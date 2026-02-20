@@ -11,6 +11,11 @@ const users = {
     return axiosClient.get(url)
   },
 
+  getAllUsers() {
+    const url = 'users/all'
+    return axiosClient.get(url)
+  },
+
   updateUserShaxsiyInfo(id, payload) {
     const url = `users/update/${id}`
     return axiosClient.patch(url, payload)
