@@ -70,7 +70,14 @@
             <h2 class="page-title">Barcha foydalanuvchilar</h2>
           </div>
           <div class="tbl-wrap" v-loading="usersLoading">
-            <el-table :data="usersStore.allUsers" stripe border style="width: 100%">
+            <el-table
+              :data="usersStore.allUsers"
+              stripe
+              border
+              style="width: 100%"
+              empty-text="Ma'lumot yo'q"
+            >
+              <el-table-column label="№" type="index" width="60" align="center" />
               <el-table-column prop="id" label="ID" width="75" />
               <el-table-column prop="username" label="Foydalanuvchi nomi" min-width="120" />
               <el-table-column prop="firstname" label="Ismi" min-width="120" />
@@ -97,7 +104,7 @@
           <div class="adm-toolbar">
             <el-input
               v-model="partnersSearch"
-              placeholder="Qidiruv (nomi, telefon)..."
+              placeholder="Qidiruv (nomi, telefon, INN)..."
               :prefix-icon="Search"
               clearable
               class="adm-search"
@@ -108,27 +115,55 @@
               clearable
               class="adm-select"
             >
-              <el-option label="Doimiy mijoz" value="Doimiy mijoz" />
-              <el-option label="Montajnik" value="Montajnik" />
-              <el-option label="Quruvchi" value="Quruvchi" />
+              <el-option
+                v-for="type in partnerTypes"
+                :key="type.value"
+                :label="type.label"
+                :value="type.value"
+              />
+            </el-select>
+            <!-- Kim qo'shgan filter -->
+            <el-select
+              v-model="partnersUser"
+              placeholder="Kim qo'shgan"
+              clearable
+              class="adm-select"
+            >
+              <el-option
+                v-for="username in partnersUserList"
+                :key="username"
+                :label="username"
+                :value="username"
+              />
             </el-select>
             <el-button class="adm-reset-btn" @click="handleResetPartners">
               <i class="el-icon-refresh-left"></i> Tozalash
             </el-button>
           </div>
           <div class="tbl-wrap" v-loading="partnersLoading">
-            <el-table :data="partnersStore.allPartners" stripe border style="width: 100%">
+            <el-table
+              :data="filteredPartners"
+              stripe
+              border
+              style="width: 100%"
+              empty-text="Hech narsa topilmadi 🔍"
+            >
+              <el-table-column label="№" type="index" width="60" align="center" />
               <el-table-column prop="id" label="ID" width="80" />
-              <el-table-column prop="partner_type" label="Turi" min-width="120" />
+              <el-table-column label="Turi" min-width="150">
+                <template #default="{ row }">
+                  <el-tag type="info">{{ getPartnerTypeLabel(row.partner_type) }}</el-tag>
+                </template>
+              </el-table-column>
               <el-table-column label="Kim qo'shgan" min-width="140">
-                <template #default="{ row }"
-                  ><el-tag>{{ row.user.firstname }}</el-tag></template
-                >
+                <template #default="{ row }">
+                  <el-tag>{{ row.user.firstname }}</el-tag>
+                </template>
               </el-table-column>
               <el-table-column label="Username" min-width="160">
-                <template #default="{ row }"
-                  ><el-tag>{{ row.user.username }}</el-tag></template
-                >
+                <template #default="{ row }">
+                  <el-tag>{{ row.user.username }}</el-tag>
+                </template>
               </el-table-column>
               <el-table-column prop="fullname" label="Nomi" min-width="130" />
               <el-table-column prop="phone_number" label="Telefon" min-width="150" />
@@ -139,10 +174,7 @@
               />
               <el-table-column label="Manzil" min-width="160">
                 <template #default="{ row }">
-                  <el-tag
-                    >{{ row.user.republic }} {{ row.user.viloyat }}
-                    {{ row.user.shahar_tuman }}</el-tag
-                  >
+                  <el-tag>{{ row.republic }} {{ row.viloyat }} {{ row.shahar_tuman }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column prop="mijozturi" label="Yuridik/Jismoniy" min-width="130" />
@@ -160,46 +192,55 @@
           <div class="adm-toolbar">
             <el-input
               v-model="objectsSearch"
-              placeholder="Qidiruv (firma nomi)..."
+              placeholder="Qidiruv (firma nomi, manzil)..."
               :prefix-icon="Search"
               clearable
               class="adm-search"
             />
+            <el-select
+              v-model="objectsUser"
+              placeholder="Kim qo'shgan"
+              clearable
+              class="adm-select"
+            >
+              <el-option
+                v-for="username in objectsUserList"
+                :key="username"
+                :label="username"
+                :value="username"
+              />
+            </el-select>
             <el-button class="adm-reset-btn" @click="handleResetObjects">
               <i class="el-icon-refresh-left"></i> Tozalash
             </el-button>
           </div>
           <div class="tbl-wrap" v-loading="objectsLoading">
             <el-table
-              :data="comeandgoInsideStore.allComeAndGoInsides"
+              :data="filteredObjects"
               stripe
               border
               style="width: 100%"
+              empty-text="Hech narsa topilmadi 🔍"
             >
+              <el-table-column label="№" type="index" width="60" align="center" />
               <el-table-column prop="id" label="ID" width="80" />
               <el-table-column prop="whereto" label="Qayerga" min-width="120" />
-              <el-table-column prop="who" label="Kim qo'shgan" min-width="130">
+              <el-table-column label="Kim qo'shgan" min-width="130">
                 <template #default="{ row }">
                   {{ row.come_and_go_father?.user?.username }}
                 </template>
               </el-table-column>
-              <el-table-column prop="when_gone" label="Ketilgan vaqt" min-width="150">
-                <template #default="{ row }">
-                  {{ formatDate(row.when_gone) }}
-                </template>
+              <el-table-column label="Ketilgan vaqt" min-width="150">
+                <template #default="{ row }">{{ formatDate(row.when_gone) }}</template>
               </el-table-column>
-              <el-table-column prop="when_came" label="Qaytilgan vaqt" min-width="150">
-                <template #default="{ row }">
-                  {{ formatDate(row.when_came) }}
-                </template>
+              <el-table-column label="Qaytilgan vaqt" min-width="150">
+                <template #default="{ row }">{{ formatDate(row.when_came) }}</template>
               </el-table-column>
               <el-table-column prop="dogovor_or_kp" label="Dogovor / KP" min-width="130" />
               <el-table-column prop="locationname" label="Manzil" min-width="130" />
               <el-table-column prop="company_name" label="Firma nomi" min-width="140" />
-              <el-table-column prop="createdAt" label="Kiritilgan vaqt" min-width="140">
-                <template #default="{ row }">
-                  {{ formatDate(row.createdAt) }}
-                </template>
+              <el-table-column label="Kiritilgan vaqt" min-width="140">
+                <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
               </el-table-column>
             </el-table>
           </div>
@@ -216,11 +257,23 @@
             <h3 class="sc-title">Ma'lumotlarni eksport qilish</h3>
             <p class="sc-desc">Barcha ma'lumotlarni EXCEL formatida yuklab olish</p>
             <div class="sc-btns">
-              <el-button class="sc-btn" @click="handleExportPartners">
-                <i class="el-icon-user"></i> Hamkorlar
+              <el-button
+                class="sc-btn"
+                :loading="exportPartnersLoading"
+                :disabled="exportPartnersLoading || exportObjectsLoading"
+                @click="handleExportPartners"
+              >
+                <i v-if="!exportPartnersLoading" class="el-icon-user"></i>
+                Hamkorlar
               </el-button>
-              <el-button class="sc-btn" @click="handleExportObjects">
-                <i class="el-icon-office-building"></i> Obyektlar
+              <el-button
+                class="sc-btn"
+                :loading="exportObjectsLoading"
+                :disabled="exportPartnersLoading || exportObjectsLoading"
+                @click="handleExportObjects"
+              >
+                <i v-if="!exportObjectsLoading" class="el-icon-office-building"></i>
+                Obyektlar
               </el-button>
             </div>
           </div>
@@ -238,6 +291,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useUsersStore } from '@/stores/user'
 import { useTransition } from '@vueuse/core'
 import { ElMessage } from 'element-plus'
+import * as XLSX from 'xlsx'
 import router from '@/router'
 
 const comeandgoInsideStore = useComeAndGoInsideStore()
@@ -249,14 +303,30 @@ const loading = ref(false)
 const usersLoading = ref(false)
 const partnersLoading = ref(false)
 const objectsLoading = ref(false)
+const exportPartnersLoading = ref(false)
+const exportObjectsLoading = ref(false)
 
+// ─── Hamkor turlari ───────────────────────────────────────
+const partnerTypes = [
+  { value: 'doimiymijoz', label: 'Doimiy mijoz' },
+  { value: 'montajnik', label: 'Montaj guruhlar' },
+  { value: 'quruvchi', label: 'Quruvchi' },
+  { value: 'dokonbozor', label: "Do'kon / Bozor" },
+  { value: 'proyektinstitut', label: 'Proyekt instituti' },
+  { value: 'tenderfirmalar', label: 'Tender firmalar' },
+  { value: 'uks', label: '"UKS" - Yagona buyurtmachi' },
+  { value: 'boshqa', label: 'Boshqa' },
+]
+
+function getPartnerTypeLabel(value) {
+  const found = partnerTypes.find((t) => t.value === value)
+  return found ? found.label : (value ?? '—')
+}
+
+// ─── Sana formatlash ──────────────────────────────────────
 function formatDate(isoString) {
   if (!isoString) return 'Kiritilmagan'
-
   const date = new Date(isoString)
-
-  const year = date.getFullYear()
-
   const months = [
     'yanvar',
     'fevral',
@@ -271,15 +341,15 @@ function formatDate(isoString) {
     'noyabr',
     'dekabr',
   ]
+  const year = date.getFullYear()
   const month = months[date.getMonth()]
   const day = date.getDate()
-
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
-
   return `${year} / ${day}-${month} / ${hours}:${minutes}`
 }
 
+// ─── Tab ro'yxati ─────────────────────────────────────────
 const tabs = [
   { name: 'users', label: 'Foydalanuvchilar', icon: 'el-icon-user' },
   { name: 'partners', label: 'Hamkorlar', icon: 'el-icon-s-custom' },
@@ -287,7 +357,7 @@ const tabs = [
   { name: 'settings', label: 'Sozlamalar', icon: 'el-icon-setting' },
 ]
 
-// Animated counters
+// ─── Animatsiyali counterlar ──────────────────────────────
 const uSrc = ref(0),
   oSrc = ref(0),
   pSrc = ref(0)
@@ -295,41 +365,156 @@ const uAnim = useTransition(uSrc, { duration: 1400 })
 const oAnim = useTransition(oSrc, { duration: 1400 })
 const pAnim = useTransition(pSrc, { duration: 1400 })
 
+// ─── Filter state ─────────────────────────────────────────
 const partnersSearch = ref('')
 const partnersType = ref('')
+const partnersUser = ref('')
 const objectsSearch = ref('')
+const objectsUser = ref('')
 
-const objectsList = ref([
-  {
-    id: 1,
-    where: 'Toshkent',
-    who: 'Admin',
-    gonetime: '2024-01-15 10:00',
-    cametime: '2024-01-15 18:00',
-    dogovororkp: 'Dogovor',
-    address: 'Yunusabad',
-    firmanomi: 'ABC Company',
-    createdtime: '2024-01-15 09:00',
-  },
-])
+// ─── Hamkorlardagi unique username list ───────────────────
+const partnersUserList = computed(() => {
+  const usernames = partnersStore.allPartners.map((p) => p.user?.username).filter(Boolean)
+  return [...new Set(usernames)]
+})
 
-const filteredObjects = computed(() =>
-  objectsList.value.filter(
-    (o) =>
-      !objectsSearch.value || o.firmanomi.toLowerCase().includes(objectsSearch.value.toLowerCase()),
-  ),
-)
+// ─── Obyektlardagi unique username list ───────────────────
+const objectsUserList = computed(() => {
+  const usernames = comeandgoInsideStore.allComeAndGoInsides
+    .map((o) => o.come_and_go_father?.user?.username)
+    .filter(Boolean)
+  return [...new Set(usernames)]
+})
 
-const handleExportPartners = () => ElMessage.success('Hamkorlar eksport qilindi!')
-const handleExportObjects = () => ElMessage.success('Obyektlar eksport qilindi!')
+// ─── Hamkorlar — filtered computed ───────────────────────
+const filteredPartners = computed(() => {
+  return partnersStore.allPartners.filter((p) => {
+    const search = partnersSearch.value.toLowerCase().trim()
+    const type = partnersType.value
+    const user = partnersUser.value
+
+    const matchSearch =
+      !search ||
+      (p.fullname ?? '').toLowerCase().includes(search) ||
+      (p.phone_number ?? '').toLowerCase().includes(search) ||
+      (p.additional_phone_number ?? '').toLowerCase().includes(search) ||
+      (p.inn ?? '').toLowerCase().includes(search)
+
+    const matchType = !type || (p.partner_type ?? '').trim() === type
+    const matchUser = !user || (p.user?.username ?? '') === user
+
+    return matchSearch && matchType && matchUser
+  })
+})
+
+// ─── Obyektlar — filtered computed ───────────────────────
+const filteredObjects = computed(() => {
+  return comeandgoInsideStore.allComeAndGoInsides.filter((o) => {
+    const search = objectsSearch.value.toLowerCase().trim()
+    const user = objectsUser.value
+
+    const matchSearch =
+      !search ||
+      (o.company_name ?? '').toLowerCase().includes(search) ||
+      (o.locationname ?? '').toLowerCase().includes(search)
+
+    const matchUser = !user || (o.come_and_go_father?.user?.username ?? '') === user
+
+    return matchSearch && matchUser
+  })
+})
+
+// ─── Reset ────────────────────────────────────────────────
 const handleResetPartners = () => {
   partnersSearch.value = ''
   partnersType.value = ''
+  partnersUser.value = ''
 }
 const handleResetObjects = () => {
   objectsSearch.value = ''
+  objectsUser.value = ''
 }
 
+// ─── Ustun kengliklarini hisoblash ───────────────────────
+function calcColWidths(data) {
+  if (!data.length) return []
+  return Object.keys(data[0]).map((key) => ({
+    wch: Math.max(key.length, ...data.map((row) => String(row[key] ?? '').length)) + 3,
+  }))
+}
+
+// ─── Hamkorlar Export ─────────────────────────────────────
+const handleExportPartners = async () => {
+  try {
+    exportPartnersLoading.value = true
+    const data = partnersStore.allPartners.map((p, i) => ({
+      '№': i + 1,
+      ID: p.id,
+      Turi: getPartnerTypeLabel(p.partner_type),
+      "Kim qo'shgan (Ism)": p.user?.firstname ?? '—',
+      "Kim qo'shgan (Username)": p.user?.username ?? '—',
+      "To'liq nomi": p.fullname ?? '—',
+      Telefon: p.phone_number ?? '—',
+      "Qo'shimcha telefon": p.additional_phone_number ?? '—',
+      Respublika: p.republic ?? '—',
+      Viloyat: p.viloyat ?? '—',
+      'Shahar/Tuman': p.shahar_tuman ?? '—',
+      'Yuridik/Jismoniy': p.mijozturi ?? '—',
+      INN: p.inn ?? '—',
+    }))
+    if (!data.length) {
+      ElMessage.warning("Eksport qilish uchun ma'lumot yo'q!")
+      return
+    }
+    const ws = XLSX.utils.json_to_sheet(data)
+    ws['!cols'] = calcColWidths(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Hamkorlar')
+    const today = new Date().toLocaleDateString('uz-UZ').replace(/\//g, '-')
+    XLSX.writeFile(wb, `Hamkorlar_${today}.xlsx`)
+    ElMessage.success('✅ Hamkorlar muvaffaqiyatli eksport qilindi!')
+  } catch (e) {
+    ElMessage.error('Eksport xatoligi: ' + e.message)
+  } finally {
+    exportPartnersLoading.value = false
+  }
+}
+
+// ─── Obyektlar Export ─────────────────────────────────────
+const handleExportObjects = async () => {
+  try {
+    exportObjectsLoading.value = true
+    const data = comeandgoInsideStore.allComeAndGoInsides.map((o, i) => ({
+      '№': i + 1,
+      ID: o.id,
+      Qayerga: o.whereto ?? '—',
+      "Kim qo'shgan": o.come_and_go_father?.user?.username ?? '—',
+      'Ketilgan vaqt': formatDate(o.when_gone),
+      'Qaytilgan vaqt': formatDate(o.when_came),
+      'Dogovor / KP': o.dogovor_or_kp ?? '—',
+      Manzil: o.locationname ?? '—',
+      'Firma nomi': o.company_name ?? '—',
+      'Kiritilgan vaqt': formatDate(o.createdAt),
+    }))
+    if (!data.length) {
+      ElMessage.warning("Eksport qilish uchun ma'lumot yo'q!")
+      return
+    }
+    const ws = XLSX.utils.json_to_sheet(data)
+    ws['!cols'] = calcColWidths(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Obyektlar')
+    const today = new Date().toLocaleDateString('uz-UZ').replace(/\//g, '-')
+    XLSX.writeFile(wb, `Obyektlar_${today}.xlsx`)
+    ElMessage.success('✅ Obyektlar muvaffaqiyatli eksport qilindi!')
+  } catch (e) {
+    ElMessage.error('Eksport xatoligi: ' + e.message)
+  } finally {
+    exportObjectsLoading.value = false
+  }
+}
+
+// ─── onMounted ────────────────────────────────────────────
 onMounted(async () => {
   try {
     loading.value = true
