@@ -62,6 +62,20 @@
             <span class="nav-text">{{ $t('settings') }}</span>
           </a>
         </li>
+
+        <li class="nav-item" v-if="usersStore?.currentUser?.is_admin">
+          <a href="/admin" class="nav-link" :title="isCollapsed ? $t('admin') : ''">
+            <i class="icon admin-icon"></i>
+            <span class="nav-text">{{ $t('admin') }}</span>
+          </a>
+        </li>
+
+        <li class="nav-item" v-if="usersStore?.currentUser?.is_admin">
+          <a href="/boss" class="nav-link" :title="isCollapsed ? $t('boss') : ''">
+            <i class="icon boss-icon"></i>
+            <span class="nav-text">{{ $t('boss') }}</span>
+          </a>
+        </li>
       </ul>
     </nav>
 
@@ -354,6 +368,16 @@ onUnmounted(() => {
 
   &.calendar-icon::before {
     content: '⚙️';
+    font-size: 16px;
+  }
+
+  &.admin-icon::before {
+    content: '🧠';
+    font-size: 16px;
+  }
+
+  &.boss-icon::before {
+    content: '🦾';
     font-size: 16px;
   }
 }

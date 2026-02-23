@@ -11,6 +11,7 @@ import RaqiblarPage from '@/views/RaqiblarPage.vue'
 import AddMijoz from '@/components/MijozlarVaHamkorlar/AddMijoz.vue'
 import AdminPage from '@/views/AdminPage.vue'
 import SingleMijozPage from '@/views/SingleMijozPage.vue'
+import BossPage from '@/views/BossPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -61,6 +62,12 @@ const router = createRouter({
       path: '/admin',
       name: 'admin',
       component: AdminPage,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/boss',
+      name: 'boss',
+      component: BossPage,
       meta: { requiresAuth: true },
     },
     {

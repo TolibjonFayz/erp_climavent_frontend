@@ -1,19 +1,19 @@
 <template>
-  <div class="vazifalar-page">
-    <LeftMenuTasks />
-    <Vazifalar />
+  <div class="home-page-sozlamalar">
+    <LeftMenuBoss />
+    <Boss />
   </div>
 </template>
 
 <script setup>
-import LeftMenuTasks from '@/components/Vazifalar/LeftMenuTasks.vue'
-import Vazifalar from '@/components/Vazifalar/Vazifalar.vue'
+import LeftMenuBoss from '@/components/Boss/LeftMenuBoss.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import Boss from '@/components/Boss/Boss.vue'
 
 const isSidebarCollapsed = ref(false)
 
 const sidebarWidth = computed(() => {
-  return isSidebarCollapsed.value ? 80 : 260
+  return isSidebarCollapsed.value ? 80 : 310
 })
 
 const handleSidebarChange = () => {
@@ -40,7 +40,9 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.vazifalar-page {
+.home-page-sozlamalar {
+  display: flex;
+  height: 100vh;
   width: v-bind('`calc(100% - ${sidebarWidth}px)`');
   margin-left: v-bind('`${sidebarWidth}px`');
   transition:

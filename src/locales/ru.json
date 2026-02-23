@@ -244,5 +244,12 @@
   "createAccount": "Создать новый аккаунт",
   "loginSuccess": "Успешный вход!",
   "loginFailed": "Вход не выполнен",
-  "invalidCredentials": "Неверный логин или пароль"
+  "invalidCredentials": "Неверный логин или пароль",
+  "admin": "Админ",
+  "boss": "Босс",
+  "comingSoon": "Скоро будет",
+  "tez": "Скоро",
+  "kunda": ".",
+  "yangiTajriba": "Новый опыт ждет вас.",
+  "sahifamizTezOradaIshgaTushadi": "Наша страница скоро будет запущена."
 }

@@ -245,5 +245,12 @@
   "createAccount": "Yangi hisob yaratish",
   "loginSuccess": "Muvaffaqiyatli kirildi!",
   "loginFailed": "Kirish amalga oshmadi",
-  "invalidCredentials": "Login yoki parol noto'g'ri"
+  "invalidCredentials": "Login yoki parol noto'g'ri",
+  "admin": "Admin",
+  "boss": "BOSS",
+  "comingSoon": "Ishlab chiqilmoqda",
+  "tez": "Tez",
+  "kunda": "Kunda",
+  "yangiTajriba": "Yangi tajriba sizni kutmoqda.",
+  "sahifamizTezOradaIshgaTushadi": "Sahifamiz tez orada ishga tushadi."
 }

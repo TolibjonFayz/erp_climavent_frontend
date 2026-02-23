@@ -1,12 +1,14 @@
 <template>
   <div class="davomat-page">
     <LeftMenuDavomat />
+    <Davomat />
   </div>
 </template>
 
 <script setup>
 import LeftMenuDavomat from '@/components/Davomat/LeftMenuDavomat.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import Davomat from '@/components/Davomat/Davomat.vue'
 
 const isSidebarCollapsed = ref(false)
 
@@ -41,7 +43,9 @@ onUnmounted(() => {
 .davomat-page {
   width: v-bind('`calc(100% - ${sidebarWidth}px)`');
   margin-left: v-bind('`${sidebarWidth}px`');
-  transition: width 0.3s ease, margin-left 0.3s ease;
+  transition:
+    width 0.3s ease,
+    margin-left 0.3s ease;
 
   @media (max-width: 768px) {
     width: calc(100% - 80px);
