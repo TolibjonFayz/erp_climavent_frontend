@@ -319,9 +319,9 @@ onUnmounted(() => {
   transition: all 0.2s ease;
   position: relative;
 
-  &:hover:not(.active) {
-    background: #f3f4f6;
-    color: #374151;
+   &:hover:not(.active) {
+    background: #cde4ff;
+    color: #232831;
   }
 
   .nav-text {

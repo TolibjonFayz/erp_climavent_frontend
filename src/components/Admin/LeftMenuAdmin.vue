@@ -320,8 +320,8 @@ onUnmounted(() => {
   position: relative;
 
   &:hover:not(.active) {
-    background: #f3f4f6;
-    color: #374151;
+    background: #cde4ff;
+    color: #232831;
   }
 
   .nav-text {

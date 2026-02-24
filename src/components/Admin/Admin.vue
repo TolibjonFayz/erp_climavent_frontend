@@ -77,7 +77,7 @@
               style="width: 100%"
               empty-text="Ma'lumot yo'q"
             >
-              <el-table-column label="№" type="index" width="60" align="center" />
+              <el-table-column label="№" type="index" width="75" align="center" />
               <el-table-column prop="id" label="ID" width="75" />
               <el-table-column prop="username" label="Foydalanuvchi nomi" min-width="120" />
               <el-table-column prop="firstname" label="Ismi" min-width="120" />
@@ -148,8 +148,8 @@
               style="width: 100%"
               empty-text="Hech narsa topilmadi 🔍"
             >
-              <el-table-column label="№" type="index" width="60" align="center" />
-              <el-table-column prop="id" label="ID" width="80" />
+              <el-table-column label="№" type="index" width="75" align="center" />
+              <el-table-column prop="id" label="ID" width="75" />
               <el-table-column label="Turi" min-width="150">
                 <template #default="{ row }">
                   <el-tag type="info">{{ getPartnerTypeLabel(row.partner_type) }}</el-tag>
@@ -222,8 +222,8 @@
               style="width: 100%"
               empty-text="Hech narsa topilmadi 🔍"
             >
-              <el-table-column label="№" type="index" width="60" align="center" />
-              <el-table-column prop="id" label="ID" width="80" />
+              <el-table-column label="№" type="index" width="75" align="center" />
+              <el-table-column prop="id" label="ID" width="75" />
               <el-table-column prop="whereto" label="Qayerga" min-width="120" />
               <el-table-column label="Kim qo'shgan" min-width="130">
                 <template #default="{ row }">
