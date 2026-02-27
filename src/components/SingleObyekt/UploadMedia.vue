@@ -97,7 +97,7 @@
             <h4 :title="item.video_name">{{ item.video_name }}</h4>
             <div class="media-meta">
               <el-tag :type="isImage(item.video_link) ? 'success' : 'warning'" size="small">
-                {{ isImage(item.video_link) ? 'Rasm' : 'Video' }}
+                {{ isImage(item.video_link) ? $t('Rasm') : $t('Video') }}
               </el-tag>
               <span class="upload-date">
                 {{ formatDate(item.created_at) }}
@@ -167,7 +167,7 @@
         <div class="modal-footer">
           <div class="media-details">
             <el-tag :type="isImage(selectedMedia?.video_link) ? 'success' : 'warning'">
-              {{ isImage(selectedMedia?.video_link) ? 'Rasm' : 'Video' }}
+              {{ isImage(selectedMedia?.video_link) ? $t('Rasm') : $t('Video') }}
             </el-tag>
             <span class="upload-date">
               {{ $t('malumotkiritilganvaqt') }}: {{ formatDate(selectedMedia?.created_at) }}
@@ -369,15 +369,11 @@ const deleteMedia = async (item: any) => {
   }
 
   try {
-    await ElMessageBox.confirm(
-      t('confirmDelete'),
-      t('confirmation'),
-      {
-        confirmButtonText: t('deleteConfirm'),
-        cancelButtonText: t('cancel'),
-        type: 'warning',
-      },
-    )
+    await ElMessageBox.confirm(t('confirmDelete'), t('confirmation'), {
+      confirmButtonText: t('deleteConfirm'),
+      cancelButtonText: t('cancel'),
+      type: 'warning',
+    })
 
     deletingIds.value.push(item.id)
 

@@ -49,12 +49,12 @@
                 </div>
                 <div class="info-row">
                   <span class="info-label">{{ $t('inn') }}</span>
-                  <span class="info-value">{{ partnerData.inn || "Yo'q" }}</span>
+                  <span class="info-value">{{ partnerData.inn || $t("no") }}</span>
                 </div>
                 <div class="info-row">
                   <span class="info-label">{{ $t('qoshimchaIzoh') }}</span>
                   <div class="more-info-wrapper">
-                    <span class="info-value">{{ partnerData.more_info || "Yo'q" }}</span>
+                    <span class="info-value">{{ partnerData.more_info || $t("no") }}</span>
                     <el-button
                       type="text"
                       size="small"
@@ -104,7 +104,7 @@
                   </el-link>
                 </div>
                 <div class="info-row">
-                  <span class="info-label">{{ $t('qoshimchaTelefon') }}</span>
+                  <span class="info-label">{{ $t('form_qoshimchaTelefon') }}</span>
                   <el-link type="primary" :href="`tel:${partnerData.additional_phone_number}`">
                     {{ partnerData.additional_phone_number }}
                   </el-link>
@@ -158,7 +158,13 @@
         />
       </div>
 
-      <el-form v-else ref="editFormRef" :model="editForm" :label-width="formLabelWidth" class="edit-form">
+      <el-form
+        v-else
+        ref="editFormRef"
+        :model="editForm"
+        :label-width="formLabelWidth"
+        class="edit-form"
+      >
         <el-form-item :label="$t('form_toliqFIO')" prop="fullname">
           <el-input v-model="editForm.fullname" :placeholder="$t('form_toliqFIO_placeholder')" />
         </el-form-item>
@@ -172,7 +178,10 @@
         </el-form-item>
 
         <el-form-item :label="$t('form_telefonRaqami')" prop="phone_number">
-          <el-input v-model="editForm.phone_number" :placeholder="$t('form_telefonRaqami_placeholder')" />
+          <el-input
+            v-model="editForm.phone_number"
+            :placeholder="$t('form_telefonRaqami_placeholder')"
+          />
         </el-form-item>
 
         <el-form-item :label="$t('form_qoshimchaTelefon')" prop="additional_phone_number">
@@ -191,7 +200,10 @@
         </el-form-item>
 
         <el-form-item :label="$t('form_shaharTuman')" prop="shahar_tuman">
-          <el-input v-model="editForm.shahar_tuman" :placeholder="$t('form_shaharTuman_placeholder')" />
+          <el-input
+            v-model="editForm.shahar_tuman"
+            :placeholder="$t('form_shaharTuman_placeholder')"
+          />
         </el-form-item>
 
         <el-form-item :label="$t('form_qoshimchamalumot')" prop="more_info">
@@ -220,7 +232,12 @@
       :close-on-click-modal="false"
       class="more-info-dialog"
     >
-      <el-form ref="moreInfoFormRef" :model="moreInfoForm" :label-width="formLabelWidth" class="edit-form">
+      <el-form
+        ref="moreInfoFormRef"
+        :model="moreInfoForm"
+        :label-width="formLabelWidth"
+        class="edit-form"
+      >
         <el-form-item :label="$t('form_qoshimchamalumot')" prop="more_info">
           <el-input
             v-model="moreInfoForm.more_info"
@@ -245,8 +262,6 @@
 
 <script setup>
 import { onMounted, ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import router from '@/router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   ArrowLeft,
@@ -259,14 +274,18 @@ import {
   CircleCheck,
 } from '@element-plus/icons-vue'
 import { usePartnersStore } from '@/stores/partners'
+import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import router from '@/router'
 
 const partnersStore = usePartnersStore()
-const loading = ref(false)
-const editLoading = ref(false)
+const moreInfoDialogVisible = ref(false)
 const editDialogVisible = ref(false)
 const moreInfoLoading = ref(false)
-const moreInfoDialogVisible = ref(false)
+const editLoading = ref(false)
+const loading = ref(false)
 const route = useRoute()
+const { t } = useI18n()
 
 // Edit form
 const editForm = ref({
@@ -413,11 +432,11 @@ const handleSaveEdit = async () => {
   editLoading.value = true
   try {
     await partnersStore.updateOnePartner(editForm.value, route.params.id)
-    ElMessage.success($t('hamkor_yangilandi'))
+    ElMessage.success(t('hamkor_yangilandi'))
     editDialogVisible.value = false
     await partnersStore.getOnePartner(route.params.id)
   } catch (error) {
-    ElMessage.error($t('yangilash_error'))
+    ElMessage.error(t('yangilash_error'))
     console.error(error)
   } finally {
     editLoading.value = false
@@ -440,11 +459,11 @@ const handleSaveMoreInfo = async () => {
       { more_info: moreInfoForm.value.more_info },
       route.params.id,
     )
-    ElMessage.success($t('yangilash_success'))
+    ElMessage.success(t('yangilash_success'))
     moreInfoDialogVisible.value = false
     await partnersStore.getOnePartner(route.params.id)
   } catch (error) {
-    ElMessage.error($t('yangilash_error'))
+    ElMessage.error(t('yangilash_error'))
     console.error(error)
   } finally {
     moreInfoLoading.value = false

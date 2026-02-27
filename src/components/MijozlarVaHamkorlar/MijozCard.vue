@@ -47,7 +47,7 @@
 
       <div class="header-cell cell-actions">
         <el-icon><OfficeBuilding /></el-icon>
-        <span class="header-text">{{ $t('amallar') || 'Amallar' }}</span>
+        <span class="header-text">{{ $t('actions') }}</span>
       </div>
     </div>
 

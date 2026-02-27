@@ -5,20 +5,32 @@
       <h2>{{ $t('yangiObyektQoshish') }}</h2>
     </div>
 
-    <!-- ASOSIY OBYEKT -->
     <el-form :model="form" :rules="formRules" ref="formRef" class="form">
       <div class="form-section-title">{{ $t('asosiyObyekt') }}</div>
 
-      <el-form-item :label="$t('obyektgaKetishVaqti')" prop="goingtime" required>
+      <el-form-item
+        label-position="top"
+        :label="$t('obyektgaKetishVaqti')"
+        prop="goingtime"
+        required
+      >
         <el-config-provider :locale="locale">
-          <el-date-picker
-            v-model="form.goingtime"
-            type="datetime"
-            :placeholder="$t('vaqtniTanlang')"
-            :disabled-date="disabledDate"
-            format="YYYY-MM-DD HH:mm"
-            class="full-width-picker"
-          />
+          <div class="datetime-split">
+            <el-date-picker
+              v-model="goingDate"
+              type="date"
+              :placeholder="$t('vaqtniTanlang')"
+              :disabled-date="disabledDate"
+              format="YYYY-MM-DD"
+              class="full-width-picker"
+            />
+            <el-time-picker
+              v-model="goingTime"
+              format="HH:mm"
+              :placeholder="$t('soatminut')"
+              class="full-width-picker"
+            />
+          </div>
         </el-config-provider>
       </el-form-item>
 
@@ -118,7 +130,7 @@
         </template>
       </el-form-item>
       <LocationPicker
-        access-token="pk.eyJ1IjoidG9saWJqb25mYXl6IiwiYSI6ImNtY2x6amdkczBoZG0ya3NkYTI2NW8waWMifQ.yM3o-yj1ZPUGJG-gWREK6Q"
+        :access-token="import.meta.env.VITE_MAPBOX_TOKEN"
         :initial-center="{ lng: -74.006, lat: 40.7128 }"
         :initial-zoom="12"
         @location-selected="handleLocationSelected"
@@ -126,10 +138,10 @@
         @link-parsed="handleLocationSelected"
       />
       <br />
-      <el-form-item :label="$t('qoshimchamalumotlarUchunJoy')">
+      <el-form-item label-position="top" :label="$t('qoshimchamalumotlarUchunJoy')">
         <el-input
           class="more-info-input"
-          :rows="3"
+          :rows="5"
           v-model="form.more_info"
           :placeholder="$t('qoshimchamalumotlarUchunJoy')"
           type="textarea"
@@ -199,16 +211,31 @@
           />
         </div>
 
-        <el-form-item :label="$t('obyektgaKetishVaqti')" prop="goingtime" required>
+        <el-form-item
+          label-position="top"
+          :label="$t('obyektgaKetishVaqti')"
+          prop="goingtime"
+          required
+        >
           <el-config-provider :locale="locale">
-            <el-date-picker
-              v-model="obj.goingtime"
-              type="datetime"
-              format="YYYY-MM-DD HH:mm"
-              :placeholder="$t('vaqtniTanlang')"
-              :disabled-date="disabledDate"
-              class="full-width-picker"
-            />
+            <div class="datetime-split">
+              <el-date-picker
+                v-model="obj.goingDate"
+                type="date"
+                :placeholder="$t('vaqtniTanlang')"
+                :disabled-date="disabledDate"
+                format="YYYY-MM-DD"
+                class="full-width-picker"
+                @change="syncAdditionalGoingTime(index, obj)"
+              />
+              <el-time-picker
+                v-model="obj.goingTime"
+                format="HH:mm"
+                :placeholder="$t('soatminut')"
+                class="full-width-picker"
+                @change="syncAdditionalGoingTime(index, obj)"
+              />
+            </div>
           </el-config-provider>
         </el-form-item>
 
@@ -322,7 +349,7 @@
           </template>
         </el-form-item>
         <LocationPicker
-          access-token="pk.eyJ1IjoidG9saWJqb25mYXl6IiwiYSI6ImNtY2x6amdkczBoZG0ya3NkYTI2NW8waWMifQ.yM3o-yj1ZPUGJG-gWREK6Q"
+          :access-token="import.meta.env.VITE_MAPBOX_TOKEN"
           :initial-center="{ lng: -74.006, lat: 40.7128 }"
           :initial-zoom="12"
           @location-selected="(location) => handleAdditionalLocationSelected(index, location)"
@@ -330,7 +357,8 @@
           @link-parsed="(location) => handleAdditionalLocationSelected(index, location)"
         />
 
-        <el-form-item :label="$t('qoshimchamalumotlarUchunJoy')">
+        <br />
+        <el-form-item label-position="top" :label="$t('qoshimchamalumotlarUchunJoy')">
           <el-input
             class="more-info-input"
             :rows="3"
@@ -360,7 +388,6 @@
 </template>
 
 <script setup>
-// Script qismi bir xil qoladi - o'zgarish yo'q
 import { useComeAndGoesStore } from '@/stores/comeandgoes'
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { useVideosStore } from '@/stores/videos'
@@ -405,6 +432,10 @@ const uploadData = ref({
 })
 const acceptedTypes = '.jpg,.jpeg,.png,.gif,.mp4,.webm,.mov,.avi,.mkv'
 
+// ✅ Asosiy forma uchun alohida date va time ref'lar
+const goingDate = ref('')
+const goingTime = ref('')
+
 const form = reactive({
   goingtime: '',
   where: '',
@@ -420,6 +451,18 @@ const form = reactive({
   lang: '',
   locationname: '',
   more_info: '',
+})
+
+// ✅ goingDate yoki goingTime o'zgarganda form.goingtime ni avtomatik birlashtir
+watch([goingDate, goingTime], ([date, time]) => {
+  if (date && time) {
+    const d = new Date(date)
+    const t = new Date(time)
+    d.setHours(t.getHours(), t.getMinutes(), 0, 0)
+    form.goingtime = d
+  } else {
+    form.goingtime = ''
+  }
 })
 
 const formRules = reactive({
@@ -494,7 +537,10 @@ const getAdditionalFormRules = (obj) => {
 
 const additionalObjects = ref([])
 
+// ✅ createEmptyObject — goingDate va goingTime qo'shildi
 const createEmptyObject = () => ({
+  goingDate: '',
+  goingTime: '',
   goingtime: '',
   where: '',
   whereother: '',
@@ -510,6 +556,18 @@ const createEmptyObject = () => ({
   locationname: '',
   more_info: '',
 })
+
+// ✅ Qo'shimcha obyektlar uchun goingtime sync funksiyasi
+const syncAdditionalGoingTime = (index, obj) => {
+  if (obj.goingDate && obj.goingTime) {
+    const d = new Date(obj.goingDate)
+    const t = new Date(obj.goingTime)
+    d.setHours(t.getHours(), t.getMinutes(), 0, 0)
+    additionalObjects.value[index].goingtime = d
+  } else {
+    additionalObjects.value[index].goingtime = ''
+  }
+}
 
 const addAdditionalObject = () => {
   if (additionalObjects.value.length < 5) {
@@ -1121,6 +1179,24 @@ watch(
   padding-top: 5px;
 }
 
+// ✅ YANGI: Split datetime picker uchun stil
+.datetime-split {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+
+  .full-width-picker {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // Juda kichik ekranlarda (360px dan kichik) ustma-ust
+  @media (max-width: 360px) {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
 :deep(.el-upload-list--picture-card) {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -1243,14 +1319,12 @@ watch(
   margin: 0;
 }
 
-// ASOSIY TUZATISH - label-width ni olib tashladik
 .full-width-picker,
 .full-width-select,
 .full-width-input {
   width: 100% !important;
 }
 
-// Element Plus form item layout override
 :deep(.el-form-item__label) {
   text-align: left;
   display: block;

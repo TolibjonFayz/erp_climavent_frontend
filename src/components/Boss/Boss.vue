@@ -1,12 +1,4 @@
 <template>
-  <!--
-    Eslatma: Bu komponentning parent elementi (router-view yoki main content)
-    quyidagi stillarga ega bo'lishi kerak:
-      height: 100%;
-      display: flex;
-      flex: 1;
-    Yoki layout da .main-content { flex: 1; overflow: hidden; }
-  -->
   <div class="coming-soon-wrapper">
     <!-- Animated background blobs -->
     <div class="blob blob-1"></div>
@@ -20,13 +12,13 @@
       <!-- Badge -->
       <div class="badge">
         <span class="badge-dot"></span>
-        Ishlab chiqilmoqda
+        {{ $t('comingSoon') }}
       </div>
 
       <!-- Main heading -->
       <h1 class="heading">
-        <span class="line-1">Tez</span>
-        <span class="line-2">Kunda</span>
+        <span class="line-1">{{ $t('tez') }}</span>
+        <span class="line-2">{{ $t('kunda') }}</span>
       </h1>
 
       <!-- Decorative line -->
@@ -38,8 +30,8 @@
 
       <!-- Description -->
       <p class="description">
-        Yangi tajriba sizni kutmoqda.<br />
-        Sahifamiz tez orada ishga tushadi.
+        {{ $t('yangiTajriba') }}<br />
+        {{ $t('sahifamizTezOradaIshgaTushadi') }}
       </p>
     </div>
   </div>

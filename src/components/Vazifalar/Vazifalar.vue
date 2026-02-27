@@ -6,25 +6,29 @@
     <div class="grid-overlay"></div>
 
     <div class="content">
+      <!-- Badge -->
       <div class="badge">
         <span class="badge-dot"></span>
-        Ishlab chiqilmoqda
+        {{ $t('comingSoon') }}
       </div>
 
+      <!-- Main heading -->
       <h1 class="heading">
-        <span class="line-1">Tez</span>
-        <span class="line-2">Kunda</span>
+        <span class="line-1">{{ $t('tez') }}</span>
+        <span class="line-2">{{ $t('kunda') }}</span>
       </h1>
 
+      <!-- Decorative line -->
       <div class="divider">
         <span class="divider-line"></span>
         <span class="divider-icon">◆</span>
         <span class="divider-line"></span>
       </div>
 
+      <!-- Description -->
       <p class="description">
-        Yangi tajriba sizni kutmoqda.<br />
-        Sahifamiz tez orada ishga tushadi.
+        {{ $t('yangiTajriba') }}<br />
+        {{ $t('sahifamizTezOradaIshgaTushadi') }}
       </p>
     </div>
   </div>

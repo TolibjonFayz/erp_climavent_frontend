@@ -33,7 +33,13 @@
     </div>
 
     <div class="table-container" v-loading="loading">
-      <div class="table-wrapper" v-if="Array.isArray(comeandgoesStore.allComeAndGoesofUser) && comeandgoesStore.allComeAndGoesofUser.length > 0">
+      <div
+        class="table-wrapper"
+        v-if="
+          Array.isArray(comeandgoesStore.allComeAndGoesofUser) &&
+          comeandgoesStore.allComeAndGoesofUser.length > 0
+        "
+      >
         <table class="modern-table">
           <thead>
             <tr>
@@ -158,10 +164,10 @@
         <div class="empty-icon">
           <el-icon :size="64"><FolderOpened /></el-icon>
         </div>
-        <h3>Hech qanday obyekt topilmadi</h3>
-        <p>Siz hali hech qayerga bormagan ekansiz. Yangi obyekt qo'shing!</p>
+        <h3>{{ $t('noobjectfound') }}</h3>
+        <p>{{ $t('youhaventbeenyet') }}</p>
         <el-button type="primary" :icon="Plus" @click="goToCreateObyekt()">
-          Birinchi obyektni qo'shish
+          {{ $t('firstobject') }}
         </el-button>
       </div>
     </div>
@@ -225,24 +231,24 @@ const isThisMonth = (date) => {
 }
 
 const getTodayCount = () => {
-  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser) ? comeandgoesStore.allComeAndGoesofUser : []
-  return data.filter(
-    (item) => item.createdAt && isToday(item.createdAt),
-  ).length
+  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser)
+    ? comeandgoesStore.allComeAndGoesofUser
+    : []
+  return data.filter((item) => item.createdAt && isToday(item.createdAt)).length
 }
 
 const getWeekCount = () => {
-  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser) ? comeandgoesStore.allComeAndGoesofUser : []
-  return data.filter(
-    (item) => item.createdAt && isThisWeek(item.createdAt),
-  ).length
+  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser)
+    ? comeandgoesStore.allComeAndGoesofUser
+    : []
+  return data.filter((item) => item.createdAt && isThisWeek(item.createdAt)).length
 }
 
 const getMonthCount = () => {
-  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser) ? comeandgoesStore.allComeAndGoesofUser : []
-  return data.filter(
-    (item) => item.createdAt && isThisMonth(item.createdAt),
-  ).length
+  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser)
+    ? comeandgoesStore.allComeAndGoesofUser
+    : []
+  return data.filter((item) => item.createdAt && isThisMonth(item.createdAt)).length
 }
 
 onMounted(async () => {

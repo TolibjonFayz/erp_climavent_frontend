@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-wrap" v-loading="loading">
+  <div class="admin-wrap">
     <header class="adm-header">
       <div class="adm-header__bg">
         <span class="orb orb-1"></span>
@@ -8,27 +8,23 @@
       </div>
       <div class="adm-header__inner">
         <div class="adm-header__left">
-          <div class="adm-logo"><i class="el-icon-management"></i></div>
+          <div class="adm-logo">
+            <el-icon :size="26"><Grid /></el-icon>
+          </div>
           <div>
             <h1 class="adm-title">Admin Panel</h1>
             <p class="adm-sub">Tizim boshqaruvchisining paneli · Barcha ma'lumotlar bir joyda</p>
           </div>
         </div>
-        <div class="adm-header__stats">
-          <div class="stat-chip" style="animation-delay: 0.1s">
-            <i class="el-icon-user chip-icon"></i>
-            <span class="chip-val">{{ Math.round(uAnim) }}</span>
-            <span class="chip-lbl">Foydalanuvchilar</span>
+        <div class="adm-header__right">
+          <div class="adm-live-clock">
+            <span class="clock-greeting">{{ greeting }}</span>
+            <span class="clock-time">{{ liveTime }}</span>
+            <span class="clock-date">{{ todayFormatted }}</span>
           </div>
-          <div class="stat-chip" style="animation-delay: 0.2s">
-            <i class="el-icon-office-building chip-icon"></i>
-            <span class="chip-val">{{ Math.round(oAnim) }}</span>
-            <span class="chip-lbl">Obyektlar</span>
-          </div>
-          <div class="stat-chip" style="animation-delay: 0.3s">
-            <i class="el-icon-s-custom chip-icon"></i>
-            <span class="chip-val">{{ Math.round(pAnim) }}</span>
-            <span class="chip-lbl">Hamkorlar</span>
+          <div class="adm-header-status">
+            <span class="status-dot"></span>
+            <span class="status-text">Tizim ishlayapti</span>
           </div>
         </div>
       </div>
@@ -41,18 +37,25 @@
           <button
             v-for="tab in tabs"
             :key="tab.name"
+            type="button"
             class="adm-nav__item"
             :class="{ 'is-active': activeTab === tab.name }"
             @click="activeTab = tab.name"
           >
-            <span class="adm-nav__icon"><i :class="tab.icon"></i></span>
+            <span class="adm-nav__icon"
+              ><el-icon><component :is="tab.icon" /></el-icon
+            ></span>
             <span class="adm-nav__lbl">{{ tab.label }}</span>
+            <span v-if="tab.name === 'audit' && auditLogs.length" class="nav-badge">
+              {{ auditLogs.length > 99 ? '99+' : auditLogs.length }}
+            </span>
           </button>
         </nav>
-
         <div class="adm-sidebar__footer">
           <div class="adm-user">
-            <div class="adm-user__av"><i class="el-icon-user-solid"></i></div>
+            <div class="adm-user__av">
+              <el-icon><UserFilled /></el-icon>
+            </div>
             <div>
               <span class="adm-user__name">Administrator</span>
               <span class="adm-user__role">Super Admin</span>
@@ -62,16 +65,193 @@
       </aside>
 
       <!-- MAIN -->
-      <main class="adm-main">
-        <!-- Foydalanuvchilar -->
+      <main class="adm-main" v-loading="loading">
+        <!-- ═══════ DASHBOARD ═══════ -->
+        <div v-if="activeTab === 'dashboard'" class="adm-page">
+          <div class="page-head">
+            <span class="page-accent"></span>
+            <h2 class="page-title">Dashboard</h2>
+            <span class="page-date">{{ todayFormatted }}</span>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card kpi-card--blue">
+              <div class="kpi-card__top">
+                <div class="kpi-icon">
+                  <el-icon><User /></el-icon>
+                </div>
+                <span class="kpi-trend kpi-trend--up">
+                  <el-icon><Top /></el-icon> +{{ newUsersThisMonth }}
+                </span>
+              </div>
+              <div class="kpi-val">{{ usersStore.allUsers.length }}</div>
+              <div class="kpi-lbl">Jami foydalanuvchilar</div>
+              <div class="kpi-sub">{{ adminCount }} admin · {{ userCount }} oddiy</div>
+              <div class="kpi-bar">
+                <div class="kpi-bar__fill" :style="{ width: adminPercent + '%' }"></div>
+              </div>
+            </div>
+
+            <div class="kpi-card kpi-card--green">
+              <div class="kpi-card__top">
+                <div class="kpi-icon">
+                  <el-icon><UserFilled /></el-icon>
+                </div>
+                <span class="kpi-trend kpi-trend--up"
+                  ><el-icon><Top /></el-icon> faol</span
+                >
+              </div>
+              <div class="kpi-val">{{ partnersStore.allPartners.length }}</div>
+              <div class="kpi-lbl">Jami hamkorlar</div>
+              <div class="kpi-sub">{{ topPartnerType.label }} — ko'p</div>
+              <div class="kpi-bar"><div class="kpi-bar__fill" :style="{ width: '72%' }"></div></div>
+            </div>
+
+            <div class="kpi-card kpi-card--orange">
+              <div class="kpi-card__top">
+                <div class="kpi-icon">
+                  <el-icon><OfficeBuilding /></el-icon>
+                </div>
+                <span class="kpi-trend kpi-trend--up"
+                  ><el-icon><Top /></el-icon> faol</span
+                >
+              </div>
+              <div class="kpi-val">{{ comeandgoInsideStore.allComeAndGoInsides.length }}</div>
+              <div class="kpi-lbl">Jami obyektlar</div>
+              <div class="kpi-sub">So'nggi: {{ lastObjectDate }}</div>
+              <div class="kpi-bar"><div class="kpi-bar__fill" :style="{ width: '58%' }"></div></div>
+            </div>
+
+            <div class="kpi-card kpi-card--purple">
+              <div class="kpi-card__top">
+                <div class="kpi-icon">
+                  <el-icon><Document /></el-icon>
+                </div>
+                <span class="kpi-trend kpi-trend--neutral"
+                  ><el-icon><Minus /></el-icon> log</span
+                >
+              </div>
+              <div class="kpi-val">{{ auditLogs.length }}</div>
+              <div class="kpi-lbl">Audit amallar</div>
+              <div class="kpi-sub">{{ todayAuditCount }} ta bugun</div>
+              <div class="kpi-bar">
+                <div
+                  class="kpi-bar__fill"
+                  :style="{ width: Math.min(auditLogs.length * 2, 100) + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-row">
+            <div class="dash-card dash-card--wide">
+              <div class="dash-card__head">
+                <span class="dash-card__title">Hamkor turlari taqsimlashi</span>
+              </div>
+              <div class="chart-bars">
+                <div v-for="type in partnerTypeStats" :key="type.value" class="chart-bar-row">
+                  <span class="chart-bar-lbl">{{ type.label }}</span>
+                  <div class="chart-bar-track">
+                    <div
+                      class="chart-bar-fill"
+                      :style="{ width: type.percent + '%', background: type.color }"
+                    ></div>
+                  </div>
+                  <span class="chart-bar-num">{{ type.count }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card__head">
+                <span class="dash-card__title">Eng faol foydalanuvchilar</span>
+              </div>
+              <div class="top-users">
+                <div v-for="(u, idx) in topActiveUsers" :key="u.username" class="top-user-row">
+                  <span class="top-user-rank">
+                    {{ idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '#' + (idx + 1) }}
+                  </span>
+                  <div class="top-user-av">
+                    {{ u.firstname?.charAt(0) || u.username?.charAt(0) }}
+                  </div>
+                  <div class="top-user-info">
+                    <span class="top-user-name">{{ u.firstname }} {{ u.lastname }}</span>
+                    <span class="top-user-un">@{{ u.username }}</span>
+                  </div>
+                  <el-tag size="small" type="info">{{ u.count }} ta</el-tag>
+                </div>
+                <div v-if="!topActiveUsers.length" class="empty-state">
+                  <el-icon><InfoFilled /></el-icon> Ma'lumot yo'q
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-card dash-card--full">
+            <div class="dash-card__head">
+              <span class="dash-card__title">So'nggi amallar</span>
+              <el-button size="small" text @click="activeTab = 'audit'">
+                Hammasini ko'rish <el-icon><ArrowRight /></el-icon>
+              </el-button>
+            </div>
+            <div class="activity-feed">
+              <div
+                v-for="log in recentAuditLogs"
+                :key="log.id"
+                class="activity-item"
+                :class="'activity-item--' + log.type"
+              >
+                <div class="activity-dot"></div>
+                <div class="activity-icon">
+                  <el-icon><component :is="getAuditIcon(log.action)" /></el-icon>
+                </div>
+                <div class="activity-content">
+                  <span class="activity-actor">{{ log.actor }}</span>
+                  <span class="activity-msg">{{ log.message }}</span>
+                </div>
+                <span class="activity-time">{{ log.time }}</span>
+              </div>
+              <div v-if="!auditLogs.length" class="empty-state">
+                <el-icon><Document /></el-icon> Hali hech qanday amal qayd etilmagan
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════ FOYDALANUVCHILAR ═══════ -->
         <div v-if="activeTab === 'users'" class="adm-page">
           <div class="page-head">
             <span class="page-accent"></span>
             <h2 class="page-title">Barcha foydalanuvchilar</h2>
           </div>
+          <div class="adm-toolbar">
+            <el-input
+              v-model="usersSearch"
+              placeholder="Qidiruv (ism, username, telefon)..."
+              :prefix-icon="Search"
+              clearable
+              class="adm-search"
+            />
+            <el-select
+              v-model="usersRoleFilter"
+              placeholder="Rol bo'yicha"
+              clearable
+              class="adm-select"
+            >
+              <el-option label="Admin" value="admin" />
+              <el-option label="Foydalanuvchi" value="user" />
+            </el-select>
+            <el-select v-model="usersStatusFilter" placeholder="Holat" clearable class="adm-select">
+              <el-option label="Faol" value="active" />
+              <el-option label="Bloklangan" value="blocked" />
+            </el-select>
+            <button class="adm-reset-btn" @click="handleResetUsers">
+              <el-icon><RefreshLeft /></el-icon> Tozalash
+            </button>
+          </div>
           <div class="tbl-wrap" v-loading="usersLoading">
             <el-table
-              :data="usersStore.allUsers"
+              :data="filteredUsers"
               stripe
               border
               style="width: 100%"
@@ -79,23 +259,77 @@
             >
               <el-table-column label="№" type="index" width="75" align="center" />
               <el-table-column prop="id" label="ID" width="75" />
-              <el-table-column prop="username" label="Foydalanuvchi nomi" min-width="120" />
-              <el-table-column prop="firstname" label="Ismi" min-width="120" />
-              <el-table-column prop="lastname" label="Familiyasi" min-width="120" />
-              <el-table-column prop="phone_number" label="Telefon" min-width="120" />
-              <el-table-column prop="email" label="Email" min-width="120" />
-              <el-table-column label="Rol" width="250">
+              <el-table-column label="Foydalanuvchi" min-width="180">
                 <template #default="{ row }">
-                  <el-tag :type="row.is_admin ? 'success' : 'warning'">
-                    {{ row.is_admin ? 'Admin' : 'Foydalanuvchi' }}
+                  <div class="user-cell">
+                    <div class="user-cell__av" :class="row.is_admin ? 'av--admin' : 'av--user'">
+                      {{ row.firstname?.charAt(0) || row.username?.charAt(0) || '?' }}
+                    </div>
+                    <div>
+                      <div class="user-cell__name">{{ row.firstname }} {{ row.lastname }}</div>
+                      <div class="user-cell__un">@{{ row.username }}</div>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="phone_number" label="Telefon" min-width="130" />
+              <el-table-column prop="email" label="Email" min-width="150" />
+              <el-table-column label="Rol" width="120" align="center">
+                <template #default="{ row }">
+                  <el-tag :type="row.is_admin ? 'success' : 'warning'" size="small">
+                    {{ row.is_admin ? '👑 Admin' : '👤 User' }}
                   </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="Holat" width="110" align="center">
+                <template #default="{ row }">
+                  <el-tag :type="row.is_blocked ? 'danger' : 'success'" size="small">
+                    {{ row.is_blocked ? '🔴 Bloklangan' : '🟢 Faol' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="Amallar" width="130" align="center" fixed="right">
+                <template #default="{ row }">
+                  <div class="action-btns">
+                    <el-tooltip content="Batafsil ko'rish" placement="top">
+                      <button class="act-btn act-btn--view" @click="openUserDetail(row)">
+                        <el-icon><View /></el-icon>
+                      </button>
+                    </el-tooltip>
+                    <el-tooltip
+                      :content="row.is_admin ? 'Admin rolini olib tashlash' : 'Admin qilish'"
+                      placement="top"
+                    >
+                      <button
+                        :class="
+                          row.is_admin ? 'act-btn act-btn--demote' : 'act-btn act-btn--promote'
+                        "
+                        @click="toggleAdminRole(row)"
+                      >
+                        <el-icon><component :is="row.is_admin ? Minus : StarFilled" /></el-icon>
+                      </button>
+                    </el-tooltip>
+                    <el-tooltip
+                      :content="row.is_blocked ? 'Blokdan chiqarish' : 'Bloklash'"
+                      placement="top"
+                    >
+                      <button
+                        :class="
+                          row.is_blocked ? 'act-btn act-btn--unblock' : 'act-btn act-btn--block'
+                        "
+                        @click="toggleBlockUser(row)"
+                      >
+                        <el-icon><component :is="row.is_blocked ? Unlock : Lock" /></el-icon>
+                      </button>
+                    </el-tooltip>
+                  </div>
                 </template>
               </el-table-column>
             </el-table>
           </div>
         </div>
 
-        <!-- Hamkorlar -->
+        <!-- ═══════ HAMKORLAR ═══════ -->
         <div v-if="activeTab === 'partners'" class="adm-page">
           <div class="page-head">
             <span class="page-accent"></span>
@@ -122,7 +356,6 @@
                 :value="type.value"
               />
             </el-select>
-            <!-- Kim qo'shgan filter -->
             <el-select
               v-model="partnersUser"
               placeholder="Kim qo'shgan"
@@ -136,9 +369,9 @@
                 :value="username"
               />
             </el-select>
-            <el-button class="adm-reset-btn" @click="handleResetPartners">
-              <i class="el-icon-refresh-left"></i> Tozalash
-            </el-button>
+            <button class="adm-reset-btn" @click="handleResetPartners">
+              <el-icon><RefreshLeft /></el-icon> Tozalash
+            </button>
           </div>
           <div class="tbl-wrap" v-loading="partnersLoading">
             <el-table
@@ -151,19 +384,21 @@
               <el-table-column label="№" type="index" width="75" align="center" />
               <el-table-column prop="id" label="ID" width="75" />
               <el-table-column label="Turi" min-width="150">
-                <template #default="{ row }">
-                  <el-tag type="info">{{ getPartnerTypeLabel(row.partner_type) }}</el-tag>
-                </template>
+                <template #default="{ row }"
+                  ><el-tag type="info">{{
+                    getPartnerTypeLabel(row.partner_type)
+                  }}</el-tag></template
+                >
               </el-table-column>
               <el-table-column label="Kim qo'shgan" min-width="140">
-                <template #default="{ row }">
-                  <el-tag>{{ row.user.firstname }}</el-tag>
-                </template>
+                <template #default="{ row }"
+                  ><el-tag>{{ row.user.firstname }}</el-tag></template
+                >
               </el-table-column>
               <el-table-column label="Username" min-width="160">
-                <template #default="{ row }">
-                  <el-tag>{{ row.user.username }}</el-tag>
-                </template>
+                <template #default="{ row }"
+                  ><el-tag>{{ row.user.username }}</el-tag></template
+                >
               </el-table-column>
               <el-table-column prop="fullname" label="Nomi" min-width="130" />
               <el-table-column prop="phone_number" label="Telefon" min-width="150" />
@@ -173,9 +408,11 @@
                 min-width="150"
               />
               <el-table-column label="Manzil" min-width="160">
-                <template #default="{ row }">
-                  <el-tag>{{ row.republic }} {{ row.viloyat }} {{ row.shahar_tuman }}</el-tag>
-                </template>
+                <template #default="{ row }"
+                  ><el-tag
+                    >{{ row.republic }} {{ row.viloyat }} {{ row.shahar_tuman }}</el-tag
+                  ></template
+                >
               </el-table-column>
               <el-table-column prop="mijozturi" label="Yuridik/Jismoniy" min-width="130" />
               <el-table-column prop="inn" label="INN" min-width="110" />
@@ -183,7 +420,7 @@
           </div>
         </div>
 
-        <!-- Obyektlar -->
+        <!-- ═══════ OBYEKTLAR ═══════ -->
         <div v-if="activeTab === 'objects'" class="adm-page">
           <div class="page-head">
             <span class="page-accent"></span>
@@ -210,9 +447,9 @@
                 :value="username"
               />
             </el-select>
-            <el-button class="adm-reset-btn" @click="handleResetObjects">
-              <i class="el-icon-refresh-left"></i> Tozalash
-            </el-button>
+            <button class="adm-reset-btn" @click="handleResetObjects">
+              <el-icon><RefreshLeft /></el-icon> Tozalash
+            </button>
           </div>
           <div class="tbl-wrap" v-loading="objectsLoading">
             <el-table
@@ -226,9 +463,7 @@
               <el-table-column prop="id" label="ID" width="75" />
               <el-table-column prop="whereto" label="Qayerga" min-width="120" />
               <el-table-column label="Kim qo'shgan" min-width="130">
-                <template #default="{ row }">
-                  {{ row.come_and_go_father?.user?.username }}
-                </template>
+                <template #default="{ row }">{{ row.come_and_go_father?.user?.username }}</template>
               </el-table-column>
               <el-table-column label="Ketilgan vaqt" min-width="150">
                 <template #default="{ row }">{{ formatDate(row.when_gone) }}</template>
@@ -246,51 +481,294 @@
           </div>
         </div>
 
-        <!-- Sozlamalar -->
+        <!-- ═══════ AUDIT LOG ═══════ -->
+        <div v-if="activeTab === 'audit'" class="adm-page">
+          <div class="page-head">
+            <span class="page-accent"></span>
+            <h2 class="page-title">Audit Log</h2>
+            <el-button
+              size="small"
+              type="danger"
+              plain
+              style="margin-left: auto"
+              @click="clearAuditLogs"
+            >
+              <el-icon><Delete /></el-icon> Loglarni tozalash
+            </el-button>
+          </div>
+          <div class="adm-toolbar">
+            <el-input
+              v-model="auditSearch"
+              placeholder="Qidiruv (amal, foydalanuvchi)..."
+              :prefix-icon="Search"
+              clearable
+              class="adm-search"
+            />
+            <el-select
+              v-model="auditActionFilter"
+              placeholder="Amal turi"
+              clearable
+              class="adm-select"
+            >
+              <el-option label="Rol o'zgartirildi" value="role" />
+              <el-option label="Bloklash / Ochish" value="block" />
+              <el-option label="Ko'rish" value="view" />
+              <el-option label="Export" value="export" />
+            </el-select>
+            <button class="adm-reset-btn" @click="handleResetAudit">
+              <el-icon><RefreshLeft /></el-icon> Tozalash
+            </button>
+          </div>
+
+          <div class="audit-mini-stats">
+            <div class="audit-ms-item">
+              <span class="audit-ms-val">{{ auditStats?.total ?? 0 }}</span>
+              <span class="audit-ms-lbl">Jami amallar</span>
+            </div>
+            <div class="audit-ms-item">
+              <span class="audit-ms-val">{{ auditStats?.today ?? 0 }}</span>
+              <span class="audit-ms-lbl">Bugun</span>
+            </div>
+            <div class="audit-ms-item">
+              <span class="audit-ms-val">{{ auditStats?.role ?? 0 }}</span>
+              <span class="audit-ms-lbl">Rol o'zgarishlari</span>
+            </div>
+            <div class="audit-ms-item">
+              <span class="audit-ms-val">{{ auditStats?.block ?? 0 }}</span>
+              <span class="audit-ms-lbl">Bloklash amallari</span>
+            </div>
+          </div>
+
+          <div class="audit-timeline">
+            <div
+              v-for="log in filteredAuditLogs"
+              :key="log.id"
+              class="audit-entry"
+              :class="'audit-entry--' + log.type"
+            >
+              <div class="audit-entry__line"></div>
+              <div class="audit-entry__dot">
+                <el-icon><component :is="getAuditIcon(log.action)" /></el-icon>
+              </div>
+              <div class="audit-entry__body">
+                <div class="audit-entry__top">
+                  <span class="audit-entry__actor"
+                    ><el-icon><UserFilled /></el-icon> {{ log.actor }}</span
+                  >
+                  <span class="audit-entry__action-tag" :class="'tag--' + log.type">{{
+                    getActionLabel(log.action)
+                  }}</span>
+                  <span class="audit-entry__time"
+                    ><el-icon><Timer /></el-icon> {{ log.time }}</span
+                  >
+                </div>
+                <div class="audit-entry__msg">{{ log.message }}</div>
+                <div v-if="log.meta" class="audit-entry__meta">{{ log.meta }}</div>
+              </div>
+            </div>
+            <div v-if="!filteredAuditLogs.length" class="empty-audit">
+              <div class="empty-audit__icon">🔍</div>
+              <div class="empty-audit__title">Hech qanday amal topilmadi</div>
+              <div class="empty-audit__sub">
+                Foydalanuvchilarga amallar bajaring — ular shu yerda ko'rinadi
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════ SOZLAMALAR ═══════ -->
         <div v-if="activeTab === 'settings'" class="adm-page">
           <div class="page-head">
             <span class="page-accent"></span>
             <h2 class="page-title">Tizim sozlamalari</h2>
           </div>
-          <div class="settings-card">
-            <div class="sc-icon"><i class="el-icon-download"></i></div>
-            <h3 class="sc-title">Ma'lumotlarni eksport qilish</h3>
-            <p class="sc-desc">Barcha ma'lumotlarni EXCEL formatida yuklab olish</p>
-            <div class="sc-btns">
-              <el-button
-                class="sc-btn"
-                :loading="exportPartnersLoading"
-                :disabled="exportPartnersLoading || exportObjectsLoading"
-                @click="handleExportPartners"
-              >
-                <i v-if="!exportPartnersLoading" class="el-icon-user"></i>
-                Hamkorlar
-              </el-button>
-              <el-button
-                class="sc-btn"
-                :loading="exportObjectsLoading"
-                :disabled="exportPartnersLoading || exportObjectsLoading"
-                @click="handleExportObjects"
-              >
-                <i v-if="!exportObjectsLoading" class="el-icon-office-building"></i>
-                Obyektlar
-              </el-button>
+          <div class="settings-grid">
+            <div class="settings-card">
+              <div class="sc-icon">
+                <el-icon :size="22"><Download /></el-icon>
+              </div>
+              <h3 class="sc-title">Ma'lumotlarni eksport qilish</h3>
+              <p class="sc-desc">Barcha ma'lumotlarni EXCEL formatida yuklab olish</p>
+              <div class="sc-btns">
+                <button
+                  class="sc-btn"
+                  :disabled="exportPartnersLoading || exportObjectsLoading"
+                  @click="handleExportPartners"
+                >
+                  <el-icon v-if="!exportPartnersLoading"><User /></el-icon>
+                  <el-icon v-else class="is-loading"><Loading /></el-icon>
+                  Hamkorlar
+                </button>
+                <button
+                  class="sc-btn"
+                  :disabled="exportPartnersLoading || exportObjectsLoading"
+                  @click="handleExportObjects"
+                >
+                  <el-icon v-if="!exportObjectsLoading"><OfficeBuilding /></el-icon>
+                  <el-icon v-else class="is-loading"><Loading /></el-icon>
+                  Obyektlar
+                </button>
+              </div>
+            </div>
+            <div class="settings-card">
+              <div class="sc-icon sc-icon--purple">
+                <el-icon :size="22"><Document /></el-icon>
+              </div>
+              <h3 class="sc-title">Audit logni eksport qilish</h3>
+              <p class="sc-desc">Barcha audit amallarini EXCEL formatida yuklab olish</p>
+              <div class="sc-btns">
+                <button class="sc-btn" @click="handleExportAudit">
+                  <el-icon><Document /></el-icon> Audit Log
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </main>
     </div>
+
+    <!-- ═══════ USER DETAIL DRAWER ═══════ -->
+    <el-drawer
+      v-model="userDetailVisible"
+      direction="rtl"
+      size="400px"
+      :title="'Foydalanuvchi: ' + (selectedUser?.username || '')"
+      destroy-on-close
+    >
+      <div v-if="selectedUser" class="user-drawer">
+        <div class="user-drawer__avatar" :class="selectedUser.is_admin ? 'av--admin' : 'av--user'">
+          <el-icon :size="30"><UserFilled /></el-icon>
+        </div>
+        <div class="user-drawer__name">
+          {{ selectedUser.firstname }} {{ selectedUser.lastname }}
+        </div>
+        <div class="user-drawer__un">@{{ selectedUser.username }}</div>
+        <div class="user-drawer__tags">
+          <el-tag :type="selectedUser.is_admin ? 'success' : 'warning'">
+            {{ selectedUser.is_admin ? '👑 Admin' : '👤 User' }}
+          </el-tag>
+          <el-tag :type="selectedUser.is_blocked ? 'danger' : 'success'">
+            {{ selectedUser.is_blocked ? '🔴 Bloklangan' : '🟢 Faol' }}
+          </el-tag>
+        </div>
+
+        <el-divider />
+
+        <div class="user-drawer__fields">
+          <div class="udf-row">
+            <span class="udf-lbl"
+              ><el-icon><Phone /></el-icon> Telefon</span
+            >
+            <span class="udf-val">{{ selectedUser.phone_number || '—' }}</span>
+          </div>
+          <div class="udf-row">
+            <span class="udf-lbl"
+              ><el-icon><Message /></el-icon> Email</span
+            >
+            <span class="udf-val">{{ selectedUser.email || '—' }}</span>
+          </div>
+          <div class="udf-row">
+            <span class="udf-lbl"
+              ><el-icon><Key /></el-icon> ID</span
+            >
+            <span class="udf-val">{{ selectedUser.id }}</span>
+          </div>
+          <div class="udf-row">
+            <span class="udf-lbl"
+              ><el-icon><UserFilled /></el-icon> Qo'shgan hamkorlar</span
+            >
+            <span class="udf-val">{{ getUserPartnerCount(selectedUser.username) }} ta</span>
+          </div>
+          <div class="udf-row">
+            <span class="udf-lbl"
+              ><el-icon><OfficeBuilding /></el-icon> Qo'shgan obyektlar</span
+            >
+            <span class="udf-val">{{ getUserObjectCount(selectedUser.username) }} ta</span>
+          </div>
+        </div>
+
+        <el-divider />
+
+        <div class="user-drawer__actions">
+          <el-button
+            :type="selectedUser.is_admin ? 'warning' : 'success'"
+            style="width: 100%; margin-bottom: 10px"
+            @click="toggleAdminRole(selectedUser, true)"
+          >
+            <el-icon><component :is="selectedUser.is_admin ? Minus : StarFilled" /></el-icon>
+            {{ selectedUser.is_admin ? 'Admin rolini olib tashlash' : 'Admin qilish' }}
+          </el-button>
+          <el-button
+            :type="selectedUser.is_blocked ? 'success' : 'danger'"
+            style="width: 100%"
+            @click="toggleBlockUser(selectedUser, true)"
+          >
+            <el-icon><component :is="selectedUser.is_blocked ? Unlock : Lock" /></el-icon>
+            {{ selectedUser.is_blocked ? 'Blokdan chiqarish' : 'Bloklash' }}
+          </el-button>
+        </div>
+
+        <el-divider content-position="left">
+          <span style="font-size: 12px; color: #909399">Bu foydalanuvchiga tegishli amallar</span>
+        </el-divider>
+        <div class="user-audit-list">
+          <div
+            v-for="log in selectedUserLogs"
+            :key="log.id"
+            class="user-audit-item"
+            :class="'audit-entry--' + log.type"
+          >
+            <el-icon style="margin-right: 8px; color: #409eff"
+              ><component :is="getAuditIcon(log.action)"
+            /></el-icon>
+            <span>{{ log.message }}</span>
+            <span class="user-audit-time">{{ log.time ?? log.created_at }}</span>
+          </div>
+          <div
+            v-if="!selectedUserLogs.length"
+            style="color: #909399; font-size: 13px; text-align: center; padding: 12px"
+          >
+            Bu foydalanuvchiga hech qanday amal bajarilamagan
+          </div>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
 <script setup>
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { usePartnersStore } from '@/stores/partners'
-import { Search } from '@element-plus/icons-vue'
+import {
+  Search,
+  View,
+  StarFilled,
+  Minus,
+  Lock,
+  Unlock,
+  RefreshLeft,
+  ArrowRight,
+  Download,
+  User,
+  OfficeBuilding,
+  Setting,
+  DataAnalysis,
+  Document,
+  UserFilled,
+  Phone,
+  Message,
+  Key,
+  Delete,
+  Top,
+  InfoFilled,
+  Timer,
+  Loading,
+  Grid,
+} from '@element-plus/icons-vue'
 import { ref, computed, onMounted } from 'vue'
 import { useUsersStore } from '@/stores/user'
-import { useTransition } from '@vueuse/core'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useAuditLog } from '@/composables/useAuditLog'
 import * as XLSX from 'xlsx'
 import router from '@/router'
 
@@ -298,13 +776,51 @@ const comeandgoInsideStore = useComeAndGoInsideStore()
 const partnersStore = usePartnersStore()
 const usersStore = useUsersStore()
 
-const activeTab = ref('users')
+const {
+  auditLogs: _auditLogs,
+  stats: auditStats,
+  fetchLogs,
+  fetchStats,
+  fetchByTarget,
+  addAuditLog,
+  clearAllLogs,
+} = useAuditLog()
+const auditLogs = computed(() => _auditLogs?.value ?? [])
+
+// ─── State ────────────────────────────────────────────────
+const activeTab = ref('dashboard')
 const loading = ref(false)
 const usersLoading = ref(false)
 const partnersLoading = ref(false)
 const objectsLoading = ref(false)
 const exportPartnersLoading = ref(false)
 const exportObjectsLoading = ref(false)
+const userDetailVisible = ref(false)
+const selectedUser = ref(null)
+const selectedUserLogs = ref([])
+const liveTime = ref('')
+
+// ─── Filter state ─────────────────────────────────────────
+const usersSearch = ref('')
+const usersRoleFilter = ref('')
+const usersStatusFilter = ref('')
+const partnersSearch = ref('')
+const partnersType = ref('')
+const partnersUser = ref('')
+const objectsSearch = ref('')
+const objectsUser = ref('')
+const auditSearch = ref('')
+const auditActionFilter = ref('')
+
+// ─── Tabs ─────────────────────────────────────────────────
+const tabs = [
+  { name: 'dashboard', label: 'Dashboard', icon: DataAnalysis },
+  { name: 'users', label: 'Foydalanuvchilar', icon: User },
+  { name: 'partners', label: 'Hamkorlar', icon: UserFilled },
+  { name: 'objects', label: 'Obyektlar', icon: OfficeBuilding },
+  { name: 'audit', label: 'Audit Log', icon: Document },
+  { name: 'settings', label: 'Sozlamalar', icon: Setting },
+]
 
 // ─── Hamkor turlari ───────────────────────────────────────
 const partnerTypes = [
@@ -317,16 +833,25 @@ const partnerTypes = [
   { value: 'uks', label: '"UKS" - Yagona buyurtmachi' },
   { value: 'boshqa', label: 'Boshqa' },
 ]
+const partnerTypeColors = [
+  '#409eff',
+  '#67c23a',
+  '#e6a23c',
+  '#f56c6c',
+  '#909399',
+  '#9b59b6',
+  '#1abc9c',
+  '#e67e22',
+]
 
 function getPartnerTypeLabel(value) {
-  const found = partnerTypes.find((t) => t.value === value)
-  return found ? found.label : (value ?? '—')
+  return partnerTypes.find((t) => t.value === value)?.label ?? value ?? '—'
 }
 
 // ─── Sana formatlash ──────────────────────────────────────
 function formatDate(isoString) {
   if (!isoString) return 'Kiritilmagan'
-  const date = new Date(isoString)
+  const d = new Date(isoString)
   const months = [
     'yanvar',
     'fevral',
@@ -341,90 +866,250 @@ function formatDate(isoString) {
     'noyabr',
     'dekabr',
   ]
-  const year = date.getFullYear()
-  const month = months[date.getMonth()]
-  const day = date.getDate()
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${year} / ${day}-${month} / ${hours}:${minutes}`
+  return `${d.getFullYear()} / ${d.getDate()}-${months[d.getMonth()]} / ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-// ─── Tab ro'yxati ─────────────────────────────────────────
-const tabs = [
-  { name: 'users', label: 'Foydalanuvchilar', icon: 'el-icon-user' },
-  { name: 'partners', label: 'Hamkorlar', icon: 'el-icon-s-custom' },
-  { name: 'objects', label: 'Obyektlar', icon: 'el-icon-office-building' },
-  { name: 'settings', label: 'Sozlamalar', icon: 'el-icon-setting' },
-]
-
-// ─── Animatsiyali counterlar ──────────────────────────────
-const uSrc = ref(0),
-  oSrc = ref(0),
-  pSrc = ref(0)
-const uAnim = useTransition(uSrc, { duration: 1400 })
-const oAnim = useTransition(oSrc, { duration: 1400 })
-const pAnim = useTransition(pSrc, { duration: 1400 })
-
-// ─── Filter state ─────────────────────────────────────────
-const partnersSearch = ref('')
-const partnersType = ref('')
-const partnersUser = ref('')
-const objectsSearch = ref('')
-const objectsUser = ref('')
-
-// ─── Hamkorlardagi unique username list ───────────────────
-const partnersUserList = computed(() => {
-  const usernames = partnersStore.allPartners.map((p) => p.user?.username).filter(Boolean)
-  return [...new Set(usernames)]
+// ─── Computed ─────────────────────────────────────────────
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  if (h >= 5 && h < 12) return '🌅 Xayrli tong'
+  if (h >= 12 && h < 17) return '☀️ Xayrli kun'
+  if (h >= 17 && h < 21) return '🌆 Xayrli kech'
+  return '🌙 Xayrli tun'
 })
 
-// ─── Obyektlardagi unique username list ───────────────────
-const objectsUserList = computed(() => {
-  const usernames = comeandgoInsideStore.allComeAndGoInsides
-    .map((o) => o.come_and_go_father?.user?.username)
-    .filter(Boolean)
-  return [...new Set(usernames)]
+const todayFormatted = computed(() =>
+  new Date().toLocaleDateString('uz-UZ', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }),
+)
+
+const adminCount = computed(() => usersStore.allUsers.filter((u) => u.is_admin).length)
+const userCount = computed(() => usersStore.allUsers.filter((u) => !u.is_admin).length)
+const adminPercent = computed(() => {
+  const total = usersStore.allUsers.length
+  return total ? Math.round((adminCount.value / total) * 100) : 0
 })
-
-// ─── Hamkorlar — filtered computed ───────────────────────
-const filteredPartners = computed(() => {
-  return partnersStore.allPartners.filter((p) => {
-    const search = partnersSearch.value.toLowerCase().trim()
-    const type = partnersType.value
-    const user = partnersUser.value
-
-    const matchSearch =
-      !search ||
-      (p.fullname ?? '').toLowerCase().includes(search) ||
-      (p.phone_number ?? '').toLowerCase().includes(search) ||
-      (p.additional_phone_number ?? '').toLowerCase().includes(search) ||
-      (p.inn ?? '').toLowerCase().includes(search)
-
-    const matchType = !type || (p.partner_type ?? '').trim() === type
-    const matchUser = !user || (p.user?.username ?? '') === user
-
-    return matchSearch && matchType && matchUser
+const newUsersThisMonth = computed(() => {
+  const m = new Date().getMonth()
+  return usersStore.allUsers.filter((u) => u.createdAt && new Date(u.createdAt).getMonth() === m)
+    .length
+})
+const partnerTypeStats = computed(() => {
+  const total = partnersStore.allPartners.length || 1
+  return partnerTypes
+    .map((type, idx) => ({
+      ...type,
+      count: partnersStore.allPartners.filter((p) => p.partner_type === type.value).length,
+      percent: Math.round(
+        (partnersStore.allPartners.filter((p) => p.partner_type === type.value).length / total) *
+          100,
+      ),
+      color: partnerTypeColors[idx % partnerTypeColors.length],
+    }))
+    .filter((t) => t.count > 0)
+    .sort((a, b) => b.count - a.count)
+})
+const topPartnerType = computed(() => partnerTypeStats.value[0] || { label: '—' })
+const lastObjectDate = computed(() => {
+  const sorted = [...comeandgoInsideStore.allComeAndGoInsides].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+  )
+  return sorted[0] ? formatDate(sorted[0].createdAt).split(' / ')[0] : '—'
+})
+const topActiveUsers = computed(() => {
+  const map = {}
+  partnersStore.allPartners.forEach((p) => {
+    const un = p.user?.username
+    if (!un) return
+    if (!map[un]) map[un] = { ...p.user, count: 0 }
+    map[un].count++
   })
+  return Object.values(map)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
 })
+const recentAuditLogs = computed(() => auditLogs.value.slice(0, 8))
+const todayAuditCount = computed(() => auditStats.value?.today ?? 0)
 
-// ─── Obyektlar — filtered computed ───────────────────────
-const filteredObjects = computed(() => {
-  return comeandgoInsideStore.allComeAndGoInsides.filter((o) => {
-    const search = objectsSearch.value.toLowerCase().trim()
-    const user = objectsUser.value
-
+const filteredUsers = computed(() =>
+  usersStore.allUsers.filter((u) => {
+    const s = usersSearch.value.toLowerCase().trim()
     const matchSearch =
-      !search ||
-      (o.company_name ?? '').toLowerCase().includes(search) ||
-      (o.locationname ?? '').toLowerCase().includes(search)
+      !s ||
+      ['firstname', 'lastname', 'username', 'phone_number'].some((k) =>
+        (u[k] ?? '').toLowerCase().includes(s),
+      )
+    const matchRole =
+      !usersRoleFilter.value || (usersRoleFilter.value === 'admin' ? u.is_admin : !u.is_admin)
+    const matchStatus =
+      !usersStatusFilter.value ||
+      (usersStatusFilter.value === 'blocked' ? u.is_blocked : !u.is_blocked)
+    return matchSearch && matchRole && matchStatus
+  }),
+)
+const partnersUserList = computed(() => [
+  ...new Set(partnersStore.allPartners.map((p) => p.user?.username).filter(Boolean)),
+])
+const objectsUserList = computed(() => [
+  ...new Set(
+    comeandgoInsideStore.allComeAndGoInsides
+      .map((o) => o.come_and_go_father?.user?.username)
+      .filter(Boolean),
+  ),
+])
 
-    const matchUser = !user || (o.come_and_go_father?.user?.username ?? '') === user
+const filteredPartners = computed(() =>
+  partnersStore.allPartners.filter((p) => {
+    const s = partnersSearch.value.toLowerCase().trim()
+    const matchSearch =
+      !s ||
+      ['fullname', 'phone_number', 'additional_phone_number', 'inn'].some((k) =>
+        (p[k] ?? '').toLowerCase().includes(s),
+      )
+    return (
+      matchSearch &&
+      (!partnersType.value || (p.partner_type ?? '').trim() === partnersType.value) &&
+      (!partnersUser.value || p.user?.username === partnersUser.value)
+    )
+  }),
+)
+const filteredObjects = computed(() =>
+  comeandgoInsideStore.allComeAndGoInsides.filter((o) => {
+    const s = objectsSearch.value.toLowerCase().trim()
+    const matchSearch =
+      !s ||
+      (o.company_name ?? '').toLowerCase().includes(s) ||
+      (o.locationname ?? '').toLowerCase().includes(s)
+    return (
+      matchSearch &&
+      (!objectsUser.value || o.come_and_go_father?.user?.username === objectsUser.value)
+    )
+  }),
+)
+const filteredAuditLogs = computed(() =>
+  auditLogs.value.filter((l) => {
+    const s = auditSearch.value.toLowerCase().trim()
+    const actor = l.actor?.username ?? l.actor ?? ''
+    return (
+      (!s || l.message.toLowerCase().includes(s) || actor.toLowerCase().includes(s)) &&
+      (!auditActionFilter.value || l.action === auditActionFilter.value)
+    )
+  }),
+)
 
-    return matchSearch && matchUser
+// ─── Audit helpers ────────────────────────────────────────
+function getAuditIcon(action) {
+  return (
+    { role: StarFilled, block: Lock, unblock: Unlock, view: View, export: Download, login: User }[
+      action
+    ] || Document
+  )
+}
+function getActionLabel(action) {
+  return (
+    {
+      role: "Rol o'zgartirildi",
+      block: 'Bloklandi',
+      unblock: 'Blok ochildi',
+      view: "Ko'rildi",
+      export: 'Export',
+      login: 'Kirish',
+    }[action] || action
+  )
+}
+
+// ─── User actions ─────────────────────────────────────────
+async function toggleAdminRole(user, closeDrawer = false) {
+  const newRole = !user.is_admin
+  try {
+    await ElMessageBox.confirm(
+      `"${user.firstname} ${user.lastname}" (@${user.username}) — ${newRole ? 'Admin qilish' : 'Admin rolini olib tashlash'}?`,
+      'Tasdiqlash',
+      { confirmButtonText: 'Ha', cancelButtonText: 'Bekor qilish', type: 'warning' },
+    )
+    user.is_admin = newRole
+    if (closeDrawer) userDetailVisible.value = false
+    addAuditLog({
+      action: 'role',
+      message: `"${user.firstname} ${user.lastname}" (@${user.username}) — ${newRole ? 'Admin qilindi' : 'Admin roli olib tashlandi'}`,
+      type: newRole ? 'success' : 'warning',
+      target_id: user.id,
+    })
+    ElMessage.success(
+      `✅ ${newRole ? 'Admin qilish' : 'Admin rolini olib tashlash'} muvaffaqiyatli!`,
+    )
+  } catch {}
+}
+
+async function toggleBlockUser(user, closeDrawer = false) {
+  const newBlock = !user.is_blocked
+  try {
+    await ElMessageBox.confirm(
+      `"${user.firstname} ${user.lastname}" (@${user.username}) — ${newBlock ? 'Bloklash' : 'Blokdan chiqarish'}?`,
+      'Tasdiqlash',
+      {
+        confirmButtonText: 'Ha',
+        cancelButtonText: 'Bekor qilish',
+        type: newBlock ? 'error' : 'warning',
+      },
+    )
+    user.is_blocked = newBlock
+    if (closeDrawer) userDetailVisible.value = false
+    addAuditLog({
+      action: newBlock ? 'block' : 'unblock',
+      message: `"${user.firstname} ${user.lastname}" (@${user.username}) — ${newBlock ? 'Bloklandi' : 'Blok ochildi'}`,
+      type: newBlock ? 'danger' : 'success',
+      target_id: user.id,
+    })
+    ElMessage.success(`✅ ${newBlock ? 'Bloklash' : 'Blokdan chiqarish'} muvaffaqiyatli!`)
+  } catch {}
+}
+
+async function openUserDetail(user) {
+  selectedUser.value = user
+  userDetailVisible.value = true
+  selectedUserLogs.value = await fetchByTarget(user.username)
+  addAuditLog({
+    action: 'view',
+    message: `"${user.firstname} ${user.lastname}" (@${user.username}) profili ko'rildi`,
+    type: 'info',
+    target_id: user.id,
   })
-})
+}
 
-// ─── Reset ────────────────────────────────────────────────
+function getUserPartnerCount(username) {
+  return partnersStore.allPartners.filter((p) => p.user?.username === username).length
+}
+function getUserObjectCount(username) {
+  return comeandgoInsideStore.allComeAndGoInsides.filter(
+    (o) => o.come_and_go_father?.user?.username === username,
+  ).length
+}
+
+// ─── Audit ───────────────────────────────────────────────
+async function clearAuditLogs() {
+  try {
+    await ElMessageBox.confirm(
+      "Barcha audit loglarni o'chirmoqchimisiz? Bu amalni qaytarib bo'lmaydi.",
+      'Ogohlantirish',
+      { confirmButtonText: "Ha, o'chirish", cancelButtonText: 'Bekor qilish', type: 'warning' },
+    )
+    await clearAllLogs()
+    await fetchStats()
+    ElMessage.success('Loglar tozalandi')
+  } catch {}
+}
+
+// ─── Reset handlers ───────────────────────────────────────
+const handleResetUsers = () => {
+  usersSearch.value = ''
+  usersRoleFilter.value = ''
+  usersStatusFilter.value = ''
+}
 const handleResetPartners = () => {
   partnersSearch.value = ''
   partnersType.value = ''
@@ -434,8 +1119,12 @@ const handleResetObjects = () => {
   objectsSearch.value = ''
   objectsUser.value = ''
 }
+const handleResetAudit = () => {
+  auditSearch.value = ''
+  auditActionFilter.value = ''
+}
 
-// ─── Ustun kengliklarini hisoblash ───────────────────────
+// ─── Excel export ─────────────────────────────────────────
 function calcColWidths(data) {
   if (!data.length) return []
   return Object.keys(data[0]).map((key) => ({
@@ -443,7 +1132,6 @@ function calcColWidths(data) {
   }))
 }
 
-// ─── Hamkorlar Export ─────────────────────────────────────
 const handleExportPartners = async () => {
   try {
     exportPartnersLoading.value = true
@@ -470,8 +1158,15 @@ const handleExportPartners = async () => {
     ws['!cols'] = calcColWidths(data)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Hamkorlar')
-    const today = new Date().toLocaleDateString('uz-UZ').replace(/\//g, '-')
-    XLSX.writeFile(wb, `Hamkorlar_${today}.xlsx`)
+    XLSX.writeFile(
+      wb,
+      `Hamkorlar_${new Date().toLocaleDateString('uz-UZ').replace(/\//g, '-')}.xlsx`,
+    )
+    addAuditLog({
+      action: 'export',
+      message: `Hamkorlar ma'lumotlari export qilindi (${data.length} ta yozuv)`,
+      type: 'info',
+    })
     ElMessage.success('✅ Hamkorlar muvaffaqiyatli eksport qilindi!')
   } catch (e) {
     ElMessage.error('Eksport xatoligi: ' + e.message)
@@ -480,7 +1175,6 @@ const handleExportPartners = async () => {
   }
 }
 
-// ─── Obyektlar Export ─────────────────────────────────────
 const handleExportObjects = async () => {
   try {
     exportObjectsLoading.value = true
@@ -504,8 +1198,15 @@ const handleExportObjects = async () => {
     ws['!cols'] = calcColWidths(data)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Obyektlar')
-    const today = new Date().toLocaleDateString('uz-UZ').replace(/\//g, '-')
-    XLSX.writeFile(wb, `Obyektlar_${today}.xlsx`)
+    XLSX.writeFile(
+      wb,
+      `Obyektlar_${new Date().toLocaleDateString('uz-UZ').replace(/\//g, '-')}.xlsx`,
+    )
+    addAuditLog({
+      action: 'export',
+      message: `Obyektlar ma'lumotlari export qilindi (${data.length} ta yozuv)`,
+      type: 'info',
+    })
     ElMessage.success('✅ Obyektlar muvaffaqiyatli eksport qilindi!')
   } catch (e) {
     ElMessage.error('Eksport xatoligi: ' + e.message)
@@ -514,49 +1215,85 @@ const handleExportObjects = async () => {
   }
 }
 
+const handleExportAudit = () => {
+  try {
+    const data = auditLogs.value.map((l, i) => ({
+      '№': i + 1,
+      Vaqt: l.time,
+      Amal: getActionLabel(l.action),
+      Xabar: l.message,
+      Bajardi: l.actor,
+    }))
+    if (!data.length) {
+      ElMessage.warning("Eksport qilish uchun log yo'q!")
+      return
+    }
+    const ws = XLSX.utils.json_to_sheet(data)
+    ws['!cols'] = calcColWidths(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'AuditLog')
+    XLSX.writeFile(
+      wb,
+      `AuditLog_${new Date().toLocaleDateString('uz-UZ').replace(/\//g, '-')}.xlsx`,
+    )
+    ElMessage.success('✅ Audit log eksport qilindi!')
+  } catch (e) {
+    ElMessage.error('Eksport xatoligi: ' + e.message)
+  }
+}
+
 // ─── onMounted ────────────────────────────────────────────
 onMounted(async () => {
+  loading.value = true
   try {
-    loading.value = true
     await usersStore.getUserInfo(Number(localStorage.getItem('userid')))
-    if (!usersStore.currentUser.is_admin) {
+    if (!usersStore.currentUser?.is_admin) {
       router.push('/')
       return
     }
-    await Promise.all([
-      usersStore.getAllUsers(),
-      partnersStore.getAllPartners(),
-      comeandgoInsideStore.getAllComeAndGoInside(),
-    ])
-    uSrc.value = usersStore.allUsers.length
-    pSrc.value = partnersStore.allPartners.length
-    oSrc.value = comeandgoInsideStore.allComeAndGoInsides.length
   } catch (e) {
-    ElMessage.error('Yuklashda xatolik: ' + e.message)
-  } finally {
+    ElMessage.error("Foydalanuvchi ma'lumotini yuklashda xatolik")
     loading.value = false
+    return
   }
+
+  await Promise.allSettled([
+    usersStore.getAllUsers(),
+    partnersStore.getAllPartners(),
+    comeandgoInsideStore.getAllComeAndGoInside(),
+  ])
+
+  loading.value = false
+
+  fetchLogs({ limit: 100 }).catch(console.error)
+  fetchStats().catch(console.error)
+
+  const tick = () => {
+    liveTime.value = new Date().toLocaleTimeString('uz-UZ', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+  }
+  tick()
+  setInterval(tick, 1000)
 })
 </script>
 
 <style lang="scss" scoped>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
-// ─── Element Plus ko'k ranglar ────────────────────────────
-$blue: #409eff; // El Plus primary
-$blue-d: #337ecc; // El Plus primary-dark-2
-$blue-l: #a0cfff; // El Plus primary-light-3
-$blue-bg: #ecf5ff; // El Plus primary-light-9
-
-$text-primary: #303133; // El Plus text primary
-$text-regular: #606266; // El Plus text regular
-$text-secondary: #909399; // El Plus text secondary
-
-$border: #dcdfe6; // El Plus border
-$bg-page: #f0f2f5; // sahifa foni — juda ochiq kulrang
+$blue: #409eff;
+$blue-d: #337ecc;
+$blue-l: #a0cfff;
+$blue-bg: #ecf5ff;
+$text-primary: #303133;
+$text-regular: #606266;
+$text-secondary: #909399;
+$border: #dcdfe6;
+$bg-page: #f0f2f5;
 $bg-white: #ffffff;
-
-$sw: 220px; // sidebar width
+$sw: 220px;
 
 *,
 *::before,
@@ -576,11 +1313,11 @@ $sw: 220px; // sidebar width
   background: $bg-page;
 }
 
+// ── HEADER ────────────────────────────────────────────────
 .adm-header {
   position: relative;
   flex-shrink: 0;
   width: 100%;
-  // Ochroq, El Plus ko'ki asosidagi gradient
   background: linear-gradient(115deg, #2a7ae2 0%, #409eff 55%, #66b1ff 100%);
   padding: 28px 40px 24px;
   color: #fff;
@@ -604,7 +1341,6 @@ $sw: 220px; // sidebar width
       background: #a0cfff;
       top: -120px;
       right: -40px;
-      animation-delay: 0s;
     }
     .orb-2 {
       width: 220px;
@@ -623,7 +1359,6 @@ $sw: 220px; // sidebar width
       animation-delay: -12s;
     }
   }
-
   &__inner {
     position: relative;
     z-index: 1;
@@ -633,16 +1368,15 @@ $sw: 220px; // sidebar width
     gap: 20px;
     flex-wrap: wrap;
   }
-
   &__left {
     display: flex;
     align-items: center;
     gap: 18px;
   }
-  &__stats {
+  &__right {
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px;
   }
 }
 
@@ -656,67 +1390,76 @@ $sw: 220px; // sidebar width
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
-  flex-shrink: 0;
   animation: logoFloat 4s ease-in-out infinite;
 }
-
 .adm-title {
   font-size: 32px;
   font-weight: 800;
   letter-spacing: -1px;
-  color: #fff;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
-
 .adm-sub {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.82);
   margin-top: 4px;
-  font-weight: 400;
 }
 
-.stat-chip {
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 12px;
-  padding: 13px 18px;
-  min-width: 110px;
-  text-align: center;
-  animation: slideRight 0.5s ease-out both;
-  transition: all 0.3s;
-  cursor: default;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.32);
-    transform: translateY(-4px);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
-  }
-
-  .chip-icon {
-    display: block;
-    font-size: 18px;
+.adm-live-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 14px;
+  padding: 12px 20px;
+  .clock-greeting {
+    font-size: 11px;
+    font-weight: 600;
     opacity: 0.85;
-    margin-bottom: 3px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
   }
-  .chip-val {
-    display: block;
-    font-size: 24px;
+  .clock-time {
+    font-size: 28px;
     font-weight: 800;
     font-family: 'JetBrains Mono', monospace;
-    margin: 3px 0;
+    letter-spacing: 2px;
+    line-height: 1;
   }
-  .chip-lbl {
-    display: block;
-    font-size: 9px;
-    opacity: 0.78;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+  .clock-date {
+    font-size: 11px;
+    opacity: 0.75;
+    font-weight: 500;
   }
 }
 
+.adm-header-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(103, 194, 58, 0.5);
+  border-radius: 20px;
+  padding: 8px 16px;
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #67c23a;
+    box-shadow: 0 0 0 3px rgba(103, 194, 58, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .status-text {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.9;
+  }
+}
+
+// ── LAYOUT ────────────────────────────────────────────────
 .adm-body {
   display: flex;
   flex: 1;
@@ -771,7 +1514,6 @@ $sw: 220px; // sidebar width
       background: $blue;
       transition: transform 0.18s;
     }
-
     &:hover {
       background: $blue-bg;
       .adm-nav__icon {
@@ -783,7 +1525,6 @@ $sw: 220px; // sidebar width
         color: $blue;
       }
     }
-
     &.is-active {
       background: $blue-bg;
       &::before {
@@ -801,7 +1542,6 @@ $sw: 220px; // sidebar width
       }
     }
   }
-
   &__icon {
     width: 33px;
     height: 33px;
@@ -816,7 +1556,6 @@ $sw: 220px; // sidebar width
     flex-shrink: 0;
     transition: all 0.18s;
   }
-
   &__lbl {
     font-size: 13px;
     font-weight: 600;
@@ -826,12 +1565,23 @@ $sw: 220px; // sidebar width
   }
 }
 
+.nav-badge {
+  margin-left: auto;
+  background: #f56c6c;
+  color: #fff;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+}
+
 .adm-sidebar__footer {
   margin-top: 14px;
   padding-top: 14px;
   border-top: 1px solid $border;
 }
-
 .adm-user {
   display: flex;
   align-items: center;
@@ -840,7 +1590,6 @@ $sw: 220px; // sidebar width
   border-radius: 10px;
   background: $blue-bg;
   border: 1px solid $blue-l;
-
   &__av {
     width: 33px;
     height: 33px;
@@ -849,7 +1598,6 @@ $sw: 220px; // sidebar width
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
     color: #fff;
     box-shadow: 0 3px 8px rgba($blue, 0.28);
     flex-shrink: 0;
@@ -872,10 +1620,10 @@ $sw: 220px; // sidebar width
   flex: 1;
   min-width: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 30px 34px;
   background: $bg-page;
 }
-
 .adm-page {
   animation: fadeUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -885,7 +1633,6 @@ $sw: 220px; // sidebar width
   align-items: center;
   gap: 12px;
   margin-bottom: 22px;
-
   .page-accent {
     width: 4px;
     height: 26px;
@@ -900,15 +1647,21 @@ $sw: 220px; // sidebar width
     color: $text-primary;
     letter-spacing: -0.3px;
   }
+  .page-date {
+    margin-left: auto;
+    font-size: 12px;
+    color: $text-secondary;
+    font-weight: 500;
+  }
 }
 
+// ── TOOLBAR ───────────────────────────────────────────────
 .adm-toolbar {
   display: flex;
   gap: 10px;
   margin-bottom: 18px;
   flex-wrap: wrap;
   align-items: center;
-
   .adm-search {
     flex: 1;
     min-width: 230px;
@@ -926,9 +1679,8 @@ $sw: 220px; // sidebar width
       }
     }
   }
-
   .adm-select {
-    min-width: 175px;
+    min-width: 155px;
     :deep(.el-input__wrapper) {
       border-radius: 10px;
       background: $bg-white;
@@ -939,7 +1691,6 @@ $sw: 220px; // sidebar width
       }
     }
   }
-
   .adm-reset-btn {
     background: $bg-white;
     border: 1.5px solid $border;
@@ -953,6 +1704,7 @@ $sw: 220px; // sidebar width
     align-items: center;
     gap: 6px;
     transition: all 0.2s;
+    cursor: pointer;
     &:hover {
       border-color: $blue;
       color: $blue;
@@ -961,12 +1713,12 @@ $sw: 220px; // sidebar width
   }
 }
 
+// ── TABLE ─────────────────────────────────────────────────
 .tbl-wrap {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   border: 1px solid $border;
-
   :deep(.el-table) {
     background: $bg-white;
     td {
@@ -991,7 +1743,6 @@ $sw: 220px; // sidebar width
       }
     }
   }
-
   .el-tag {
     border-radius: 6px;
     padding: 4px 10px;
@@ -1001,17 +1752,742 @@ $sw: 220px; // sidebar width
   }
 }
 
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  &__av {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    &.av--admin {
+      background: linear-gradient(135deg, #67c23a, #95d475);
+    }
+    &.av--user {
+      background: linear-gradient(135deg, $blue-d, $blue);
+    }
+  }
+  &__name {
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-primary;
+    line-height: 1.3;
+  }
+  &__un {
+    font-size: 11px;
+    color: $text-secondary;
+  }
+}
+
+.action-btns {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.act-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1.5px solid;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  &--view {
+    color: $blue;
+    border-color: $blue-l;
+    background: $blue-bg;
+    &:hover {
+      background: $blue;
+      color: #fff;
+      border-color: $blue;
+    }
+  }
+  &--promote {
+    color: #67c23a;
+    border-color: #b3e19d;
+    background: #f0f9eb;
+    &:hover {
+      background: #67c23a;
+      color: #fff;
+      border-color: #67c23a;
+    }
+  }
+  &--demote {
+    color: #e6a23c;
+    border-color: #f5dab1;
+    background: #fdf6ec;
+    &:hover {
+      background: #e6a23c;
+      color: #fff;
+      border-color: #e6a23c;
+    }
+  }
+  &--block {
+    color: #f56c6c;
+    border-color: #fbc4c4;
+    background: #fef0f0;
+    &:hover {
+      background: #f56c6c;
+      color: #fff;
+      border-color: #f56c6c;
+    }
+  }
+  &--unblock {
+    color: #67c23a;
+    border-color: #b3e19d;
+    background: #f0f9eb;
+    &:hover {
+      background: #67c23a;
+      color: #fff;
+      border-color: #67c23a;
+    }
+  }
+}
+
+// ── KPI ───────────────────────────────────────────────────
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 22px;
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+.kpi-card {
+  background: $bg-white;
+  border-radius: 14px;
+  padding: 22px 20px;
+  border: 1px solid $border;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+  &--blue::before {
+    background: linear-gradient(90deg, $blue-d, $blue);
+  }
+  &--green::before {
+    background: linear-gradient(90deg, #3d9970, #67c23a);
+  }
+  &--orange::before {
+    background: linear-gradient(90deg, #d68910, #e6a23c);
+  }
+  &--purple::before {
+    background: linear-gradient(90deg, #7d3c98, #9b59b6);
+  }
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.1);
+  }
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+}
+.kpi-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  .kpi-card--blue & {
+    background: $blue-bg;
+    color: $blue;
+  }
+  .kpi-card--green & {
+    background: #f0f9eb;
+    color: #67c23a;
+  }
+  .kpi-card--orange & {
+    background: #fdf6ec;
+    color: #e6a23c;
+  }
+  .kpi-card--purple & {
+    background: #f3e8fb;
+    color: #9b59b6;
+  }
+}
+.kpi-trend {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 20px;
+  &--up {
+    background: #f0f9eb;
+    color: #67c23a;
+  }
+  &--neutral {
+    background: #f5f7fa;
+    color: $text-secondary;
+  }
+}
+.kpi-val {
+  font-size: 36px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: $text-primary;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.kpi-lbl {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-regular;
+  margin-bottom: 4px;
+}
+.kpi-sub {
+  font-size: 11px;
+  color: $text-secondary;
+  margin-bottom: 12px;
+}
+.kpi-bar {
+  height: 4px;
+  background: #f0f2f5;
+  border-radius: 4px;
+  overflow: hidden;
+  &__fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+    .kpi-card--blue & {
+      background: $blue;
+    }
+    .kpi-card--green & {
+      background: #67c23a;
+    }
+    .kpi-card--orange & {
+      background: #e6a23c;
+    }
+    .kpi-card--purple & {
+      background: #9b59b6;
+    }
+  }
+}
+
+// ── CHARTS ────────────────────────────────────────────────
+.dash-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+.dash-card {
+  background: $bg-white;
+  border-radius: 14px;
+  padding: 22px;
+  border: 1px solid $border;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  &--full {
+    width: 100%;
+  }
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  &__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: $text-primary;
+  }
+}
+.chart-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chart-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.chart-bar-lbl {
+  font-size: 12px;
+  color: $text-regular;
+  font-weight: 500;
+  width: 130px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chart-bar-track {
+  flex: 1;
+  height: 8px;
+  background: #f0f2f5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.chart-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.chart-bar-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: $text-primary;
+  font-family: 'JetBrains Mono', monospace;
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.top-users {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.top-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  &:hover {
+    background: $blue-bg;
+  }
+}
+.top-user-rank {
+  font-size: 16px;
+  width: 28px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.top-user-av {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, $blue-d, $blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+.top-user-info {
+  flex: 1;
+  min-width: 0;
+}
+.top-user-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-primary;
+}
+.top-user-un {
+  display: block;
+  font-size: 11px;
+  color: $text-secondary;
+}
+
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  &:hover {
+    background: $blue-bg;
+  }
+  &--danger .activity-icon {
+    color: #f56c6c;
+    background: #fef0f0;
+  }
+  &--success .activity-icon {
+    color: #67c23a;
+    background: #f0f9eb;
+  }
+  &--warning .activity-icon {
+    color: #e6a23c;
+    background: #fdf6ec;
+  }
+  &--info .activity-icon {
+    color: $blue;
+    background: $blue-bg;
+  }
+}
+.activity-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #dcdfe6;
+  flex-shrink: 0;
+  .activity-item--success & {
+    background: #67c23a;
+  }
+  .activity-item--danger & {
+    background: #f56c6c;
+  }
+  .activity-item--warning & {
+    background: #e6a23c;
+  }
+  .activity-item--info & {
+    background: $blue;
+  }
+}
+.activity-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+.activity-actor {
+  font-weight: 700;
+  font-size: 13px;
+  color: $text-primary;
+  margin-right: 6px;
+}
+.activity-msg {
+  font-size: 13px;
+  color: $text-regular;
+}
+.activity-time {
+  font-size: 11px;
+  color: $text-secondary;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: $text-secondary;
+  font-size: 13px;
+}
+
+// ── AUDIT LOG ─────────────────────────────────────────────
+.audit-mini-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.audit-ms-item {
+  background: $bg-white;
+  border: 1px solid $border;
+  border-radius: 10px;
+  padding: 14px 20px;
+  min-width: 120px;
+  text-align: center;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+}
+.audit-ms-val {
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: $text-primary;
+}
+.audit-ms-lbl {
+  display: block;
+  font-size: 11px;
+  color: $text-secondary;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.audit-timeline {
+  display: flex;
+  flex-direction: column;
+}
+.audit-entry {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  padding-left: 48px;
+  padding-bottom: 20px;
+  &__line {
+    position: absolute;
+    left: 20px;
+    top: 28px;
+    bottom: 0;
+    width: 2px;
+    background: $border;
+  }
+  &:last-child .audit-entry__line {
+    display: none;
+  }
+  &__dot {
+    position: absolute;
+    left: 8px;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    background: #f5f7fa;
+    border: 2px solid $border;
+    color: $text-secondary;
+    flex-shrink: 0;
+    .audit-entry--success & {
+      background: #f0f9eb;
+      border-color: #b3e19d;
+      color: #67c23a;
+    }
+    .audit-entry--danger & {
+      background: #fef0f0;
+      border-color: #fbc4c4;
+      color: #f56c6c;
+    }
+    .audit-entry--warning & {
+      background: #fdf6ec;
+      border-color: #f5dab1;
+      color: #e6a23c;
+    }
+    .audit-entry--info & {
+      background: $blue-bg;
+      border-color: $blue-l;
+      color: $blue;
+    }
+  }
+  &__body {
+    flex: 1;
+    background: $bg-white;
+    border: 1px solid $border;
+    border-radius: 10px;
+    padding: 12px 16px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.04);
+  }
+  &__top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  &__actor {
+    font-size: 13px;
+    font-weight: 700;
+    color: $text-primary;
+  }
+  &__action-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    &.tag--success {
+      background: #f0f9eb;
+      color: #67c23a;
+    }
+    &.tag--danger {
+      background: #fef0f0;
+      color: #f56c6c;
+    }
+    &.tag--warning {
+      background: #fdf6ec;
+      color: #e6a23c;
+    }
+    &.tag--info {
+      background: $blue-bg;
+      color: $blue;
+    }
+  }
+  &__time {
+    margin-left: auto;
+    font-size: 11px;
+    color: $text-secondary;
+    white-space: nowrap;
+  }
+  &__msg {
+    font-size: 13px;
+    color: $text-regular;
+  }
+  &__meta {
+    font-size: 11px;
+    color: $text-secondary;
+    margin-top: 4px;
+    background: #f5f7fa;
+    padding: 4px 8px;
+    border-radius: 5px;
+  }
+}
+
+.empty-audit {
+  text-align: center;
+  padding: 50px 20px;
+  background: $bg-white;
+  border-radius: 14px;
+  border: 1px solid $border;
+  &__icon {
+    font-size: 42px;
+    margin-bottom: 12px;
+  }
+  &__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: $text-primary;
+    margin-bottom: 8px;
+  }
+  &__sub {
+    font-size: 13px;
+    color: $text-secondary;
+  }
+}
+
+// ── USER DRAWER ───────────────────────────────────────────
+.user-drawer {
+  padding: 10px;
+  text-align: center;
+  &__avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    margin: 0 auto 12px;
+    &.av--admin {
+      background: linear-gradient(135deg, #67c23a, #95d475);
+    }
+    &.av--user {
+      background: linear-gradient(135deg, $blue-d, $blue);
+    }
+  }
+  &__name {
+    font-size: 18px;
+    font-weight: 800;
+    color: $text-primary;
+  }
+  &__un {
+    font-size: 13px;
+    color: $text-secondary;
+    margin-bottom: 10px;
+  }
+  &__tags {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+  &__fields {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  &__actions {
+    text-align: left;
+  }
+}
+.udf-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  &:nth-child(odd) {
+    background: $bg-page;
+  }
+}
+.udf-lbl {
+  font-size: 12px;
+  color: $text-secondary;
+  font-weight: 600;
+  min-width: 160px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.udf-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.user-audit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.user-audit-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: $text-regular;
+  border: 1px solid $border;
+}
+.user-audit-time {
+  margin-left: auto;
+  font-size: 10px;
+  color: $text-secondary;
+  white-space: nowrap;
+  padding-left: 8px;
+}
+
+// ── SETTINGS ─────────────────────────────────────────────
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+}
 .settings-card {
   background: $bg-white;
   padding: 34px;
   border-radius: 16px;
   box-shadow: 0 2px 14px rgba(0, 0, 0, 0.05);
   border: 1px solid $border;
-  max-width: 560px;
   position: relative;
   overflow: hidden;
   transition: all 0.28s;
-
   &::before {
     content: '';
     position: absolute;
@@ -1026,7 +2502,6 @@ $sw: 220px; // sidebar width
     box-shadow: 0 10px 28px rgba($blue, 0.12);
     border-color: $blue-l;
   }
-
   .sc-icon {
     width: 50px;
     height: 50px;
@@ -1035,10 +2510,13 @@ $sw: 220px; // sidebar width
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
     color: #fff;
     margin-bottom: 16px;
     box-shadow: 0 5px 14px rgba($blue, 0.28);
+    &--purple {
+      background: linear-gradient(135deg, #7d3c98, #9b59b6);
+      box-shadow: 0 5px 14px rgba(#9b59b6, 0.28);
+    }
   }
   .sc-title {
     font-size: 18px;
@@ -1059,7 +2537,7 @@ $sw: 220px; // sidebar width
   }
   .sc-btn {
     flex: 1;
-    min-width: 155px;
+    min-width: 135px;
     background: $blue-bg;
     border: 1.5px solid $blue-l;
     color: $blue-d;
@@ -1073,16 +2551,33 @@ $sw: 220px; // sidebar width
     justify-content: center;
     gap: 8px;
     transition: all 0.22s;
-    &:hover {
+    cursor: pointer;
+    &:hover:not(:disabled) {
       background: $blue;
       color: #fff;
       border-color: $blue;
       transform: translateY(-2px);
       box-shadow: 0 6px 18px rgba($blue, 0.26);
     }
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .is-loading {
+      animation: rotating 2s linear infinite;
+    }
   }
 }
 
+// ── ANIMATIONS ────────────────────────────────────────────
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 @keyframes orbFloat {
   0%,
   100% {
@@ -1104,16 +2599,6 @@ $sw: 220px; // sidebar width
     transform: translateY(-7px);
   }
 }
-@keyframes slideRight {
-  from {
-    opacity: 0;
-    transform: translateX(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -1124,7 +2609,17 @@ $sw: 220px; // sidebar width
     transform: translateY(0);
   }
 }
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(103, 194, 58, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(103, 194, 58, 0.1);
+  }
+}
 
+// ── RESPONSIVE ────────────────────────────────────────────
 @media (max-width: 1024px) {
   .adm-header {
     padding: 22px 24px 18px;
@@ -1132,14 +2627,6 @@ $sw: 220px; // sidebar width
   .adm-header__inner {
     flex-direction: column;
     align-items: flex-start;
-  }
-  .adm-header__stats {
-    width: 100%;
-    .stat-chip {
-      flex: 1;
-      min-width: 80px;
-      padding: 11px;
-    }
   }
   .adm-sidebar {
     width: 190px;
@@ -1149,7 +2636,6 @@ $sw: 220px; // sidebar width
     padding: 22px 20px;
   }
 }
-
 @media (max-width: 640px) {
   .admin-wrap {
     height: auto;
@@ -1192,8 +2678,15 @@ $sw: 220px; // sidebar width
     }
   }
   .adm-main {
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: visible;
     padding: 16px 12px;
+  }
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .dash-row {
+    grid-template-columns: 1fr;
   }
 }
 </style>
