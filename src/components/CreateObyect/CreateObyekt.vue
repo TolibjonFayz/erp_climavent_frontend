@@ -130,7 +130,7 @@
         </template>
       </el-form-item>
       <LocationPicker
-        :access-token="import.meta.env.VITE_MAPBOX_TOKEN"
+        :access-token="Mapboxtoken"
         :initial-center="{ lng: -74.006, lat: 40.7128 }"
         :initial-zoom="12"
         @location-selected="handleLocationSelected"
@@ -349,7 +349,7 @@
           </template>
         </el-form-item>
         <LocationPicker
-          :access-token="import.meta.env.VITE_MAPBOX_TOKEN"
+          :access-token="Mapboxtoken"
           :initial-center="{ lng: -74.006, lat: 40.7128 }"
           :initial-zoom="12"
           @location-selected="(location) => handleAdditionalLocationSelected(index, location)"
@@ -402,6 +402,8 @@ import router from '@/router'
 const comeandgoesStore = useComeAndGoesStore()
 const comeandgoInsideStore = useComeAndGoInsideStore()
 const videosStore = useVideosStore()
+
+const Mapboxtoken = import.meta.env.VITE_MAPBOX_TOKEN
 
 const isDogoKpNotSelected = ref(false)
 const isDogovorSelected = ref(false)
