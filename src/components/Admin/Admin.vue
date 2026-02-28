@@ -164,25 +164,86 @@
 
             <div class="dash-card">
               <div class="dash-card__head">
-                <span class="dash-card__title">Eng faol foydalanuvchilar</span>
+                <span class="dash-card__title">🏆 Eng faol foydalanuvchilar</span>
+                <el-tag size="small" type="info" effect="plain">Top 5</el-tag>
               </div>
               <div class="top-users">
-                <div v-for="(u, idx) in topActiveUsers" :key="u.username" class="top-user-row">
+                <div v-for="(u, idx) in visibleActiveUsers" :key="u.username" class="top-user-row">
+                  <!-- Rank -->
                   <span class="top-user-rank">
                     {{ idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '#' + (idx + 1) }}
                   </span>
-                  <div class="top-user-av">
+
+                  <!-- Avatar -->
+                  <div
+                    class="top-user-av"
+                    :class="
+                      idx === 0
+                        ? 'av--gold'
+                        : idx === 1
+                          ? 'av--silver'
+                          : idx === 2
+                            ? 'av--bronze'
+                            : ''
+                    "
+                  >
                     {{ u.firstname?.charAt(0) || u.username?.charAt(0) }}
                   </div>
+
+                  <!-- Info -->
                   <div class="top-user-info">
                     <span class="top-user-name">{{ u.firstname }} {{ u.lastname }}</span>
                     <span class="top-user-un">@{{ u.username }}</span>
+
+                    <!-- Mini progress bar -->
+                    <div class="top-user-bar">
+                      <div
+                        class="top-user-bar__fill"
+                        :style="{
+                          width: topActiveUsers[0]?.total
+                            ? (u.total / topActiveUsers[0].total) * 100 + '%'
+                            : '0%',
+                        }"
+                      ></div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="top-user-stats">
+                      <span class="tus-item tus-item--partner">
+                        <el-icon><UserFilled /></el-icon> {{ u.partners || 0 }} hamkor
+                      </span>
+                      <span class="tus-divider">·</span>
+                      <span class="tus-item tus-item--object">
+                        <el-icon><OfficeBuilding /></el-icon> {{ u.objects || 0 }} obyekt
+                      </span>
+                    </div>
                   </div>
-                  <el-tag size="small" type="info">{{ u.count }} ta</el-tag>
+
+                  <!-- Total badge -->
+                  <div class="top-user-total" :class="idx === 0 ? 'total--gold' : ''">
+                    {{ u.total }}
+                    <span>jami</span>
+                  </div>
                 </div>
+
                 <div v-if="!topActiveUsers.length" class="empty-state">
                   <el-icon><InfoFilled /></el-icon> Ma'lumot yo'q
                 </div>
+
+                <button
+                  v-if="topActiveUsers.length > 5"
+                  class="show-all-btn"
+                  @click="showAllActiveUsers = !showAllActiveUsers"
+                >
+                  <span v-if="!showAllActiveUsers">
+                    <el-icon><ArrowDown /></el-icon>
+                    Barchasini ko'rish · <b>{{ topActiveUsers.length }} ta</b> foydalanuvchi
+                  </span>
+                  <span v-else>
+                    <el-icon><ArrowUp /></el-icon>
+                    Yig'ish
+                  </span>
+                </button>
               </div>
             </div>
           </div>
@@ -274,21 +335,21 @@
               </el-table-column>
               <el-table-column prop="phone_number" label="Telefon" min-width="130" />
               <el-table-column prop="email" label="Email" min-width="150" />
-              <el-table-column label="Rol" width="120" align="center">
+              <el-table-column label="Rol" width="150" align="center">
                 <template #default="{ row }">
                   <el-tag :type="row.is_admin ? 'success' : 'warning'" size="small">
                     {{ row.is_admin ? '👑 Admin' : '👤 User' }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="Holat" width="110" align="center">
+              <el-table-column label="Holat" width="150" align="center">
                 <template #default="{ row }">
                   <el-tag :type="row.is_blocked ? 'danger' : 'success'" size="small">
                     {{ row.is_blocked ? '🔴 Bloklangan' : '🟢 Faol' }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="Amallar" width="130" align="center" fixed="right">
+              <el-table-column label="Amallar" width="150" align="center" fixed="right">
                 <template #default="{ row }">
                   <div class="action-btns">
                     <el-tooltip content="Batafsil ko'rish" placement="top">
@@ -390,24 +451,24 @@
                   }}</el-tag></template
                 >
               </el-table-column>
-              <el-table-column label="Kim qo'shgan" min-width="140">
+              <el-table-column label="Kim qo'shgan" min-width="150">
                 <template #default="{ row }"
                   ><el-tag>{{ row.user.firstname }}</el-tag></template
                 >
               </el-table-column>
-              <el-table-column label="Username" min-width="160">
+              <el-table-column label="Username" min-width="150">
                 <template #default="{ row }"
                   ><el-tag>{{ row.user.username }}</el-tag></template
                 >
               </el-table-column>
-              <el-table-column prop="fullname" label="Nomi" min-width="130" />
+              <el-table-column prop="fullname" label="Nomi" min-width="150" />
               <el-table-column prop="phone_number" label="Telefon" min-width="150" />
               <el-table-column
                 prop="additional_phone_number"
                 label="Qo'shimcha tel"
                 min-width="150"
               />
-              <el-table-column label="Manzil" min-width="160">
+              <el-table-column label="Manzil" min-width="250">
                 <template #default="{ row }"
                   ><el-tag
                     >{{ row.republic }} {{ row.viloyat }} {{ row.shahar_tuman }}</el-tag
@@ -458,6 +519,7 @@
               border
               style="width: 100%"
               empty-text="Hech narsa topilmadi 🔍"
+              :default-sort="{ prop: 'createdAt', order: 'descending' }"
             >
               <el-table-column label="№" type="index" width="75" align="center" />
               <el-table-column prop="id" label="ID" width="75" />
@@ -474,7 +536,7 @@
               <el-table-column prop="dogovor_or_kp" label="Dogovor / KP" min-width="130" />
               <el-table-column prop="locationname" label="Manzil" min-width="130" />
               <el-table-column prop="company_name" label="Firma nomi" min-width="140" />
-              <el-table-column label="Kiritilgan vaqt" min-width="140">
+              <el-table-column prop="createdAt" label="Kiritilgan vaqt" min-width="140" sortable>
                 <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
               </el-table-column>
             </el-table>
@@ -764,6 +826,8 @@ import {
   Timer,
   Loading,
   Grid,
+  ArrowDown,
+  ArrowUp,
 } from '@element-plus/icons-vue'
 import { ref, computed, onMounted } from 'vue'
 import { useUsersStore } from '@/stores/user'
@@ -809,6 +873,7 @@ const partnersType = ref('')
 const partnersUser = ref('')
 const objectsSearch = ref('')
 const objectsUser = ref('')
+const showAllActiveUsers = ref(false)
 const auditSearch = ref('')
 const auditActionFilter = ref('')
 
@@ -920,18 +985,39 @@ const lastObjectDate = computed(() => {
   )
   return sorted[0] ? formatDate(sorted[0].createdAt).split(' / ')[0] : '—'
 })
+
 const topActiveUsers = computed(() => {
+  // Avval barcha userlardan map yasaymiz
   const map = {}
+  usersStore.allUsers.forEach((u) => {
+    map[u.username] = { ...u, partners: 0, objects: 0 }
+  })
+
+  // Hamkorlarni sanab chiqamiz
   partnersStore.allPartners.forEach((p) => {
     const un = p.user?.username
     if (!un) return
-    if (!map[un]) map[un] = { ...p.user, count: 0 }
-    map[un].count++
+    if (!map[un]) map[un] = { ...p.user, partners: 0, objects: 0 }
+    map[un].partners++
   })
+
+  // Obyektlarni sanab chiqamiz
+  comeandgoInsideStore.allComeAndGoInsides.forEach((o) => {
+    const un = o.come_and_go_father?.user?.username
+    if (!un) return
+    if (!map[un]) map[un] = { ...o.come_and_go_father?.user, partners: 0, objects: 0 }
+    map[un].objects++
+  })
+
   return Object.values(map)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5)
+    .map((u) => ({ ...u, total: (u.partners || 0) + (u.objects || 0) }))
+    .sort((a, b) => b.total - a.total)
 })
+
+const visibleActiveUsers = computed(() =>
+  showAllActiveUsers.value ? topActiveUsers.value : topActiveUsers.value.slice(0, 5),
+)
+
 const recentAuditLogs = computed(() => auditLogs.value.slice(0, 8))
 const todayAuditCount = computed(() => auditStats.value?.today ?? 0)
 
@@ -2068,38 +2154,56 @@ $sw: 220px;
 .top-users {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .top-user-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  transition: background 0.15s;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid $border;
+  background: $bg-white;
+  transition: all 0.2s;
   &:hover {
     background: $blue-bg;
+    border-color: $blue-l;
+    transform: translateX(3px);
   }
 }
 .top-user-rank {
-  font-size: 16px;
-  width: 28px;
+  font-size: 18px;
+  width: 26px;
   flex-shrink: 0;
   text-align: center;
 }
 .top-user-av {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: linear-gradient(135deg, $blue-d, $blue);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
   color: #fff;
   flex-shrink: 0;
   text-transform: uppercase;
+  box-shadow: 0 3px 8px rgba($blue, 0.28);
+
+  &.av--gold {
+    background: linear-gradient(135deg, #f39c12, #f1c40f);
+    box-shadow: 0 3px 10px rgba(#f1c40f, 0.45);
+  }
+  &.av--silver {
+    background: linear-gradient(135deg, #7f8c8d, #bdc3c7);
+    box-shadow: 0 3px 10px rgba(#bdc3c7, 0.45);
+  }
+  &.av--bronze {
+    background: linear-gradient(135deg, #c0392b, #e67e22);
+    box-shadow: 0 3px 10px rgba(#e67e22, 0.35);
+  }
 }
 .top-user-info {
   flex: 1;
@@ -2108,13 +2212,113 @@ $sw: 220px;
 .top-user-name {
   display: block;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .top-user-un {
   display: block;
   font-size: 11px;
   color: $text-secondary;
+  margin-bottom: 5px;
+}
+.top-user-bar {
+  height: 3px;
+  background: #f0f2f5;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 5px;
+  &__fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, $blue-d, $blue);
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+.top-user-stats {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.tus-item {
+  font-size: 10.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  &--partner {
+    color: $blue;
+  }
+  &--object {
+    color: #e6a23c;
+  }
+}
+.tus-divider {
+  color: $border;
+  font-size: 12px;
+}
+.top-user-total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: $blue-bg;
+  border: 1.5px solid $blue-l;
+  font-size: 18px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: $blue-d;
+  line-height: 1;
+  span {
+    font-size: 9px;
+    font-weight: 600;
+    color: $text-secondary;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+  &.total--gold {
+    background: #fefce8;
+    border-color: #f1c40f;
+    color: #d97706;
+  }
+}
+
+.show-all-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px;
+  border: 1.5px dashed $blue-l;
+  border-radius: 10px;
+  background: transparent;
+  color: $blue;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &:hover {
+    background: $blue-bg;
+    border-style: solid;
+    border-color: $blue;
+    transform: translateY(-1px);
+  }
 }
 
 .activity-feed {
