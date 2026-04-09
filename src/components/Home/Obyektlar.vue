@@ -103,44 +103,46 @@
               </td>
               <td>
                 <div class="cell-content">
-                  <span class="cell-text bold">{{ item.comeAndGoInsides[0].whereto }}</span>
+                  <span class="cell-text bold">{{ item.comeAndGoInsides[0]?.whereto }}</span>
                 </div>
               </td>
               <td>
                 <div class="cell-content">
                   <span class="cell-text">{{
-                    formatDate(item.comeAndGoInsides[0].when_gone)
+                    formatDate(item.comeAndGoInsides[0]?.when_gone)
                   }}</span>
                 </div>
               </td>
               <td>
                 <div class="cell-content">
                   <span class="cell-text">{{
-                    formatDate(item.comeAndGoInsides[0].when_came)
+                    formatDate(item.comeAndGoInsides[0]?.when_came)
                   }}</span>
                 </div>
               </td>
               <td>
                 <div class="cell-content">
                   <el-tag type="info" size="small">{{
-                    item.comeAndGoInsides[0].dogovor_or_kp
+                    item.comeAndGoInsides[0]?.dogovor_or_kp
                   }}</el-tag>
                 </div>
               </td>
               <td>
                 <div class="cell-content">
-                  <span class="cell-text">{{ item.comeAndGoInsides[0].locationname }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text company">{{ item.comeAndGoInsides[0].company_name }}</span>
+                  <span class="cell-text">{{ item.comeAndGoInsides[0]?.locationname }}</span>
                 </div>
               </td>
               <td>
                 <div class="cell-content">
                   <span class="cell-text company">{{
-                    formatDate(item.comeAndGoInsides[0].createdAt)
+                    item.comeAndGoInsides[0]?.company_name
+                  }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="cell-content">
+                  <span class="cell-text company">{{
+                    formatDate(item.comeAndGoInsides[0]?.createdAt)
                   }}</span>
                 </div>
               </td>
