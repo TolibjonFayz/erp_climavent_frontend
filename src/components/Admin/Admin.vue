@@ -424,10 +424,10 @@
               class="adm-select"
             >
               <el-option
-                v-for="username in partnersUserList"
-                :key="username"
-                :label="username"
-                :value="username"
+                v-for="firstname in partnersUserList"
+                :key="firstname"
+                :label="firstname"
+                :value="firstname"
               />
             </el-select>
             <button class="adm-reset-btn" @click="handleResetPartners">
@@ -454,11 +454,6 @@
               <el-table-column label="Kim qo'shgan" min-width="150">
                 <template #default="{ row }"
                   ><el-tag>{{ row.user.firstname }}</el-tag></template
-                >
-              </el-table-column>
-              <el-table-column label="Username" min-width="150">
-                <template #default="{ row }"
-                  ><el-tag>{{ row.user.username }}</el-tag></template
                 >
               </el-table-column>
               <el-table-column prop="fullname" label="Nomi" min-width="150" />
@@ -502,10 +497,10 @@
               class="adm-select"
             >
               <el-option
-                v-for="username in objectsUserList"
-                :key="username"
-                :label="username"
-                :value="username"
+                v-for="firstname in objectsUserList"
+                :key="firstname"
+                :label="firstname"
+                :value="firstname"
               />
             </el-select>
             <button class="adm-reset-btn" @click="handleResetObjects">
@@ -525,7 +520,9 @@
               <el-table-column prop="id" label="ID" width="75" />
               <el-table-column prop="whereto" label="Qayerga" min-width="120" />
               <el-table-column label="Kim qo'shgan" min-width="130">
-                <template #default="{ row }">{{ row.come_and_go_father?.user?.username }}</template>
+                <template #default="{ row }">{{
+                  row.come_and_go_father?.user?.firstname
+                }}</template>
               </el-table-column>
               <el-table-column label="Ketilgan vaqt" min-width="150">
                 <template #default="{ row }">{{ formatDate(row.when_gone) }}</template>
@@ -1038,12 +1035,12 @@ const filteredUsers = computed(() =>
   }),
 )
 const partnersUserList = computed(() => [
-  ...new Set(partnersStore.allPartners.map((p) => p.user?.username).filter(Boolean)),
+  ...new Set(partnersStore.allPartners.map((p) => p.user?.firstname).filter(Boolean)),
 ])
 const objectsUserList = computed(() => [
   ...new Set(
     comeandgoInsideStore.allComeAndGoInsides
-      .map((o) => o.come_and_go_father?.user?.username)
+      .map((o) => o.come_and_go_father?.user?.firstname)
       .filter(Boolean),
   ),
 ])
@@ -1059,7 +1056,7 @@ const filteredPartners = computed(() =>
     return (
       matchSearch &&
       (!partnersType.value || (p.partner_type ?? '').trim() === partnersType.value) &&
-      (!partnersUser.value || p.user?.username === partnersUser.value)
+      (!partnersUser.value || p.user?.firstname === partnersUser.value)
     )
   }),
 )
@@ -1072,7 +1069,7 @@ const filteredObjects = computed(() =>
       (o.locationname ?? '').toLowerCase().includes(s)
     return (
       matchSearch &&
-      (!objectsUser.value || o.come_and_go_father?.user?.username === objectsUser.value)
+      (!objectsUser.value || o.come_and_go_father?.user?.firstname === objectsUser.value)
     )
   }),
 )
