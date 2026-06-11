@@ -7,6 +7,8 @@ const messages = {
   ru,
 }
 
+const SUPPORTED_LOCALES = Object.keys(messages)
+
 // Cookie'dan tilni o'qish
 function getCookieLanguage(name = 'lang') {
   const nameEQ = name + '='
@@ -14,7 +16,9 @@ function getCookieLanguage(name = 'lang') {
   for (let cookie of cookies) {
     cookie = cookie.trim()
     if (cookie.indexOf(nameEQ) === 0) {
-      return decodeURIComponent(cookie.substring(nameEQ.length))
+      const lang = decodeURIComponent(cookie.substring(nameEQ.length))
+      // Cookie'da boshqa loyihadan qolgan yaroqsiz til bo'lishi mumkin (masalan "en")
+      return SUPPORTED_LOCALES.includes(lang) ? lang : 'uz'
     }
   }
   return 'uz'
@@ -22,6 +26,7 @@ function getCookieLanguage(name = 'lang') {
 
 const i18n = createI18n({
   locale: getCookieLanguage(),
+  fallbackLocale: 'uz',
   globalInjection: true,
   messages,
 })

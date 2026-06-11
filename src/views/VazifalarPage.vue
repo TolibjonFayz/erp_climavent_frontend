@@ -13,7 +13,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 const isSidebarCollapsed = ref(false)
 
 const sidebarWidth = computed(() => {
-  return isSidebarCollapsed.value ? 80 : 260
+  return isSidebarCollapsed.value ? 80 : 310
 })
 
 const handleSidebarChange = () => {

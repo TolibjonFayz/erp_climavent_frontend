@@ -21,9 +21,7 @@ app.use(createPinia())
 app.use(router)
 app.use(i18n)
 app.use(ElementPlus, {
-  locale: {
-    locale: ru,
-  },
+  locale: ru,
 })
 
 app.mount('#app')
