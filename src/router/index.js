@@ -68,7 +68,7 @@ const router = createRouter({
       path: '/boss',
       name: 'boss',
       component: BossPage,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, bossOnly: true },
     },
     {
       path: '/login',
@@ -96,13 +96,19 @@ const router = createRouter({
   ],
 })
 
+// Boss (direktor) user id — faqat shu user /boss sahifasiga kira oladi
+const BOSS_USER_ID = 16
+
 router.beforeEach((to, from, next) => {
   const isAuthenticated = !!localStorage.getItem('refreshtoken')
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login')
-  } else {
-    next()
+    return next('/login')
   }
+  // Faqat boss kira oladigan sahifalar
+  if (to.meta.bossOnly && Number(localStorage.getItem('userid')) !== BOSS_USER_ID) {
+    return next('/')
+  }
+  next()
 })
 
 export default router

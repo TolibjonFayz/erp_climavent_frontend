@@ -70,7 +70,7 @@
           </a>
         </li>
 
-        <li class="nav-item" v-if="usersStore?.currentUser?.is_admin">
+        <li class="nav-item" v-if="Number(usersStore?.currentUser?.id) === 16">
           <a href="/boss" class="nav-link" :title="isCollapsed ? $t('boss') : ''">
             <i class="icon boss-icon"></i>
             <span class="nav-text">{{ $t('boss') }}</span>
