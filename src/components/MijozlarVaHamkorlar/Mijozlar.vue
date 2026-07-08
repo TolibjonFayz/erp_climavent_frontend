@@ -218,6 +218,24 @@
         </div>
       </el-tab-pane>
     </el-tabs>
+
+    <!-- Yangi mijoz qo'shish dialogi -->
+    <el-dialog
+      v-model="addDialogVisible"
+      :title="$t('yangiMijozQoshishText')"
+      class="add-mijoz-dialog"
+      width="640px"
+      top="6vh"
+      append-to-body
+      destroy-on-close
+    >
+      <AddMijoz
+        v-if="addDialogVisible"
+        embedded
+        @success="handleAddSuccess"
+        @cancel="addDialogVisible = false"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -229,14 +247,24 @@ import { Plus } from '@element-plus/icons-vue'
 import MijozCard from './MijozCard.vue'
 import { ElMessage } from 'element-plus'
 import MijozCardJami from './MijozCardJami.vue'
+import AddMijoz from './AddMijoz.vue'
 
 const loading = ref(false)
 const activeTab = ref('doimiymijoz')
 const partnersStore = usePartnersStore()
+const addDialogVisible = ref(false)
 
 const handleAddMijoz = () => {
+  // AddMijoz payload'ida partner_type shu qiymatdan olinadi
   localStorage.setItem('mijozTur', activeTab.value)
-  router.push({ name: 'mijozlarnew' })
+  addDialogVisible.value = true
+}
+
+const handleAddSuccess = async () => {
+  addDialogVisible.value = false
+  loading.value = true
+  await partnersStore.getAllPartnersOfUser(Number(localStorage.getItem('userid')))
+  loading.value = false
 }
 
 const handleEdit = (id) => {
@@ -822,6 +850,29 @@ onMounted(async () => {
 
   .tab-header h2 {
     font-size: 13px;
+  }
+}
+</style>
+
+<!-- Dialog body'ga tegishli (append-to-body sabab unscoped bo'lishi kerak) -->
+<style lang="scss">
+.add-mijoz-dialog {
+  max-width: 92vw;
+  border-radius: 14px;
+
+  .el-dialog__body {
+    max-height: 74vh;
+    overflow-y: auto;
+    padding-top: 8px;
+  }
+
+  @media (max-width: 768px) {
+    width: 94vw !important;
+    top: 4vh !important;
+
+    .el-dialog__body {
+      max-height: 80vh;
+    }
   }
 }
 </style>

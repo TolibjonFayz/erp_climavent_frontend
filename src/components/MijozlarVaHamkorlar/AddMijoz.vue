@@ -1,6 +1,6 @@
 <template>
-  <div class="container">
-    <div class="header-row">
+  <div class="container" :class="{ embedded }">
+    <div class="header-row" v-if="!embedded">
       <el-icon @click="goback()"><Back /></el-icon>
       <h2>{{ $t('yangiMijozQoshishText') }}</h2>
     </div>
@@ -134,6 +134,12 @@ import { reactive, ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
 import { useI18n } from 'vue-i18n'
+
+const props = defineProps({
+  // dialog ichida ishlaganda true — o'shanda sahifaga navigatsiya o'rniga event chiqaramiz
+  embedded: { type: Boolean, default: false },
+})
+const emit = defineEmits(['success', 'cancel'])
 
 const partnersStore = usePartnersStore()
 const loading = ref(false)
@@ -1590,7 +1596,8 @@ const onSubmit = async () => {
     console.log('Creating partner with payload:', mainPayload)
     await partnersStore.createPartner(mainPayload)
     ElMessage.success("Barcha ma'lumotlar muvaffaqiyatli saqlandi!")
-    router.push('/')
+    if (props.embedded) emit('success')
+    else router.push('/')
   } catch (error) {
     if (error !== false) {
       ElMessage.error(
@@ -1603,7 +1610,10 @@ const onSubmit = async () => {
   }
 }
 
-const goback = () => router.push('/')
+const goback = () => {
+  if (props.embedded) emit('cancel')
+  else router.push('/')
+}
 </script>
 
 <style scoped lang="scss">
@@ -1623,6 +1633,25 @@ const goback = () => router.push('/')
   @media (max-width: 480px) {
     padding: 8px;
     padding-bottom: 20px;
+  }
+}
+
+/* Dialog ichida ishlaganda: to'liq ekran markazlashuvi va soya kerak emas */
+.container.embedded {
+  min-height: auto;
+  padding: 0;
+
+  .form {
+    box-shadow: none;
+    padding: 4px 2px;
+    max-width: 100%;
+    border-radius: 0;
+  }
+
+  .button-group-container {
+    padding: 0;
+    max-width: 100%;
+    margin-top: 20px;
   }
 }
 
