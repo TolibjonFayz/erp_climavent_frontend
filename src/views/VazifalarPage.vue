@@ -1,14 +1,14 @@
 <template>
   <div class="vazifalar-page">
-    <LeftMenuTasks />
+    <Sidebar :activePath="'tasks'" />
     <Vazifalar />
   </div>
 </template>
 
 <script setup>
-import LeftMenuTasks from '@/components/Vazifalar/LeftMenuTasks.vue'
 import Vazifalar from '@/components/Vazifalar/Vazifalar.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import Sidebar from '@/components/Sidebar.vue'
 
 const isSidebarCollapsed = ref(false)
 

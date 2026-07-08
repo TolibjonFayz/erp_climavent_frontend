@@ -3,7 +3,7 @@
     <div class="sidebar-header">
       <div class="logo" v-show="!isCollapsed">
         <div class="logo-icon">
-          <img src="../../assets/logo.png" alt="Logo img" />
+          <img src="../assets/logo.png" alt="Logo img" />
         </div>
         <div class="logo-text">
           <h3>Climavent</h3>
@@ -21,59 +21,18 @@
 
     <nav class="sidebar-nav">
       <ul class="nav-list">
-        <li class="nav-item active">
-          <a href="/" class="nav-link" :title="$t('mijozlarHamkorlarTitle')">
-            <i class="icon places-icon"></i>
-            <span class="nav-text">{{ $t('mijozlarHamkorlarText') }}</span>
-          </a>
-        </li>
+        <li
+          v-for="menu in menus"
+          :key="menu.key"
+          class="nav-item"
+          :class="{ active: props.activePath === menu.key }"
+        >
+          <a v-if="menu?.show" :href="menu.href" class="nav-link" :title="$t(menu.title)">
+            <i class="icon" :class="menu.icon"></i>
 
-        <li class="nav-item">
-          <a href="/obyekt" class="nav-link" :title="$t('obyekt')">
-            <i class="icon home-icon"></i>
-            <span class="nav-text">{{ $t('obyekt') }}</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="/raqiblar" class="nav-link" :title="$t('raqib')">
-            <i class="icon oppenents-icon"></i>
-            <span class="nav-text">{{ $t('raqibtext') }}</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="/davomat" class="nav-link" :title="$t('davomat')">
-            <i class="icon project-icon"></i>
-            <span class="nav-text">{{ $t('davomat') }}</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="/tasks" class="nav-link" :title="$t('tasks')">
-            <i class="icon tasks-icon"></i>
-            <span class="nav-text">{{ $t('tasks') }}</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="/settings" class="nav-link" :title="$t('settings')">
-            <i class="icon calendar-icon"></i>
-            <span class="nav-text">{{ $t('settings') }}</span>
-          </a>
-        </li>
-
-        <li class="nav-item" v-if="usersStore?.currentUser?.is_admin">
-          <a href="/admin" class="nav-link" :title="isCollapsed ? $t('admin') : ''">
-            <i class="icon admin-icon"></i>
-            <span class="nav-text">{{ $t('admin') }}</span>
-          </a>
-        </li>
-
-        <li class="nav-item" v-if="Number(usersStore?.currentUser?.id) === 16">
-          <a href="/boss" class="nav-link" :title="isCollapsed ? $t('boss') : ''">
-            <i class="icon boss-icon"></i>
-            <span class="nav-text">{{ $t('boss') }}</span>
+            <span class="nav-text">
+              {{ $t(menu.text) }}
+            </span>
           </a>
         </li>
       </ul>
@@ -101,6 +60,14 @@
 <script setup lang="ts">
 import { useUsersStore } from '@/stores/user'
 import { onMounted, ref, onUnmounted } from 'vue'
+import { computed } from 'vue'
+
+const props = defineProps({
+  activePath: {
+    type: String,
+    required: true,
+  },
+})
 
 const usersStore = useUsersStore()
 const loading = ref(false)
@@ -116,7 +83,72 @@ const handleResize = () => {
     isCollapsed.value = true
   }
 }
-
+const menus = computed(() => [
+  {
+    key: 'mijozlar',
+    href: '/',
+    icon: 'places-icon',
+    title: 'mijozlarHamkorlarTitle',
+    text: 'mijozlarHamkorlarText',
+    show: true,
+  },
+  {
+    key: 'obyekt',
+    href: '/obyekt',
+    icon: 'home-icon',
+    title: 'obyekt',
+    text: 'obyekt',
+    show: true,
+  },
+  {
+    key: 'raqiblar',
+    href: '/raqiblar',
+    icon: 'oppenents-icon',
+    title: 'raqib',
+    text: 'raqibtext',
+    show: true,
+  },
+  {
+    key: 'davomat',
+    href: '/davomat',
+    icon: 'project-icon',
+    title: 'davomat',
+    text: 'davomat',
+    show: true,
+  },
+  {
+    key: 'tasks',
+    href: '/tasks',
+    icon: 'tasks-icon',
+    title: 'tasks',
+    text: 'tasks',
+    show: true,
+  },
+  {
+    key: 'settings',
+    href: '/settings',
+    icon: 'calendar-icon',
+    title: 'settings',
+    text: 'settings',
+    show: true,
+  },
+  {
+    key: 'admin',
+    href: '/admin',
+    icon: 'admin-icon',
+    title: 'admin',
+    text: 'admin',
+    show: usersStore?.currentUser?.is_admin,
+  },
+  {
+    key: 'boss',
+    href: '/boss',
+    icon: 'boss-icon',
+    title: 'boss',
+    text: 'boss',
+    show: Number(usersStore?.currentUser?.id) === 16,
+  },
+])
 onMounted(async () => {
   loading.value = true
   const userId = localStorage.getItem('userid')
@@ -319,7 +351,7 @@ onUnmounted(() => {
   transition: all 0.2s ease;
   position: relative;
 
-   &:hover:not(.active) {
+  &:hover:not(.active) {
     background: #cde4ff;
     color: #232831;
   }

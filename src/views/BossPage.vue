@@ -1,13 +1,13 @@
 <template>
   <div class="home-page-sozlamalar">
-    <LeftMenuBoss />
+    <Sidebar :activePath="'boss'" />
     <Boss />
   </div>
 </template>
 
 <script setup>
-import LeftMenuBoss from '@/components/Boss/LeftMenuBoss.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import Sidebar from '@/components/Sidebar.vue'
 import Boss from '@/components/Boss/Boss.vue'
 
 const isSidebarCollapsed = ref(false)

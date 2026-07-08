@@ -1,14 +1,14 @@
 <template>
   <div class="raqiblar-page">
-    <LeftMenuRaqiblar />
+    <Sidebar :activePath="'raqiblar'" />
     <Raqiblar />
   </div>
 </template>
 
 <script setup>
-import LeftMenuRaqiblar from '@/components/Raqiblar/LeftMenuRaqiblar.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Raqiblar from '@/components/Raqiblar/Raqiblar.vue'
+import Sidebar from '@/components/Sidebar.vue'
 
 const isSidebarCollapsed = ref(false)
 

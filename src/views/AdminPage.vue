@@ -1,13 +1,13 @@
 <template>
   <div class="home-page-sozlamalar">
-    <LeftMenuAdmin />
+    <Sidebar :activePath="'admin'" />
     <Admin />
   </div>
 </template>
 
 <script setup>
 import Admin from '@/components/Admin/Admin.vue'
-import LeftMenuAdmin from '@/components/Admin/LeftMenuAdmin.vue'
+import Sidebar from '@/components/Sidebar.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const isSidebarCollapsed = ref(false)

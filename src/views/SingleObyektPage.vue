@@ -1,13 +1,13 @@
 <template>
   <div class="single-obyekt-page">
-    <SingleObyekt />
+    <Sidebar :activePath="'obyekt'" />
     <UploadMedia />
   </div>
 </template>
 
 <script setup>
-import SingleObyekt from '@/components/SingleObyekt/SingleObyekt.vue'
 import UploadMedia from '@/components/SingleObyekt/UploadMedia.vue'
+import Sidebar from '@/components/Sidebar.vue'
 </script>
 
 <style lang="scss" scoped></style>

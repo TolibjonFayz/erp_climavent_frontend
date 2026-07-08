@@ -1,14 +1,14 @@
 <template>
   <div class="davomat-page">
-    <LeftMenuDavomat />
+    <Sidebar :activePath="'davomat'" />
     <Davomat />
   </div>
 </template>
 
 <script setup>
-import LeftMenuDavomat from '@/components/Davomat/LeftMenuDavomat.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Davomat from '@/components/Davomat/Davomat.vue'
+import Sidebar from '@/components/Sidebar.vue'
 
 const isSidebarCollapsed = ref(false)
 

@@ -1,13 +1,13 @@
 <template>
   <div class="home-page-sozlamalar">
-    <LeftMenuMijozlar />
+    <Sidebar :activePath="'mijozlar'" />
     <Mijozlar />
   </div>
 </template>
 
 <script setup>
-import LeftMenuMijozlar from '@/components/MijozlarVaHamkorlar/LeftMenuMijozlar.vue'
 import Mijozlar from '@/components/MijozlarVaHamkorlar/Mijozlar.vue'
+import Sidebar from '@/components/Sidebar.vue'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const isSidebarCollapsed = ref(false)
@@ -45,7 +45,9 @@ onUnmounted(() => {
   height: 100vh;
   width: v-bind('`calc(100% - ${sidebarWidth}px)`');
   margin-left: v-bind('`${sidebarWidth}px`');
-  transition: width 0.3s ease, margin-left 0.3s ease;
+  transition:
+    width 0.3s ease,
+    margin-left 0.3s ease;
 
   @media (max-width: 768px) {
     width: calc(100% - 80px);
