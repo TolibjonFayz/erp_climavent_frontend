@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import users from '@/api/apiUsers'
+import usersApi from '@/api/users'
+import { runRequest } from './helpers'
 
 export const useUsersStore = defineStore('users', {
   state: () => ({
@@ -7,92 +8,45 @@ export const useUsersStore = defineStore('users', {
     allUsers: [],
     isLoading: false,
     error: null,
-    isAuthenticated: false,
   }),
   actions: {
     async loginUser(payload) {
-      try {
-        this.isLoading = true
-        this.error = null
-        let res = await users.loginUser(payload)
-        this.currentUser = res.data || res
-        this.isAuthenticated = true
-        return res
-      } catch (error) {
-        this.error = error.message || 'Login failed'
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+      const res = await runRequest(this, () => usersApi.login(payload), 'Login failed')
+      this.currentUser = res.data || res
+      return res
     },
 
     async getUserInfo(id) {
       try {
-        this.isLoading = true
-        this.error = null
-        let res = await users.getUserInfo(id)
+        const res = await runRequest(this, () => usersApi.getOne(id), 'Failed to fetch user')
         this.currentUser = res.data || res
-        this.isAuthenticated = true
         return res
       } catch (error) {
-        this.error = error.message || 'Failed to fetch user'
-        this.isAuthenticated = false
         this.currentUser = null
-        console.log(error)
         throw error
-      } finally {
-        this.isLoading = false
       }
     },
 
-    async getAllUsers(id) {
-      try {
-        this.isLoading = true
-        this.error = null
-        let res = await users.getAllUsers()
-        this.allUsers = res.data || res
-        return res
-      } catch (error) {
-        this.error = error.message || 'Failed to fetch user'
-        this.isAuthenticated = false
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+    async getAllUsers() {
+      const res = await runRequest(this, () => usersApi.getAll(), 'Failed to fetch users')
+      this.allUsers = res.data || res
+      return res
     },
 
     async updateUser(id, payload) {
-      try {
-        this.isLoading = true
-        this.error = null
-        let res = await users.updateUserShaxsiyInfo(id, payload)
-        this.currentUser = res.data || res
-        return res
-      } catch (error) {
-        this.error = error.message || 'Update failed'
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+      const res = await runRequest(this, () => usersApi.updateProfile(id, payload), 'Update failed')
+      this.currentUser = res.data || res
+      return res
     },
 
     async updateUserPassword(id, payload) {
-      try {
-        this.isLoading = true
-        this.error = null
-        let res = await users.updateUserPassword(id, payload)
-        this.currentUser = res.data || res
-        return res
-      } catch (error) {
-        this.error = error.message || 'Update failed'
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+      const res = await runRequest(
+        this,
+        () => usersApi.updatePassword(id, payload),
+        'Update failed',
+      )
+      this.currentUser = res.data || res
+      return res
     },
   },
 })

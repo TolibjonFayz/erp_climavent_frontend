@@ -1,107 +1,41 @@
-import tasks from '@/api/apiTasks'
 import { defineStore } from 'pinia'
+import tasksApi from '@/api/tasks'
+import { runRequest } from './helpers'
 
 export const useTasksStore = defineStore('tasks', {
   state: () => ({
-    allTasks: [], // admin: barcha vazifalar
-    myTasks: [], // xodim: o'ziga biriktirilgan vazifalar
+    allTasks: [], // admin: every task
+    myTasks: [], // employee: tasks assigned to them
     isLoading: false,
     error: null,
   }),
-
   actions: {
-    // Admin: barcha vazifalar
     async getAllTasks() {
-      try {
-        this.isLoading = true
-        this.error = null
-        const res = await tasks.getAllTasks()
-        this.allTasks = res.data || res
-        return res
-      } catch (error) {
-        this.error = error.message || 'Get all tasks failed'
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+      const res = await runRequest(this, () => tasksApi.getAll(), 'Get all tasks failed')
+      this.allTasks = res.data || res
+      return res
     },
 
-    // Xodim: o'ziga biriktirilgan vazifalar
     async getMyTasks(userId) {
-      try {
-        this.isLoading = true
-        this.error = null
-        const res = await tasks.getTasksOfUser(userId)
-        this.myTasks = res.data || res
-        return res
-      } catch (error) {
-        this.error = error.message || 'Get my tasks failed'
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+      const res = await runRequest(this, () => tasksApi.getByUser(userId), 'Get my tasks failed')
+      this.myTasks = res.data || res
+      return res
     },
 
     async createTask(payload) {
-      try {
-        this.isLoading = true
-        this.error = null
-        const res = await tasks.createTask(payload)
-        return res
-      } catch (error) {
-        this.error = error.message || 'Create task failed'
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+      return runRequest(this, () => tasksApi.create(payload), 'Create task failed')
     },
 
     async updateTask(id, payload) {
-      try {
-        this.isLoading = true
-        this.error = null
-        const res = await tasks.updateTask(id, payload)
-        return res
-      } catch (error) {
-        this.error = error.message || 'Update task failed'
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+      return runRequest(this, () => tasksApi.update(id, payload), 'Update task failed')
     },
 
     async updateStatus(id, status) {
-      try {
-        this.isLoading = true
-        this.error = null
-        const res = await tasks.updateStatus(id, { status })
-        return res
-      } catch (error) {
-        this.error = error.message || 'Update status failed'
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+      return runRequest(this, () => tasksApi.updateStatus(id, { status }), 'Update status failed')
     },
 
     async deleteTask(id) {
-      try {
-        this.isLoading = true
-        this.error = null
-        const res = await tasks.deleteTask(id)
-        return res
-      } catch (error) {
-        this.error = error.message || 'Delete task failed'
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+      return runRequest(this, () => tasksApi.remove(id), 'Delete task failed')
     },
   },
 })

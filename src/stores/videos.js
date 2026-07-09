@@ -1,43 +1,19 @@
-import videos from '@/api/apiVideos'
 import { defineStore } from 'pinia'
+import videosApi from '@/api/videos'
+import { runRequest } from './helpers'
 
 export const useVideosStore = defineStore('videos', {
   state: () => ({
     isLoading: false,
     error: null,
-    isAuthenticated: false,
   }),
   actions: {
     async createVideo(payload) {
-      try {
-        this.isLoading = true
-        this.error = null
-        let res = await videos.createVideo(payload)
-        this.isAuthenticated = true
-        return res
-      } catch (error) {
-        this.error = error.message || 'Creating video failed'
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+      return runRequest(this, () => videosApi.create(payload), 'Creating video failed')
     },
 
     async getVideosOfAObyekt(id) {
-      try {
-        this.isLoading = true
-        this.error = null
-        let res = await videos.getVideosOfAObyekt(id)
-        this.isAuthenticated = true
-        return res
-      } catch (error) {
-        this.error = error.message || 'Getting video failed'
-        console.log(error)
-        throw error
-      } finally {
-        this.isLoading = false
-      }
+      return runRequest(this, () => videosApi.getBySite(id), 'Getting videos failed')
     },
   },
 })
