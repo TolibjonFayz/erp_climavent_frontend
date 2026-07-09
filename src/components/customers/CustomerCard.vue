@@ -118,7 +118,7 @@
 import router from '@/router'
 import { User, Phone, Location, OfficeBuilding, Document } from '@element-plus/icons-vue'
 
-const props = defineProps({
+defineProps({
   partners: {
     type: Array,
     default: () => [],
