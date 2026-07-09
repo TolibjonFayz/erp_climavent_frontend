@@ -41,7 +41,7 @@
 .coming-soon-wrapper {
   position: relative;
   width: 100%;
-  /* 100dvh — mobilda address bar ni hisobga oladi, oq joy qolmaydi */
+  /* 100dvh accounts for the mobile address bar so no blank gap remains */
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
@@ -228,7 +228,6 @@
 @media (max-width: 600px) {
   .coming-soon-wrapper {
     padding: 20px 14px;
-    /* min-height HECH QACHON o'zgarmaydi, 100dvh qoladi */
   }
 
   .content {

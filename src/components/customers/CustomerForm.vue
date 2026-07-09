@@ -135,6 +135,7 @@ import { ElMessage } from 'element-plus'
 import router from '@/router'
 import { useI18n } from 'vue-i18n'
 import { createLocationData, createRepublicOptions } from '@/constants/locations'
+import { getCookie } from '@/utils/cookies'
 
 const props = defineProps({
   // When true (used inside a dialog) emit events instead of navigating away
@@ -147,16 +148,7 @@ const loading = ref(false)
 const { t } = useI18n()
 const formRef = ref()
 
-// ─── Cookie helper ────────────────────────────────────────────────────────────
-function getCookie(name) {
-  const cookies = document.cookie.split('; ')
-  for (const cookie of cookies) {
-    const [cookieName, cookieValue] = cookie.split('=')
-    if (cookieName === name) return decodeURIComponent(cookieValue)
-  }
-  return 'uz'
-}
-const lang = getCookie('lang')
+const lang = getCookie('lang', 'uz')
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 const form = reactive({

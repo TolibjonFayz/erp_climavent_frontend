@@ -29,7 +29,7 @@
                 class="modern-input"
               />
               <el-alert
-                v-if="isloginEnterd"
+                v-if="showLoginError"
                 :title="$t('loginError')"
                 type="error"
                 :closable="false"
@@ -48,7 +48,7 @@
                 class="modern-input"
               />
               <el-alert
-                v-if="isPasswordEntered"
+                v-if="showPasswordError"
                 :title="$t('passwordError')"
                 type="error"
                 :closable="false"
@@ -76,76 +76,44 @@
 import { useUsersStore } from '@/stores/user'
 import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
+import { getCookie } from '@/utils/cookies'
 
 const usersStore = useUsersStore()
-const isPasswordEntered = ref(false)
-const isloginEnterd = ref(false)
 const username = ref('')
 const password = ref('')
+const showLoginError = ref(false)
+const showPasswordError = ref(false)
 const loading = ref(false)
 
-function getCookie(name) {
-  const cookies = document.cookie.split('; ')
-  for (const cookie of cookies) {
-    const [cookieName, cookieValue] = cookie.split('=')
-    if (cookieName === name) {
-      return decodeURIComponent(cookieValue)
-    }
-  }
-  return 'uz'
-}
-const lang = getCookie('lang')
+const lang = getCookie('lang', 'uz')
 
 const handleLogin = async () => {
-  loading.value = true
-  // Check if username and password are entered
-  if (!username.value) {
-    isloginEnterd.value = true
-    loading.value = false
-    if (!password.value) {
-      isPasswordEntered.value = true
-      loading.value = false
-    } else {
-      isPasswordEntered.value = false
-    }
-  } else if (!password.value) {
-    isPasswordEntered.value = true
-    isloginEnterd.value = false
-    loading.value = false
-  } else {
-    isloginEnterd.value = false
-    isPasswordEntered.value = false
+  showLoginError.value = !username.value
+  showPasswordError.value = !password.value
+  if (showLoginError.value || showPasswordError.value) return
 
-    const payload = {
+  loading.value = true
+  try {
+    const res = await usersStore.loginUser({
       username: username.value,
       password: password.value,
-    }
-    await usersStore
-      .loginUser(payload)
-      .then((res) => {
-        localStorage.setItem('userid', res.user.id)
-        localStorage.setItem('refreshtoken', res.tokens.refreshToken)
-        localStorage.setItem('accesstoken', res.tokens.accessToken)
-        loading.value = false
-        window.location.href = '/'
-      })
-      .catch((error) => {
-        if (lang == 'uz') {
-          ElNotification({
-            title: 'Xatolik',
-            message: error.response.data.message || 'Login amalga oshmadi',
-            type: 'error',
-          })
-          loading.value = false
-        } else {
-          ElNotification({
-            title: 'Ошибка',
-            message: error.response.data.messageRu || 'Логин не удался',
-            type: 'error',
-          })
-          loading.value = false
-        }
-      })
+    })
+    localStorage.setItem('userid', res.user.id)
+    localStorage.setItem('refreshtoken', res.tokens.refreshToken)
+    localStorage.setItem('accesstoken', res.tokens.accessToken)
+    window.location.href = '/'
+  } catch (error) {
+    const data = error?.response?.data
+    ElNotification({
+      title: lang === 'uz' ? 'Xatolik' : 'Ошибка',
+      message:
+        lang === 'uz'
+          ? data?.message || 'Login amalga oshmadi'
+          : data?.messageRu || 'Логин не удался',
+      type: 'error',
+    })
+  } finally {
+    loading.value = false
   }
 }
 </script>
