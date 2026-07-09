@@ -1,5 +1,5 @@
 <template>
-  <div class="obyekt-container">
+  <div class="site-container">
     <div class="page-header">
       <div class="header-content">
         <div class="header-text">
@@ -25,7 +25,7 @@
           size="large"
           class="add-btn"
           :icon="Plus"
-          @click="goToCreateObyekt()"
+          @click="goToCreateSite()"
         >
           {{ $t('yangiQoshish') }}
         </el-button>
@@ -168,7 +168,7 @@
         </div>
         <h3>{{ $t('noobjectfound') }}</h3>
         <p>{{ $t('youhaventbeenyet') }}</p>
-        <el-button type="primary" :icon="Plus" @click="goToCreateObyekt()">
+        <el-button type="primary" :icon="Plus" @click="goToCreateSite()">
           {{ $t('firstobject') }}
         </el-button>
       </div>
@@ -195,15 +195,16 @@ import router from '@/router'
 const comeandgoesStore = useComeAndGoesStore()
 const loading = ref(false)
 
-const goToCreateObyekt = () => {
+const goToCreateSite = () => {
   router.push({ name: 'site-create' })
 }
 
-const handleEdit = (index, row) => {
-  router.push({ name: 'site-detail', params: { id: row.id } })
-}
+const entries = computed(() =>
+  Array.isArray(comeandgoesStore.allComeAndGoesofUser)
+    ? comeandgoesStore.allComeAndGoesofUser
+    : [],
+)
 
-// Date counting functions
 const isToday = (date) => {
   const today = new Date()
   const itemDate = new Date(date)
@@ -232,26 +233,14 @@ const isThisMonth = (date) => {
   return itemDate.getMonth() === today.getMonth() && itemDate.getFullYear() === today.getFullYear()
 }
 
-const getTodayCount = () => {
-  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser)
-    ? comeandgoesStore.allComeAndGoesofUser
-    : []
-  return data.filter((item) => item.createdAt && isToday(item.createdAt)).length
-}
+const getTodayCount = () =>
+  entries.value.filter((item) => item.createdAt && isToday(item.createdAt)).length
 
-const getWeekCount = () => {
-  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser)
-    ? comeandgoesStore.allComeAndGoesofUser
-    : []
-  return data.filter((item) => item.createdAt && isThisWeek(item.createdAt)).length
-}
+const getWeekCount = () =>
+  entries.value.filter((item) => item.createdAt && isThisWeek(item.createdAt)).length
 
-const getMonthCount = () => {
-  const data = Array.isArray(comeandgoesStore.allComeAndGoesofUser)
-    ? comeandgoesStore.allComeAndGoesofUser
-    : []
-  return data.filter((item) => item.createdAt && isThisMonth(item.createdAt)).length
-}
+const getMonthCount = () =>
+  entries.value.filter((item) => item.createdAt && isThisMonth(item.createdAt)).length
 
 onMounted(async () => {
   loading.value = true
@@ -262,7 +251,7 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.obyekt-container {
+.site-container {
   width: 100%;
   padding: 32px;
   background: #f5f7fa;
@@ -490,7 +479,7 @@ onMounted(async () => {
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .obyekt-container {
+  .site-container {
     padding: 24px;
   }
 
@@ -504,7 +493,7 @@ onMounted(async () => {
 }
 
 @media (max-width: 992px) {
-  .obyekt-container {
+  .site-container {
     padding: 20px;
   }
 
@@ -539,7 +528,7 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
-  .obyekt-container {
+  .site-container {
     padding: 16px;
   }
 
@@ -591,7 +580,7 @@ onMounted(async () => {
 }
 
 @media (max-width: 640px) {
-  .obyekt-container {
+  .site-container {
     padding: 12px;
   }
 
@@ -621,7 +610,7 @@ onMounted(async () => {
 }
 
 @media (max-width: 480px) {
-  .obyekt-container {
+  .site-container {
     padding: 10px;
   }
 
@@ -663,7 +652,7 @@ onMounted(async () => {
 }
 
 @media (max-width: 360px) {
-  .obyekt-container {
+  .site-container {
     padding: 8px;
   }
 
