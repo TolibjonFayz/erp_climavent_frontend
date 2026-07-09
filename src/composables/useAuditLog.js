@@ -9,7 +9,7 @@ export function useAuditLog() {
   const loading = ref(false)
   const total = ref(0)
 
-  // ─── Loglarni backenddan olish ────────────────────────────
+  // ─── Fetch logs from the backend ───
   // Backend: GET /audit-logs/filter
   async function fetchLogs(params = {}) {
     try {
@@ -25,7 +25,7 @@ export function useAuditLog() {
     }
   }
 
-  // ─── Statistikani olish ───────────────────────────────────
+  // ─── Fetch stats ───
   // Backend: GET /audit-logs/stats
   async function fetchStats() {
     try {
@@ -43,7 +43,7 @@ export function useAuditLog() {
     }
   }
 
-  // ─── Bitta userga tegishli loglarni olish ────────────────
+  // ─── Fetch logs for a single user ───
   // Backend: GET /audit-logs/target/:username
   async function fetchByTarget(username) {
     try {
@@ -55,7 +55,7 @@ export function useAuditLog() {
     }
   }
 
-  // ─── Log yozish ───────────────────────────────────────────
+  // ─── Write a log ───
   // Backend: POST /audit-logs/create
   async function addAuditLog({ action, message, meta = null, type = 'info', target_id = null }) {
     try {
@@ -77,7 +77,7 @@ export function useAuditLog() {
     }
   }
 
-  // ─── Barcha loglarni tozalash ─────────────────────────────
+  // ─── Clear all logs ───
   // Backend: DELETE /audit-logs/delete
   async function clearAllLogs() {
     try {

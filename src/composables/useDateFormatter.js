@@ -52,7 +52,7 @@ export function formatDateShort(dateString) {
   return `${day}-${month}, ${hours}:${minutes}`
 }
 
-// Nisbiy vaqt (masalan: "2 soat oldin")
+// Relative time (e.g. "2 hours ago")
 export function formatDateRelative(dateString) {
   const date = new Date(dateString)
   const now = new Date()
