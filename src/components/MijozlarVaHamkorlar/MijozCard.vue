@@ -97,7 +97,7 @@
             link
             type="primary"
             size="small"
-            @click="router.push({ name: 'single-mijoz', params: { id: partner.id } })"
+            @click="router.push({ name: 'customer-detail', params: { id: partner.id } })"
           >
             {{ $t('viewDetails') }}
             <el-icon class="ml-1"><ArrowRight /></el-icon>

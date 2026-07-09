@@ -852,7 +852,7 @@ const onSubmit = async () => {
     }
 
     console.log('🎉 ALL DONE! Redirecting...')
-    router.push('/obyekt')
+    router.push('/sites')
   } catch (error) {
     console.error('❌ ERROR:', error)
     ElMessage.error('Xatolik yuz berdi: ' + (error.message || "Iltimos, qaytadan urinib ko'ring."))
@@ -862,7 +862,7 @@ const onSubmit = async () => {
 }
 
 const goback = () => {
-  router.push('/obyekt')
+  router.push('/sites')
 }
 
 watch(

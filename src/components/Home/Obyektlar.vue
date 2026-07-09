@@ -151,7 +151,7 @@
                   type="primary"
                   link
                   size="small"
-                  @click="router.push({ name: 'single-obyekt', params: { id: item.id } })"
+                  @click="router.push({ name: 'site-detail', params: { id: item.id } })"
                 >
                   {{ $t('viewDetails') }}
                   <el-icon class="ml-1"><ArrowRight /></el-icon>
@@ -196,11 +196,11 @@ const comeandgoesStore = useComeAndGoesStore()
 const loading = ref(false)
 
 const goToCreateObyekt = () => {
-  router.push({ name: 'create-obyekt' })
+  router.push({ name: 'site-create' })
 }
 
 const handleEdit = (index, row) => {
-  router.push({ name: 'single-obyekt', params: { id: row.id } })
+  router.push({ name: 'site-detail', params: { id: row.id } })
 }
 
 // Date counting functions

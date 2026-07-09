@@ -1,5 +1,5 @@
 <template>
-  <!-- Mobil hamburger tugmasi: faqat mobilda, drawer yopiq bo'lganda -->
+  <!-- Mobile hamburger: only on mobile while the drawer is closed -->
   <button
     v-if="isMobile && !isMobileOpen"
     class="mobile-toggle"
@@ -11,7 +11,7 @@
     <span></span>
   </button>
 
-  <!-- Mobil overlay: drawer ochilganda orqa fonni qoraytiradi -->
+  <!-- Mobile overlay: dims the background when the drawer is open -->
   <transition name="overlay-fade">
     <div v-if="isMobile && isMobileOpen" class="sidebar-overlay" @click="closeMobile"></div>
   </transition>
@@ -27,7 +27,7 @@
     <div class="sidebar-header">
       <div class="logo" v-show="!showCollapsed">
         <div class="logo-icon">
-          <img src="../assets/logo.png" alt="Logo img" />
+          <img src="../../assets/logo.png" alt="Climavent logo" />
         </div>
         <div class="logo-text">
           <h3>Climavent</h3>
@@ -40,7 +40,7 @@
         @click="toggleCollapsed"
         :title="isCollapsed ? $t('expandSidebar') : $t('collapseSidebar')"
       >
-        <!-- Mobilda yopish (X), desktopda collapse chevron -->
+        <!-- Close (X) on mobile, collapse chevron on desktop -->
         <span v-if="isMobile" class="close-icon"></span>
         <i v-else class="toggle-icon" :class="{ rotated: isCollapsed }"></i>
       </button>
@@ -56,25 +56,19 @@
         >
           <a :href="menu.href" class="nav-link" :title="$t(menu.title)" @click="closeMobile">
             <i class="icon" :class="menu.icon"></i>
-            <span class="nav-text" :class="{ multiline: menu.key == 'mijozlar' }">{{
-              $t(menu.text)
-            }}</span>
+            <span class="nav-text" :class="{ multiline: menu.key === 'customers' }">
+              {{ $t(menu.text) }}
+            </span>
           </a>
         </li>
       </ul>
     </nav>
 
-    <!-- Foydalanuvchi profili -->
+    <!-- User profile -->
     <div class="user-profile" v-loading="loading">
       <div class="user-avatar">
         <img
-          v-if="currentUser?.profile_image == 'profile.jpg'"
-          src="/user.png"
-          alt="User profile"
-        />
-        <img
-          v-else
-          :src="currentUser?.profile_image ? currentUser?.profile_image : '/user.png'"
+          :src="avatarUrl"
           alt="User profile"
         />
         <div class="status-dot"></div>
@@ -109,20 +103,24 @@ const props = defineProps({
 })
 
 const usersStore = useUsersStore()
-const currentUser = computed<CurrentUser | null>(() => {
-  return (usersStore?.currentUser ?? null) as CurrentUser | null
-})
 const loading = ref(false)
 
 const { isCollapsed, isMobile, isMobileOpen, toggleCollapsed, openMobile, closeMobile } =
   useSidebar()
 
-// Collapse ko'rinishini faqat desktopda qo'llaymiz (mobilda to'liq drawer)
+const currentUser = computed<CurrentUser | null>(() => usersStore?.currentUser ?? null)
+
+const avatarUrl = computed(() => {
+  const image = currentUser.value?.profile_image
+  return !image || image === 'profile.jpg' ? '/user.png' : image
+})
+
+// Collapsed visuals only apply on desktop (mobile uses the full drawer)
 const showCollapsed = computed(() => isCollapsed.value && !isMobile.value)
 
 const menus = computed(() => [
   {
-    key: 'mijozlar',
+    key: 'customers',
     href: '/',
     icon: 'places-icon',
     title: 'mijozlarHamkorlarTitle',
@@ -130,24 +128,24 @@ const menus = computed(() => [
     show: true,
   },
   {
-    key: 'obyekt',
-    href: '/obyekt',
+    key: 'sites',
+    href: '/sites',
     icon: 'home-icon',
     title: 'obyekt',
     text: 'obyekt',
     show: true,
   },
   {
-    key: 'raqiblar',
-    href: '/raqiblar',
+    key: 'competitors',
+    href: '/competitors',
     icon: 'oppenents-icon',
     title: 'raqib',
     text: 'raqibtext',
     show: true,
   },
   {
-    key: 'davomat',
-    href: '/davomat',
+    key: 'attendance',
+    href: '/attendance',
     icon: 'project-icon',
     title: 'davomat',
     text: 'davomat',
@@ -224,19 +222,16 @@ $accent-dark: #2f7fe0;
 
     .logo-text,
     .nav-text,
-    .nav-text.multiline,
     .user-info {
       display: none;
     }
     .user-profile {
       justify-content: center;
     }
-
     .nav-link {
       justify-content: center;
       padding: 12px;
     }
-
     .toggle-icon {
       transform: rotate(225deg);
       margin-left: -3px;
@@ -244,7 +239,7 @@ $accent-dark: #2f7fe0;
   }
 }
 
-/* Mobil drawer rejimi: ekrandan tashqarida turadi, ochilganda sirg'alib chiqadi */
+/* Mobile drawer: sits off-screen and slides in when opened */
 .sidebar.is-mobile {
   width: 84vw;
   max-width: 320px;
@@ -273,7 +268,7 @@ $accent-dark: #2f7fe0;
   opacity: 0;
 }
 
-/* Mobil hamburger tugmasi (drawer yopiqligida) */
+/* Mobile hamburger (shown while the drawer is closed) */
 .mobile-toggle {
   position: fixed;
   top: 16px;
@@ -347,7 +342,6 @@ $accent-dark: #2f7fe0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  min-width: 0;
 
   h3 {
     margin: 0;
@@ -460,19 +454,15 @@ $accent-dark: #2f7fe0;
     font-size: 14.5px;
     font-weight: 500;
     margin-left: 12px;
-    white-space: normal;
-    line-height: 1.25;
-    word-break: break-word;
-    overflow: hidden;
     white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
-    min-width: 0;
   }
+
   .nav-text.multiline {
     white-space: normal;
     display: -webkit-box;
     -webkit-line-clamp: 2;
-    /* standard property for compatibility */
     line-clamp: 2;
     -webkit-box-orient: vertical;
   }
@@ -482,10 +472,6 @@ $accent-dark: #2f7fe0;
   background: linear-gradient(135deg, $accent 0%, $accent-dark 100%);
   color: #fff;
   box-shadow: 0 6px 16px rgba(64, 158, 255, 0.35);
-
-  .icon {
-    filter: none;
-  }
 }
 
 .icon {
@@ -528,7 +514,7 @@ $accent-dark: #2f7fe0;
   }
 }
 
-/* Foydalanuvchi profili */
+/* User profile */
 .user-profile {
   padding: 14px 18px;
   margin: 0 12px 12px;
