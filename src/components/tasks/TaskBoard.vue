@@ -1,5 +1,5 @@
 <template>
-  <div class="vazifalar-container" v-loading="tasksStore.isLoading">
+  <div class="tasks-container" v-loading="tasksStore.isLoading">
     <div class="page-header">
       <div class="header-top">
         <div class="header-text">
@@ -276,7 +276,7 @@ const usersStore = useUsersStore()
 const currentUserId = Number(localStorage.getItem('userid'))
 const isAdmin = computed(() => !!usersStore.currentUser?.is_admin)
 
-// Admin allTasks, xodim myTasks ustidan ishlaydi
+// Admins work over allTasks, employees over their own myTasks
 const sourceTasks = computed(() => (isAdmin.value ? tasksStore.allTasks : tasksStore.myTasks))
 const employees = computed(() => usersStore.allUsers || [])
 
@@ -373,7 +373,7 @@ const formatDeadline = (deadline) => {
   return `${dd}.${mm}.${d.getFullYear()}`
 }
 
-// ─── Refresh (rolga qarab) ───
+// ─── Refresh (role-based) ───
 const refresh = async () => {
   if (isAdmin.value) await tasksStore.getAllTasks()
   else await tasksStore.getMyTasks(currentUserId)
@@ -505,7 +505,7 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.vazifalar-container {
+.tasks-container {
   width: 100%;
   padding: 32px;
   background: #f5f7fa;
@@ -815,7 +815,7 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
-  .vazifalar-container {
+  .tasks-container {
     padding: 20px 14px;
   }
 

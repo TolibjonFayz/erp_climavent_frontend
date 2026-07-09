@@ -1,5 +1,5 @@
 <template>
-  <div class="davomat-container" v-loading="attendanceStore.isLoading">
+  <div class="attendance-container" v-loading="attendanceStore.isLoading">
     <div class="page-header">
       <div class="header-top">
         <div class="header-text">
@@ -297,7 +297,7 @@ const tripsByDate = computed(() => {
 const isPersonal = (trip) => (trip.whereto || '').trim().toLowerCase() === 'shaxsiy'
 
 const suggestStatus = (dateStr) => {
-  if (dateStr > todayStr) return null // kelajak
+  if (dateStr > todayStr) return null // future date
   const trips = tripsByDate.value[dateStr] || []
   const d = new Date(dateStr + 'T00:00:00')
   const weekend = d.getDay() === 0 || d.getDay() === 6
@@ -342,7 +342,7 @@ const dayStyle = (day) => {
   if (!day.statusKey) return {}
   const c = statusColor(day.statusKey)
   if (day.confirmed) return { background: c + '33', borderColor: c }
-  return { background: c + '14' } // suggested — juda och
+  return { background: c + '14' } // suggested — very light
 }
 
 const stats = computed(() => {
@@ -493,7 +493,7 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.davomat-container {
+.attendance-container {
   width: 100%;
   padding: 28px 32px;
   background: #f5f7fa;
@@ -872,7 +872,7 @@ onMounted(async () => {
 
 /* ─── Responsive ─── */
 @media (max-width: 900px) {
-  .davomat-container {
+  .attendance-container {
     padding: 20px 14px;
   }
   .davomat-body {
