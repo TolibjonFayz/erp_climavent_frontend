@@ -612,7 +612,6 @@ const disabledDate = (time) => {
 }
 
 const beforeUpload = (file) => {
-  console.log('🔍 Validating file:', file.name)
 
   const isValidType = [
     'image/jpeg',
@@ -637,12 +636,10 @@ const beforeUpload = (file) => {
     return false
   }
 
-  console.log('✅ File validated:', file.name)
   return true
 }
 
 const handleUploadSuccess = (response, file) => {
-  console.log('✅ Cloudinary SUCCESS:', file.name, response)
 
   const mediaData = {
     url: response.secure_url,
@@ -656,7 +653,6 @@ const handleUploadSuccess = (response, file) => {
   }
 
   uploadedMediaData.value.push(mediaData)
-  console.log('📊 Total uploaded to Cloudinary:', uploadedMediaData.value.length)
 }
 
 const handleUploadError = (error, file) => {
@@ -665,11 +661,8 @@ const handleUploadError = (error, file) => {
 }
 
 const uploadMediaToDatabase = async (comeAndGoId) => {
-  console.log('💾 Starting database save...')
-  console.log('💾 Media data to save:', uploadedMediaData.value)
 
   if (uploadedMediaData.value.length === 0) {
-    console.log('ℹ️ No media to save to database')
     return { success: true, count: 0 }
   }
 
@@ -682,18 +675,15 @@ const uploadMediaToDatabase = async (comeAndGoId) => {
         comeandgo_id: comeAndGoId,
       }
 
-      console.log(`💾 Saving media ${index + 1}/${uploadedMediaData.value.length}:`, payload)
 
       const result = await videosStore.createVideo(payload)
 
-      console.log(`✅ Saved media ${index + 1}:`, result)
 
       return result
     })
 
     await Promise.all(savePromises)
 
-    console.log('🎉 All media saved to database!')
 
     return {
       success: true,
@@ -722,22 +712,17 @@ const createInsidePayload = (obj) => {
 }
 
 const onSubmit = async () => {
-  console.log('🎯 SUBMIT STARTED')
-  console.log('📁 Media files selected:', mediaFileList.value.length)
 
   let isMainFormValid = false
   try {
     await formRef.value.validate()
     isMainFormValid = true
-    console.log('✅ Main form validated')
   } catch (error) {
-    console.log('❌ Main form validation failed:', error)
     ElMessage.error("Asosiy obyekt: Iltimos, barcha majburiy maydonlarni to'ldiring")
     return
   }
 
   if (additionalObjects.value.length > 0) {
-    console.log(`🔍 Validating ${additionalFormRefs.value.length} additional forms...`)
 
     for (let i = 0; i < additionalFormRefs.value.length; i++) {
       if (!additionalFormRefs.value[i]) {
@@ -747,9 +732,7 @@ const onSubmit = async () => {
 
       try {
         await additionalFormRefs.value[i].validate()
-        console.log(`✅ Additional form ${i + 1} validated`)
       } catch (error) {
-        console.log(`❌ Additional form ${i + 1} validation failed:`, error)
         ElMessage.error(
           `Qo'shimcha obyekt #${i + 1}: Iltimos, barcha majburiy maydonlarni to'ldiring`,
         )
@@ -758,11 +741,9 @@ const onSubmit = async () => {
     }
   }
 
-  console.log('✅ All forms validated successfully')
   loading.value = true
 
   try {
-    console.log('1️⃣ Creating parent ComeAndGoes...')
 
     const parentPayload = {
       user_id: Number(localStorage.getItem('userid')),
@@ -771,42 +752,33 @@ const onSubmit = async () => {
 
     const comeAndGoId = parentResponse?.newCGO?.id
 
-    console.log('✅ Parent created with ID:', comeAndGoId)
 
     if (!comeAndGoId) {
       throw new Error('ComeAndGoes ID olinmadi')
     }
 
-    console.log('2️⃣ Creating main inside obyekt...')
 
     const mainInsidePayload = {
       ...createInsidePayload(form),
       come_and_go_father_id: comeAndGoId,
     }
-    console.log('📤 Main payload:', mainInsidePayload)
     await comeandgoInsideStore.createComeAndGoInside(mainInsidePayload)
 
-    console.log('✅ Main inside obyekt created')
 
     if (additionalObjects.value.length > 0) {
-      console.log(`3️⃣ Creating ${additionalObjects.value.length} additional obyekts...`)
 
       for (let i = 0; i < additionalObjects.value.length; i++) {
         const additionalInsidePayload = {
           ...createInsidePayload(additionalObjects.value[i]),
           come_and_go_father_id: comeAndGoId,
         }
-        console.log(`📤 Additional payload ${i + 1}:`, additionalInsidePayload)
         await comeandgoInsideStore.createComeAndGoInside(additionalInsidePayload)
-        console.log(`✅ Additional obyekt ${i + 1} created`)
       }
     }
 
     let mediaUploadCount = 0
 
     if (mediaFileList.value.length > 0) {
-      console.log('4️⃣ Media files detected:', mediaFileList.value.length)
-      console.log('📤 Uploading to Cloudinary...')
 
       uploadedMediaData.value = []
 
@@ -820,9 +792,6 @@ const onSubmit = async () => {
         while (uploadedMediaData.value.length < mediaFileList.value.length && waited < maxWait) {
           await new Promise((resolve) => setTimeout(resolve, checkInterval))
           waited += checkInterval
-          console.log(
-            `⏳ Waiting for Cloudinary... ${uploadedMediaData.value.length}/${mediaFileList.value.length} (${waited}ms)`,
-          )
         }
 
         if (uploadedMediaData.value.length < mediaFileList.value.length) {
@@ -831,18 +800,14 @@ const onSubmit = async () => {
             `Faqat ${uploadedMediaData.value.length}/${mediaFileList.value.length} media fayl yuklandi`,
           )
         } else {
-          console.log('✅ All files uploaded to Cloudinary')
         }
 
         if (uploadedMediaData.value.length > 0) {
-          console.log('5️⃣ Saving media to database...')
           const dbResult = await uploadMediaToDatabase(comeAndGoId)
           mediaUploadCount = dbResult.count
-          console.log('✅ Media saved to database:', mediaUploadCount)
         }
       }
     } else {
-      console.log('ℹ️ No media files selected')
     }
 
     if (mediaUploadCount > 0) {
@@ -851,7 +816,6 @@ const onSubmit = async () => {
       ElMessage.success('Barcha obyektlar muvaffaqiyatli saqlandi!')
     }
 
-    console.log('🎉 ALL DONE! Redirecting...')
     router.push('/sites')
   } catch (error) {
     console.error('❌ ERROR:', error)

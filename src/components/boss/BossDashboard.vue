@@ -520,7 +520,6 @@ onMounted(async () => {
       bossStore.getAnnouncements(),
     ])
   } catch (e) {
-    console.log(e)
   } finally {
     loading.value = false
   }

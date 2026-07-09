@@ -307,7 +307,6 @@ const getCurrentLocation = () => {
         )
 
         if (distance > 10) {
-          console.log('Location updated:', { longitude, latitude })
 
           // Update marker position
           if (marker) {
@@ -320,7 +319,6 @@ const getCurrentLocation = () => {
       }
     },
     (error) => {
-      console.log('Watch position error:', error)
     },
     {
       enableHighAccuracy: true,
@@ -351,7 +349,6 @@ const parseLocationLink = async () => {
 
     // If no coordinates found and it's a short URL, try alternative methods
     if (!coords && isShortUrl(url)) {
-      console.log('Qisqa havola qayta ishlanmoqda:', url)
       coords = await handleShortUrl(url)
     }
 
@@ -494,7 +491,6 @@ const handleShortUrl = async (shortUrl) => {
         }
       }
     } catch (e) {
-      console.log(`Proxy ${proxy} ishlamadi:`, e)
       continue
     }
   }
