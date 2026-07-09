@@ -31,12 +31,12 @@
         <div class="tab-content">
           <div class="tab-header">
             <h2>{{ $t('doimiymijozlar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
+            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
               {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
-          <MijozCard
+          <CustomerCard
             v-if="getFilteredPartners('doimiymijoz').length > 0"
             :partners="getFilteredPartners('doimiymijoz')"
             @delete="handleDelete"
@@ -54,12 +54,12 @@
         <div class="tab-content">
           <div class="tab-header">
             <h2>{{ $t('montajguruhlar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
+            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
               {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
-          <MijozCard
+          <CustomerCard
             v-if="getFilteredPartners('montajnik').length > 0"
             :partners="getFilteredPartners('montajnik')"
             @delete="handleDelete"
@@ -77,12 +77,12 @@
         <div class="tab-content">
           <div class="tab-header">
             <h2>{{ $t('quruvchilar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
+            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
               {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
-          <MijozCard
+          <CustomerCard
             v-if="getFilteredPartners('quruvchi').length > 0"
             :partners="getFilteredPartners('quruvchi')"
             @delete="handleDelete"
@@ -100,12 +100,12 @@
         <div class="tab-content">
           <div class="tab-header">
             <h2>{{ $t('dokonchitadbirkorlar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
+            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
               {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
-          <MijozCard
+          <CustomerCard
             v-if="getFilteredPartners('dokonchitadbirkor').length > 0"
             :partners="getFilteredPartners('dokonchitadbirkor')"
             @delete="handleDelete"
@@ -123,12 +123,12 @@
         <div class="tab-content">
           <div class="tab-header">
             <h2>{{ $t('proyektinstitutlar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
+            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
               {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
-          <MijozCard
+          <CustomerCard
             v-if="getFilteredPartners('proyektinstitut').length > 0"
             :partners="getFilteredPartners('proyektinstitut')"
             @delete="handleDelete"
@@ -146,12 +146,12 @@
         <div class="tab-content">
           <div class="tab-header">
             <h2>{{ $t('tenderfirmalar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
+            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
               {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
-          <MijozCard
+          <CustomerCard
             v-if="getFilteredPartners('tenderfirmalar').length > 0"
             :partners="getFilteredPartners('tenderfirmalar')"
             @delete="handleDelete"
@@ -166,12 +166,12 @@
         <div class="tab-content">
           <div class="tab-header">
             <h2>{{ $t('uks2') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
+            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
               {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
-          <MijozCard
+          <CustomerCard
             v-if="getFilteredPartners('uks').length > 0"
             :partners="getFilteredPartners('uks')"
             @delete="handleDelete"
@@ -189,12 +189,12 @@
         <div class="tab-content">
           <div class="tab-header">
             <h2>{{ $t('boshqa') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="handleAddMijoz">
+            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
               {{ $t('yangiQoshish') }}
             </el-button>
           </div>
 
-          <MijozCard
+          <CustomerCard
             v-if="getFilteredPartners('boshqa').length > 0"
             :partners="getFilteredPartners('boshqa')"
             @delete="handleDelete"
@@ -207,7 +207,7 @@
 
       <el-tab-pane :label="`${$t('jami')} (${getFilteredPartners('jami').length})`" name="jami">
         <div class="tab-content">
-          <MijozCardJami
+          <CustomerSummaryCard
             v-if="getFilteredPartners('jami').length > 0"
             :partners="getFilteredPartners('jami')"
             @delete="handleDelete"
@@ -229,7 +229,7 @@
       append-to-body
       destroy-on-close
     >
-      <AddMijoz
+      <CustomerForm
         v-if="addDialogVisible"
         embedded
         @success="handleAddSuccess"
@@ -244,18 +244,18 @@ import router from '@/router'
 import { onMounted, ref } from 'vue'
 import { usePartnersStore } from '@/stores/partners'
 import { Plus } from '@element-plus/icons-vue'
-import MijozCard from './MijozCard.vue'
+import CustomerCard from './CustomerCard.vue'
 import { ElMessage } from 'element-plus'
-import MijozCardJami from './MijozCardJami.vue'
-import AddMijoz from './AddMijoz.vue'
+import CustomerSummaryCard from './CustomerSummaryCard.vue'
+import CustomerForm from './CustomerForm.vue'
 
 const loading = ref(false)
 const activeTab = ref('doimiymijoz')
 const partnersStore = usePartnersStore()
 const addDialogVisible = ref(false)
 
-const handleAddMijoz = () => {
-  // AddMijoz payload'ida partner_type shu qiymatdan olinadi
+const openAddDialog = () => {
+  // partner_type in the form payload is read from this value
   localStorage.setItem('mijozTur', activeTab.value)
   addDialogVisible.value = true
 }
@@ -268,13 +268,13 @@ const handleAddSuccess = async () => {
 }
 
 const handleEdit = (id) => {
-  router.push({ name: 'mijozlar-edit', params: { id } })
+  router.push({ name: 'customer-detail', params: { id } })
 }
 
 const handleDelete = async (id) => {
   try {
     loading.value = true
-    await partnersStore.deletePartner(id)
+    await partnersStore.deleteOnePartner(id)
     await partnersStore.getAllPartnersOfUser(Number(localStorage.getItem('userid')))
     ElMessage.success("Muvaffaqiyatli o'chirildi!")
   } catch (error) {

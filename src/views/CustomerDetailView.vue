@@ -1,7 +1,7 @@
 <template>
-  <SingleMijoz />
+  <CustomerDetail />
 </template>
 
 <script setup>
-import SingleMijoz from '@/components/SingleMijoz/SingleMijoz.vue'
+import CustomerDetail from '@/components/customers/CustomerDetail.vue'
 </script>

@@ -1,10 +1,10 @@
 <template>
   <AppLayout active="customers">
-    <Mijozlar />
+    <CustomerList />
   </AppLayout>
 </template>
 
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
-import Mijozlar from '@/components/MijozlarVaHamkorlar/Mijozlar.vue'
+import CustomerList from '@/components/customers/CustomerList.vue'
 </script>
