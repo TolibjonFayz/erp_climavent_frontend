@@ -910,7 +910,7 @@ function getPartnerTypeLabel(value) {
   return partnerTypes.find((t) => t.value === value)?.label ?? value ?? '—'
 }
 
-// ─── Sana formatlash ──────────────────────────────────────
+// ─── Date formatting ───
 function formatDate(isoString) {
   if (!isoString) return 'Kiritilmagan'
   const d = new Date(isoString)
@@ -984,13 +984,13 @@ const lastObjectDate = computed(() => {
 })
 
 const topActiveUsers = computed(() => {
-  // Avval barcha userlardan map yasaymiz
+  // Build a map keyed by username
   const map = {}
   usersStore.allUsers.forEach((u) => {
     map[u.username] = { ...u, partners: 0, objects: 0 }
   })
 
-  // Hamkorlarni sanab chiqamiz
+  // Count partners per user
   partnersStore.allPartners.forEach((p) => {
     const un = p.user?.username
     if (!un) return
@@ -998,7 +998,7 @@ const topActiveUsers = computed(() => {
     map[un].partners++
   })
 
-  // Obyektlarni sanab chiqamiz
+  // Count objects per user
   comeandgoInsideStore.allComeAndGoInsides.forEach((o) => {
     const un = o.come_and_go_father?.user?.username
     if (!un) return

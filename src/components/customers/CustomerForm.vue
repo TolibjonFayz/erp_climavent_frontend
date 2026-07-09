@@ -309,7 +309,7 @@ const rules = computed(() => ({
 }))
 
 // ─── Payload builder ──────────────────────────────────────────────────────────
-// republic uchun to'g'ri translated nomni olamiz (key emas, value)
+// Resolve the translated republic name (its value, not the key)
 const getRepublicValue = (key) => {
   if (!key || key === 'boshqa') return null
   const found = republicOptions.find((r) => r.key === key)
@@ -383,7 +383,7 @@ const goback = () => {
   }
 }
 
-/* Dialog ichida ishlaganda: to'liq ekran markazlashuvi va soya kerak emas */
+/* Inside a dialog: no full-screen centering or shadow needed */
 .container.embedded {
   min-height: auto;
   padding: 0;

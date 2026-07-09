@@ -205,6 +205,7 @@ import PasswordEditDialog from './PasswordEditDialog.vue'
 import { ElNotification, ElMessage } from 'element-plus'
 import type { UploadProps } from 'element-plus'
 import { onMounted, ref, computed } from 'vue'
+import { getCookie } from '@/utils/cookies'
 import { useUsersStore } from '@/stores/user'
 import i18n from '@/i18n'
 
@@ -220,20 +221,7 @@ const imageUrl = ref('')
 const avatarUploading = ref(false)
 const languageLoading = ref(false)
 
-// Cookie'dan tilni o'qish
-function getCookieLanguage(name = 'lang') {
-  const nameEQ = name + '='
-  const cookies = document.cookie.split(';')
-  for (let cookie of cookies) {
-    cookie = cookie.trim()
-    if (cookie.indexOf(nameEQ) === 0) {
-      return decodeURIComponent(cookie.substring(nameEQ.length))
-    }
-  }
-  return 'uz'
-}
-
-// Cookie'ga tilni yozish
+// Write the language to the cookie
 function setCookieLanguage(value, days = 365) {
   const date = new Date()
   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000)
@@ -242,7 +230,7 @@ function setCookieLanguage(value, days = 365) {
 }
 
 // Language settings
-const selectedLanguage = ref(getCookieLanguage())
+const selectedLanguage = ref(getCookie('lang', 'uz'))
 const languages = [
   { value: 'uz', label: "O'zbekcha", flag: '🇺🇿' },
   { value: 'ru', label: 'Русский', flag: '🇷🇺' },
@@ -256,10 +244,10 @@ const getCurrentLanguageLabel = computed(() => {
 const handleLanguageChange = (value: string) => {
   languageLoading.value = true
 
-  // Cookie'ga tilni saqlash
+  // Persist the chosen language
   setCookieLanguage(value)
 
-  // i18n tilini o'zgartirish
+  // Switch the active i18n locale
   i18n.global.locale = value
 
   ElNotification({

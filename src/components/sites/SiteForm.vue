@@ -455,7 +455,7 @@ const form = reactive({
   more_info: '',
 })
 
-// ✅ goingDate yoki goingTime o'zgarganda form.goingtime ni avtomatik birlashtir
+// Auto-combine goingDate + goingTime into form.goingtime whenever either changes
 watch([goingDate, goingTime], ([date, time]) => {
   if (date && time) {
     const d = new Date(date)
@@ -539,7 +539,7 @@ const getAdditionalFormRules = (obj) => {
 
 const additionalObjects = ref([])
 
-// ✅ createEmptyObject — goingDate va goingTime qo'shildi
+// createEmptyObject — includes goingDate and goingTime
 const createEmptyObject = () => ({
   goingDate: '',
   goingTime: '',
@@ -559,7 +559,7 @@ const createEmptyObject = () => ({
   more_info: '',
 })
 
-// ✅ Qo'shimcha obyektlar uchun goingtime sync funksiyasi
+// Keeps goingtime in sync for the additional objects
 const syncAdditionalGoingTime = (index, obj) => {
   if (obj.goingDate && obj.goingTime) {
     const d = new Date(obj.goingDate)

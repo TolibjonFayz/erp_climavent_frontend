@@ -106,15 +106,15 @@ const handleSave = () => {
     return
   }
 
-  // Xatolik yo'q bo'lsa
+  // No validation errors
   errorMessage.value = ''
 
-  // Parent komponentga yuborish
+  // Emit to the parent
   emit('save', {
     password: localForm.value.password,
   })
 
-  // Formani tozalash
+  // Reset the form
   localForm.value = {
     password: '',
     confirmPassword: '',
