@@ -199,9 +199,9 @@
 
 <script setup lang="ts">
 import { Plus, Edit, User, Lock, SwitchButton, Upload, Setting } from '@element-plus/icons-vue'
-import PersonalInfoEditDialog from '../SingleObyekt/PersonalInfoEditDialog.vue'
-import UsernameEditDialog from '../SingleObyekt/UsernameEditDialog.vue'
-import PasswordEditDialog from '../SingleObyekt/PasswordEditDialog.vue'
+import PersonalInfoEditDialog from './PersonalInfoEditDialog.vue'
+import UsernameEditDialog from './UsernameEditDialog.vue'
+import PasswordEditDialog from './PasswordEditDialog.vue'
 import { ElNotification, ElMessage } from 'element-plus'
 import type { UploadProps } from 'element-plus'
 import { onMounted, ref, computed } from 'vue'

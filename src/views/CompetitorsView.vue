@@ -1,10 +1,10 @@
 <template>
   <AppLayout active="competitors">
-    <Raqiblar />
+    <CompetitorList />
   </AppLayout>
 </template>
 
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
-import Raqiblar from '@/components/Raqiblar/Raqiblar.vue'
+import CompetitorList from '@/components/competitors/CompetitorList.vue'
 </script>

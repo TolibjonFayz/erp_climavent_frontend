@@ -1,10 +1,10 @@
 <template>
   <AppLayout active="admin">
-    <Admin />
+    <AdminPanel />
   </AppLayout>
 </template>
 
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
-import Admin from '@/components/Admin/Admin.vue'
+import AdminPanel from '@/components/admin/AdminPanel.vue'
 </script>

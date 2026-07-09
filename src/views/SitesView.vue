@@ -1,10 +1,10 @@
 <template>
   <AppLayout active="sites">
-    <Obyektlar />
+    <SiteList />
   </AppLayout>
 </template>
 
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
-import Obyektlar from '@/components/Home/Obyektlar.vue'
+import SiteList from '@/components/sites/SiteList.vue'
 </script>

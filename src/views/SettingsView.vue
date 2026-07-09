@@ -1,10 +1,10 @@
 <template>
   <AppLayout active="settings">
-    <Sozlamalar />
+    <SettingsPanel />
   </AppLayout>
 </template>
 
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
-import Sozlamalar from '@/components/Sozlamalar/Sozlamalar.vue'
+import SettingsPanel from '@/components/settings/SettingsPanel.vue'
 </script>

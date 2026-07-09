@@ -1,9 +1,9 @@
 <template>
   <TheSidebar active-path="sites" />
-  <UploadMedia />
+  <SiteMediaUpload />
 </template>
 
 <script setup>
 import TheSidebar from '@/components/layout/TheSidebar.vue'
-import UploadMedia from '@/components/SingleObyekt/UploadMedia.vue'
+import SiteMediaUpload from '@/components/sites/SiteMediaUpload.vue'
 </script>

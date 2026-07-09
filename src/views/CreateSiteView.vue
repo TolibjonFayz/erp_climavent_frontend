@@ -1,7 +1,7 @@
 <template>
-  <CreateObyekt class="container" />
+  <SiteForm class="container" />
 </template>
 
 <script setup>
-import CreateObyekt from '@/components/CreateObyect/CreateObyekt.vue'
+import SiteForm from '@/components/sites/SiteForm.vue'
 </script>

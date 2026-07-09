@@ -1,10 +1,10 @@
 <template>
   <AppLayout active="boss">
-    <Boss />
+    <BossDashboard />
   </AppLayout>
 </template>
 
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
-import Boss from '@/components/Boss/Boss.vue'
+import BossDashboard from '@/components/boss/BossDashboard.vue'
 </script>

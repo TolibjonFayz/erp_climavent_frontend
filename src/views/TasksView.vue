@@ -1,10 +1,10 @@
 <template>
   <AppLayout active="tasks">
-    <Vazifalar />
+    <TaskBoard />
   </AppLayout>
 </template>
 
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
-import Vazifalar from '@/components/Vazifalar/Vazifalar.vue'
+import TaskBoard from '@/components/tasks/TaskBoard.vue'
 </script>

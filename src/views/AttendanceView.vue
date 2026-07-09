@@ -1,10 +1,10 @@
 <template>
   <AppLayout active="attendance">
-    <Davomat />
+    <AttendanceTable />
   </AppLayout>
 </template>
 
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
-import Davomat from '@/components/Davomat/Davomat.vue'
+import AttendanceTable from '@/components/attendance/AttendanceTable.vue'
 </script>
