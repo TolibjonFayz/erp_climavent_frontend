@@ -60,7 +60,7 @@
         </div>
 
         <div class="table-cell cell-group">
-          <el-tag type="info" size="small">{{ formatPartnerType(partner.partner_type) }}</el-tag>
+          <el-tag type="info" size="small">{{ partnerTypeLabel(partner.partner_type) }}</el-tag>
         </div>
 
         <div class="table-cell cell-name">
@@ -76,19 +76,19 @@
         </div>
 
         <div class="table-cell cell-republic">
-          <span class="cell-value">{{ formatText(partner.republic) || '-' }}</span>
+          <span class="cell-value">{{ formatLocationName(partner.republic) || '-' }}</span>
         </div>
 
         <div class="table-cell cell-region">
-          <span class="cell-value">{{ formatText(partner.viloyat) || '-' }}</span>
+          <span class="cell-value">{{ formatLocationName(partner.viloyat) || '-' }}</span>
         </div>
 
         <div class="table-cell cell-district">
-          <span class="cell-value">{{ formatText(partner.shahar_tuman) || '-' }}</span>
+          <span class="cell-value">{{ formatLocationName(partner.shahar_tuman) || '-' }}</span>
         </div>
 
         <div class="table-cell cell-type">
-          <el-tag :type="getTypeTag(partner.mijozturi)" size="small">
+          <el-tag :type="partnerTypeTag(partner.mijozturi)" size="small">
             {{ partner.mijozturi }}
           </el-tag>
         </div>
@@ -109,36 +109,14 @@
 
 <script setup>
 import { User, Phone, Location, OfficeBuilding, Document, Folder } from '@element-plus/icons-vue'
+import { formatLocationName, partnerTypeTag, partnerTypeLabel } from '@/utils/partners'
 
-const props = defineProps({
+defineProps({
   partners: {
     type: Array,
     default: () => [],
   },
 })
-
-const formatText = (text) => {
-  if (!text) return ''
-  return text.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
-}
-
-const formatPartnerType = (type) => {
-  const types = {
-    doimiymijoz: 'Doimiy mijoz',
-    montajnik: 'Montajnik',
-    quruvchi: 'Quruvchi',
-    dokonchitadbirkor: "Do'konchi tadbirkor",
-    proyektinstitut: 'Proyekt institut',
-    tenderfirmalar: 'Tender firmasi',
-    uks: 'UKS tashkiloti',
-    boshqa: 'Boshqa',
-  }
-  return types[type] || type
-}
-
-const getTypeTag = (type) => {
-  return type === 'Yuridik shaxs' ? 'success' : 'warning'
-}
 </script>
 
 <style lang="scss" scoped>

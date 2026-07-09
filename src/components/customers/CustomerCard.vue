@@ -71,19 +71,19 @@
         </div>
 
         <div class="table-cell cell-republic">
-          <span class="cell-value">{{ formatText(partner.republic) || '-' }}</span>
+          <span class="cell-value">{{ formatLocationName(partner.republic) || '-' }}</span>
         </div>
 
         <div class="table-cell cell-region">
-          <span class="cell-value">{{ formatText(partner.viloyat) || '-' }}</span>
+          <span class="cell-value">{{ formatLocationName(partner.viloyat) || '-' }}</span>
         </div>
 
         <div class="table-cell cell-district">
-          <span class="cell-value">{{ formatText(partner.shahar_tuman) || '-' }}</span>
+          <span class="cell-value">{{ formatLocationName(partner.shahar_tuman) || '-' }}</span>
         </div>
 
         <div class="table-cell cell-type">
-          <el-tag :type="getTypeTag(partner.mijozturi)" size="small">
+          <el-tag :type="partnerTypeTag(partner.mijozturi)" size="small">
             {{ partner.mijozturi }}
           </el-tag>
         </div>
@@ -117,6 +117,7 @@
 <script setup>
 import router from '@/router'
 import { User, Phone, Location, OfficeBuilding, Document } from '@element-plus/icons-vue'
+import { formatLocationName, partnerTypeTag } from '@/utils/partners'
 
 defineProps({
   partners: {
@@ -124,15 +125,6 @@ defineProps({
     default: () => [],
   },
 })
-
-const formatText = (text) => {
-  if (!text) return ''
-  return text.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
-}
-
-const getTypeTag = (type) => {
-  return type === 'Yuridik shaxs' ? 'success' : 'warning'
-}
 </script>
 
 <style lang="scss" scoped>
