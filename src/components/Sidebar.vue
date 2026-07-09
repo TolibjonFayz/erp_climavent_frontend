@@ -56,26 +56,32 @@
         >
           <a :href="menu.href" class="nav-link" :title="$t(menu.title)" @click="closeMobile">
             <i class="icon" :class="menu.icon"></i>
-            <span class="nav-text">{{ $t(menu.text) }}</span>
+            <span class="nav-text" :class="{ multiline: menu.key == 'mijozlar' }">{{
+              $t(menu.text)
+            }}</span>
           </a>
         </li>
       </ul>
     </nav>
 
     <!-- Foydalanuvchi profili -->
-    <div class="user-profile" v-loading="loading" v-show="!showCollapsed">
+    <div class="user-profile" v-loading="loading">
       <div class="user-avatar">
         <img
-          v-if="usersStore?.currentUser?.profile_image == 'profile.jpg'"
+          v-if="currentUser?.profile_image == 'profile.jpg'"
           src="/user.png"
           alt="User profile"
         />
-        <img v-else :src="usersStore?.currentUser?.profile_image" alt="User profile" />
+        <img
+          v-else
+          :src="currentUser?.profile_image ? currentUser?.profile_image : '/user.png'"
+          alt="User profile"
+        />
         <div class="status-dot"></div>
       </div>
       <div class="user-info">
-        <h4>{{ usersStore?.currentUser?.firstname }} {{ usersStore?.currentUser?.lastname }}</h4>
-        <p>{{ usersStore?.currentUser?.username }}</p>
+        <h4>{{ currentUser?.firstname }} {{ currentUser?.lastname }}</h4>
+        <p>{{ currentUser?.username }}</p>
       </div>
     </div>
   </aside>
@@ -86,6 +92,15 @@ import { useUsersStore } from '@/stores/user'
 import { onMounted, ref, computed } from 'vue'
 import { useSidebar } from '@/composables/useSidebar'
 
+type CurrentUser = {
+  profile_image?: string | null
+  firstname?: string | null
+  lastname?: string | null
+  username?: string | null
+  is_admin?: boolean | null
+  id?: number | null
+}
+
 const props = defineProps({
   activePath: {
     type: String,
@@ -94,6 +109,9 @@ const props = defineProps({
 })
 
 const usersStore = useUsersStore()
+const currentUser = computed<CurrentUser | null>(() => {
+  return (usersStore?.currentUser ?? null) as CurrentUser | null
+})
 const loading = ref(false)
 
 const { isCollapsed, isMobile, isMobileOpen, toggleCollapsed, openMobile, closeMobile } =
@@ -157,7 +175,7 @@ const menus = computed(() => [
     icon: 'admin-icon',
     title: 'admin',
     text: 'admin',
-    show: usersStore?.currentUser?.is_admin,
+    show: currentUser.value?.is_admin,
   },
   {
     key: 'boss',
@@ -165,7 +183,7 @@ const menus = computed(() => [
     icon: 'boss-icon',
     title: 'boss',
     text: 'boss',
-    show: Number(usersStore?.currentUser?.id) === 16,
+    show: Number(currentUser.value?.id) === 16,
   },
 ])
 
@@ -206,8 +224,12 @@ $accent-dark: #2f7fe0;
 
     .logo-text,
     .nav-text,
+    .nav-text.multiline,
     .user-info {
       display: none;
+    }
+    .user-profile {
+      justify-content: center;
     }
 
     .nav-link {
@@ -216,7 +238,8 @@ $accent-dark: #2f7fe0;
     }
 
     .toggle-icon {
-      transform: rotate(135deg);
+      transform: rotate(225deg);
+      margin-left: -3px;
     }
   }
 }
@@ -321,6 +344,10 @@ $accent-dark: #2f7fe0;
 
 .logo-text {
   min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
 
   h3 {
     margin: 0;
@@ -362,7 +389,7 @@ $accent-dark: #2f7fe0;
   border-bottom: 2px solid #6b7280;
   transform: rotate(45deg);
   margin-left: 3px;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease-in-out;
 }
 
 .close-icon {
@@ -436,6 +463,18 @@ $accent-dark: #2f7fe0;
     white-space: normal;
     line-height: 1.25;
     word-break: break-word;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .nav-text.multiline {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* standard property for compatibility */
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 }
 
