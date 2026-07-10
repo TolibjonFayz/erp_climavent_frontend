@@ -67,10 +67,7 @@
     <!-- User profile -->
     <div class="user-profile" v-loading="loading">
       <div class="user-avatar">
-        <img
-          :src="avatarUrl"
-          alt="User profile"
-        />
+        <img :src="avatarUrl" alt="User profile" />
         <div class="status-dot"></div>
       </div>
       <div class="user-info">
@@ -222,7 +219,8 @@ $accent-dark: #2f7fe0;
 
     .logo-text,
     .nav-text,
-    .user-info {
+    .user-info,
+    .nav-text.multiline {
       display: none;
     }
     .user-profile {
