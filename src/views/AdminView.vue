@@ -1,10 +1,8 @@
 <template>
-  <AppLayout active="admin">
-    <AdminPanel />
-  </AppLayout>
+  <!-- Admin is a self-contained full-screen dashboard with its own sidebar -->
+  <AdminPanel />
 </template>
 
 <script setup>
-import AppLayout from '@/components/layout/AppLayout.vue'
 import AdminPanel from '@/components/admin/AdminPanel.vue'
 </script>

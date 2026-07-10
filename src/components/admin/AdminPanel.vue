@@ -61,6 +61,10 @@
               <span class="adm-user__role">Super Admin</span>
             </div>
           </div>
+          <button class="adm-exit" type="button" @click="router.push('/')">
+            <el-icon><Back /></el-icon>
+            <span>Ilovaga qaytish</span>
+          </button>
         </div>
       </aside>
 
@@ -1696,6 +1700,30 @@ $sw: 220px;
     font-size: 10px;
     color: $blue;
     font-weight: 600;
+  }
+}
+.adm-exit {
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 11px;
+  border: 1px solid $blue-l;
+  border-radius: 10px;
+  background: transparent;
+  color: $blue;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+
+  &:hover {
+    background: $blue;
+    color: #fff;
   }
 }
 
