@@ -39,9 +39,25 @@ const router = createRouter({
       component: SiteDetailView,
       meta: { requiresAuth: true },
     },
-    { path: '/attendance', name: 'attendance', component: AttendanceView, meta: { requiresAuth: true } },
+    {
+      path: '/attendance',
+      name: 'attendance',
+      component: AttendanceView,
+      meta: { requiresAuth: true },
+    },
     { path: '/tasks', name: 'tasks', component: TasksView, meta: { requiresAuth: true } },
-    { path: '/competitors', name: 'competitors', component: CompetitorsView, meta: { requiresAuth: true } },
+    {
+      path: '/kp',
+      name: 'kp',
+      component: () => import('@/views/KPView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/competitors',
+      name: 'competitors',
+      component: CompetitorsView,
+      meta: { requiresAuth: true },
+    },
     { path: '/settings', name: 'settings', component: SettingsView, meta: { requiresAuth: true } },
     { path: '/admin', name: 'admin', component: AdminView, meta: { requiresAuth: true } },
     {

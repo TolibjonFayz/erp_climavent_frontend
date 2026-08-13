@@ -544,6 +544,125 @@
           </div>
         </div>
 
+        <!-- ═══════ KP ═══════ -->
+        <div v-if="activeTab === 'kp'" class="adm-page">
+          <div class="page-head">
+            <span class="page-accent"></span>
+            <h2 class="page-title">KP (Savdo takliflari)</h2>
+          </div>
+          <div class="adm-toolbar">
+            <span class="kp-filtered-count">Topildi: {{ filteredKp.length }} ta</span>
+            <button class="adm-reset-btn" @click="handleResetKp">
+              <el-icon><RefreshLeft /></el-icon> Filtrlarni tozalash
+            </button>
+            <button
+              class="adm-reset-btn"
+              style="margin-left: auto"
+              :disabled="exportKpLoading"
+              @click="handleExportKp"
+            >
+              <el-icon v-if="!exportKpLoading"><Download /></el-icon>
+              <el-icon v-else class="is-loading"><Loading /></el-icon>
+              Excel'ga yuklab olish
+            </button>
+          </div>
+          <div class="tbl-wrap" v-loading="kpLoading">
+            <el-table
+              :data="pagedKp"
+              stripe
+              border
+              style="width: 100%"
+              empty-text="Hech narsa topilmadi 🔍"
+            >
+              <el-table-column label="№" type="index" width="60" align="center" />
+              <el-table-column prop="kp_number" label="Raqami" width="110">
+                <template #header><input v-model="kpFilter.number" class="col-filter-admin" placeholder="Raqami" /></template>
+                <template #default="{ row }">{{ row.kp_number ?? '—' }}</template>
+              </el-table-column>
+              <el-table-column label="Holat" width="130">
+                <template #header>
+                  <select v-model="kpFilter.status" class="col-filter-admin">
+                    <option value="">Holat</option>
+                    <option v-for="opt in kpStatusOptions" :key="opt.value" :value="opt.value">
+                      {{ opt.label }}
+                    </option>
+                  </select>
+                </template>
+                <template #default="{ row }"
+                  ><el-tag :type="kpStatusTagType(row.kp_status)">{{
+                    kpStatusLabel(row.kp_status)
+                  }}</el-tag></template
+                >
+              </el-table-column>
+              <el-table-column prop="client_name" label="Mijoz" min-width="160">
+                <template #header><input v-model="kpFilter.client" class="col-filter-admin" placeholder="Mijoz" /></template>
+              </el-table-column>
+              <el-table-column prop="manager_name" label="Menejer" min-width="150">
+                <template #header><input v-model="kpFilter.manager" class="col-filter-admin" placeholder="Menejer" /></template>
+              </el-table-column>
+              <el-table-column prop="kp_date" label="Sana" width="120">
+                <template #header><input v-model="kpFilter.date" class="col-filter-admin" placeholder="Sana" /></template>
+              </el-table-column>
+              <el-table-column label="Yopilgan sana" width="130">
+                <template #header><input v-model="kpFilter.closedDate" class="col-filter-admin" placeholder="Yopilgan sana" /></template>
+                <template #default="{ row }">{{ row.closed_date ?? '—' }}</template>
+              </el-table-column>
+              <el-table-column label="Summa" width="140">
+                <template #header><input v-model="kpFilter.sum" class="col-filter-admin" placeholder="Summa" /></template>
+                <template #default="{ row }">{{
+                  new Intl.NumberFormat('uz-UZ').format(row.kp_sum ?? 0)
+                }}</template>
+              </el-table-column>
+              <el-table-column label="Izoh" min-width="240" class-name="kp-wrap-col">
+                <template #header>
+                  <select v-model="kpFilter.comment" class="col-filter-admin">
+                    <option value="">Izoh</option>
+                    <option v-for="opt in KP_COMMENT_FILTER_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
+                  </select>
+                </template>
+                <template #default="{ row }">{{ row.comment || '—' }}</template>
+              </el-table-column>
+              <el-table-column label="Admin izohi" min-width="200" class-name="kp-wrap-col">
+                <template #header><input v-model="kpFilter.adminComment" class="col-filter-admin" placeholder="Admin izohi" /></template>
+                <template #default="{ row }"
+                  ><span class="kp-admin-comment">{{ row.admin_comment || '—' }}</span></template
+                >
+              </el-table-column>
+              <el-table-column label="Kim kiritgan" min-width="150">
+                <template #header><input v-model="kpFilter.creator" class="col-filter-admin" placeholder="Kim kiritgan" /></template>
+                <template #default="{ row }">{{
+                  row.creator ? `${row.creator.firstname} ${row.creator.lastname}` : '—'
+                }}</template>
+              </el-table-column>
+              <el-table-column label="Amallar" width="140" fixed="right">
+                <template #default="{ row }">
+                  <el-button text size="small" :icon="Edit" @click="openKpEditDialog(row)"
+                    >Tahrirlash</el-button
+                  >
+                  <el-button
+                    text
+                    size="small"
+                    type="danger"
+                    :icon="Delete"
+                    @click="handleKpDelete(row)"
+                    >O'chirish</el-button
+                  >
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <div class="kp-pagination-bar" v-if="filteredKp.length > kpPageSize">
+            <el-pagination
+              v-model:current-page="kpPage"
+              v-model:page-size="kpPageSize"
+              :page-sizes="[50, 100, 200, 500]"
+              :total="filteredKp.length"
+              layout="total, sizes, prev, pager, next, jumper"
+              background
+            />
+          </div>
+        </div>
+
         <!-- ═══════ AUDIT LOG ═══════ -->
         <div v-if="activeTab === 'audit'" class="adm-page">
           <div class="page-head">
@@ -796,12 +915,133 @@
         </div>
       </div>
     </el-drawer>
+
+    <!-- ═══════ KP EDIT DIALOG ═══════ -->
+    <el-dialog v-model="kpDialogVisible" title="KPni tahrirlash" width="720px" destroy-on-close>
+      <el-form ref="kpFormRef" :model="kpForm" :rules="kpFormRules" label-position="top">
+        <el-row :gutter="18">
+          <el-col :span="12">
+            <el-form-item label="Hujjat raqami" prop="kp_number">
+              <el-input-number
+                v-model="kpForm.kp_number"
+                :min="1"
+                :controls="false"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="KP holati" prop="kp_status">
+              <el-select v-model="kpForm.kp_status" style="width: 100%">
+                <el-option
+                  v-for="opt in kpStatusOptions"
+                  :key="opt.value"
+                  :label="opt.label"
+                  :value="opt.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Mijoz nomi" prop="client_name">
+              <el-input v-model="kpForm.client_name" maxlength="120" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Menejer nomi" prop="manager_name">
+              <el-input v-model="kpForm.manager_name" maxlength="120" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="KP sanasi" prop="kp_date">
+              <el-date-picker
+                v-model="kpForm.kp_date"
+                type="date"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Yopilgan sana" prop="closed_date">
+              <el-date-picker
+                v-model="kpForm.closed_date"
+                type="date"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Keyingi uchrashuv sanasi" prop="dogovor_next">
+              <el-date-picker
+                v-model="kpForm.dogovor_next"
+                type="date"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Summa" prop="kp_sum">
+              <el-input-number v-model="kpForm.kp_sum" :min="0" :step="100" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="Izoh" prop="commentSelect">
+              <el-select v-model="kpForm.commentSelect" placeholder="Izoh sababini tanlang" filterable style="width: 100%">
+                <el-option v-for="opt in KP_COMMENT_OPTIONS" :key="opt" :label="opt" :value="opt" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col v-if="kpForm.commentSelect === CONTRACT_NUMBER_OPTION" :span="24">
+            <el-form-item label="Shartnoma raqami" prop="contractNumber">
+              <el-input v-model="kpForm.contractNumber" placeholder="Shartnoma raqamini kiriting" maxlength="60" />
+            </el-form-item>
+          </el-col>
+          <el-col v-if="kpForm.commentSelect === OTHER_COMMENT_OPTION" :span="24">
+            <el-form-item label="Izohni yozing" prop="customComment">
+              <el-input type="textarea" v-model="kpForm.customComment" rows="3" maxlength="400" show-word-limit />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="Admin izohi (ichki, faqat adminlarga ko'rinadi)" prop="admin_comment">
+              <el-input
+                type="textarea"
+                v-model="kpForm.admin_comment"
+                rows="3"
+                maxlength="400"
+                show-word-limit
+                class="admin-comment-textarea"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+      <template #footer>
+        <el-button @click="kpDialogVisible = false">Bekor qilish</el-button>
+        <el-button type="primary" :loading="kpLoading" @click="handleKpSubmit">Saqlash</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { usePartnersStore } from '@/stores/partners'
+import { useKPsStore } from '@/stores/kp'
+import {
+  KP_COMMENT_OPTIONS,
+  KP_COMMENT_FILTER_OPTIONS,
+  CONTRACT_NUMBER_OPTION,
+  OTHER_COMMENT_OPTION,
+  deriveCommentForm,
+  resolveCommentValue,
+  commentMatchesFilter,
+} from '@/constants/kpComments'
 import {
   Search,
   View,
@@ -822,6 +1062,7 @@ import {
   Message,
   Key,
   Delete,
+  Edit,
   Top,
   InfoFilled,
   Timer,
@@ -830,7 +1071,7 @@ import {
   ArrowDown,
   ArrowUp,
 } from '@element-plus/icons-vue'
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useUsersStore } from '@/stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuditLog } from '@/composables/useAuditLog'
@@ -840,6 +1081,7 @@ import router from '@/router'
 const comeandgoInsideStore = useComeAndGoInsideStore()
 const partnersStore = usePartnersStore()
 const usersStore = useUsersStore()
+const kpStore = useKPsStore()
 
 const {
   auditLogs: _auditLogs,
@@ -858,8 +1100,10 @@ const loading = ref(false)
 const usersLoading = ref(false)
 const partnersLoading = ref(false)
 const objectsLoading = ref(false)
+const kpLoading = ref(false)
 const exportPartnersLoading = ref(false)
 const exportObjectsLoading = ref(false)
+const exportKpLoading = ref(false)
 const userDetailVisible = ref(false)
 const selectedUser = ref(null)
 const selectedUserLogs = ref([])
@@ -874,6 +1118,20 @@ const partnersType = ref('')
 const partnersUser = ref('')
 const objectsSearch = ref('')
 const objectsUser = ref('')
+const kpFilter = reactive({
+  number: '',
+  status: '',
+  client: '',
+  manager: '',
+  date: '',
+  closedDate: '',
+  sum: '',
+  comment: '',
+  adminComment: '',
+  creator: '',
+})
+const kpPage = ref(1)
+const kpPageSize = ref(50)
 const showAllActiveUsers = ref(false)
 const auditSearch = ref('')
 const auditActionFilter = ref('')
@@ -884,6 +1142,7 @@ const tabs = [
   { name: 'users', label: 'Foydalanuvchilar', icon: User },
   { name: 'partners', label: 'Hamkorlar', icon: UserFilled },
   { name: 'objects', label: 'Obyektlar', icon: OfficeBuilding },
+  { name: 'kp', label: 'KP', icon: Document },
   { name: 'audit', label: 'Audit Log', icon: Document },
   { name: 'settings', label: 'Sozlamalar', icon: Setting },
 ]
@@ -1087,6 +1346,35 @@ const filteredAuditLogs = computed(() =>
     )
   }),
 )
+const kpColText = (value, filter) =>
+  !filter.trim() || String(value ?? '').toLowerCase().includes(filter.trim().toLowerCase())
+
+// Backend KP'larni createdAt bo'yicha (yangilari birinchi) qaytaradi — shu tartibni saqlaymiz
+const filteredKp = computed(() =>
+  (kpStore.allKPs || []).filter(
+    (kp) =>
+      kpColText(kp.kp_number, kpFilter.number) &&
+      (!kpFilter.status || kp.kp_status === kpFilter.status) &&
+      kpColText(kp.client_name, kpFilter.client) &&
+      kpColText(kp.manager_name, kpFilter.manager) &&
+      kpColText(kp.kp_date, kpFilter.date) &&
+      kpColText(kp.closed_date, kpFilter.closedDate) &&
+      kpColText(kp.kp_sum, kpFilter.sum) &&
+      commentMatchesFilter(kp.comment, kpFilter.comment) &&
+      kpColText(kp.admin_comment, kpFilter.adminComment) &&
+      kpColText(kp.creator ? `${kp.creator.firstname} ${kp.creator.lastname}` : '', kpFilter.creator),
+  ),
+)
+const pagedKp = computed(() => {
+  const start = (kpPage.value - 1) * kpPageSize.value
+  return filteredKp.value.slice(start, start + kpPageSize.value)
+})
+watch(
+  () => ({ ...kpFilter }),
+  () => {
+    kpPage.value = 1
+  },
+)
 
 // ─── Audit helpers ────────────────────────────────────────
 function getAuditIcon(action) {
@@ -1206,9 +1494,178 @@ const handleResetObjects = () => {
   objectsSearch.value = ''
   objectsUser.value = ''
 }
+const handleResetKp = () => {
+  Object.keys(kpFilter).forEach((key) => {
+    kpFilter[key] = ''
+  })
+  kpPage.value = 1
+}
 const handleResetAudit = () => {
   auditSearch.value = ''
   auditActionFilter.value = ''
+}
+
+// ─── KP actions ───────────────────────────────────────────
+const kpStatusOptions = [
+  { value: 'Open', label: 'Ochilgan' },
+  { value: 'Negotiation', label: 'Muzokaralar' },
+  { value: 'Closed', label: 'Yopilgan' },
+]
+function kpStatusLabel(status) {
+  return kpStatusOptions.find((o) => o.value === status)?.label || status || '—'
+}
+function kpStatusTagType(status) {
+  return { Open: 'success', Negotiation: 'warning', Closed: 'info' }[status] || 'info'
+}
+
+const kpDialogVisible = ref(false)
+const kpFormRef = ref(null)
+const editingKpRow = ref(null)
+const kpForm = reactive({
+  kp_number: null,
+  kp_status: 'Open',
+  client_name: '',
+  kp_date: '',
+  manager_name: '',
+  kp_sum: null,
+  dogovor_next: '',
+  closed_date: '',
+  commentSelect: '',
+  contractNumber: '',
+  customComment: '',
+  admin_comment: '',
+})
+const kpFormRules = {
+  kp_status: [{ required: true, message: "KP holatini tanlang", trigger: 'change' }],
+  client_name: [{ required: true, message: 'Mijoz nomini kiriting', trigger: 'blur' }],
+  kp_date: [{ required: true, message: 'KP sanasini tanlang', trigger: 'change' }],
+  manager_name: [{ required: true, message: 'Menejer nomini kiriting', trigger: 'blur' }],
+  kp_sum: [{ required: true, message: 'Summa qiymatini kiriting', trigger: 'change' }],
+}
+
+function openKpEditDialog(row) {
+  editingKpRow.value = row
+  Object.assign(kpForm, {
+    kp_number: row.kp_number ?? null,
+    kp_status: row.kp_status || 'Open',
+    client_name: row.client_name || '',
+    kp_date: row.kp_date || '',
+    manager_name: row.manager_name || '',
+    kp_sum: row.kp_sum ?? null,
+    dogovor_next: row.dogovor_next || '',
+    closed_date: row.closed_date || '',
+    ...deriveCommentForm(row.comment),
+    admin_comment: row.admin_comment || '',
+  })
+  kpDialogVisible.value = true
+}
+
+async function handleKpSubmit() {
+  if (!kpFormRef.value) return
+  try {
+    await kpFormRef.value.validate()
+  } catch {
+    return
+  }
+  try {
+    kpLoading.value = true
+    await kpStore.updateKP(editingKpRow.value.id, {
+      kp_number: kpForm.kp_number || undefined,
+      kp_status: kpForm.kp_status,
+      client_name: kpForm.client_name.trim(),
+      kp_date: kpForm.kp_date,
+      manager_name: kpForm.manager_name.trim(),
+      kp_sum: kpForm.kp_sum,
+      dogovor_next: kpForm.dogovor_next || undefined,
+      closed_date: kpForm.closed_date || undefined,
+      comment:
+        resolveCommentValue({
+          commentSelect: kpForm.commentSelect,
+          contractNumber: kpForm.contractNumber,
+          customComment: kpForm.customComment,
+        }) || undefined,
+      admin_comment: kpForm.admin_comment?.trim() || undefined,
+    })
+    await kpStore.getAllKPs()
+    addAuditLog({
+      action: 'role',
+      message: `KP #${editingKpRow.value.id} (${kpForm.client_name}) tahrirlandi`,
+      type: 'info',
+      target_id: editingKpRow.value.id,
+    })
+    ElMessage.success('✅ KP muvaffaqiyatli yangilandi!')
+    kpDialogVisible.value = false
+  } catch (e) {
+    ElMessage.error(e?.response?.data?.message || e?.message || 'KP yangilashda xatolik')
+  } finally {
+    kpLoading.value = false
+  }
+}
+
+async function handleKpDelete(row) {
+  try {
+    await ElMessageBox.confirm(
+      `"${row.client_name}" (#${row.kp_number ?? row.id}) — KP yozuvini o'chirmoqchimisiz?`,
+      'Tasdiqlash',
+      { confirmButtonText: 'Ha', cancelButtonText: 'Bekor qilish', type: 'warning' },
+    )
+    kpLoading.value = true
+    await kpStore.deleteKP(row.id)
+    await kpStore.getAllKPs()
+    addAuditLog({
+      action: 'role',
+      message: `KP #${row.id} (${row.client_name}) o'chirildi`,
+      type: 'warning',
+      target_id: row.id,
+    })
+    ElMessage.success("✅ KP muvaffaqiyatli o'chirildi!")
+  } catch (e) {
+    if (e === 'cancel' || e === 'close') return
+    ElMessage.error(e?.response?.data?.message || e?.message || "KP o'chirishda xatolik")
+  } finally {
+    kpLoading.value = false
+  }
+}
+
+const handleExportKp = async () => {
+  try {
+    exportKpLoading.value = true
+    const data = kpStore.allKPs.map((k, i) => ({
+      '№': i + 1,
+      ID: k.id,
+      Raqami: k.kp_number ?? '—',
+      Holat: kpStatusLabel(k.kp_status),
+      Mijoz: k.client_name ?? '—',
+      Menejer: k.manager_name ?? '—',
+      Sana: k.kp_date ?? '—',
+      'Yopilgan sana': k.closed_date ?? '—',
+      'Keyingi sana': k.dogovor_next ?? '—',
+      Summa: k.kp_sum ?? 0,
+      Izoh: k.comment ?? '—',
+      'Admin izohi': k.admin_comment ?? '—',
+      "Kim kiritgan": k.creator ? `${k.creator.firstname} ${k.creator.lastname}` : '—',
+      'Kiritilgan vaqt': formatDate(k.createdAt),
+    }))
+    if (!data.length) {
+      ElMessage.warning("Eksport qilish uchun ma'lumot yo'q!")
+      return
+    }
+    const ws = XLSX.utils.json_to_sheet(data)
+    ws['!cols'] = calcColWidths(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'KP')
+    XLSX.writeFile(wb, `KP_${new Date().toLocaleDateString('uz-UZ').replace(/\//g, '-')}.xlsx`)
+    addAuditLog({
+      action: 'export',
+      message: `KP ma'lumotlari export qilindi (${data.length} ta yozuv)`,
+      type: 'info',
+    })
+    ElMessage.success('✅ KP muvaffaqiyatli eksport qilindi!')
+  } catch (e) {
+    ElMessage.error('Eksport xatoligi: ' + e.message)
+  } finally {
+    exportKpLoading.value = false
+  }
 }
 
 // ─── Excel export ─────────────────────────────────────────
@@ -1348,6 +1805,7 @@ onMounted(async () => {
     usersStore.getAllUsers(),
     partnersStore.getAllPartners(),
     comeandgoInsideStore.getAllComeAndGoInside(),
+    kpStore.getAllKPs(),
   ])
 
   loading.value = false
@@ -1852,6 +2310,11 @@ $sw: 220px;
       &:hover {
         background: $blue-bg !important;
       }
+    }
+    .kp-wrap-col .cell {
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.6;
     }
   }
   .el-tag {
@@ -2917,5 +3380,41 @@ $sw: 220px;
   .dash-row {
     grid-template-columns: 1fr;
   }
+}
+
+.kp-admin-comment {
+  color: #b45309;
+  font-style: italic;
+}
+.admin-comment-textarea :deep(.el-textarea__inner) {
+  border-color: #f59e0b;
+  background: #fffaf0;
+}
+.kp-filtered-count {
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+.col-filter-admin {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 7px;
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  background: white;
+  color: #374151;
+
+  &:focus {
+    outline: none;
+    border-color: #409eff;
+  }
+}
+.kp-pagination-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
 }
 </style>

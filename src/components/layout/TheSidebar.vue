@@ -141,6 +141,14 @@ const menus = computed(() => [
     show: true,
   },
   {
+    key: 'kp',
+    href: '/kp',
+    icon: 'kp-icon',
+    title: 'kptext',
+    text: 'kptext',
+    show: true,
+  },
+  {
     key: 'attendance',
     href: '/attendance',
     icon: 'project-icon',
@@ -489,6 +497,9 @@ $accent-dark: #2f7fe0;
   }
   &.tasks-icon::before {
     content: '✅';
+  }
+  &.kp-icon::before {
+    content: '📄';
   }
   &.oppenents-icon::before {
     content: '⚔️';
