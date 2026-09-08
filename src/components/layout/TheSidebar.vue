@@ -54,10 +54,27 @@
           class="nav-item"
           :class="{ active: props.activePath === menu.key }"
         >
-          <a :href="menu.href" class="nav-link" :title="$t(menu.title)" @click="closeMobile">
+          <a :href="menu.href" class="nav-link" :title="navTitle(menu)" @click="closeMobile">
             <i class="icon" :class="menu.icon"></i>
             <span class="nav-text" :class="{ multiline: menu.key === 'customers' }">
               {{ $t(menu.text) }}
+            </span>
+
+            <!-- Vazifalar: status bo'yicha rangli hisoblagichlar -->
+            <span
+              v-if="menu.key === 'tasks' && taskCounts.total"
+              class="task-badges"
+              :class="{ stacked: showCollapsed }"
+            >
+              <span
+                v-for="badge in visibleTaskBadges"
+                :key="badge.key"
+                class="task-badge"
+                :class="`badge-${badge.key}`"
+                :title="badge.title"
+              >
+                {{ badge.count }}
+              </span>
             </span>
           </a>
         </li>
@@ -80,7 +97,9 @@
 
 <script setup lang="ts">
 import { useUsersStore } from '@/stores/user'
+import { useTasksStore } from '@/stores/tasks'
 import { onMounted, ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useSidebar } from '@/composables/useSidebar'
 
 type CurrentUser = {
@@ -100,6 +119,8 @@ const props = defineProps({
 })
 
 const usersStore = useUsersStore()
+const tasksStore = useTasksStore()
+const { t } = useI18n()
 const loading = ref(false)
 
 const { isCollapsed, isMobile, isMobileOpen, toggleCollapsed, openMobile, closeMobile } =
@@ -192,11 +213,45 @@ const menus = computed(() => [
 
 const visibleMenus = computed(() => menus.value.filter((m) => m.show))
 
+// ─── Vazifalar hisoblagichi (sidebar'da rangli nuqtalar) ───
+const taskCounts = computed(() =>
+  tasksStore.statusCounts(!!currentUser.value?.is_admin),
+)
+
+// Yig'ilgan holatda joy tor — faqat eng muhimlari ko'rsatiladi
+const taskBadges = computed(() => [
+  { key: 'todo', count: taskCounts.value.todo, title: t('statusTodo') },
+  { key: 'in_progress', count: taskCounts.value.in_progress, title: t('statusInProgress') },
+  { key: 'done', count: taskCounts.value.done, title: t('statusDone') },
+  { key: 'pending', count: taskCounts.value.pending, title: t('taskApprovalPending') },
+])
+
+const visibleTaskBadges = computed(() => taskBadges.value.filter((b) => b.count > 0))
+
+const navTitle = (menu: { key: string; title: string }) => {
+  const base = t(menu.title)
+  if (menu.key !== 'tasks' || !taskCounts.value.total) return base
+  const parts = visibleTaskBadges.value.map((b) => `${b.title}: ${b.count}`)
+  return `${base} — ${parts.join(', ')}`
+}
+
 onMounted(async () => {
   loading.value = true
   const userId = localStorage.getItem('userid')
   await usersStore.getUserInfo(Number(userId))
   loading.value = false
+
+  // Sidebar hisoblagichi uchun vazifalarni yuklaymiz (sahifa o'zi ham yuklaydi —
+  // shuning uchun ro'yxat bo'sh bo'lsagina so'rov yuboriladi)
+  try {
+    if (currentUser.value?.is_admin) {
+      if (!tasksStore.allTasks.length) await tasksStore.getAllTasks()
+    } else if (!tasksStore.myTasks.length) {
+      await tasksStore.getMyTasks(Number(userId))
+    }
+  } catch {
+    // hisoblagich ikkinchi darajali — xatoni jimgina o'tkazamiz
+  }
 })
 </script>
 
@@ -478,6 +533,58 @@ $accent-dark: #2f7fe0;
   background: linear-gradient(135deg, $accent 0%, $accent-dark 100%);
   color: #fff;
   box-shadow: 0 6px 16px rgba(64, 158, 255, 0.35);
+}
+
+/* ─── Vazifalar hisoblagichi ──────────────────────────────── */
+.task-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+
+  /* Yig'ilgan sidebar: ikonka ustiga kichik ustun bo'lib joylashadi */
+  &.stacked {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    gap: 2px;
+  }
+}
+
+.task-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(17, 24, 39, 0.18);
+
+  &.badge-todo {
+    background: #909399;
+  }
+  &.badge-in_progress {
+    background: #e6a23c;
+  }
+  &.badge-done {
+    background: #67c23a;
+  }
+  /* Tasdiq kutayotganlar — e'tibor tortadi */
+  &.badge-pending {
+    background: #f0a020;
+    box-shadow: 0 0 0 2px rgba(240, 160, 32, 0.25);
+  }
+}
+
+.task-badges.stacked .task-badge {
+  min-width: 16px;
+  height: 16px;
+  line-height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
 }
 
 .icon {
