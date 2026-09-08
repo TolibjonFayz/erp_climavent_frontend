@@ -170,6 +170,14 @@ const menus = computed(() => [
     show: true,
   },
   {
+    key: 'dogovor',
+    href: '/dogovor',
+    icon: 'dogovor-icon',
+    title: 'dogovortext',
+    text: 'dogovortext',
+    show: true,
+  },
+  {
     key: 'attendance',
     href: '/attendance',
     icon: 'project-icon',
@@ -607,6 +615,9 @@ $accent-dark: #2f7fe0;
   }
   &.kp-icon::before {
     content: '📄';
+  }
+  &.dogovor-icon::before {
+    content: '📝';
   }
   &.oppenents-icon::before {
     content: '⚔️';

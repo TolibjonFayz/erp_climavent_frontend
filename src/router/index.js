@@ -53,6 +53,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/dogovor',
+      name: 'dogovor',
+      component: () => import('@/views/DogovorView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/competitors',
       name: 'competitors',
       component: CompetitorsView,
