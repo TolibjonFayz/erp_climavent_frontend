@@ -50,8 +50,13 @@ export const useLoyihaStore = defineStore('loyiha', {
     },
 
     // ─── Fayllar ───
-    async uploadFile(id, section, file) {
-      return runRequest(this, () => loyihaApi.uploadFile(id, section, file), 'Upload failed')
+    // onProgress(percent) — yuklash foizini komponentga qaytaradi
+    async uploadFile(id, section, file, onProgress) {
+      return runRequest(
+        this,
+        () => loyihaApi.uploadFile(id, section, file, onProgress),
+        'Upload failed',
+      )
     },
 
     async getFileLink(fileId, mode) {

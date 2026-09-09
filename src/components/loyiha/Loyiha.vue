@@ -37,21 +37,13 @@
       </div>
     </div>
 
-    <el-alert
-      v-if="!loyihaStore.storageReady"
-      class="storage-warning"
-      type="warning"
-      :closable="false"
-      show-icon
-      :title="$t('loyihaStorageNotReady')"
-    />
-
     <div v-if="loyihaStore.error" class="error-banner">{{ loyihaStore.error }}</div>
 
     <div class="toolbar" v-if="loyihas.length">
       <span class="toolbar-count">
         {{ $t('loyihaFilteredCount', { count: filteredLoyihas.length }) }}
       </span>
+      <span class="toolbar-hint">{{ $t('loyihaRowClickHint') }}</span>
       <button class="toolbar-reset-btn" @click="resetFilters">
         {{ $t('loyihaResetFilters') }}
       </button>
@@ -96,12 +88,17 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(row, index) in pagedLoyihas" :key="row.id">
+            <tr
+              v-for="(row, index) in pagedLoyihas"
+              :key="row.id"
+              class="clickable-row"
+              @click="openDetail(row)"
+            >
               <td class="table-index">
                 <span class="index-badge">{{ (currentPage - 1) * pageSize + index + 1 }}</span>
               </td>
               <td><span class="cell-text bold">{{ row.order_number ?? '—' }}</span></td>
-              <td><span class="cell-text">{{ managerName(row) }}</span></td>
+              <td><span class="cell-text">{{ row.manager_name || '—' }}</span></td>
               <td><span class="cell-text">{{ row.other_source || '—' }}</span></td>
               <td class="wrap-cell"><span class="cell-text">{{ row.system_info || '—' }}</span></td>
               <td><span class="cell-text">{{ row.area != null ? formatNumber(row.area) + ' m²' : '—' }}</span></td>
@@ -130,26 +127,25 @@
                   </span>
                 </div>
               </td>
-              <td class="actions-cell">
+              <!-- Qatorga bosilganda detail ochiladi, tugmalar esa o'z ishini qiladi -->
+              <td class="actions-cell" @click.stop>
                 <div class="actions-row">
-                  <el-button text size="small" :icon="Folder" @click="openFilesDialog(row)">
-                    {{ $t('loyihaFilesButton') }}
-                  </el-button>
-                  <el-button text size="small" :icon="Edit" @click="openEditDialog(row)">
-                    {{ $t('edit') }}
-                  </el-button>
+                  <el-tooltip :content="$t('loyihaOpenDetail')" placement="top">
+                    <el-button circle size="small" :icon="View" @click="openDetail(row)" />
+                  </el-tooltip>
+                  <el-tooltip :content="$t('edit')" placement="top">
+                    <el-button circle size="small" :icon="EditPen" @click="openEditDialog(row)" />
+                  </el-tooltip>
                   <el-popconfirm
                     :title="$t('loyihaDeleteConfirm')"
-                    width="260"
-                    placement="top"
-                    :confirm-button-text="t('deleteConfirm')"
-                    :cancel-button-text="t('cancel')"
+                    width="270"
+                    placement="top-end"
+                    :confirm-button-text="$t('deleteConfirm')"
+                    :cancel-button-text="$t('cancel')"
                     @confirm="handleDelete(row.id)"
                   >
                     <template #reference>
-                      <el-button text size="small" type="danger" :icon="Delete">
-                        {{ $t('delete') }}
-                      </el-button>
+                      <el-button circle size="small" type="danger" plain :icon="Delete" />
                     </template>
                   </el-popconfirm>
                 </div>
@@ -181,256 +177,28 @@
       </div>
     </div>
 
-    <!-- Qo'shish / tahrirlash -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="editing ? $t('edit') : $t('loyihaDialogTitle')"
-      width="820px"
-      class="loyiha-dialog"
-      destroy-on-close
-    >
-      <el-form ref="formRef" :model="form" :rules="formRules" label-position="top">
-        <el-row :gutter="18">
-          <el-col :span="8">
-            <el-form-item :label="$t('loyihaNumberLabel')" prop="order_number">
-              <el-input-number v-model="form.order_number" :min="1" :controls="false" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item :label="$t('loyihaManagerLabel')" prop="manager_id">
-              <el-select
-                v-model="form.manager_id"
-                :placeholder="$t('loyihaManagerPlaceholder')"
-                filterable
-                clearable
-                style="width: 100%"
-              >
-                <el-option
-                  v-for="u in employees"
-                  :key="u.id"
-                  :label="`${u.firstname} ${u.lastname || ''}`.trim()"
-                  :value="u.id"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item :label="$t('loyihaOtherLabel')" prop="other_source">
-              <el-input v-model="form.other_source" :placeholder="$t('loyihaOtherPlaceholder')" maxlength="200" />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="8">
-            <el-form-item :label="$t('loyihaSystemLabel')" prop="system_info">
-              <el-input v-model="form.system_info" :placeholder="$t('loyihaSystemPlaceholder')" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item :label="$t('loyihaAreaLabel')" prop="area">
-              <el-input-number v-model="form.area" :min="0" :precision="2" :controls="false" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item :label="$t('loyihaDifficultyLabel')" prop="difficulty">
-              <div class="difficulty-picker">
-                <el-slider v-model="form.difficulty" :min="1" :max="10" :step="1" show-stops />
-                <span class="difficulty-badge" :class="difficultyClass(form.difficulty)">
-                  {{ form.difficulty }}/10
-                </span>
-              </div>
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="8">
-            <el-form-item :label="$t('loyihaPhoneLabel')" prop="contact_phone">
-              <el-input v-model="form.contact_phone" maxlength="60" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item :label="$t('loyihaEmailLabel')" prop="contact_email">
-              <el-input v-model="form.contact_email" maxlength="120" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item :label="$t('loyihaAddressLabel')" prop="contact_address">
-              <el-input v-model="form.contact_address" maxlength="300" />
-            </el-form-item>
-          </el-col>
-
-          <el-col :span="24">
-            <el-form-item :label="$t('loyihaCommentLabel')" prop="comment">
-              <el-input
-                v-model="form.comment"
-                type="textarea"
-                :rows="4"
-                maxlength="2000"
-                show-word-limit
-                :placeholder="$t('loyihaCommentPlaceholder')"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-
-      <template #footer>
-        <el-button @click="dialogVisible = false">{{ $t('cancel') }}</el-button>
-        <el-button type="primary" :loading="loyihaStore.isLoading" @click="handleSubmit">
-          {{ $t('save') }}
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- Fayllar -->
-    <el-dialog
-      v-model="filesDialogVisible"
-      :title="filesTitle"
-      width="880px"
-      class="files-dialog"
-      destroy-on-close
-    >
-      <div class="files-grid">
-        <!-- 1-bo'lim: arxiv, o'zgarmas -->
-        <section class="file-section archive-section">
-          <header class="file-section-head">
-            <div>
-              <h4>🔒 {{ $t('loyihaArchiveSection') }}</h4>
-              <p class="file-section-hint">{{ $t('loyihaArchiveHint') }}</p>
-            </div>
-            <el-upload
-              :show-file-list="false"
-              :before-upload="(file) => handleUpload(file, 'archive')"
-              :disabled="!loyihaStore.storageReady"
-            >
-              <el-button
-                type="primary"
-                size="small"
-                :icon="Upload"
-                :loading="uploading === 'archive'"
-                :disabled="!loyihaStore.storageReady"
-              >
-                {{ $t('loyihaUpload') }}
-              </el-button>
-            </el-upload>
-          </header>
-
-          <ul class="file-list">
-            <li v-for="file in sectionFiles('archive')" :key="file.id" class="file-item">
-              <div class="file-main">
-                <span class="file-name" :title="file.file_name">{{ file.file_name }}</span>
-                <span class="file-meta">
-                  {{ formatDateTime(file.createdAt) }} · {{ formatSize(file.size_bytes) }}
-                  <template v-if="file.uploader">· {{ file.uploader.firstname }}</template>
-                </span>
-              </div>
-              <div class="file-actions">
-                <el-button text size="small" :icon="Download" @click="downloadFile(file)">
-                  {{ $t('loyihaDownload') }}
-                </el-button>
-                <span class="locked-hint" :title="$t('loyihaArchiveLocked')">🔒</span>
-              </div>
-            </li>
-            <li v-if="!sectionFiles('archive').length" class="file-empty">
-              {{ $t('loyihaNoFiles') }}
-            </li>
-          </ul>
-        </section>
-
-        <!-- 2-bo'lim: ishchi fayllar, to'liq boshqariladi -->
-        <section class="file-section">
-          <header class="file-section-head">
-            <div>
-              <h4>📁 {{ $t('loyihaWorkingSection') }}</h4>
-              <p class="file-section-hint">{{ $t('loyihaWorkingHint') }}</p>
-            </div>
-            <el-upload
-              :show-file-list="false"
-              :before-upload="(file) => handleUpload(file, 'working')"
-              :disabled="!loyihaStore.storageReady"
-            >
-              <el-button
-                type="primary"
-                size="small"
-                :icon="Upload"
-                :loading="uploading === 'working'"
-                :disabled="!loyihaStore.storageReady"
-              >
-                {{ $t('loyihaUpload') }}
-              </el-button>
-            </el-upload>
-          </header>
-
-          <ul class="file-list">
-            <li v-for="file in sectionFiles('working')" :key="file.id" class="file-item">
-              <div class="file-main">
-                <template v-if="renamingId === file.id">
-                  <el-input
-                    v-model="renameValue"
-                    size="small"
-                    @keyup.enter="saveRename(file)"
-                    :placeholder="$t('loyihaFileName')"
-                  />
-                </template>
-                <template v-else>
-                  <span class="file-name" :title="file.file_name">{{ file.file_name }}</span>
-                  <span class="file-meta">
-                    {{ formatDateTime(file.createdAt) }} · {{ formatSize(file.size_bytes) }}
-                    <template v-if="file.title">· {{ file.title }}</template>
-                  </span>
-                </template>
-              </div>
-              <div class="file-actions">
-                <template v-if="renamingId === file.id">
-                  <el-button text size="small" type="primary" @click="saveRename(file)">
-                    {{ $t('save') }}
-                  </el-button>
-                  <el-button text size="small" @click="renamingId = null">{{ $t('cancel') }}</el-button>
-                </template>
-                <template v-else>
-                  <el-button text size="small" :icon="Download" @click="downloadFile(file)" />
-                  <el-button text size="small" :icon="Edit" @click="startRename(file)" />
-                  <el-popconfirm
-                    :title="$t('loyihaFileDeleteConfirm')"
-                    width="240"
-                    :confirm-button-text="t('deleteConfirm')"
-                    :cancel-button-text="t('cancel')"
-                    @confirm="handleFileDelete(file)"
-                  >
-                    <template #reference>
-                      <el-button text size="small" type="danger" :icon="Delete" />
-                    </template>
-                  </el-popconfirm>
-                </template>
-              </div>
-            </li>
-            <li v-if="!sectionFiles('working').length" class="file-empty">
-              {{ $t('loyihaNoFiles') }}
-            </li>
-          </ul>
-        </section>
-      </div>
-
-      <template #footer>
-        <el-button @click="filesDialogVisible = false">{{ $t('cancel') }}</el-button>
-      </template>
-    </el-dialog>
+    <LoyihaFormDialog v-model="dialogVisible" :model-value-data="editing" @saved="refresh" />
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
-import { Plus, Edit, Delete, Upload, Download, Folder } from '@element-plus/icons-vue'
+import { Plus, EditPen, Delete, Download, View } from '@element-plus/icons-vue'
 import { useLoyihaStore } from '@/stores/loyiha'
 import { useUsersStore } from '@/stores/user'
+import LoyihaFormDialog from './LoyihaFormDialog.vue'
+import { formatNumber, difficultyClass } from '@/utils/loyihaFormat'
 
 const { t } = useI18n()
+const router = useRouter()
 const loyihaStore = useLoyihaStore()
 const usersStore = useUsersStore()
 
 const loyihas = computed(() => loyihaStore.allLoyihas || [])
-const employees = computed(() => usersStore.allUsers || [])
 const currentUserId = Number(localStorage.getItem('userid'))
 
 // ─── Filtrlar ───
@@ -451,9 +219,6 @@ const pageSize = ref(20)
 const textMatch = (value, filter) =>
   !filter.trim() || String(value ?? '').toLowerCase().includes(filter.trim().toLowerCase())
 
-const managerName = (row) =>
-  row.manager ? `${row.manager.firstname} ${row.manager.lastname || ''}`.trim() : '—'
-
 const contactText = (row) =>
   [row.contact_phone, row.contact_email, row.contact_address].filter(Boolean).join(' ')
 
@@ -461,7 +226,7 @@ const filteredLoyihas = computed(() =>
   loyihas.value.filter(
     (row) =>
       textMatch(row.order_number, filters.number) &&
-      textMatch(managerName(row), filters.manager) &&
+      textMatch(row.manager_name, filters.manager) &&
       textMatch(row.other_source, filters.other) &&
       textMatch(row.system_info, filters.system) &&
       textMatch(row.area, filters.area) &&
@@ -506,209 +271,31 @@ const totalFiles = computed(() =>
 const fileCount = (row, section) =>
   (row.files || []).filter((f) => f.section === section).length
 
-// ─── Formatlash ───
-const formatNumber = (value) =>
-  new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 2 }).format(Number(value) || 0)
-
-const formatDateTime = (value) => {
-  if (!value) return '—'
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return '—'
-  return `${d.toLocaleDateString('uz-UZ')} ${String(d.getHours()).padStart(2, '0')}:${String(
-    d.getMinutes(),
-  ).padStart(2, '0')}`
-}
-
-const formatSize = (bytes) => {
-  const n = Number(bytes) || 0
-  if (n >= 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + ' MB'
-  if (n >= 1024) return Math.round(n / 1024) + ' KB'
-  return n + ' B'
-}
-
-const difficultyClass = (value) => {
-  const n = Number(value) || 0
-  if (n >= 8) return 'diff-high'
-  if (n >= 4) return 'diff-mid'
-  return 'diff-low'
-}
-
-// ─── Forma ───
+// ─── Amallar ───
 const dialogVisible = ref(false)
 const editing = ref(null)
-const formRef = ref(null)
 
-const initialForm = () => ({
-  order_number: null,
-  manager_id: null,
-  other_source: '',
-  system_info: '',
-  area: null,
-  difficulty: 5,
-  contact_phone: '',
-  contact_email: '',
-  contact_address: '',
-  comment: '',
-})
+const openDetail = (row) => router.push(`/loyiha/${row.id}`)
 
-const form = reactive(initialForm())
-
-const formRules = {
-  contact_email: [
-    { type: 'email', message: () => t('loyihaValidationEmail'), trigger: 'blur' },
-  ],
-}
-
-const openCreateDialog = async () => {
+const openCreateDialog = () => {
   editing.value = null
-  Object.assign(form, initialForm())
-  try {
-    form.order_number = await loyihaStore.nextNumber()
-  } catch {
-    // raqamni taklif qilib bo'lmasa ham forma ochilaveradi
-  }
   dialogVisible.value = true
 }
 
 const openEditDialog = (row) => {
   editing.value = row
-  Object.assign(form, {
-    ...initialForm(),
-    ...row,
-    difficulty: row.difficulty || 5,
-  })
   dialogVisible.value = true
 }
 
-const handleSubmit = async () => {
-  if (!formRef.value) return
-  try {
-    await formRef.value.validate()
-  } catch {
-    return
-  }
-
-  const text = (value) => (value && String(value).trim() ? String(value).trim() : undefined)
-  const payload = {
-    order_number: form.order_number || undefined,
-    manager_id: form.manager_id || undefined,
-    other_source: text(form.other_source),
-    system_info: text(form.system_info),
-    area: form.area ?? undefined,
-    difficulty: form.difficulty || undefined,
-    contact_phone: text(form.contact_phone),
-    contact_email: text(form.contact_email),
-    contact_address: text(form.contact_address),
-    comment: text(form.comment),
-  }
-
-  try {
-    if (editing.value) {
-      await loyihaStore.updateLoyiha(editing.value.id, payload)
-      ElMessage.success(t('loyihaMessageUpdated'))
-    } else {
-      await loyihaStore.createLoyiha(payload)
-      ElMessage.success(t('loyihaMessageSaved'))
-    }
-    dialogVisible.value = false
-    await loyihaStore.getAllLoyihas()
-  } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('loyihaMessageSaveError'))
-  }
-}
+const refresh = () => loyihaStore.getAllLoyihas()
 
 const handleDelete = async (id) => {
   try {
     await loyihaStore.deleteLoyiha(id)
     ElMessage.success(t('loyihaMessageDeleted'))
-    await loyihaStore.getAllLoyihas()
+    await refresh()
   } catch (error) {
     ElMessage.error(error?.response?.data?.message || t('loyihaMessageDeleteError'))
-  }
-}
-
-// ─── Fayllar ───
-const filesDialogVisible = ref(false)
-const activeLoyiha = ref(null)
-const uploading = ref(null)
-const renamingId = ref(null)
-const renameValue = ref('')
-
-const filesTitle = computed(() =>
-  activeLoyiha.value
-    ? `${t('loyihaFilesTitle')} — №${activeLoyiha.value.order_number ?? activeLoyiha.value.id}`
-    : t('loyihaFilesTitle'),
-)
-
-const openFilesDialog = (row) => {
-  activeLoyiha.value = row
-  renamingId.value = null
-  filesDialogVisible.value = true
-}
-
-const sectionFiles = (section) =>
-  (activeLoyiha.value?.files || [])
-    .filter((f) => f.section === section)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-
-// Ochiq turgan oynani yangilangan ma'lumot bilan qayta bog'laymiz
-const refreshActive = async () => {
-  await loyihaStore.getAllLoyihas()
-  if (activeLoyiha.value) {
-    activeLoyiha.value =
-      loyihas.value.find((row) => row.id === activeLoyiha.value.id) || activeLoyiha.value
-  }
-}
-
-const handleUpload = async (file, section) => {
-  if (!activeLoyiha.value) return false
-  uploading.value = section
-  try {
-    await loyihaStore.uploadFile(activeLoyiha.value.id, section, file)
-    ElMessage.success(t('loyihaFileUploaded'))
-    await refreshActive()
-  } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('loyihaFileUploadError'))
-  } finally {
-    uploading.value = null
-  }
-  return false // Element Plus o'zi yubormasin
-}
-
-const downloadFile = async (file) => {
-  try {
-    const url = await loyihaStore.getFileLink(file.id, 'download')
-    if (url) window.open(url, '_blank')
-  } catch {
-    ElMessage.error(t('loyihaFileLinkError'))
-  }
-}
-
-const startRename = (file) => {
-  renamingId.value = file.id
-  renameValue.value = file.file_name
-}
-
-const saveRename = async (file) => {
-  const name = renameValue.value.trim()
-  if (!name) return
-  try {
-    await loyihaStore.updateFile(file.id, { file_name: name })
-    renamingId.value = null
-    ElMessage.success(t('loyihaFileUpdated'))
-    await refreshActive()
-  } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('loyihaFileUpdateError'))
-  }
-}
-
-const handleFileDelete = async (file) => {
-  try {
-    await loyihaStore.deleteFile(file.id)
-    ElMessage.success(t('loyihaFileDeleted'))
-    await refreshActive()
-  } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('loyihaFileDeleteError'))
   }
 }
 
@@ -722,7 +309,7 @@ const exportExcel = () => {
   const rows = list.map((row, index) => ({
     '№': index + 1,
     [t('loyihaTableNumber')]: row.order_number ?? '—',
-    [t('loyihaTableManager')]: managerName(row),
+    [t('loyihaTableManager')]: row.manager_name || '—',
     [t('loyihaTableOther')]: row.other_source || '—',
     [t('loyihaTableSystem')]: row.system_info || '—',
     [t('loyihaTableArea')]: row.area ?? '—',
@@ -744,11 +331,7 @@ const exportExcel = () => {
 onMounted(async () => {
   try {
     if (!usersStore.currentUser) await usersStore.getUserInfo(currentUserId)
-    await Promise.all([
-      loyihaStore.getAllLoyihas(),
-      usersStore.getAllUsers(),
-      loyihaStore.checkStorage(),
-    ])
+    await Promise.all([loyihaStore.getAllLoyihas(), loyihaStore.checkStorage()])
   } catch {
     ElMessage.error(t('loyihaMessageLoadError'))
   }
@@ -837,10 +420,6 @@ onMounted(async () => {
   color: #111827;
 }
 
-.storage-warning {
-  margin-bottom: 16px;
-}
-
 .error-banner {
   margin-bottom: 16px;
   padding: 12px 16px;
@@ -861,6 +440,11 @@ onMounted(async () => {
 .toolbar-count {
   font-size: 13px;
   color: #6b7280;
+}
+
+.toolbar-hint {
+  font-size: 12.5px;
+  color: #9ca3af;
 }
 
 .toolbar-reset-btn {
@@ -921,6 +505,10 @@ onMounted(async () => {
 
     &:hover {
       background: #f9fafb;
+    }
+
+    &.clickable-row {
+      cursor: pointer;
     }
   }
 
@@ -1060,7 +648,7 @@ onMounted(async () => {
 
 .actions-row {
   display: flex;
-  gap: 2px;
+  gap: 6px;
   align-items: center;
 }
 
@@ -1095,127 +683,6 @@ onMounted(async () => {
   margin: 0 0 22px;
   color: #6b7280;
   font-size: 14px;
-}
-
-.difficulty-picker {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-
-  :deep(.el-slider) {
-    flex: 1;
-  }
-}
-
-/* ─── Fayllar oynasi ─────────────────────────────── */
-.files-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-
-.file-section {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 14px 16px;
-  background: #fff;
-
-  &.archive-section {
-    background: #fffdf5;
-    border-color: #f5dab1;
-  }
-}
-
-.file-section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
-
-  h4 {
-    margin: 0 0 2px;
-    font-size: 15px;
-    color: #1f2937;
-  }
-}
-
-.file-section-hint {
-  margin: 0;
-  font-size: 12px;
-  color: #6b7280;
-  max-width: 260px;
-  line-height: 1.5;
-}
-
-.file-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-.file-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 9px 0;
-  border-bottom: 1px solid #f3f4f6;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.file-main {
-  min-width: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.file-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1f2937;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.file-meta {
-  font-size: 11.5px;
-  color: #9ca3af;
-}
-
-.file-actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-}
-
-.locked-hint {
-  font-size: 12px;
-  color: #b45309;
-  cursor: default;
-}
-
-.file-empty {
-  color: #9ca3af;
-  font-size: 13px;
-  text-align: center;
-  padding: 18px 0;
-}
-
-@media (max-width: 900px) {
-  .files-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 768px) {

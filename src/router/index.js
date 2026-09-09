@@ -65,6 +65,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/loyiha/:id',
+      name: 'loyiha-detail',
+      component: () => import('@/views/LoyihaDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/competitors',
       name: 'competitors',
       component: CompetitorsView,
