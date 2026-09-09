@@ -74,8 +74,9 @@
       <li v-if="!files.length" class="file-empty">{{ $t('loyihaNoFiles') }}</li>
     </ul>
 
-    <!-- Bitta bo'sh yuklash joyi: fayl yuklangach yangisi paydo bo'ladi -->
-    <div class="upload-slot" :class="{ 'is-busy': !!uploading, 'is-disabled': !storageReady }">
+    <!-- Yuklash joyi avvaldan ko'rinmaydi: "Fayl qo'shish" bosilganda bitta joy
+         ochiladi, fayl yuklangach yana yopiladi — keyingisi uchun qaytadan bosiladi. -->
+    <div class="upload-area" :class="{ 'is-disabled': !storageReady }">
       <div v-if="uploading" class="upload-progress">
         <div class="upload-file-line">
           <span class="upload-file-name">{{ uploading.name }}</span>
@@ -89,27 +90,40 @@
         />
       </div>
 
-      <el-upload
+      <div v-else-if="slotOpen" class="upload-slot">
+        <el-upload
+          drag
+          :show-file-list="false"
+          :before-upload="startUpload"
+          :disabled="!storageReady"
+        >
+          <div class="slot-inner">
+            <el-icon class="slot-icon"><UploadFilled /></el-icon>
+            <span class="slot-text">{{ $t('loyihaUploadSlot') }}</span>
+            <span class="slot-sub">{{ $t('loyihaUploadSlotHint') }}</span>
+          </div>
+        </el-upload>
+        <el-button class="slot-cancel" text size="small" @click="slotOpen = false">
+          {{ $t('cancel') }}
+        </el-button>
+      </div>
+
+      <el-button
         v-else
-        drag
-        :show-file-list="false"
-        :before-upload="startUpload"
+        class="add-file-btn"
+        :icon="Plus"
         :disabled="!storageReady"
-        class="slot-upload"
+        @click="slotOpen = true"
       >
-        <div class="slot-inner">
-          <el-icon class="slot-icon"><UploadFilled /></el-icon>
-          <span class="slot-text">{{ $t('loyihaUploadSlot') }}</span>
-          <span class="slot-sub">{{ $t('loyihaUploadSlotHint') }}</span>
-        </div>
-      </el-upload>
+        {{ $t('loyihaAddFile') }}
+      </el-button>
     </div>
   </section>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
-import { Download, EditPen, Delete, UploadFilled } from '@element-plus/icons-vue'
+import { Download, EditPen, Delete, UploadFilled, Plus } from '@element-plus/icons-vue'
 import { formatDateTime, formatSize, fullName } from '@/utils/loyihaFormat'
 
 const props = defineProps({
@@ -125,18 +139,23 @@ const sortedFiles = computed(() =>
   [...props.files].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
 )
 
+// Yuklash joyi ochiqmi — "Fayl qo'shish" bosilganda ochiladi
+const slotOpen = ref(false)
+
 // { name, percent } — faqat bitta fayl bir vaqtda yuklanadi
 const uploading = ref(null)
 
 const startUpload = (file) => {
   uploading.value = { name: file.name, percent: 0 }
+  slotOpen.value = false
   emit('upload', {
     file,
     onProgress: (percent) => {
       if (uploading.value) uploading.value.percent = percent
     },
     onDone: () => {
-      // 100% ni ko'rsatib, keyin yangi bo'sh joyni chiqaramiz
+      // 100% ni ko'rsatib, keyin joyni yopamiz — keyingi fayl uchun
+      // foydalanuvchi "Fayl qo'shish" ni qaytadan bosadi
       if (uploading.value) uploading.value.percent = 100
       setTimeout(() => {
         uploading.value = null
@@ -311,12 +330,24 @@ const fileIcon = (file) => {
 }
 
 /* ─── Yuklash joyi ──────────────────────────────── */
-.upload-slot {
+.upload-area {
   &.is-disabled {
     opacity: 0.55;
-    pointer-events: none;
   }
+}
 
+.add-file-btn {
+  width: 100%;
+  border-style: dashed;
+  color: #4b5563;
+
+  &:hover:not(.is-disabled) {
+    color: #409eff;
+    border-color: #409eff;
+  }
+}
+
+.upload-slot {
   :deep(.el-upload) {
     width: 100%;
   }
@@ -325,17 +356,22 @@ const fileIcon = (file) => {
     width: 100%;
     padding: 18px 12px;
     border-radius: 14px;
-    border: 1.5px dashed #d5dbe3;
-    background: #fbfcfe;
+    border: 1.5px dashed #409eff;
+    background: #f4f9ff;
     transition:
       border-color 0.2s ease,
       background 0.2s ease;
 
     &:hover {
-      border-color: #409eff;
-      background: #f4f9ff;
+      background: #eaf3ff;
     }
   }
+}
+
+.slot-cancel {
+  display: block;
+  margin: 6px auto 0;
+  color: #9ca3af;
 }
 
 .slot-inner {

@@ -1346,5 +1346,6 @@
   "loyihaDifficultyHigh": "Og'ir",
   "loyihaUploadSlot": "Fayl tanlang yoki shu yerga tashlang",
   "loyihaUploadSlotHint": "Bir vaqtda bitta fayl",
-  "loyihaSectionMain": "Asosiy ma'lumotlar"
+  "loyihaSectionMain": "Asosiy ma'lumotlar",
+  "loyihaAddFile": "Fayl qo'shish"
 }

@@ -1359,5 +1359,6 @@
   "loyihaDifficultyHigh": "Сложный",
   "loyihaUploadSlot": "Выберите файл или перетащите сюда",
   "loyihaUploadSlotHint": "По одному файлу за раз",
-  "loyihaSectionMain": "Основные данные"
+  "loyihaSectionMain": "Основные данные",
+  "loyihaAddFile": "Добавить файл"
 }
