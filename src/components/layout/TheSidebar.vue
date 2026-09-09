@@ -178,6 +178,14 @@ const menus = computed(() => [
     show: true,
   },
   {
+    key: 'loyiha',
+    href: '/loyiha',
+    icon: 'loyiha-icon',
+    title: 'loyihatext',
+    text: 'loyihatext',
+    show: true,
+  },
+  {
     key: 'attendance',
     href: '/attendance',
     icon: 'project-icon',
@@ -618,6 +626,9 @@ $accent-dark: #2f7fe0;
   }
   &.dogovor-icon::before {
     content: '📝';
+  }
+  &.loyiha-icon::before {
+    content: '📐';
   }
   &.oppenents-icon::before {
     content: '⚔️';

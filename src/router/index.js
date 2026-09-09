@@ -59,6 +59,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/loyiha',
+      name: 'loyiha',
+      component: () => import('@/views/LoyihaView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/competitors',
       name: 'competitors',
       component: CompetitorsView,
