@@ -1,11 +1,11 @@
 <template>
-  <el-dialog v-model="dialogVisible" title="Shaxsiy ma'lumotlar" width="500">
+  <el-dialog v-model="dialogVisible" :title="$t('username')" width="500">
     <div class="demo-input-with-icon">
       <div class="input-group">
         <span class="label">{{ $t('username') }}</span>
         <div class="input-container">
           <el-input
-            style="width: 320px"
+            style="width: 100%"
             v-model="localForm.username"
             class="responsive-input"
             :placeholder="$t('writeusername')"

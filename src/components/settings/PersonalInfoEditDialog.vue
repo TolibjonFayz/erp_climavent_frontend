@@ -5,7 +5,7 @@
         <span class="label">{{ $t('ism') }}</span>
         <div class="input-container">
           <el-input
-            style="width: 320px"
+            style="width: 100%"
             v-model="localForm.firstname"
             class="responsive-input"
             :placeholder="$t('ism')"
@@ -16,7 +16,7 @@
         <span class="label">{{ $t('familiya') }}</span>
         <div class="input-container">
           <el-input
-            style="width: 320px"
+            style="width: 100%"
             v-model="localForm.lastname"
             class="responsive-input"
             :placeholder="$t('familiya')"
@@ -27,7 +27,7 @@
         <span class="label">{{ $t('telefonRaqam') }}</span>
         <div class="input-container">
           <el-input
-            style="width: 320px"
+            style="width: 100%"
             v-model="localForm.phone_number"
             class="responsive-input"
             :placeholder="$t('telefonRaqam')"
@@ -38,7 +38,7 @@
         <span class="label">{{ $t('email') }}</span>
         <div class="input-container">
           <el-input
-            style="width: 320px"
+            style="width: 100%"
             v-model="localForm.email"
             class="responsive-input"
             :placeholder="$t('email')"
