@@ -1,162 +1,45 @@
 <template>
-  <div class="settings-container" v-loading="loading">
-    <div class="header-section">
-      <h1>{{ $t('shaxsiymalumotlar') }}</h1>
-      <p class="subtitle">{{ $t('shaxsiymalumotlarSubtitle') }}</p>
+  <div class="modern-settings" v-loading="loading">
+    <div class="settings-header-banner">
+      <div class="banner-content">
+        <h1>{{ $t('shaxsiymalumotlar') }}</h1>
+        <p>{{ $t('shaxsiymalumotlarSubtitle') }}</p>
+      </div>
     </div>
 
-    <!-- Main Grid Layout -->
-    <div class="main-grid">
-      <!-- Avatar Section -->
-      <div class="avatar-card">
-        <div class="avatar-content">
-          <div class="current-avatar">
-            <img
-              v-if="usersStore?.currentUser?.profile_image == 'profile.jpg'"
-              src="/user.png"
-              alt="User profile picture"
-            />
-            <img v-else :src="usersStore?.currentUser?.profile_image" alt="User profile picture" />
-            <div class="avatar-badge">
-              <el-icon><User /></el-icon>
-            </div>
-          </div>
-          <div class="avatar-info">
-            <h3>{{ $t('profileimage') }}</h3>
-            <p>{{ $t('profileimageInfo') }}</p>
-            <el-upload
-              class="avatar-uploader"
-              :action="cloudinaryUrl"
-              :data="uploadData"
-              :show-file-list="false"
-              :on-success="handleAvatarSuccess"
-              :before-upload="beforeAvatarUpload"
-              :on-error="handleAvatarError"
-              v-loading="avatarUploading"
-            >
-              <el-button type="primary" :icon="Upload">{{ $t('uploadAvatar') }}</el-button>
-            </el-upload>
-          </div>
-        </div>
-      </div>
+    <div class="settings-layout">
+      <!-- Sidebar -->
+      <aside class="settings-sidebar">
+        <nav class="settings-nav">
+          <button 
+            :class="['nav-item', { active: activeTab === 'profile' }]"
+            @click="activeTab = 'profile'"
+          >
+            <el-icon class="nav-icon"><User /></el-icon>
+            <span class="nav-label">{{ $t('shaxsiymalumotlar') }}</span>
+            <div class="active-indicator" v-if="activeTab === 'profile'"></div>
+          </button>
+          
+          <button 
+            :class="['nav-item', { active: activeTab === 'security' }]"
+            @click="activeTab = 'security'"
+          >
+            <el-icon class="nav-icon"><Lock /></el-icon>
+            <span class="nav-label">{{ $t('security') }}</span>
+            <div class="active-indicator" v-if="activeTab === 'security'"></div>
+          </button>
 
-      <!-- Personal Information Card -->
-      <div class="info-card" v-loading="updateShaxsiyLoading">
-        <div class="card-header">
-          <div class="card-title">
-            <el-icon class="title-icon"><User /></el-icon>
-            <h3>{{ $t('shaxsiymalumotlar') }}</h3>
-          </div>
-          <el-button type="primary" link @click="changeUserMainInfoDialog = true" :icon="Edit">
-            {{ $t('edit') }}
-          </el-button>
-        </div>
-        <div class="card-body">
-          <div class="info-row">
-            <div class="info-item">
-              <span class="info-label">{{ $t('ism') }}</span>
-              <span class="info-value">{{ usersStore?.currentUser?.firstname }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">{{ $t('familiya') }}</span>
-              <span class="info-value">{{ usersStore?.currentUser?.lastname }}</span>
-            </div>
-          </div>
-          <div class="info-row">
-            <div class="info-item">
-              <span class="info-label">{{ $t('telefonRaqam') }}</span>
-              <span class="info-value">{{
-                formatPhoneNumber(usersStore?.currentUser?.phone_number)
-              }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">{{ $t('email') }}</span>
-              <span class="info-value">{{ usersStore?.currentUser?.email }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+          <button 
+            :class="['nav-item', { active: activeTab === 'preferences' }]"
+            @click="activeTab = 'preferences'"
+          >
+            <el-icon class="nav-icon"><Setting /></el-icon>
+            <span class="nav-label">{{ $t('languageSettings') }}</span>
+            <div class="active-indicator" v-if="activeTab === 'preferences'"></div>
+          </button>
+        </nav>
 
-      <!-- Security Card -->
-      <div class="info-card security-card">
-        <div class="card-header">
-          <div class="card-title">
-            <el-icon class="title-icon"><Lock /></el-icon>
-            <h3>{{ $t('security') }}</h3>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="info-row">
-            <div class="info-item" v-loading="updateUsernameLoading">
-              <div>
-                <span class="info-label">{{ $t('username') }}: </span>
-                <span class="info-value">{{ usersStore?.currentUser?.username }}</span>
-              </div>
-              <!-- <el-button type="primary" link @click="changeUsernameDialog = true" :icon="Edit">
-                {{$t('edit')}}
-              </el-button> -->
-            </div>
-            <div class="info-item" v-loading="updatePasswordLoading">
-              <div>
-                <span class="info-label">{{ $t('password') }}: </span>
-                <span class="info-value password">••••••••••</span>
-              </div>
-              <el-button type="primary" link @click="changePasswordDialog = true" :icon="Edit">
-                {{ $t('edit') }}
-              </el-button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Language Card -->
-      <div class="info-card language-card">
-        <div class="card-header">
-          <div class="card-title">
-            <el-icon class="title-icon"><Setting /></el-icon>
-            <h3>{{ $t('languageSettings') }}</h3>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="info-row">
-            <div class="info-item language-item" v-loading="languageLoading">
-              <div>
-                <span class="info-label">{{ $t('currentLanguage') }}</span>
-                <span class="info-value">{{ getCurrentLanguageLabel }}</span>
-              </div>
-              <el-select
-                v-model="selectedLanguage"
-                :placeholder="$t('selectLanguage')"
-                @change="handleLanguageChange"
-                class="language-select"
-              >
-                <el-option
-                  v-for="lang in languages"
-                  :key="lang.value"
-                  :label="lang.label"
-                  :value="lang.value"
-                >
-                  <div class="language-option">
-                    <span class="language-flag">{{ lang.flag }}</span>
-                    <span class="language-name">{{ lang.label }}</span>
-                  </div>
-                </el-option>
-              </el-select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Logout Card -->
-      <div class="logout-card">
-        <div class="logout-content">
-          <div class="logout-info">
-            <el-icon class="logout-icon"><SwitchButton /></el-icon>
-            <div>
-              <h4>{{ $t('logout') }}</h4>
-              <p>{{ $t('logoutInfo') }}</p>
-            </div>
-          </div>
+        <div class="sidebar-footer">
           <el-popconfirm
             :title="$t('logoutConfirmTitle')"
             width="280"
@@ -165,13 +48,171 @@
             @confirm="logout"
           >
             <template #reference>
-              <el-button type="danger" size="large" :icon="SwitchButton">{{
-                $t('logout')
-              }}</el-button>
+              <button class="logout-btn">
+                <el-icon><SwitchButton /></el-icon>
+                <span>{{ $t('logout') }}</span>
+              </button>
             </template>
           </el-popconfirm>
         </div>
-      </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="settings-content">
+        <transition name="fade-slide" mode="out-in">
+          <!-- Profile Tab -->
+          <div v-if="activeTab === 'profile'" key="profile" class="tab-pane">
+            
+            <div class="section-card avatar-section">
+              <div class="avatar-wrapper">
+                <img
+                  v-if="usersStore?.currentUser?.profile_image == 'profile.jpg'"
+                  src="/user.png"
+                  alt="Avatar"
+                />
+                <img v-else :src="usersStore?.currentUser?.profile_image" alt="Avatar" />
+                <el-upload
+                  class="avatar-uploader-btn"
+                  :action="cloudinaryUrl"
+                  :data="uploadData"
+                  :show-file-list="false"
+                  :on-success="handleAvatarSuccess"
+                  :before-upload="beforeAvatarUpload"
+                  :on-error="handleAvatarError"
+                  v-loading="avatarUploading"
+                >
+                  <button class="edit-avatar-btn">
+                    <el-icon><Edit /></el-icon>
+                  </button>
+                </el-upload>
+              </div>
+              <div class="avatar-texts">
+                <h3>{{ usersStore?.currentUser?.firstname }} {{ usersStore?.currentUser?.lastname }}</h3>
+                <p>{{ usersStore?.currentUser?.email || $t('profileimageInfo') }}</p>
+                <div class="avatar-actions">
+                   <el-upload
+                    :action="cloudinaryUrl"
+                    :data="uploadData"
+                    :show-file-list="false"
+                    :on-success="handleAvatarSuccess"
+                    :before-upload="beforeAvatarUpload"
+                    :on-error="handleAvatarError"
+                    v-loading="avatarUploading"
+                  >
+                    <el-button type="primary" :icon="Upload" round>{{ $t('uploadAvatar') }}</el-button>
+                  </el-upload>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-card info-section" v-loading="updateShaxsiyLoading">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">{{ $t('shaxsiymalumotlar') }}</h3>
+                  <p class="card-subtitle">{{ $t('shaxsiymalumotlarSubtitle') }}</p>
+                </div>
+                <el-button type="primary" plain round @click="changeUserMainInfoDialog = true" :icon="Edit">
+                  {{ $t('edit') }}
+                </el-button>
+              </div>
+              
+              <div class="info-grid">
+                <div class="info-group">
+                  <label>{{ $t('ism') }}</label>
+                  <div class="info-val">{{ usersStore?.currentUser?.firstname || '-' }}</div>
+                </div>
+                <div class="info-group">
+                  <label>{{ $t('familiya') }}</label>
+                  <div class="info-val">{{ usersStore?.currentUser?.lastname || '-' }}</div>
+                </div>
+                <div class="info-group">
+                  <label>{{ $t('telefonRaqam') }}</label>
+                  <div class="info-val">{{ formatPhoneNumber(usersStore?.currentUser?.phone_number) || '-' }}</div>
+                </div>
+                <div class="info-group">
+                  <label>{{ $t('email') }}</label>
+                  <div class="info-val">{{ usersStore?.currentUser?.email || '-' }}</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Security Tab -->
+          <div v-else-if="activeTab === 'security'" key="security" class="tab-pane">
+            <div class="section-card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">{{ $t('security') }}</h3>
+                  <p class="card-subtitle">Yangi parol o'rnatish yoki akkauntni himoyalash</p>
+                </div>
+              </div>
+
+              <div class="security-list">
+                <div class="security-item" v-loading="updateUsernameLoading">
+                  <div class="sec-info">
+                    <div class="sec-icon"><el-icon><User /></el-icon></div>
+                    <div>
+                      <h4>{{ $t('username') }}</h4>
+                      <p>{{ usersStore?.currentUser?.username }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="security-item" v-loading="updatePasswordLoading">
+                  <div class="sec-info">
+                    <div class="sec-icon"><el-icon><Lock /></el-icon></div>
+                    <div>
+                      <h4>{{ $t('password') }}</h4>
+                      <p>••••••••••••</p>
+                    </div>
+                  </div>
+                  <el-button type="primary" plain round @click="changePasswordDialog = true">
+                    {{ $t('edit') }}
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preferences Tab -->
+          <div v-else-if="activeTab === 'preferences'" key="preferences" class="tab-pane">
+            <div class="section-card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">{{ $t('languageSettings') }}</h3>
+                  <p class="card-subtitle">Tizim uchun o'zingizga qulay tilni tanlang</p>
+                </div>
+              </div>
+
+              <div class="preference-item" v-loading="languageLoading">
+                <div class="pref-info">
+                  <h4>{{ $t('currentLanguage') }}</h4>
+                  <p>{{ getCurrentLanguageLabel }}</p>
+                </div>
+                <el-select
+                  v-model="selectedLanguage"
+                  :placeholder="$t('selectLanguage')"
+                  @change="handleLanguageChange"
+                  class="modern-select"
+                >
+                  <el-option
+                    v-for="lang in languages"
+                    :key="lang.value"
+                    :label="lang.label"
+                    :value="lang.value"
+                  >
+                    <div class="language-option">
+                      <span class="language-flag">{{ lang.flag }}</span>
+                      <span class="language-name">{{ lang.label }}</span>
+                    </div>
+                  </el-option>
+                </el-select>
+              </div>
+            </div>
+          </div>
+        </transition>
+      </main>
     </div>
 
     <!-- Dialogs -->
@@ -209,6 +250,8 @@ import { getCookie } from '@/utils/cookies'
 import { useUsersStore } from '@/stores/user'
 import i18n from '@/i18n'
 
+const activeTab = ref('profile')
+
 const changePasswordDialog = ref(false)
 const changeUsernameDialog = ref(false)
 const changeUserMainInfoDialog = ref(false)
@@ -222,7 +265,7 @@ const avatarUploading = ref(false)
 const languageLoading = ref(false)
 
 // Write the language to the cookie
-function setCookieLanguage(value, days = 365) {
+function setCookieLanguage(value: string, days = 365) {
   const date = new Date()
   date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000)
   const expires = 'expires=' + date.toUTCString()
@@ -243,20 +286,14 @@ const getCurrentLanguageLabel = computed(() => {
 
 const handleLanguageChange = (value: string) => {
   languageLoading.value = true
-
-  // Persist the chosen language
   setCookieLanguage(value)
-
-  // Switch the active i18n locale
   i18n.global.locale = value
-
   ElNotification({
     title: value === 'uz' ? "Til o'zgartirildi!" : 'Язык изменен!',
     message: value === 'uz' ? "O'zbekcha tilga o'tish amalga oshirildi" : 'Русский язык установлен',
     type: 'success',
     duration: 2000,
   })
-
   languageLoading.value = false
 }
 
@@ -293,7 +330,6 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
     ElMessage.error("Rasm hajmi 50MB dan kam bo'lishi kerak!")
     return false
   }
-
   avatarUploading.value = true
   return true
 }
@@ -304,11 +340,12 @@ const handleAvatarError: UploadProps['onError'] = (error) => {
 }
 
 const formatPhoneNumber = (oldnumber: string) => {
+  if (!oldnumber || oldnumber.length < 12) return oldnumber;
   let newnumber = '+998 '
-  newnumber += oldnumber?.slice(4, 6) + ' '
-  newnumber += oldnumber?.slice(6, 9) + ' '
-  newnumber += oldnumber?.slice(9, 11) + ' '
-  newnumber += oldnumber?.slice(11)
+  newnumber += oldnumber.slice(4, 6) + ' '
+  newnumber += oldnumber.slice(6, 9) + ' '
+  newnumber += oldnumber.slice(9, 11) + ' '
+  newnumber += oldnumber.slice(11)
   return newnumber
 }
 
@@ -362,260 +399,392 @@ const logout = () => {
 onMounted(async () => {
   loading.value = true
   const userId = localStorage.getItem('userid')
-  await usersStore.getUserInfo(Number(userId))
+  if (userId) {
+    await usersStore.getUserInfo(Number(userId))
+  }
   loading.value = false
-
-  // Add loaded class to prevent initial animations
-  setTimeout(() => {
-    const container = document.querySelector('.settings-container')
-    if (container) {
-      container.classList.add('loaded')
-    }
-  }, 0)
 })
 </script>
 
 <style scoped>
-.settings-container {
-  width: 100%;
-  padding: 32px;
-  background: #f5f7fa;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.modern-settings {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #f8fafc;
   min-height: 100vh;
-  overflow-x: hidden;
-  box-sizing: border-box;
-  opacity: 1;
-  transform: none;
+  padding: 30px 40px;
+  color: #0f172a;
 }
 
-/* Prevent animation on initial load */
-.settings-container * {
-  animation: none !important;
-  transition-delay: 0s !important;
+.settings-header-banner {
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+  border-radius: 24px;
+  padding: 40px 50px;
+  margin-bottom: 30px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
-/* Re-enable transitions after load */
-.settings-container.loaded * {
-  transition: all 0.3s ease;
+.settings-header-banner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
-.settings-container.loaded .info-card,
-.settings-container.loaded .avatar-card,
-.settings-container.loaded .logout-card {
-  transition: all 0.3s ease;
+.banner-content {
+  position: relative;
+  z-index: 1;
 }
 
-.header-section {
-  margin-bottom: 32px;
+.banner-content h1 {
+  font-size: 36px;
+  font-weight: 800;
+  margin: 0 0 10px 0;
+  color: #1e1b4b;
+  letter-spacing: -0.5px;
 }
 
-.header-section h1 {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 8px 0;
-  word-break: break-word;
-}
-
-.subtitle {
-  font-size: 15px;
-  color: #6b7280;
+.banner-content p {
+  font-size: 16px;
+  color: #4338ca;
   margin: 0;
-  word-break: break-word;
+  opacity: 0.8;
+  font-weight: 500;
 }
 
-/* Main Grid - 2 columns */
-.main-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  width: 100%;
+.settings-layout {
+  display: flex;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* Avatar Card - spans 1 row */
-.avatar-card {
-  grid-column: 1 / 2;
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.avatar-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  transition: box-shadow 0.3s ease;
-}
-
-.avatar-content {
+.settings-sidebar {
+  width: 280px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+.settings-nav {
+  background: white;
+  border-radius: 24px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
   align-items: center;
-  gap: 24px;
-  text-align: center;
-}
-
-.current-avatar {
+  gap: 14px;
+  padding: 14px 20px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  color: #64748b;
+  transition: all 0.3s ease;
   position: relative;
+  text-align: left;
 }
 
-.current-avatar img {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid #f3f4f6;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.nav-item:hover {
+  background: #f8fafc;
+  color: #334155;
 }
 
-.avatar-badge {
+.nav-item.active {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.nav-icon {
+  font-size: 20px;
+}
+
+.active-indicator {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+  width: 4px;
+  background: #4f46e5;
+  border-radius: 0 4px 4px 0;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+}
+
+.logout-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 4px solid white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.avatar-badge .el-icon {
-  color: white;
-  font-size: 20px;
-}
-
-.avatar-info h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 8px 0;
-}
-
-.avatar-info p {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0 0 16px 0;
-}
-
-/* Personal Info Card - spans 1 row */
-.info-card {
-  background: white;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
   border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  border: 1px solid #fee2e2;
+  background: #fef2f2;
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.info-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  transition: box-shadow 0.3s ease;
+.logout-btn:hover {
+  background: #fee2e2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+.settings-content {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section-card {
+  background: white;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.section-card:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 28px 20px;
-  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .card-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
 }
 
-.title-icon {
-  font-size: 22px;
-  color: #667eea;
-}
-
-.card-title h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
+.card-subtitle {
+  font-size: 14px;
+  color: #64748b;
   margin: 0;
 }
 
-.card-body {
-  padding: 28px;
+/* Avatar Section Styles */
+.avatar-section {
+  display: flex;
+  align-items: center;
+  gap: 30px;
 }
 
-.info-row {
+.avatar-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+}
+
+.avatar-wrapper img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-uploader-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+
+.edit-avatar-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: white;
+  border: 3px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  transition: all 0.2s ease;
+}
+
+.edit-avatar-btn:hover {
+  transform: scale(1.1);
+  background: #4338ca;
+}
+
+.avatar-texts h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #0f172a;
+}
+
+.avatar-texts p {
+  font-size: 15px;
+  color: #64748b;
+  margin: 0 0 16px 0;
+}
+
+.avatar-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Info Grid Styles */
+.info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 24px;
-  margin-bottom: 20px;
 }
 
-.info-row:last-child {
-  margin-bottom: 0;
+.info-group {
+  background: #f8fafc;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid #f1f5f9;
 }
 
-.info-item {
+.info-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-val {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Security List Styles */
+.security-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
 }
 
-.security-card .info-item {
-  flex-direction: row;
+.security-item {
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #f1f5f9;
+  background: white;
+  transition: all 0.3s ease;
 }
 
-.security-card .info-item:hover {
-  background-color: #f9fafb;
+.security-item:hover {
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 }
 
-.info-label {
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.info-value {
-  font-size: 15px;
-  color: #1f2937;
-  font-weight: 600;
-}
-
-.info-value.password {
-  letter-spacing: 2px;
-  font-size: 18px;
-}
-
-/* Language Card */
-.language-card {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-}
-
-.language-item {
-  flex-direction: row !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  padding: 16px;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
-}
-
-.language-item:hover {
-  background-color: #f9fafb;
-}
-
-.language-item > div {
+.sec-info {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 16px;
 }
 
-.language-select {
-  min-width: 180px;
+.sec-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.sec-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sec-info p {
+  margin: 0;
+  color: #64748b;
+  font-family: monospace;
+  font-size: 16px;
+}
+
+/* Preference Item Styles */
+.preference-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  background: #f8fafc;
+  border-radius: 16px;
+  border: 1px solid #f1f5f9;
+}
+
+.pref-info h4 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.pref-info p {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.modern-select {
+  width: 200px;
 }
 
 .language-option {
@@ -633,743 +802,79 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-/* Security Card - spans 1 column in same row as Language */
-.security-card {
-  grid-column: 1 / 2;
-  grid-row: 2 / 3;
-}
-
-/* Logout Card - spans full width */
-.logout-card {
-  grid-column: 1 / -1;
-  background: white;
-  border-radius: 16px;
-  padding: 28px 32px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.logout-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  transition: box-shadow 0.3s ease;
-}
-
-.logout-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logout-info {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.logout-icon {
-  font-size: 42px;
-  color: #ef4444;
-  background: #fee2e2;
-  padding: 14px;
-  border-radius: 12px;
-}
-
-.logout-info h4 {
-  font-size: 17px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 4px 0;
-}
-
-.logout-info p {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
-}
-
 /* Responsive Design */
-
-/* Tablet - 1280px to 1024px */
-@media (max-width: 1280px) {
-  .settings-container {
-    padding: 28px;
-  }
-
-  .header-section h1 {
-    font-size: 30px;
-  }
-
-  .main-grid {
-    gap: 22px;
-  }
-}
-
-/* Tablet - 1024px */
 @media (max-width: 1024px) {
-  .settings-container {
-    padding: 24px;
-    min-height: calc(100vh - 48px);
+  .settings-layout {
+    flex-direction: column;
   }
-
-  .header-section {
-    margin-bottom: 28px;
-  }
-
-  .header-section h1 {
-    font-size: 28px;
-    margin-bottom: 6px;
-  }
-
-  .subtitle {
-    font-size: 14px;
-  }
-
-  .main-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-
-  .avatar-card {
-    padding: 24px;
-  }
-
-  .current-avatar img {
-    width: 120px;
-    height: 120px;
-  }
-
-  .avatar-info h3 {
-    font-size: 18px;
-  }
-
-  .card-header {
-    padding: 20px 24px 16px;
-  }
-
-  .card-body {
-    padding: 24px;
-  }
-
-  .card-title h3 {
-    font-size: 17px;
-  }
-
-  .title-icon {
-    font-size: 20px;
-  }
-
-  .logout-card {
-    padding: 24px 28px;
-  }
-}
-
-/* iPad and Small Tablets - 768px to 1023px */
-@media (max-width: 1023px) {
-  .settings-container {
-    padding: 20px 16px;
-  }
-
-  .header-section {
-    margin-bottom: 24px;
-  }
-
-  .header-section h1 {
-    font-size: 26px;
-  }
-
-  .subtitle {
-    font-size: 14px;
-  }
-
-  .main-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .avatar-card {
-    grid-column: 1;
-    padding: 22px;
-  }
-
-  .language-card {
-    grid-column: 1;
-    grid-row: auto;
-  }
-
-  .language-item {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 12px;
-    padding: 14px;
-  }
-
-  .language-select {
+  .settings-sidebar {
     width: 100%;
-  }
-
-  .security-card {
-    grid-column: 1;
-    grid-row: auto;
-  }
-
-  .logout-card {
-    grid-column: 1;
-  }
-
-  .info-row {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-
-  .info-item {
-    padding: 12px 0;
-  }
-
-  .current-avatar img {
-    width: 110px;
-    height: 110px;
-  }
-
-  .avatar-badge {
-    width: 38px;
-    height: 38px;
-    bottom: 2px;
-    right: 2px;
-  }
-
-  .avatar-badge .el-icon {
-    font-size: 18px;
-  }
-
-  .avatar-info h3 {
-    font-size: 19px;
-  }
-
-  .avatar-info p {
-    font-size: 13px;
-  }
-
-  .card-header {
-    padding: 20px;
-    gap: 12px;
-  }
-
-  .card-title {
-    flex: 1;
-    min-width: 200px;
-  }
-
-  .card-title h3 {
-    font-size: 17px;
-  }
-
-  .card-body {
-    padding: 20px;
-  }
-
-  .info-label {
-    font-size: 13px;
-  }
-
-  .info-value {
-    font-size: 14px;
-  }
-
-  .security-card .info-item {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 14px;
   }
-
-  .logout-card {
-    padding: 20px;
+  .settings-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 12px;
   }
-
-  .logout-content {
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
+  .nav-item {
+    width: auto;
+    white-space: nowrap;
+    padding: 12px 20px;
   }
-
-  .logout-info {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .logout-icon {
-    font-size: 38px;
-  }
-
-  .logout-info h4 {
-    font-size: 16px;
-  }
-
-  .logout-info p {
-    font-size: 13px;
-  }
-}
-
-/* Mobile Landscape and Large Phones - 641px to 767px */
-@media (max-width: 767px) and (min-width: 641px) {
-  .settings-container {
-    padding: 18px 14px;
-  }
-
-  .header-section {
-    margin-bottom: 22px;
-  }
-
-  .header-section h1 {
-    font-size: 24px;
-  }
-
-  .subtitle {
-    font-size: 13px;
-  }
-
-  .main-grid {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
-  .avatar-card {
-    padding: 20px;
-  }
-
-  .current-avatar img {
-    width: 100px;
-    height: 100px;
-  }
-
-  .avatar-info h3 {
-    font-size: 17px;
-  }
-
-  .avatar-info p {
-    font-size: 12px;
-  }
-
-  .card-header {
-    padding: 18px;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .card-title h3 {
-    font-size: 16px;
-  }
-
-  .card-body {
-    padding: 18px;
-  }
-
-  .info-row {
-    gap: 14px;
-    margin-bottom: 14px;
-  }
-
-  .info-label {
-    font-size: 12px;
-  }
-
-  .info-value {
-    font-size: 13px;
-  }
-
-  .logout-card {
-    padding: 18px;
-  }
-}
-
-/* Mobile - 480px to 640px */
-@media (max-width: 640px) {
-  .settings-container {
-    padding: 16px 12px;
-    min-height: calc(100vh - 32px);
-  }
-
-  .header-section {
-    margin-bottom: 20px;
-  }
-
-  .header-section h1 {
-    font-size: 22px;
-    margin-bottom: 4px;
-  }
-
-  .subtitle {
-    font-size: 13px;
-  }
-
-  .main-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .avatar-card {
-    grid-column: 1;
-    padding: 20px 16px;
-  }
-
-  .avatar-content {
-    gap: 16px;
-  }
-
-  .current-avatar img {
-    width: 95px;
-    height: 95px;
-    border: 3px solid #f3f4f6;
-  }
-
-  .avatar-badge {
-    width: 36px;
-    height: 36px;
+  .active-indicator {
+    left: 50%;
+    top: auto;
     bottom: 0;
-    right: 0;
-    border: 3px solid white;
+    width: 20px;
+    height: 4px;
+    transform: translateX(-50%);
+    border-radius: 4px 4px 0 0;
   }
+}
 
-  .avatar-badge .el-icon {
-    font-size: 17px;
+@media (max-width: 768px) {
+  .modern-settings {
+    padding: 20px 16px;
   }
-
-  .avatar-info h3 {
-    font-size: 18px;
-    margin-bottom: 6px;
+  .settings-header-banner {
+    padding: 30px 20px;
+    border-radius: 20px;
   }
-
-  .avatar-info p {
-    font-size: 12px;
-    margin-bottom: 14px;
+  .banner-content h1 {
+    font-size: 28px;
   }
-
-  .language-card {
-    grid-column: 1;
-  }
-
-  .security-card {
-    grid-column: 1;
-  }
-
-  .logout-card {
-    grid-column: 1;
-    padding: 16px;
-  }
-
-  .card-header {
-    padding: 16px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    border-bottom: 1px solid #f3f4f6;
-  }
-
-  .card-header button {
-    align-self: flex-end;
-  }
-
-  .card-title {
-    width: 100%;
-  }
-
-  .card-title h3 {
-    font-size: 16px;
-    margin-bottom: 0;
-  }
-
-  .title-icon {
-    font-size: 20px;
-  }
-
-  .card-body {
-    padding: 16px;
-  }
-
-  .info-row {
+  .info-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
   }
-
-  .info-item {
-    gap: 6px;
-  }
-
-  .info-label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .info-value {
-    font-size: 14px;
-  }
-
-  .security-card .info-item {
+  .avatar-section {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 12px;
-  }
-
-  .security-card .info-item > div {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .security-card .info-item button {
-    align-self: flex-start;
-  }
-
-  .logout-card {
-    padding: 16px 12px;
-  }
-
-  .logout-content {
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
     text-align: center;
   }
-
-  .logout-info {
+  .avatar-actions {
+    justify-content: center;
+  }
+  .security-item {
     flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    align-items: flex-start;
+    gap: 16px;
   }
-
-  .logout-icon {
-    font-size: 32px;
-    padding: 12px;
+  .security-item .el-button {
+    width: 100%;
   }
-
-  .logout-info h4 {
-    font-size: 16px;
-    margin-bottom: 2px;
+  .preference-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
   }
-
-  .logout-info p {
-    font-size: 12px;
-    margin: 0;
-  }
-}
-
-/* Small Mobile Phones - 380px to 479px */
-@media (max-width: 479px) {
-  .settings-container {
-    padding: 14px 10px;
-  }
-
-  .header-section {
-    margin-bottom: 18px;
-  }
-
-  .header-section h1 {
-    font-size: 20px;
-  }
-
-  .subtitle {
-    font-size: 12px;
-  }
-
-  .main-grid {
-    gap: 10px;
-  }
-
-  .avatar-card {
-    padding: 18px 14px;
-  }
-
-  .avatar-content {
-    gap: 14px;
-  }
-
-  .current-avatar img {
-    width: 85px;
-    height: 85px;
-  }
-
-  .avatar-badge {
-    width: 32px;
-    height: 32px;
-  }
-
-  .avatar-badge .el-icon {
-    font-size: 16px;
-  }
-
-  .avatar-info h3 {
-    font-size: 16px;
-  }
-
-  .avatar-info p {
-    font-size: 11px;
-  }
-
-  .card-header {
-    padding: 14px;
-    gap: 10px;
-  }
-
-  .card-title h3 {
-    font-size: 15px;
-  }
-
-  .title-icon {
-    font-size: 18px;
-  }
-
-  .card-body {
-    padding: 14px;
-  }
-
-  .info-row {
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .info-label {
-    font-size: 10px;
-  }
-
-  .info-value {
-    font-size: 13px;
-  }
-
-  .current-language {
-    font-size: 15px;
-  }
-
-  .logout-card {
-    padding: 14px;
-  }
-
-  .logout-icon {
-    font-size: 28px;
-    padding: 10px;
-  }
-
-  .logout-info h4 {
-    font-size: 15px;
-  }
-
-  .logout-info p {
-    font-size: 11px;
-  }
-}
-
-/* Very Small Mobile - 320px to 379px */
-@media (max-width: 379px) {
-  .settings-container {
-    padding: 12px 8px;
-  }
-
-  .header-section {
-    margin-bottom: 16px;
-  }
-
-  .header-section h1 {
-    font-size: 18px;
-  }
-
-  .subtitle {
-    font-size: 11px;
-  }
-
-  .main-grid {
-    gap: 8px;
-  }
-
-  .avatar-card {
-    padding: 16px 12px;
-  }
-
-  .avatar-content {
-    gap: 12px;
-  }
-
-  .current-avatar img {
-    width: 80px;
-    height: 80px;
-  }
-
-  .avatar-badge {
-    width: 28px;
-    height: 28px;
-    border: 2px solid white;
-  }
-
-  .avatar-badge .el-icon {
-    font-size: 14px;
-  }
-
-  .avatar-info h3 {
-    font-size: 15px;
-  }
-
-  .avatar-info p {
-    font-size: 10px;
-  }
-
-  .card-header {
-    padding: 12px;
-    gap: 8px;
-  }
-
-  .card-title h3 {
-    font-size: 14px;
-  }
-
-  .title-icon {
-    font-size: 16px;
-  }
-
-  .card-body {
-    padding: 12px;
-  }
-
-  .info-row {
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-
-  .info-label {
-    font-size: 9px;
-  }
-
-  .info-value {
-    font-size: 12px;
-  }
-
-  .current-language {
-    font-size: 14px;
-  }
-
-  .logout-card {
-    padding: 12px;
-  }
-
-  .logout-icon {
-    font-size: 24px;
-    padding: 8px;
-  }
-
-  .logout-info h4 {
-    font-size: 14px;
-  }
-
-  .logout-info p {
-    font-size: 10px;
+  .modern-select {
+    width: 100%;
   }
 }
 </style>
 
 <style>
-.avatar-uploader .el-upload {
-  border: none;
+.avatar-uploader-btn .el-upload {
+  border: none !important;
+  background: transparent !important;
 }
 </style>
