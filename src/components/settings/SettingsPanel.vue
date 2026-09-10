@@ -1,17 +1,22 @@
 <template>
   <div class="modern-settings" v-loading="loading">
+    <!-- Top Header Banner in Climavent Primary Blue -->
     <div class="settings-header-banner">
       <div class="banner-content">
         <h1>{{ $t('shaxsiymalumotlar') }}</h1>
         <p>{{ $t('shaxsiymalumotlarSubtitle') }}</p>
       </div>
+      <div class="banner-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+      </div>
     </div>
 
     <div class="settings-layout">
-      <!-- Sidebar -->
+      <!-- Sidebar Navigation -->
       <aside class="settings-sidebar">
         <nav class="settings-nav">
-          <button 
+          <button
             :class="['nav-item', { active: activeTab === 'profile' }]"
             @click="activeTab = 'profile'"
           >
@@ -19,8 +24,8 @@
             <span class="nav-label">{{ $t('shaxsiymalumotlar') }}</span>
             <div class="active-indicator" v-if="activeTab === 'profile'"></div>
           </button>
-          
-          <button 
+
+          <button
             :class="['nav-item', { active: activeTab === 'security' }]"
             @click="activeTab = 'security'"
           >
@@ -29,7 +34,7 @@
             <div class="active-indicator" v-if="activeTab === 'security'"></div>
           </button>
 
-          <button 
+          <button
             :class="['nav-item', { active: activeTab === 'preferences' }]"
             @click="activeTab = 'preferences'"
           >
@@ -62,7 +67,7 @@
         <transition name="fade-slide" mode="out-in">
           <!-- Profile Tab -->
           <div v-if="activeTab === 'profile'" key="profile" class="tab-pane">
-            
+            <!-- Avatar Section -->
             <div class="section-card avatar-section">
               <div class="avatar-wrapper">
                 <img
@@ -81,16 +86,17 @@
                   :on-error="handleAvatarError"
                   v-loading="avatarUploading"
                 >
-                  <button class="edit-avatar-btn">
+                  <button class="edit-avatar-btn" title="Rasm yuklash">
                     <el-icon><Edit /></el-icon>
                   </button>
                 </el-upload>
               </div>
+
               <div class="avatar-texts">
                 <h3>{{ usersStore?.currentUser?.firstname }} {{ usersStore?.currentUser?.lastname }}</h3>
                 <p>{{ usersStore?.currentUser?.email || $t('profileimageInfo') }}</p>
                 <div class="avatar-actions">
-                   <el-upload
+                  <el-upload
                     :action="cloudinaryUrl"
                     :data="uploadData"
                     :show-file-list="false"
@@ -105,6 +111,7 @@
               </div>
             </div>
 
+            <!-- Personal Info Section -->
             <div class="section-card info-section" v-loading="updateShaxsiyLoading">
               <div class="card-header">
                 <div>
@@ -115,7 +122,7 @@
                   {{ $t('edit') }}
                 </el-button>
               </div>
-              
+
               <div class="info-grid">
                 <div class="info-group">
                   <label>{{ $t('ism') }}</label>
@@ -135,7 +142,6 @@
                 </div>
               </div>
             </div>
-
           </div>
 
           <!-- Security Tab -->
@@ -144,7 +150,7 @@
               <div class="card-header">
                 <div>
                   <h3 class="card-title">{{ $t('security') }}</h3>
-                  <p class="card-subtitle">Yangi parol o'rnatish yoki akkauntni himoyalash</p>
+                  <p class="card-subtitle">Akkaunt xavfsizligi va maxfiy so'z boshqaruvi</p>
                 </div>
               </div>
 
@@ -163,11 +169,11 @@
                   <div class="sec-info">
                     <div class="sec-icon"><el-icon><Lock /></el-icon></div>
                     <div>
-                      <h4>{{ $t('password') }}</h4>
-                      <p>••••••••••••</p>
+                      <h4>Maxfiy so'z</h4>
+                      <p class="password-dots">••••••••••••</p>
                     </div>
                   </div>
-                  <el-button type="primary" plain round @click="changePasswordDialog = true">
+                  <el-button type="primary" plain round @click="changePasswordDialog = true" :icon="Edit">
                     {{ $t('edit') }}
                   </el-button>
                 </div>
@@ -239,7 +245,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Edit, User, Lock, SwitchButton, Upload, Setting } from '@element-plus/icons-vue'
+import { Edit, User, Lock, SwitchButton, Upload, Setting } from '@element-plus/icons-vue'
 import PersonalInfoEditDialog from './PersonalInfoEditDialog.vue'
 import UsernameEditDialog from './UsernameEditDialog.vue'
 import PasswordEditDialog from './PasswordEditDialog.vue'
@@ -334,13 +340,13 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
   return true
 }
 
-const handleAvatarError: UploadProps['onError'] = (error) => {
+const handleAvatarError: UploadProps['onError'] = () => {
   avatarUploading.value = false
   ElMessage.error('Rasm yuklashda xatolik yuz berdi!')
 }
 
 const formatPhoneNumber = (oldnumber: string) => {
-  if (!oldnumber || oldnumber.length < 12) return oldnumber;
+  if (!oldnumber || oldnumber.length < 12) return oldnumber
   let newnumber = '+998 '
   newnumber += oldnumber.slice(4, 6) + ' '
   newnumber += oldnumber.slice(6, 9) + ' '
@@ -407,68 +413,79 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 .modern-settings {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: #f8fafc;
+  font-family: 'Montserrat', sans-serif;
+  background-color: #f6f8fb;
   min-height: 100vh;
-  padding: 30px 40px;
-  color: #0f172a;
+  padding: 28px 36px;
+  color: #1e293b;
+  box-sizing: border-box;
 }
 
+/* ─── Header Banner (Climavent Signature Blue Gradient) ─── */
 .settings-header-banner {
-  background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
-  border-radius: 24px;
-  padding: 40px 50px;
-  margin-bottom: 30px;
+  background: linear-gradient(135deg, #409eff 0%, #3a8ee6 50%, #5dade2 100%);
+  border-radius: 20px;
+  padding: 36px 44px;
+  margin-bottom: 28px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 12px 28px -6px rgba(64, 158, 255, 0.35);
 }
 
-.settings-header-banner::before {
-  content: '';
+.banner-shapes .shape {
   position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
   border-radius: 50%;
   pointer-events: none;
 }
 
+.banner-shapes .shape-1 {
+  top: -60%;
+  right: -10%;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+.banner-shapes .shape-2 {
+  bottom: -40%;
+  left: 25%;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
 .banner-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .banner-content h1 {
-  font-size: 36px;
-  font-weight: 800;
-  margin: 0 0 10px 0;
-  color: #1e1b4b;
-  letter-spacing: -0.5px;
+  font-size: 30px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: #ffffff;
+  letter-spacing: -0.3px;
 }
 
 .banner-content p {
-  font-size: 16px;
-  color: #4338ca;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
-  opacity: 0.8;
   font-weight: 500;
 }
 
+/* ─── Layout ─── */
 .settings-layout {
   display: flex;
-  gap: 40px;
-  max-width: 1200px;
+  gap: 32px;
+  max-width: 1240px;
   margin: 0 auto;
 }
 
+/* ─── Sidebar ─── */
 .settings-sidebar {
-  width: 280px;
+  width: 270px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -476,45 +493,52 @@ onMounted(async () => {
 }
 
 .settings-nav {
-  background: white;
-  border-radius: 24px;
-  padding: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 2px 14px rgba(17, 24, 39, 0.04);
+  border: 1px solid #eef0f4;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 20px;
+  gap: 12px;
+  padding: 13px 18px;
   border: none;
   background: transparent;
   width: 100%;
-  border-radius: 14px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #64748b;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   position: relative;
   text-align: left;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .nav-item:hover {
-  background: #f8fafc;
-  color: #334155;
+  background: #f0f7ff;
+  color: #409eff;
 }
 
 .nav-item.active {
-  background: #eef2ff;
-  color: #4f46e5;
+  background: #ecf5ff;
+  color: #409eff;
 }
 
 .nav-icon {
-  font-size: 20px;
+  font-size: 19px;
+  transition: color 0.25s ease;
+}
+
+.nav-item.active .nav-icon {
+  color: #409eff;
 }
 
 .active-indicator {
@@ -524,7 +548,7 @@ onMounted(async () => {
   transform: translateY(-50%);
   height: 20px;
   width: 4px;
-  background: #4f46e5;
+  background: #409eff;
   border-radius: 0 4px 4px 0;
 }
 
@@ -538,23 +562,25 @@ onMounted(async () => {
   justify-content: center;
   gap: 10px;
   width: 100%;
-  padding: 16px;
-  border-radius: 16px;
+  padding: 14px;
+  border-radius: 14px;
   border: 1px solid #fee2e2;
-  background: #fef2f2;
+  background: #fff5f5;
   color: #ef4444;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .logout-btn:hover {
   background: #fee2e2;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.15);
 }
 
+/* ─── Content Area ─── */
 .settings-content {
   flex-grow: 1;
   min-width: 0;
@@ -563,26 +589,36 @@ onMounted(async () => {
 .tab-pane {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  animation: fadeIn 0.4s ease-out;
+  gap: 22px;
+  animation: fadeIn 0.35s ease-out;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .section-card {
-  background: white;
-  border-radius: 24px;
-  padding: 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(226, 232, 240, 0.5);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 2px 14px rgba(17, 24, 39, 0.04);
+  border: 1px solid #eef0f4;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
 }
 
 .section-card:hover {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 10px 28px rgba(64, 158, 255, 0.08);
+  border-color: #d9ecff;
 }
 
 .card-header {
@@ -590,34 +626,34 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  padding-bottom: 20px;
+  padding-bottom: 18px;
   border-bottom: 1px solid #f1f5f9;
 }
 
 .card-title {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 6px 0;
+  color: #1e293b;
+  margin: 0 0 5px 0;
 }
 
 .card-subtitle {
-  font-size: 14px;
+  font-size: 13px;
   color: #64748b;
   margin: 0;
 }
 
-/* Avatar Section Styles */
+/* ─── Avatar Section ─── */
 .avatar-section {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 28px;
 }
 
 .avatar-wrapper {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   flex-shrink: 0;
 }
 
@@ -626,8 +662,8 @@ onMounted(async () => {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid white;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border: 4px solid #ffffff;
+  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
 }
 
 .avatar-uploader-btn {
@@ -637,34 +673,34 @@ onMounted(async () => {
 }
 
 .edit-avatar-btn {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: #4f46e5;
-  color: white;
-  border: 3px solid white;
+  background: #409eff;
+  color: #ffffff;
+  border: 3px solid #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
   transition: all 0.2s ease;
 }
 
 .edit-avatar-btn:hover {
   transform: scale(1.1);
-  background: #4338ca;
+  background: #337ecc;
 }
 
 .avatar-texts h3 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  margin: 0 0 8px 0;
-  color: #0f172a;
+  margin: 0 0 6px 0;
+  color: #1e293b;
 }
 
 .avatar-texts p {
-  font-size: 15px;
+  font-size: 14px;
   color: #64748b;
   margin: 0 0 16px 0;
 }
@@ -674,57 +710,64 @@ onMounted(async () => {
   gap: 12px;
 }
 
-/* Info Grid Styles */
+/* ─── Info Grid ─── */
 .info-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  gap: 20px;
 }
 
 .info-group {
   background: #f8fafc;
   padding: 16px 20px;
-  border-radius: 16px;
-  border: 1px solid #f1f5f9;
+  border-radius: 14px;
+  border: 1px solid #eef0f4;
+  transition: all 0.2s ease;
+}
+
+.info-group:hover {
+  background: #f0f7ff;
+  border-color: #d9ecff;
 }
 
 .info-group label {
   display: block;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #64748b;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .info-val {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: #0f172a;
+  color: #1e293b;
 }
 
-/* Security List Styles */
+/* ─── Security Section ─── */
 .security-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .security-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 18px 22px;
   border-radius: 16px;
-  border: 1px solid #f1f5f9;
-  background: white;
-  transition: all 0.3s ease;
+  border: 1px solid #eef0f4;
+  background: #ffffff;
+  transition: all 0.25s ease;
 }
 
 .security-item:hover {
-  border-color: #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  border-color: #d9ecff;
+  box-shadow: 0 4px 16px rgba(64, 158, 255, 0.08);
+  background: #fcfeff;
 }
 
 .sec-info {
@@ -734,57 +777,68 @@ onMounted(async () => {
 }
 
 .sec-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: #eef2ff;
-  color: #4f46e5;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #ecf5ff;
+  color: #409eff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
 }
 
 .sec-info h4 {
   margin: 0 0 4px 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  color: #0f172a;
+  color: #1e293b;
 }
 
 .sec-info p {
   margin: 0;
   color: #64748b;
-  font-family: monospace;
-  font-size: 16px;
+  font-size: 14px;
 }
 
-/* Preference Item Styles */
+.sec-info p.password-dots {
+  font-family: monospace;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+/* ─── Preferences Section ─── */
 .preference-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
+  padding: 22px 24px;
   background: #f8fafc;
   border-radius: 16px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid #eef0f4;
+  transition: all 0.2s ease;
+}
+
+.preference-item:hover {
+  background: #f0f7ff;
+  border-color: #d9ecff;
 }
 
 .pref-info h4 {
   margin: 0 0 6px 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: #0f172a;
+  color: #1e293b;
 }
 
 .pref-info p {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   color: #64748b;
 }
 
 .modern-select {
-  width: 200px;
+  width: 210px;
 }
 
 .language-option {
@@ -802,7 +856,23 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-/* Responsive Design */
+/* ─── Transitions ─── */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* ─── Responsive ─── */
 @media (max-width: 1024px) {
   .settings-layout {
     flex-direction: column;
@@ -814,34 +884,37 @@ onMounted(async () => {
   .settings-nav {
     flex-direction: row;
     overflow-x: auto;
-    padding: 12px;
+    padding: 10px;
   }
   .nav-item {
     width: auto;
     white-space: nowrap;
-    padding: 12px 20px;
+    padding: 11px 18px;
   }
   .active-indicator {
     left: 50%;
     top: auto;
     bottom: 0;
-    width: 20px;
-    height: 4px;
+    width: 24px;
+    height: 3px;
     transform: translateX(-50%);
-    border-radius: 4px 4px 0 0;
+    border-radius: 3px 3px 0 0;
   }
 }
 
 @media (max-width: 768px) {
   .modern-settings {
-    padding: 20px 16px;
+    padding: 18px 14px;
   }
   .settings-header-banner {
-    padding: 30px 20px;
-    border-radius: 20px;
+    padding: 26px 20px;
+    border-radius: 16px;
   }
   .banner-content h1 {
-    font-size: 28px;
+    font-size: 24px;
+  }
+  .banner-content p {
+    font-size: 13px;
   }
   .info-grid {
     grid-template-columns: 1fr;
@@ -856,7 +929,7 @@ onMounted(async () => {
   .security-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 14px;
   }
   .security-item .el-button {
     width: 100%;
@@ -864,7 +937,7 @@ onMounted(async () => {
   .preference-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 14px;
   }
   .modern-select {
     width: 100%;
