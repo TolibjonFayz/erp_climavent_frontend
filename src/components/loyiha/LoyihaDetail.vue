@@ -9,7 +9,10 @@
           </el-button>
           <h1>
             {{ $t('loyihaDetailTitle') }}
-            <span class="order-badge">№{{ loyiha.order_number ?? loyiha.id }}</span>
+            <span class="order-badge">{{ formatLoyihaId(loyiha.order_number) }}</span>
+            <span class="status-pill" :class="statusClass(loyiha.status)">
+              {{ statusIcon(loyiha.status) }} {{ $t(statusLabelKey(loyiha.status)) }}
+            </span>
           </h1>
           <p class="created-line">
             {{ $t('loyihaCreatedBy') }}:
@@ -81,15 +84,11 @@
         </div>
 
         <div class="info-card">
-          <h3 class="card-title">{{ $t('loyihaTableContact') }}</h3>
+          <h3 class="card-title">{{ $t('loyihaSectionClient') }}</h3>
           <ul class="contact-list">
             <li v-if="loyiha.contact_phone">
               <span class="contact-icon">📞</span>
               <a :href="`tel:${loyiha.contact_phone}`">{{ loyiha.contact_phone }}</a>
-            </li>
-            <li v-if="loyiha.contact_email">
-              <span class="contact-icon">✉️</span>
-              <a :href="`mailto:${loyiha.contact_email}`">{{ loyiha.contact_email }}</a>
             </li>
             <li v-if="loyiha.contact_address">
               <span class="contact-icon">📍</span>
@@ -97,6 +96,47 @@
             </li>
             <li v-if="!hasContact" class="empty-value">{{ $t('loyihaNoContact') }}</li>
           </ul>
+        </div>
+      </div>
+
+      <!-- KP va Dogovor -->
+      <div class="docs-grid">
+        <div class="info-card doc-card kp">
+          <h3 class="card-title">{{ $t('loyihaSectionKp') }}</h3>
+          <div v-if="hasKp" class="doc-rows">
+            <div class="doc-row">
+              <span>{{ $t('loyihaKpNumberLabel') }}</span>
+              <strong>{{ loyiha.kp_number || '—' }}</strong>
+            </div>
+            <div class="doc-row">
+              <span>{{ $t('loyihaKpSumLabel') }}</span>
+              <strong>{{ formatMoney(loyiha.kp_sum) }}</strong>
+            </div>
+            <div class="doc-row">
+              <span>{{ $t('loyihaKpDateLabel') }}</span>
+              <strong>{{ formatDate(loyiha.kp_date) }}</strong>
+            </div>
+          </div>
+          <p v-else class="empty-value">{{ $t('loyihaNoKp') }}</p>
+        </div>
+
+        <div class="info-card doc-card dogovor">
+          <h3 class="card-title">{{ $t('loyihaSectionDogovor') }}</h3>
+          <div v-if="hasDogovor" class="doc-rows">
+            <div class="doc-row">
+              <span>{{ $t('loyihaDogovorNumberLabel') }}</span>
+              <strong>{{ loyiha.dogovor_number || '—' }}</strong>
+            </div>
+            <div class="doc-row">
+              <span>{{ $t('loyihaDogovorSumLabel') }}</span>
+              <strong>{{ formatMoney(loyiha.dogovor_sum) }}</strong>
+            </div>
+            <div class="doc-row">
+              <span>{{ $t('loyihaDogovorDateLabel') }}</span>
+              <strong>{{ formatDate(loyiha.dogovor_date) }}</strong>
+            </div>
+          </div>
+          <p v-else class="empty-value">{{ $t('loyihaNoDogovor') }}</p>
         </div>
       </div>
 
@@ -116,23 +156,29 @@
         :title="$t('loyihaStorageNotReady')"
       />
 
-      <!-- Fayllar -->
-      <div class="files-grid">
+      <!-- Fayllar: ishchi bo'lim faqat arxiv fayli yuklangach ochiladi -->
+      <div class="files-grid" :class="{ 'single-column': !archiveFile }">
         <LoyihaFileSection
           archive
-          :files="archiveFiles"
+          :file="archiveFile"
           :storage-ready="loyihaStore.storageReady"
           @upload="(e) => handleUpload(e, 'archive')"
           @download="downloadFile"
         />
         <LoyihaFileSection
-          :files="workingFiles"
+          v-if="archiveFile"
+          :file="workingFile"
           :storage-ready="loyihaStore.storageReady"
           @upload="(e) => handleUpload(e, 'working')"
           @download="downloadFile"
           @rename="handleRename"
           @remove="handleFileDelete"
         />
+        <div v-else class="working-locked">
+          <span class="locked-icon">📁</span>
+          <h4>{{ $t('loyihaWorkingSection') }}</h4>
+          <p>{{ $t('loyihaWorkingLockedHint') }}</p>
+        </div>
       </div>
     </div>
 
@@ -161,9 +207,15 @@ import LoyihaFileSection from './LoyihaFileSection.vue'
 import LoyihaFormDialog from './LoyihaFormDialog.vue'
 import {
   formatNumber,
+  formatDate,
   formatDateTime,
+  formatMoney,
+  formatLoyihaId,
   difficultyClass,
+  statusClass,
+  statusLabelKey,
   fullName,
+  LOYIHA_STATUS_OPTIONS,
 } from '@/utils/loyihaFormat'
 
 const { t } = useI18n()
@@ -177,20 +229,31 @@ const dialogVisible = ref(false)
 
 const loyihaId = computed(() => Number(route.params.id))
 
-const archiveFiles = computed(() =>
-  (loyiha.value?.files || []).filter((f) => f.section === 'archive'),
+// Har bo'limda bitta fayl
+const archiveFile = computed(
+  () => (loyiha.value?.files || []).find((f) => f.section === 'archive') || null,
 )
-const workingFiles = computed(() =>
-  (loyiha.value?.files || []).filter((f) => f.section === 'working'),
+const workingFile = computed(
+  () => (loyiha.value?.files || []).find((f) => f.section === 'working') || null,
 )
 const hasContact = computed(
+  () => !!(loyiha.value?.contact_phone || loyiha.value?.contact_address),
+)
+const hasKp = computed(
+  () =>
+    !!(loyiha.value?.kp_number || loyiha.value?.kp_sum || loyiha.value?.kp_date),
+)
+const hasDogovor = computed(
   () =>
     !!(
-      loyiha.value?.contact_phone ||
-      loyiha.value?.contact_email ||
-      loyiha.value?.contact_address
+      loyiha.value?.dogovor_number ||
+      loyiha.value?.dogovor_sum ||
+      loyiha.value?.dogovor_date
     ),
 )
+
+const statusIcon = (status) =>
+  LOYIHA_STATUS_OPTIONS.find((o) => o.value === status)?.icon || '🔧'
 
 const difficultyLabel = (value) => {
   const n = Number(value) || 0
@@ -327,6 +390,103 @@ onMounted(async () => {
   font-weight: 700;
   padding: 4px 14px;
   border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+
+.status-pill {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 999px;
+
+  &.status-progress {
+    background: #fef3c7;
+    color: #b45309;
+  }
+
+  &.status-done {
+    background: #d1fae5;
+    color: #047857;
+  }
+}
+
+/* ─── KP / Dogovor ──────────────────────────────── */
+.docs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.doc-card {
+  &.kp {
+    background: #f7fbff;
+    border-color: #dbeafe;
+  }
+
+  &.dogovor {
+    background: #fbfaf5;
+    border-color: #f0e6d2;
+  }
+}
+
+.doc-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.doc-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  span {
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  strong {
+    font-size: 14px;
+    color: #1f2937;
+    text-align: right;
+    word-break: break-word;
+  }
+}
+
+/* Ishchi fayllar hali ochilmagan holat */
+.working-locked {
+  border: 1.5px dashed #e5e7eb;
+  border-radius: 18px;
+  padding: 28px 22px;
+  text-align: center;
+  background: #fafbfc;
+  color: #9ca3af;
+
+  h4 {
+    margin: 8px 0 6px;
+    font-size: 15px;
+    color: #6b7280;
+  }
+
+  p {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+    max-width: 300px;
+    margin-inline: auto;
+  }
+}
+
+.locked-icon {
+  font-size: 26px;
+  opacity: 0.45;
 }
 
 .created-line {
@@ -520,7 +680,8 @@ onMounted(async () => {
   .cards-grid {
     grid-template-columns: 1fr 1fr;
   }
-  .files-grid {
+  .files-grid,
+  .docs-grid {
     grid-template-columns: 1fr;
   }
 }

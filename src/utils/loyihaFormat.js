@@ -34,3 +34,25 @@ export const difficultyClass = (value) => {
 
 export const fullName = (user) =>
   user ? `${user.firstname || ''} ${user.lastname || ''}`.trim() : ''
+
+// Loyiha id — nol bilan to'ldirilgan ko'rinishda: 1 -> "0001"
+export const formatLoyihaId = (value) => {
+  if (value === null || value === undefined || value === '') return '—'
+  return String(value).padStart(4, '0')
+}
+
+export const LOYIHA_STATUS_OPTIONS = [
+  { value: 'in_progress', labelKey: 'loyihaStatusInProgress', icon: '🔧' },
+  { value: 'done', labelKey: 'loyihaStatusDone', icon: '✅' },
+]
+
+export const statusLabelKey = (status) =>
+  status === 'done' ? 'loyihaStatusDone' : 'loyihaStatusInProgress'
+
+export const statusClass = (status) => (status === 'done' ? 'status-done' : 'status-progress')
+
+// Pul summasi: 1189776 -> "1 189 776"
+export const formatMoney = (value) => {
+  if (value === null || value === undefined || value === '') return '—'
+  return new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 2 }).format(Number(value) || 0)
+}

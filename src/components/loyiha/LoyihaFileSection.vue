@@ -1,5 +1,7 @@
 <template>
-  <section class="file-section" :class="{ 'is-archive': archive }">
+  <!-- Har bo'limda FAQAT BITTA fayl bo'ladi.
+       Arxiv — yuklangach qulflanadi; ishchi fayl — almashtirilishi mumkin. -->
+  <section class="file-section" :class="{ 'is-archive': archive, 'has-file': !!file }">
     <header class="section-head">
       <div class="section-title">
         <span class="section-icon">{{ archive ? '🔒' : '📁' }}</span>
@@ -10,139 +12,133 @@
           </p>
         </div>
       </div>
-      <span class="section-count">{{ files.length }}</span>
+      <span v-if="file" class="section-status" :class="archive ? 'locked' : 'ready'">
+        {{ archive ? $t('loyihaLocked') : $t('loyihaReplaceable') }}
+      </span>
     </header>
 
-    <ul class="file-list">
-      <li v-for="file in sortedFiles" :key="file.id" class="file-row">
-        <span class="file-icon">{{ fileIcon(file) }}</span>
-
-        <div class="file-body">
-          <template v-if="renamingId === file.id">
-            <el-input
-              v-model="renameValue"
-              size="small"
-              class="rename-input"
-              @keyup.enter="saveRename(file)"
-              @keyup.esc="renamingId = null"
-            />
-          </template>
-          <template v-else>
-            <span class="file-name" :title="file.file_name">{{ file.file_name }}</span>
-            <span class="file-meta">
-              {{ formatDateTime(file.createdAt) }} · {{ formatSize(file.size_bytes) }}
-              <template v-if="file.uploader"> · {{ fullName(file.uploader) }}</template>
-              <template v-if="file.title"> · {{ file.title }}</template>
-            </span>
-          </template>
-        </div>
-
-        <div class="file-actions">
-          <template v-if="renamingId === file.id">
-            <el-button size="small" type="primary" @click="saveRename(file)">
-              {{ $t('save') }}
-            </el-button>
-            <el-button size="small" @click="renamingId = null">{{ $t('cancel') }}</el-button>
-          </template>
-          <template v-else>
-            <el-tooltip :content="$t('loyihaDownload')" placement="top">
-              <el-button circle size="small" :icon="Download" @click="$emit('download', file)" />
-            </el-tooltip>
-            <template v-if="!archive">
-              <el-tooltip :content="$t('edit')" placement="top">
-                <el-button circle size="small" :icon="EditPen" @click="startRename(file)" />
-              </el-tooltip>
-              <el-popconfirm
-                :title="$t('loyihaFileDeleteConfirm')"
-                width="240"
-                :confirm-button-text="$t('deleteConfirm')"
-                :cancel-button-text="$t('cancel')"
-                @confirm="$emit('remove', file)"
-              >
-                <template #reference>
-                  <el-button circle size="small" type="danger" plain :icon="Delete" />
-                </template>
-              </el-popconfirm>
-            </template>
-            <el-tooltip v-else :content="$t('loyihaArchiveLocked')" placement="top">
-              <span class="locked-badge">🔒</span>
-            </el-tooltip>
-          </template>
-        </div>
-      </li>
-
-      <li v-if="!files.length" class="file-empty">{{ $t('loyihaNoFiles') }}</li>
-    </ul>
-
-    <!-- Yuklash joyi avvaldan ko'rinmaydi: "Fayl qo'shish" bosilganda bitta joy
-         ochiladi, fayl yuklangach yana yopiladi — keyingisi uchun qaytadan bosiladi. -->
-    <div class="upload-area" :class="{ 'is-disabled': !storageReady }">
-      <div v-if="uploading" class="upload-progress">
-        <div class="upload-file-line">
-          <span class="upload-file-name">{{ uploading.name }}</span>
-          <span class="upload-percent">{{ uploading.percent }}%</span>
-        </div>
-        <el-progress
-          :percentage="uploading.percent"
-          :stroke-width="10"
-          :status="uploading.percent === 100 ? 'success' : undefined"
-          :show-text="false"
-        />
+    <!-- Yuklanayotgan fayl -->
+    <div v-if="uploading" class="upload-progress">
+      <div class="upload-file-line">
+        <span class="upload-file-name">{{ uploading.name }}</span>
+        <span class="upload-percent">{{ uploading.percent }}%</span>
       </div>
+      <el-progress
+        :percentage="uploading.percent"
+        :stroke-width="10"
+        :status="uploading.percent === 100 ? 'success' : undefined"
+        :show-text="false"
+      />
+    </div>
 
-      <div v-else-if="slotOpen" class="upload-slot">
-        <el-upload
-          drag
-          :show-file-list="false"
-          :before-upload="startUpload"
-          :disabled="!storageReady"
-        >
-          <div class="slot-inner">
-            <el-icon class="slot-icon"><UploadFilled /></el-icon>
-            <span class="slot-text">{{ $t('loyihaUploadSlot') }}</span>
-            <span class="slot-sub">{{ $t('loyihaUploadSlotHint') }}</span>
-          </div>
-        </el-upload>
-        <el-button class="slot-cancel" text size="small" @click="slotOpen = false">
-          {{ $t('cancel') }}
-        </el-button>
-      </div>
-
-      <el-button
-        v-else
-        class="add-file-btn"
-        :icon="Plus"
-        :disabled="!storageReady"
-        @click="slotOpen = true"
-      >
-        {{ $t('loyihaAddFile') }}
+    <!-- Yuklash joyi (ochilganda) -->
+    <div v-else-if="slotOpen" class="upload-slot">
+      <el-upload drag :show-file-list="false" :before-upload="startUpload" :disabled="!storageReady">
+        <div class="slot-inner">
+          <el-icon class="slot-icon"><UploadFilled /></el-icon>
+          <span class="slot-text">{{ $t('loyihaUploadSlot') }}</span>
+          <span class="slot-sub">
+            {{ file ? $t('loyihaReplaceHint') : $t('loyihaUploadSlotHint') }}
+          </span>
+        </div>
+      </el-upload>
+      <el-button class="slot-cancel" text size="small" @click="slotOpen = false">
+        {{ $t('cancel') }}
       </el-button>
     </div>
+
+    <!-- Mavjud fayl -->
+    <div v-else-if="file" class="file-card">
+      <span class="file-icon">{{ fileIcon(file) }}</span>
+
+      <div class="file-body">
+        <template v-if="renaming">
+          <el-input
+            v-model="renameValue"
+            size="small"
+            class="rename-input"
+            @keyup.enter="saveRename"
+            @keyup.esc="renaming = false"
+          />
+        </template>
+        <template v-else>
+          <span class="file-name" :title="file.file_name">{{ file.file_name }}</span>
+          <span class="file-meta">
+            {{ formatDateTime(file.createdAt) }} · {{ formatSize(file.size_bytes) }}
+            <template v-if="file.uploader"> · {{ fullName(file.uploader) }}</template>
+          </span>
+        </template>
+      </div>
+
+      <div class="file-actions">
+        <template v-if="renaming">
+          <el-button size="small" type="primary" @click="saveRename">{{ $t('save') }}</el-button>
+          <el-button size="small" @click="renaming = false">{{ $t('cancel') }}</el-button>
+        </template>
+        <template v-else>
+          <el-tooltip :content="$t('loyihaDownload')" placement="top">
+            <el-button circle size="small" :icon="Download" @click="$emit('download', file)" />
+          </el-tooltip>
+
+          <template v-if="!archive">
+            <el-tooltip :content="$t('loyihaRename')" placement="top">
+              <el-button circle size="small" :icon="EditPen" @click="startRename" />
+            </el-tooltip>
+            <el-button size="small" :icon="RefreshRight" @click="slotOpen = true">
+              {{ $t('loyihaReplace') }}
+            </el-button>
+            <el-popconfirm
+              :title="$t('loyihaFileDeleteConfirm')"
+              width="240"
+              :confirm-button-text="$t('deleteConfirm')"
+              :cancel-button-text="$t('cancel')"
+              @confirm="$emit('remove', file)"
+            >
+              <template #reference>
+                <el-button circle size="small" type="danger" plain :icon="Delete" />
+              </template>
+            </el-popconfirm>
+          </template>
+        </template>
+      </div>
+    </div>
+
+    <!-- Fayl yo'q: qo'shish tugmasi -->
+    <el-button
+      v-else
+      class="add-file-btn"
+      :icon="Plus"
+      :disabled="!storageReady"
+      @click="slotOpen = true"
+    >
+      {{ $t('loyihaAddFile') }}
+    </el-button>
   </section>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import { Download, EditPen, Delete, UploadFilled, Plus } from '@element-plus/icons-vue'
+import { ref } from 'vue'
+import {
+  Download,
+  EditPen,
+  Delete,
+  UploadFilled,
+  Plus,
+  RefreshRight,
+} from '@element-plus/icons-vue'
 import { formatDateTime, formatSize, fullName } from '@/utils/loyihaFormat'
 
 const props = defineProps({
-  files: { type: Array, default: () => [] },
+  // Bo'limdagi yagona fayl (yo'q bo'lsa null)
+  file: { type: Object, default: null },
   archive: { type: Boolean, default: false },
   storageReady: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['upload', 'download', 'remove', 'rename'])
 
-// Yangi fayllar tepada
-const sortedFiles = computed(() =>
-  [...props.files].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
-)
-
-// Yuklash joyi ochiqmi — "Fayl qo'shish" bosilganda ochiladi
 const slotOpen = ref(false)
-
-// { name, percent } — faqat bitta fayl bir vaqtda yuklanadi
+// { name, percent } — bir vaqtda bitta fayl
 const uploading = ref(null)
 
 const startUpload = (file) => {
@@ -154,8 +150,6 @@ const startUpload = (file) => {
       if (uploading.value) uploading.value.percent = percent
     },
     onDone: () => {
-      // 100% ni ko'rsatib, keyin joyni yopamiz — keyingi fayl uchun
-      // foydalanuvchi "Fayl qo'shish" ni qaytadan bosadi
       if (uploading.value) uploading.value.percent = 100
       setTimeout(() => {
         uploading.value = null
@@ -168,22 +162,22 @@ const startUpload = (file) => {
   return false // Element Plus o'zi yubormasin — biz o'zimiz yuboramiz
 }
 
-const renamingId = ref(null)
+const renaming = ref(false)
 const renameValue = ref('')
 
-const startRename = (file) => {
-  renamingId.value = file.id
-  renameValue.value = file.file_name
+const startRename = () => {
+  renaming.value = true
+  renameValue.value = props.file?.file_name || ''
 }
 
-const saveRename = (file) => {
+const saveRename = () => {
   const name = renameValue.value.trim()
-  if (!name || name === file.file_name) {
-    renamingId.value = null
+  if (!name || name === props.file.file_name) {
+    renaming.value = false
     return
   }
-  emit('rename', { file, name })
-  renamingId.value = null
+  emit('rename', { file: props.file, name })
+  renaming.value = false
 }
 
 const fileIcon = (file) => {
@@ -244,54 +238,52 @@ const fileIcon = (file) => {
   max-width: 340px;
 }
 
-.section-count {
-  background: #f3f4f6;
-  color: #4b5563;
-  font-size: 13px;
+.section-status {
+  font-size: 11.5px;
   font-weight: 700;
-  padding: 3px 12px;
+  padding: 4px 11px;
   border-radius: 999px;
   flex-shrink: 0;
+  white-space: nowrap;
+
+  &.locked {
+    background: #fef3c7;
+    color: #b45309;
+  }
+
+  &.ready {
+    background: #e0efff;
+    color: #2563eb;
+  }
 }
 
-.file-list {
-  list-style: none;
-  margin: 0 0 14px;
-  padding: 0;
-}
-
-.file-row {
+/* ─── Fayl kartasi ──────────────────────────────── */
+.file-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
-  border-radius: 12px;
-  transition: background 0.15s ease;
-
-  &:hover {
-    background: #f9fafb;
-  }
-
-  & + .file-row {
-    border-top: 1px solid #f3f4f6;
-  }
+  gap: 13px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #f9fafb;
+  border: 1px solid #eef0f4;
+  flex-wrap: wrap;
 }
 
 .file-icon {
-  font-size: 20px;
+  font-size: 26px;
   flex-shrink: 0;
 }
 
 .file-body {
   flex: 1;
-  min-width: 0;
+  min-width: 160px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .file-name {
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 600;
   color: #1f2937;
   overflow: hidden;
@@ -313,29 +305,10 @@ const fileIcon = (file) => {
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
-.locked-badge {
-  font-size: 14px;
-  color: #b45309;
-  cursor: default;
-  padding: 0 6px;
-}
-
-.file-empty {
-  text-align: center;
-  color: #9ca3af;
-  font-size: 13px;
-  padding: 22px 0;
-}
-
-/* ─── Yuklash joyi ──────────────────────────────── */
-.upload-area {
-  &.is-disabled {
-    opacity: 0.55;
-  }
-}
-
+/* ─── Yuklash ───────────────────────────────────── */
 .add-file-btn {
   width: 100%;
   border-style: dashed;
@@ -358,20 +331,12 @@ const fileIcon = (file) => {
     border-radius: 14px;
     border: 1.5px dashed #409eff;
     background: #f4f9ff;
-    transition:
-      border-color 0.2s ease,
-      background 0.2s ease;
+    transition: background 0.2s ease;
 
     &:hover {
       background: #eaf3ff;
     }
   }
-}
-
-.slot-cancel {
-  display: block;
-  margin: 6px auto 0;
-  color: #9ca3af;
 }
 
 .slot-inner {
@@ -394,6 +359,12 @@ const fileIcon = (file) => {
 
 .slot-sub {
   font-size: 12px;
+  color: #9ca3af;
+}
+
+.slot-cancel {
+  display: block;
+  margin: 6px auto 0;
   color: #9ca3af;
 }
 

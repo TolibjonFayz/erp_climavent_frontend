@@ -27,12 +27,12 @@
           <div class="stat-value">{{ formatNumber(totalArea) }} m²</div>
         </div>
         <div class="stat-card">
-          <div class="stat-title">{{ $t('loyihaStatAvgDifficulty') }}</div>
-          <div class="stat-value">{{ avgDifficulty ?? '—' }}</div>
+          <div class="stat-title">{{ $t('loyihaStatusInProgress') }}</div>
+          <div class="stat-value stat-progress">{{ statusCount.in_progress }}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-title">{{ $t('loyihaStatFiles') }}</div>
-          <div class="stat-value">{{ totalFiles }}</div>
+          <div class="stat-title">{{ $t('loyihaStatusDone') }}</div>
+          <div class="stat-value stat-done">{{ statusCount.done }}</div>
         </div>
       </div>
     </div>
@@ -56,11 +56,14 @@
             <tr>
               <th class="table-index">#</th>
               <th>{{ $t('loyihaTableNumber') }}</th>
+              <th>{{ $t('loyihaTableStatus') }}</th>
               <th>{{ $t('loyihaTableManager') }}</th>
               <th>{{ $t('loyihaTableOther') }}</th>
               <th>{{ $t('loyihaTableSystem') }}</th>
               <th>{{ $t('loyihaTableArea') }}</th>
               <th>{{ $t('loyihaTableDifficulty') }}</th>
+              <th>{{ $t('loyihaTableKp') }}</th>
+              <th>{{ $t('loyihaTableDogovor') }}</th>
               <th>{{ $t('loyihaTableContact') }}</th>
               <th>{{ $t('loyihaTableComment') }}</th>
               <th>{{ $t('loyihaTableFiles') }}</th>
@@ -69,6 +72,14 @@
             <tr class="filter-row">
               <th></th>
               <th><input v-model="filters.number" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
+              <th>
+                <select v-model="filters.status" class="col-filter">
+                  <option value="">{{ $t('loyihaAllStatuses') }}</option>
+                  <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
+                    {{ $t(opt.labelKey) }}
+                  </option>
+                </select>
+              </th>
               <th><input v-model="filters.manager" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
               <th><input v-model="filters.other" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
               <th><input v-model="filters.system" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
@@ -79,6 +90,8 @@
                   <option v-for="n in 10" :key="n" :value="String(n)">{{ n }}</option>
                 </select>
               </th>
+              <th><input v-model="filters.kp" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
+              <th><input v-model="filters.dogovor" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
               <th><input v-model="filters.contact" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
               <th class="comment-filter-col">
                 <input v-model="filters.comment" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" />
@@ -97,7 +110,12 @@
               <td class="table-index">
                 <span class="index-badge">{{ (currentPage - 1) * pageSize + index + 1 }}</span>
               </td>
-              <td><span class="cell-text bold">{{ row.order_number ?? '—' }}</span></td>
+              <td><span class="loyiha-id">{{ formatLoyihaId(row.order_number) }}</span></td>
+              <td>
+                <span class="status-pill" :class="statusClass(row.status)">
+                  {{ statusIcon(row.status) }} {{ $t(statusLabelKey(row.status)) }}
+                </span>
+              </td>
               <td><span class="cell-text">{{ row.manager_name || '—' }}</span></td>
               <td><span class="cell-text">{{ row.other_source || '—' }}</span></td>
               <td class="wrap-cell"><span class="cell-text">{{ row.system_info || '—' }}</span></td>
@@ -108,12 +126,27 @@
                 </span>
                 <span v-else class="cell-text">—</span>
               </td>
+              <td class="doc-cell">
+                <template v-if="row.kp_number || row.kp_sum || row.kp_date">
+                  <span v-if="row.kp_number" class="doc-num">№{{ row.kp_number }}</span>
+                  <span v-if="row.kp_sum" class="doc-sum">{{ formatMoney(row.kp_sum) }}</span>
+                  <span v-if="row.kp_date" class="doc-date">{{ formatDate(row.kp_date) }}</span>
+                </template>
+                <span v-else class="cell-text">—</span>
+              </td>
+              <td class="doc-cell">
+                <template v-if="row.dogovor_number || row.dogovor_sum || row.dogovor_date">
+                  <span v-if="row.dogovor_number" class="doc-num">№{{ row.dogovor_number }}</span>
+                  <span v-if="row.dogovor_sum" class="doc-sum">{{ formatMoney(row.dogovor_sum) }}</span>
+                  <span v-if="row.dogovor_date" class="doc-date">{{ formatDate(row.dogovor_date) }}</span>
+                </template>
+                <span v-else class="cell-text">—</span>
+              </td>
               <td class="wrap-cell">
                 <div class="contact-lines">
                   <span v-if="row.contact_phone">📞 {{ row.contact_phone }}</span>
-                  <span v-if="row.contact_email">✉️ {{ row.contact_email }}</span>
                   <span v-if="row.contact_address">📍 {{ row.contact_address }}</span>
-                  <span v-if="!row.contact_phone && !row.contact_email && !row.contact_address">—</span>
+                  <span v-if="!row.contact_phone && !row.contact_address">—</span>
                 </div>
               </td>
               <td class="wrap-cell comment-cell"><span class="cell-text">{{ row.comment || '—' }}</span></td>
@@ -191,7 +224,16 @@ import { Plus, EditPen, Delete, Download, View } from '@element-plus/icons-vue'
 import { useLoyihaStore } from '@/stores/loyiha'
 import { useUsersStore } from '@/stores/user'
 import LoyihaFormDialog from './LoyihaFormDialog.vue'
-import { formatNumber, difficultyClass } from '@/utils/loyihaFormat'
+import {
+  formatNumber,
+  formatDate,
+  formatMoney,
+  formatLoyihaId,
+  difficultyClass,
+  statusClass,
+  statusLabelKey,
+  LOYIHA_STATUS_OPTIONS,
+} from '@/utils/loyihaFormat'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -201,14 +243,21 @@ const usersStore = useUsersStore()
 const loyihas = computed(() => loyihaStore.allLoyihas || [])
 const currentUserId = Number(localStorage.getItem('userid'))
 
+const statusOptions = LOYIHA_STATUS_OPTIONS
+const statusIcon = (status) =>
+  LOYIHA_STATUS_OPTIONS.find((o) => o.value === status)?.icon || '🔧'
+
 // ─── Filtrlar ───
 const filters = reactive({
   number: '',
+  status: '',
   manager: '',
   other: '',
   system: '',
   area: '',
   difficulty: '',
+  kp: '',
+  dogovor: '',
   contact: '',
   comment: '',
 })
@@ -220,17 +269,26 @@ const textMatch = (value, filter) =>
   !filter.trim() || String(value ?? '').toLowerCase().includes(filter.trim().toLowerCase())
 
 const contactText = (row) =>
-  [row.contact_phone, row.contact_email, row.contact_address].filter(Boolean).join(' ')
+  [row.contact_phone, row.contact_address].filter(Boolean).join(' ')
+
+const kpText = (row) => [row.kp_number, row.kp_sum, row.kp_date].filter(Boolean).join(' ')
+const dogovorText = (row) =>
+  [row.dogovor_number, row.dogovor_sum, row.dogovor_date].filter(Boolean).join(' ')
 
 const filteredLoyihas = computed(() =>
   loyihas.value.filter(
     (row) =>
-      textMatch(row.order_number, filters.number) &&
+      // Loyiha id nol bilan ham qidirilsin ("0001" ham, "1" ham topsin)
+      (textMatch(row.order_number, filters.number) ||
+        textMatch(formatLoyihaId(row.order_number), filters.number)) &&
+      (!filters.status || row.status === filters.status) &&
       textMatch(row.manager_name, filters.manager) &&
       textMatch(row.other_source, filters.other) &&
       textMatch(row.system_info, filters.system) &&
       textMatch(row.area, filters.area) &&
       (!filters.difficulty || String(row.difficulty) === filters.difficulty) &&
+      textMatch(kpText(row), filters.kp) &&
+      textMatch(dogovorText(row), filters.dogovor) &&
       textMatch(contactText(row), filters.contact) &&
       textMatch(row.comment, filters.comment),
   ),
@@ -258,15 +316,10 @@ const resetFilters = () => {
 const totalArea = computed(() =>
   loyihas.value.reduce((acc, row) => acc + (Number(row.area) || 0), 0),
 )
-const avgDifficulty = computed(() => {
-  const rated = loyihas.value.filter((row) => row.difficulty)
-  if (!rated.length) return null
-  const sum = rated.reduce((acc, row) => acc + Number(row.difficulty), 0)
-  return (sum / rated.length).toFixed(1)
-})
-const totalFiles = computed(() =>
-  loyihas.value.reduce((acc, row) => acc + (row.files?.length || 0), 0),
-)
+const statusCount = computed(() => ({
+  in_progress: loyihas.value.filter((row) => row.status !== 'done').length,
+  done: loyihas.value.filter((row) => row.status === 'done').length,
+}))
 
 const fileCount = (row, section) =>
   (row.files || []).filter((f) => f.section === section).length
@@ -308,14 +361,20 @@ const exportExcel = () => {
   }
   const rows = list.map((row, index) => ({
     '№': index + 1,
-    [t('loyihaTableNumber')]: row.order_number ?? '—',
+    [t('loyihaTableNumber')]: formatLoyihaId(row.order_number),
+    [t('loyihaTableStatus')]: t(statusLabelKey(row.status)),
     [t('loyihaTableManager')]: row.manager_name || '—',
     [t('loyihaTableOther')]: row.other_source || '—',
     [t('loyihaTableSystem')]: row.system_info || '—',
     [t('loyihaTableArea')]: row.area ?? '—',
     [t('loyihaTableDifficulty')]: row.difficulty ?? '—',
+    [t('loyihaKpNumberLabel')]: row.kp_number || '—',
+    [t('loyihaKpSumLabel')]: row.kp_sum ?? '—',
+    [t('loyihaKpDateLabel')]: row.kp_date || '—',
+    [t('loyihaDogovorNumberLabel')]: row.dogovor_number || '—',
+    [t('loyihaDogovorSumLabel')]: row.dogovor_sum ?? '—',
+    [t('loyihaDogovorDateLabel')]: row.dogovor_date || '—',
     [t('loyihaPhoneLabel')]: row.contact_phone || '—',
-    [t('loyihaEmailLabel')]: row.contact_email || '—',
     [t('loyihaAddressLabel')]: row.contact_address || '—',
     [t('loyihaTableComment')]: row.comment || '—',
     [t('loyihaArchiveSection')]: fileCount(row, 'archive'),
@@ -592,6 +651,70 @@ onMounted(async () => {
 
 .comment-filter-col {
   min-width: 180px;
+}
+
+.stat-value.stat-progress {
+  color: #b45309;
+}
+
+.stat-value.stat-done {
+  color: #047857;
+}
+
+.loyiha-id {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1f2937;
+  background: #eef2f7;
+  padding: 3px 9px;
+  border-radius: 7px;
+  letter-spacing: 0.06em;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &.status-progress {
+    background: #fef3c7;
+    color: #b45309;
+  }
+
+  &.status-done {
+    background: #d1fae5;
+    color: #047857;
+  }
+}
+
+.doc-cell {
+  min-width: 130px;
+  display: table-cell;
+
+  .doc-num {
+    display: block;
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 13px;
+  }
+
+  .doc-sum {
+    display: block;
+    font-size: 12.5px;
+    color: #4b5563;
+  }
+
+  .doc-date {
+    display: block;
+    font-size: 11.5px;
+    color: #9ca3af;
+  }
 }
 
 .difficulty-badge {
