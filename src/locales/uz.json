@@ -1368,5 +1368,20 @@
   "loyihaLocked": "O'zgarmas",
   "loyihaRename": "Nomini o‘zgartirish",
   "loyihaReplaceHint": "Yangi fayl eskisining o'rnini egallaydi",
-  "loyihaWorkingLockedHint": "Avval arxiv faylini yuklang — shundan keyin bu bo'lim ochiladi"
+  "loyihaWorkingLockedHint": "Avval arxiv faylini yuklang — shundan keyin bu bo'lim ochiladi",
+  "loyihaStatusTooltip": "Loyihaning hozirgi holati: \"Jarayonda\" yoki \"Tugadi\" ekanligini belgilang.",
+  "loyihaSystemTooltip": "Obyektga o'rnatiladigan ventilyatsiya yoki konditsioner tizimining turini kiriting (masalan, VRF, chiler, kanalli).",
+  "loyihaManagerTooltip": "Loyihani olib kelgan yoki biriktirilgan menejer ismini yozing.",
+  "loyihaOtherTooltip": "Agar loyihani kompaniya xodimi emas, tashqi hamkor olib kelgan bo'lsa, uning ismini kiriting.",
+  "loyihaAreaTooltip": "Obyektning umumiy maydonini (kvadrat metrda) kiriting.",
+  "loyihaDifficultyTooltip": "Loyihaning qiyinchilik darajasini 1 (eng yengil) dan 10 (eng qiyin) gacha belgilang.",
+  "loyihaPhoneTooltip": "Mijoz bilan bog'lanish uchun telefon raqamini kiriting.",
+  "loyihaAddressTooltip": "Loyiha amalga oshiriladigan obyektning aniq manzilini kiriting.",
+  "loyihaKpNumberTooltip": "Tijorat taklifi (Kommercheskoe Predlojenie - KP) raqamini kiriting.",
+  "loyihaKpSumTooltip": "Tijorat taklifida (KP) ko'rsatilgan umumiy summani kiriting.",
+  "loyihaKpDateTooltip": "Tijorat taklifi (KP) taqdim etilgan sanani belgilang.",
+  "loyihaDogovorNumberTooltip": "Mijoz bilan tuzilgan shartnoma (Dogovor) raqamini kiriting.",
+  "loyihaDogovorSumTooltip": "Shartnomada ko'rsatilgan umumiy summani kiriting.",
+  "loyihaDogovorDateTooltip": "Shartnoma imzolangan sanani belgilang.",
+  "loyihaCommentTooltip": "Loyiha bo'yicha qo'shimcha ma'lumot, eslatma yoki muhim izohlarni kiriting."
 }

@@ -14,7 +14,15 @@
         <h4 class="block-title">{{ $t('loyihaSectionMain') }}</h4>
         <el-row :gutter="18">
           <el-col :span="12">
-            <el-form-item :label="$t('loyihaStatusLabel')" prop="status">
+            <el-form-item prop="status">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaStatusLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaStatusTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-radio-group v-model="form.status" class="status-picker">
                 <el-radio-button
                   v-for="opt in statusOptions"
@@ -27,13 +35,29 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('loyihaSystemLabel')" prop="system_info">
+            <el-form-item prop="system_info">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaSystemLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaSystemTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-input v-model="form.system_info" :placeholder="$t('loyihaSystemPlaceholder')" />
             </el-form-item>
           </el-col>
 
           <el-col :span="12">
-            <el-form-item :label="$t('loyihaManagerLabel')" prop="manager_name">
+            <el-form-item prop="manager_name">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaManagerLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaManagerTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-input
                 v-model="form.manager_name"
                 :placeholder="$t('loyihaManagerPlaceholder')"
@@ -42,7 +66,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('loyihaOtherLabel')" prop="other_source">
+            <el-form-item prop="other_source">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaOtherLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaOtherTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-input
                 v-model="form.other_source"
                 :placeholder="$t('loyihaOtherPlaceholder')"
@@ -52,7 +84,15 @@
           </el-col>
 
           <el-col :span="12">
-            <el-form-item :label="$t('loyihaAreaLabel')" prop="area">
+            <el-form-item prop="area">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaAreaLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaAreaTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-input-number
                 v-model="form.area"
                 :min="0"
@@ -63,7 +103,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('loyihaDifficultyLabel')" prop="difficulty">
+            <el-form-item prop="difficulty">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaDifficultyLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaDifficultyTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <div class="difficulty-picker">
                 <el-slider v-model="form.difficulty" :min="1" :max="10" :step="1" show-stops />
                 <span class="difficulty-badge" :class="difficultyClass(form.difficulty)">
@@ -80,12 +128,28 @@
         <h4 class="block-title">{{ $t('loyihaSectionClient') }}</h4>
         <el-row :gutter="18">
           <el-col :span="8">
-            <el-form-item :label="$t('loyihaPhoneLabel')" prop="contact_phone">
+            <el-form-item prop="contact_phone">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaPhoneLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaPhoneTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-input v-model="form.contact_phone" maxlength="60" />
             </el-form-item>
           </el-col>
           <el-col :span="16">
-            <el-form-item :label="$t('loyihaAddressLabel')" prop="contact_address">
+            <el-form-item prop="contact_address">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaAddressLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaAddressTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-input v-model="form.contact_address" maxlength="300" />
             </el-form-item>
           </el-col>
@@ -97,12 +161,28 @@
         <h4 class="block-title">{{ $t('loyihaSectionKp') }}</h4>
         <el-row :gutter="18">
           <el-col :span="8">
-            <el-form-item :label="$t('loyihaKpNumberLabel')" prop="kp_number">
+            <el-form-item prop="kp_number">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaKpNumberLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaKpNumberTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-input v-model="form.kp_number" maxlength="100" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item :label="$t('loyihaKpSumLabel')" prop="kp_sum">
+            <el-form-item prop="kp_sum">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaKpSumLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaKpSumTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-input-number
                 v-model="form.kp_sum"
                 :min="0"
@@ -113,7 +193,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item :label="$t('loyihaKpDateLabel')" prop="kp_date">
+            <el-form-item prop="kp_date">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaKpDateLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaKpDateTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-date-picker
                 v-model="form.kp_date"
                 type="date"
@@ -131,12 +219,28 @@
         <h4 class="block-title">{{ $t('loyihaSectionDogovor') }}</h4>
         <el-row :gutter="18">
           <el-col :span="8">
-            <el-form-item :label="$t('loyihaDogovorNumberLabel')" prop="dogovor_number">
+            <el-form-item prop="dogovor_number">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaDogovorNumberLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaDogovorNumberTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-input v-model="form.dogovor_number" maxlength="100" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item :label="$t('loyihaDogovorSumLabel')" prop="dogovor_sum">
+            <el-form-item prop="dogovor_sum">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaDogovorSumLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaDogovorSumTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-input-number
                 v-model="form.dogovor_sum"
                 :min="0"
@@ -147,7 +251,15 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item :label="$t('loyihaDogovorDateLabel')" prop="dogovor_date">
+            <el-form-item prop="dogovor_date">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaDogovorDateLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaDogovorDateTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
               <el-date-picker
                 v-model="form.dogovor_date"
                 type="date"
@@ -162,7 +274,15 @@
 
       <!-- ── Izoh ── -->
       <div class="form-block">
-        <el-form-item :label="$t('loyihaCommentLabel')" prop="comment">
+        <el-form-item prop="comment">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaCommentLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaCommentTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
           <el-input
             v-model="form.comment"
             type="textarea"
@@ -186,6 +306,7 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
+import { InfoFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { useLoyihaStore } from '@/stores/loyiha'
@@ -373,5 +494,19 @@ const handleSubmit = async () => {
   &.diff-high {
     background: #f56c6c;
   }
+}
+
+.label-with-tooltip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.info-icon {
+  color: #909399;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.info-icon:hover {
+  color: #409eff;
 }
 </style>
