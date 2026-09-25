@@ -24,7 +24,8 @@ const { sidebarWidth } = useSidebar()
   width: v-bind('`calc(100% - ${sidebarWidth}px)`');
   margin-left: v-bind('`${sidebarWidth}px`');
   transition:
-    width 0.3s ease,
-    margin-left 0.3s ease;
+    width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    margin-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--bg-color); /* Match global background */
 }
 </style>

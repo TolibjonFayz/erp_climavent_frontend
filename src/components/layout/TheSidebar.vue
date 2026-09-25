@@ -291,14 +291,15 @@ $accent-dark: #2f7fe0;
 .sidebar {
   width: $expanded;
   height: 100vh;
-  background: #ffffff;
-  border-right: 1px solid #eef0f4;
-  box-shadow: 2px 0 12px rgba(17, 24, 39, 0.04);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 4px 0 24px rgba(18, 38, 63, 0.03);
   display: flex;
   flex-direction: column;
   transition:
-    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: fixed;
   top: 0;
   left: 0;
@@ -315,6 +316,8 @@ $accent-dark: #2f7fe0;
     }
     .user-profile {
       justify-content: center;
+      background: transparent;
+      box-shadow: none;
     }
     .nav-link {
       justify-content: center;
@@ -665,18 +668,23 @@ $accent-dark: #2f7fe0;
 
 /* User profile */
 .user-profile {
-  padding: 14px 18px;
-  margin: 0 12px 12px;
-  border-radius: 14px;
-  background: #f7f9fc;
+  padding: 12px 14px;
+  margin: 0 12px 16px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 2px 8px rgba(18, 38, 63, 0.02);
   display: flex;
   align-items: center;
   gap: 12px;
-  transition: background 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
 
   &:hover {
-    background: #eef2f8;
+    background: #f8fafc;
+    border-color: rgba(203, 213, 225, 0.8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(18, 38, 63, 0.05);
   }
 }
 
