@@ -14,7 +14,15 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => response.data,
-  (error) => Promise.reject(error),
+  (error) => {
+    if (error.response?.status === 401 || (error.response?.status === 403 && error.response?.data?.message === 'Akkount bloklangan')) {
+      localStorage.removeItem('accesstoken')
+      localStorage.removeItem('refreshtoken')
+      localStorage.removeItem('userid')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  },
 )
 
 export default apiClient
