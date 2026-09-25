@@ -136,96 +136,107 @@ const avatarUrl = computed(() => {
 // Collapsed visuals only apply on desktop (mobile uses the full drawer)
 const showCollapsed = computed(() => isCollapsed.value && !isMobile.value)
 
-const menus = computed(() => [
-  {
-    key: 'customers',
-    href: '/',
-    icon: 'places-icon',
-    title: 'mijozlarHamkorlarTitle',
-    text: 'mijozlarHamkorlarText',
-    show: true,
-  },
-  {
-    key: 'sites',
-    href: '/sites',
-    icon: 'home-icon',
-    title: 'obyekt',
-    text: 'obyekt',
-    show: true,
-  },
-  {
-    key: 'competitors',
-    href: '/competitors',
-    icon: 'oppenents-icon',
-    title: 'raqib',
-    text: 'raqibtext',
-    show: true,
-  },
-  {
-    key: 'kp',
-    href: '/kp',
-    icon: 'kp-icon',
-    title: 'kptext',
-    text: 'kptext',
-    show: true,
-  },
-  {
-    key: 'dogovor',
-    href: '/dogovor',
-    icon: 'dogovor-icon',
-    title: 'dogovortext',
-    text: 'dogovortext',
-    show: true,
-  },
-  {
-    key: 'loyiha',
-    href: '/loyiha',
-    icon: 'loyiha-icon',
-    title: 'loyihatext',
-    text: 'loyihatext',
-    show: true,
-  },
-  {
-    key: 'attendance',
-    href: '/attendance',
-    icon: 'project-icon',
-    title: 'davomat',
-    text: 'davomat',
-    show: true,
-  },
-  {
-    key: 'tasks',
-    href: '/tasks',
-    icon: 'tasks-icon',
-    title: 'tasks',
-    text: 'tasks',
-    show: true,
-  },
-  {
-    key: 'settings',
-    href: '/settings',
-    icon: 'calendar-icon',
-    title: 'settings',
-    text: 'settings',
-    show: true,
-  },
-  {
-    key: 'admin',
-    href: '/admin',
-    icon: 'admin-icon',
-    title: 'admin',
-    text: 'admin',
-    show: currentUser.value?.is_admin,
-  },
-  {
-    key: 'boss',
-    href: '/boss',
-    icon: 'boss-icon',
-    title: 'boss',
-    text: 'boss',
-    show: Number(currentUser.value?.id) === 16,
-  },
-])
+const menus = computed(() => {
+  const perms = currentUser.value?.permissions || {};
+  const hasAccess = (key) => {
+    if (key === 'boss') {
+      if (perms.boss !== undefined) return perms.boss;
+      return Number(currentUser.value?.id) === 16;
+    }
+    return perms[key] !== false; // default true if undefined
+  };
+  
+  return [
+    {
+      key: 'customers',
+      href: '/',
+      icon: 'places-icon',
+      title: 'mijozlarHamkorlarTitle',
+      text: 'mijozlarHamkorlarText',
+      show: hasAccess('customers'),
+    },
+    {
+      key: 'sites',
+      href: '/sites',
+      icon: 'home-icon',
+      title: 'obyekt',
+      text: 'obyekt',
+      show: hasAccess('sites'),
+    },
+    {
+      key: 'competitors',
+      href: '/competitors',
+      icon: 'oppenents-icon',
+      title: 'raqib',
+      text: 'raqibtext',
+      show: hasAccess('competitors'),
+    },
+    {
+      key: 'kp',
+      href: '/kp',
+      icon: 'kp-icon',
+      title: 'kptext',
+      text: 'kptext',
+      show: hasAccess('kp'),
+    },
+    {
+      key: 'dogovor',
+      href: '/dogovor',
+      icon: 'dogovor-icon',
+      title: 'dogovortext',
+      text: 'dogovortext',
+      show: hasAccess('dogovor'),
+    },
+    {
+      key: 'loyiha',
+      href: '/loyiha',
+      icon: 'loyiha-icon',
+      title: 'loyihatext',
+      text: 'loyihatext',
+      show: hasAccess('loyiha'),
+    },
+    {
+      key: 'attendance',
+      href: '/attendance',
+      icon: 'project-icon',
+      title: 'davomat',
+      text: 'davomat',
+      show: hasAccess('attendance'),
+    },
+    {
+      key: 'tasks',
+      href: '/tasks',
+      icon: 'tasks-icon',
+      title: 'tasks',
+      text: 'tasks',
+      show: hasAccess('tasks'),
+    },
+    {
+      key: 'settings',
+      href: '/settings',
+      icon: 'calendar-icon',
+      title: 'settings',
+      text: 'settings',
+      show: true,
+    },
+    {
+      key: 'admin',
+      href: '/admin',
+      icon: 'admin-icon',
+      title: 'admin',
+      text: 'admin',
+      show: currentUser.value?.is_admin,
+    },
+    {
+      key: 'boss',
+      href: '/boss',
+      icon: 'boss-icon',
+      title: 'boss',
+      text: 'boss',
+      show: hasAccess('boss'),
+    },
+  ];
+})
 
 const visibleMenus = computed(() => menus.value.filter((m) => m.show))
 

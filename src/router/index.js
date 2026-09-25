@@ -19,83 +19,127 @@ const BOSS_USER_ID = 16
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'customers', component: CustomersView, meta: { requiresAuth: true } },
+    { path: '/', name: 'customers', component: CustomersView, meta: { requiresAuth: true, permissionKey: 'customers' } },
     {
       path: '/customers/:id',
       name: 'customer-detail',
       component: CustomerDetailView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permissionKey: 'customers' },
     },
-    { path: '/sites', name: 'sites', component: SitesView, meta: { requiresAuth: true } },
+    { path: '/sites', name: 'sites', component: SitesView, meta: { requiresAuth: true, permissionKey: 'sites' } },
     {
       path: '/sites/create',
       name: 'site-create',
       component: CreateSiteView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permissionKey: 'sites' },
     },
     {
       path: '/sites/:id',
       name: 'site-detail',
       component: SiteDetailView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permissionKey: 'sites' },
     },
     {
       path: '/attendance',
       name: 'attendance',
       component: AttendanceView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permissionKey: 'attendance' },
     },
-    { path: '/tasks', name: 'tasks', component: TasksView, meta: { requiresAuth: true } },
+    { path: '/tasks', name: 'tasks', component: TasksView, meta: { requiresAuth: true, permissionKey: 'tasks' } },
     {
       path: '/kp',
       name: 'kp',
       component: () => import('@/views/KPView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permissionKey: 'kp' },
     },
     {
       path: '/dogovor',
       name: 'dogovor',
       component: () => import('@/views/DogovorView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permissionKey: 'dogovor' },
     },
     {
       path: '/loyiha',
       name: 'loyiha',
       component: () => import('@/views/LoyihaView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permissionKey: 'loyiha' },
     },
     {
       path: '/loyiha/:id',
       name: 'loyiha-detail',
       component: () => import('@/views/LoyihaDetailView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permissionKey: 'loyiha' },
     },
     {
       path: '/competitors',
       name: 'competitors',
       component: CompetitorsView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, permissionKey: 'competitors' },
     },
     { path: '/settings', name: 'settings', component: SettingsView, meta: { requiresAuth: true } },
-    { path: '/admin', name: 'admin', component: AdminView, meta: { requiresAuth: true } },
+    { path: '/admin', name: 'admin', component: AdminView, meta: { requiresAuth: true, adminOnly: true } },
     {
       path: '/boss',
       name: 'boss',
       component: BossView,
-      meta: { requiresAuth: true, bossOnly: true },
+      meta: { requiresAuth: true, permissionKey: 'boss' },
     },
     { path: '/login', name: 'login', component: LoginView },
   ],
 })
 
-router.beforeEach((to, from, next) => {
+import { useUsersStore } from '@/stores/user'
+
+router.beforeEach(async (to, from, next) => {
   const isAuthenticated = !!localStorage.getItem('refreshtoken')
   if (to.meta.requiresAuth && !isAuthenticated) {
     return next('/login')
   }
-  if (to.meta.bossOnly && Number(localStorage.getItem('userid')) !== BOSS_USER_ID) {
-    return next('/')
+
+  if (to.meta.requiresAuth) {
+    const usersStore = useUsersStore()
+    // Ensure user info is loaded
+    if (!usersStore.currentUser) {
+      try {
+        await usersStore.getUserInfo(Number(localStorage.getItem('userid')))
+      } catch (e) {
+        return next('/login')
+      }
+    }
+
+    const user = usersStore.currentUser
+    const perms = user?.permissions || {}
+
+    // 1. Admin faqat (AdminOnly)
+    if (to.meta.adminOnly && !user.is_admin) {
+      return next('/settings')
+    }
+
+    // 2. Sahifa ruxsatlari (permissionKey)
+    if (to.meta.permissionKey) {
+      const key = to.meta.permissionKey
+      let hasAccess = false
+      if (key === 'boss') {
+        hasAccess = perms.boss !== undefined ? perms.boss : Number(user.id) === BOSS_USER_ID
+      } else {
+        hasAccess = perms[key] !== false // undefined bo'lsa ruxsat beriladi (eski logikaga kora)
+      }
+
+      if (!hasAccess) {
+        // Ruxsati yo'q pagega kirdi, ruxsati bor birinchi pagega redirect qilamiz
+        const allowedPages = ['customers', 'sites', 'competitors', 'kp', 'dogovor', 'loyiha', 'attendance', 'tasks'].filter(k => perms[k] !== false)
+        if (perms.boss || Number(user.id) === BOSS_USER_ID) allowedPages.push('boss')
+        
+        if (allowedPages.length > 0) {
+           // Agar boshqa page bo'lsa shunga yuboramiz (faqat cheksiz sikl bo'lib qolmasligi uchun)
+           const fallbackRoute = allowedPages[0] === 'customers' ? '/' : `/${allowedPages[0]}`
+           if (to.path !== fallbackRoute) return next(fallbackRoute)
+        }
+        return next('/settings') // Hech qaysiga ruxsat yo'q bo'lsa settingsga
+      }
+    }
   }
+
   next()
 })
 

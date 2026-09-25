@@ -35,7 +35,10 @@ export const useUsersStore = defineStore('users', {
 
     async updateUser(id, payload) {
       const res = await runRequest(this, () => usersApi.updateProfile(id, payload), 'Update failed')
-      this.currentUser = res.data || res
+      // Only update currentUser if they updated their own profile
+      if (this.currentUser && Number(this.currentUser.id) === Number(id)) {
+        this.currentUser = res.data || res
+      }
       return res
     },
 

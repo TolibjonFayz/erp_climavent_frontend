@@ -362,6 +362,7 @@
                       </button>
                     </el-tooltip>
                     <el-tooltip
+                      v-if="row.id !== usersStore.currentUser?.id"
                       :content="row.is_admin ? 'Admin rolini olib tashlash' : 'Admin qilish'"
                       placement="top"
                     >
@@ -375,6 +376,7 @@
                       </button>
                     </el-tooltip>
                     <el-tooltip
+                      v-if="row.id !== usersStore.currentUser?.id"
                       :content="row.is_blocked ? 'Blokdan chiqarish' : 'Bloklash'"
                       placement="top"
                     >
@@ -388,6 +390,63 @@
                       </button>
                     </el-tooltip>
                   </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+
+        <!-- ═══════ RUXSATLAR ═══════ -->
+        <div v-if="activeTab === 'permissions'" class="adm-page">
+          <div class="page-head">
+            <span class="page-accent"></span>
+            <h2 class="page-title">Sahifalarga ruxsatlar</h2>
+          </div>
+          <div class="adm-toolbar">
+            <el-input
+              v-model="usersSearch"
+              placeholder="Foydalanuvchi qidiruv (ism, username)..."
+              :prefix-icon="Search"
+              clearable
+              class="adm-search"
+            />
+          </div>
+          <div class="tbl-wrap" v-loading="usersLoading">
+            <el-table
+              :data="filteredUsers"
+              stripe
+              border
+              style="width: 100%"
+              empty-text="Ma'lumot yo'q"
+            >
+              <el-table-column label="Foydalanuvchi" min-width="250" fixed="left">
+                <template #default="{ row }">
+                  <div class="user-cell">
+                    <div class="user-cell__av" :class="row.is_admin ? 'av--admin' : 'av--user'">
+                      {{ row.firstname?.charAt(0) || row.username?.charAt(0) || '?' }}
+                    </div>
+                    <div>
+                      <div class="user-cell__name">{{ row.firstname }} {{ row.lastname }}</div>
+                      <div class="user-cell__un">@{{ row.username }}</div>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              
+              <el-table-column 
+                v-for="page in permissionPages" 
+                :key="page.key" 
+                :label="page.title" 
+                min-width="110" 
+                align="center"
+              >
+                <template #default="{ row }">
+                  <el-switch
+                    :model-value="hasPermission(row, page.key)"
+                    :loading="updatingPermissions[`${row.id}-${page.key}`]"
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949"
+                    @change="(val) => handleTogglePermission(row, page.key, val)"
+                  />
                 </template>
               </el-table-column>
             </el-table>
@@ -871,7 +930,7 @@
 
         <el-divider />
 
-        <div class="user-drawer__actions">
+        <div class="user-drawer__actions" v-if="selectedUser.id !== usersStore.currentUser?.id">
           <el-button
             :type="selectedUser.is_admin ? 'warning' : 'success'"
             style="width: 100%; margin-bottom: 10px"
@@ -1140,6 +1199,7 @@ const auditActionFilter = ref('')
 const tabs = [
   { name: 'dashboard', label: 'Dashboard', icon: DataAnalysis },
   { name: 'users', label: 'Foydalanuvchilar', icon: User },
+  { name: 'permissions', label: 'Ruxsatlar', icon: Key },
   { name: 'partners', label: 'Hamkorlar', icon: UserFilled },
   { name: 'objects', label: 'Obyektlar', icon: OfficeBuilding },
   { name: 'kp', label: 'KP', icon: Document },
@@ -1406,6 +1466,10 @@ async function toggleAdminRole(user, closeDrawer = false) {
       'Tasdiqlash',
       { confirmButtonText: 'Ha', cancelButtonText: 'Bekor qilish', type: 'warning' },
     )
+    
+    // Call API
+    await usersStore.updateUser(user.id, { is_admin: newRole })
+
     user.is_admin = newRole
     if (closeDrawer) userDetailVisible.value = false
     addAuditLog({
@@ -1417,7 +1481,13 @@ async function toggleAdminRole(user, closeDrawer = false) {
     ElMessage.success(
       `✅ ${newRole ? 'Admin qilish' : 'Admin rolini olib tashlash'} muvaffaqiyatli!`,
     )
-  } catch {}
+  } catch (err) {
+    if (err !== 'cancel') {
+      const msg = err?.response?.data?.message || err.message || "Xatolik yuz berdi";
+      ElMessage.error(msg)
+      console.error(err)
+    }
+  }
 }
 
 async function toggleBlockUser(user, closeDrawer = false) {
@@ -1432,6 +1502,10 @@ async function toggleBlockUser(user, closeDrawer = false) {
         type: newBlock ? 'error' : 'warning',
       },
     )
+    
+    // Call API
+    await usersStore.updateUser(user.id, { is_blocked: newBlock })
+
     user.is_blocked = newBlock
     if (closeDrawer) userDetailVisible.value = false
     addAuditLog({
@@ -1441,7 +1515,13 @@ async function toggleBlockUser(user, closeDrawer = false) {
       target_id: user.id,
     })
     ElMessage.success(`✅ ${newBlock ? 'Bloklash' : 'Blokdan chiqarish'} muvaffaqiyatli!`)
-  } catch {}
+  } catch (err) {
+    if (err !== 'cancel') {
+      const msg = err?.response?.data?.message || err.message || "Xatolik yuz berdi";
+      ElMessage.error(msg)
+      console.error(err)
+    }
+  }
 }
 
 async function openUserDetail(user) {
@@ -1503,6 +1583,47 @@ const handleResetKp = () => {
 const handleResetAudit = () => {
   auditSearch.value = ''
   auditActionFilter.value = ''
+}
+
+// ─── Permissions ──────────────────────────────────────────
+const permissionPages = [
+  { key: 'customers', title: 'Mijozlar' },
+  { key: 'sites', title: 'Obyektlar' },
+  { key: 'competitors', title: 'Raqiblar' },
+  { key: 'kp', title: 'KP' },
+  { key: 'dogovor', title: 'Dogovor' },
+  { key: 'loyiha', title: 'Loyiha' },
+  { key: 'attendance', title: 'Davomat' },
+  { key: 'tasks', title: 'Vazifalar' },
+  { key: 'boss', title: 'Boss' },
+]
+
+const updatingPermissions = ref({})
+
+const hasPermission = (user, pageKey) => {
+  if (pageKey === 'boss') {
+    if (user.permissions?.boss !== undefined) return user.permissions.boss;
+    return Number(user.id) === 16;
+  }
+  return user.permissions?.[pageKey] !== false
+}
+
+const handleTogglePermission = async (user, pageKey, val) => {
+  const currentPerms = user.permissions || {}
+  const newPerms = { ...currentPerms, [pageKey]: val }
+  
+  updatingPermissions.value[`${user.id}-${pageKey}`] = true
+  try {
+    await usersStore.updateUser(user.id, { permissions: newPerms })
+    ElMessage.success("Ruxsat saqlandi")
+    user.permissions = newPerms 
+  } catch (err) {
+    ElMessage.error("Xatolik yuz berdi")
+    // ui revert handled by user not being updated in store if it threw, 
+    // but better to explicitly revert
+  } finally {
+    updatingPermissions.value[`${user.id}-${pageKey}`] = false
+  }
 }
 
 // ─── KP actions ───────────────────────────────────────────
