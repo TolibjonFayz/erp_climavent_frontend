@@ -9,7 +9,6 @@ const messages = {
 
 const SUPPORTED_LOCALES = Object.keys(messages)
 
-// Cookie'dan tilni o'qish
 function getCookieLanguage(name = 'lang') {
   const nameEQ = name + '='
   const cookies = document.cookie.split(';')
@@ -17,10 +16,20 @@ function getCookieLanguage(name = 'lang') {
     cookie = cookie.trim()
     if (cookie.indexOf(nameEQ) === 0) {
       const lang = decodeURIComponent(cookie.substring(nameEQ.length))
-      // Cookie'da boshqa loyihadan qolgan yaroqsiz til bo'lishi mumkin (masalan "en")
-      return SUPPORTED_LOCALES.includes(lang) ? lang : 'uz'
+      if (SUPPORTED_LOCALES.includes(lang)) {
+        return lang
+      }
     }
   }
+
+  // If no valid cookie, try browser language
+  if (typeof navigator !== 'undefined' && navigator.language) {
+    const browserLang = navigator.language.split('-')[0].toLowerCase()
+    if (SUPPORTED_LOCALES.includes(browserLang)) {
+      return browserLang
+    }
+  }
+
   return 'uz'
 }
 

@@ -13,6 +13,12 @@
 
       <!-- Right Side - Form -->
       <div class="login-form-section">
+        <div class="lang-switcher">
+          <el-select v-model="currentLang" @change="changeLanguage" size="small">
+            <el-option label="O'zbek" value="uz" />
+            <el-option label="Русский" value="ru" />
+          </el-select>
+        </div>
         <div class="form-wrapper">
           <div class="form-header">
             <h1>{{ $t('loginPageHeader') }}</h1>
@@ -76,7 +82,10 @@
 import { useUsersStore } from '@/stores/user'
 import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
-import { getCookie } from '@/utils/cookies'
+import { setCookie } from '@/utils/cookies'
+import { useI18n } from 'vue-i18n'
+
+const { t, locale } = useI18n()
 
 const usersStore = useUsersStore()
 const username = ref('')
@@ -85,13 +94,18 @@ const showLoginError = ref(false)
 const showPasswordError = ref(false)
 const loading = ref(false)
 
-const lang = getCookie('lang', 'uz')
+const currentLang = ref(locale.value)
+
+const changeLanguage = (lang) => {
+  locale.value = lang
+  setCookie('lang', lang, 365)
+}
 
 const handleLogin = async () => {
   showLoginError.value = !username.value
   showPasswordError.value = !password.value
   if (showLoginError.value || showPasswordError.value) return
-
+  
   loading.value = true
   try {
     const res = await usersStore.loginUser({
@@ -105,11 +119,11 @@ const handleLogin = async () => {
   } catch (error) {
     const data = error?.response?.data
     ElNotification({
-      title: lang === 'uz' ? 'Xatolik' : 'Ошибка',
+      title: locale.value === 'uz' ? 'Xatolik' : 'Ошибка',
       message:
-        lang === 'uz'
+        locale.value === 'uz'
           ? data?.message || 'Login amalga oshmadi'
-          : data?.messageRu || 'Логин не удался',
+          : data?.messageRu || 'Вход не выполнен',
       type: 'error',
     })
   } finally {
@@ -222,6 +236,13 @@ const handleLogin = async () => {
   align-items: center;
   justify-content: center;
   background: #ffffff;
+  position: relative; // added for lang switcher
+
+  .lang-switcher {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+  }
 
   @media (max-width: 968px) {
     padding: 40px 30px;
