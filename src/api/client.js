@@ -19,7 +19,9 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('accesstoken')
       localStorage.removeItem('refreshtoken')
       localStorage.removeItem('userid')
-      window.location.href = '/login'
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   },
