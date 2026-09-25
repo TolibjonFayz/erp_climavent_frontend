@@ -14,10 +14,22 @@
       <!-- Right Side - Form -->
       <div class="login-form-section">
         <div class="lang-switcher">
-          <el-select v-model="currentLang" @change="changeLanguage" size="small">
-            <el-option label="O'zbek" value="uz" />
-            <el-option label="Русский" value="ru" />
-          </el-select>
+          <div class="lang-toggle">
+            <button
+              type="button"
+              :class="['lang-btn', { active: currentLang === 'uz' }]"
+              @click="changeLanguage('uz')"
+            >
+              UZ
+            </button>
+            <button
+              type="button"
+              :class="['lang-btn', { active: currentLang === 'ru' }]"
+              @click="changeLanguage('ru')"
+            >
+              RU
+            </button>
+          </div>
         </div>
         <div class="form-wrapper">
           <div class="form-header">
@@ -97,6 +109,7 @@ const loading = ref(false)
 const currentLang = ref(locale.value)
 
 const changeLanguage = (lang) => {
+  currentLang.value = lang
   locale.value = lang
   setCookie('lang', lang, 365)
 }
@@ -240,8 +253,40 @@ const handleLogin = async () => {
 
   .lang-switcher {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 30px;
+    right: 40px;
+
+    .lang-toggle {
+      display: flex;
+      background: #f1f3f5;
+      border-radius: 20px;
+      padding: 4px;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+      position: relative;
+      
+      .lang-btn {
+        border: none;
+        background: transparent;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #95a5a6;
+        border-radius: 16px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1;
+
+        &.active {
+          background: #ffffff;
+          color: #2c3e50;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        &:hover:not(.active) {
+          color: #34495e;
+        }
+      }
+    }
   }
 
   @media (max-width: 968px) {
