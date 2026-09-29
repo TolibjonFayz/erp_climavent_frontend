@@ -603,6 +603,15 @@
           </div>
         </div>
 
+        <!-- ═══════ amoCRM ═══════ -->
+        <div v-if="activeTab === 'amocrm'" class="adm-page">
+          <div class="page-head">
+            <span class="page-accent"></span>
+            <h2 class="page-title">amoCRM</h2>
+          </div>
+          <AmoCrmStats />
+        </div>
+
         <!-- ═══════ KP ═══════ -->
         <div v-if="activeTab === 'kp'" class="adm-page">
           <div class="page-head">
@@ -1092,6 +1101,7 @@
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { usePartnersStore } from '@/stores/partners'
 import { useKPsStore } from '@/stores/kp'
+import AmoCrmStats from '@/components/amocrm/AmoCrmStats.vue'
 import {
   KP_COMMENT_OPTIONS,
   KP_COMMENT_FILTER_OPTIONS,
@@ -1203,6 +1213,7 @@ const tabs = [
   { name: 'partners', label: 'Hamkorlar', icon: UserFilled },
   { name: 'objects', label: 'Obyektlar', icon: OfficeBuilding },
   { name: 'kp', label: 'KP', icon: Document },
+  { name: 'amocrm', label: 'amoCRM', icon: Phone },
   { name: 'audit', label: 'Audit Log', icon: Document },
   { name: 'settings', label: 'Sozlamalar', icon: Setting },
 ]

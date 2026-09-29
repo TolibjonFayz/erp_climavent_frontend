@@ -205,6 +205,9 @@
       </section>
     </div>
 
+    <!-- amoCRM: qo'ng'iroqlar va sdelkalar -->
+    <AmoCrmStats class="boss-amo" />
+
     <!-- Target dialog -->
     <el-dialog v-model="targetDialog" :title="$t('setTarget')" width="420px" destroy-on-close>
       <el-form label-position="top">
@@ -263,6 +266,7 @@ import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { useTasksStore } from '@/stores/tasks'
 import { useAttendanceStore } from '@/stores/attendance'
 import { useBossStore } from '@/stores/boss'
+import AmoCrmStats from '@/components/amocrm/AmoCrmStats.vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Bell, Aim, Close, User, Briefcase, Promotion, Document, Check } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -651,6 +655,9 @@ onMounted(async () => {
 }
 
 /* Grid */
+.boss-amo {
+  margin-top: 18px;
+}
 .boss-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
