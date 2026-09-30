@@ -1,11 +1,14 @@
 <template>
   <section class="amo" v-loading="amoStore.isLoading && !stats">
-    <!-- Sarlavha va filtrlar -->
-    <div class="amo-head">
-      <div class="amo-head__text">
-        <h3>{{ $t('amoTitle') }}</h3>
-        <span class="amo-sync" :class="{ 'is-error': sync?.has_error }">
-          <el-icon v-if="syncing" class="is-loading"><Loading /></el-icon>
+    <!-- ═══ Sarlavha ═══ -->
+    <header class="amo-top">
+      <div class="amo-top__title">
+        <h3>
+          {{ $t('amoTitle') }}
+          <AmoHint :hint="$t('amoClickHint')" />
+        </h3>
+        <span class="amo-sync" :class="{ 'is-error': sync?.has_error, 'is-busy': syncing }">
+          <i class="amo-sync__dot"></i>
           <template v-if="syncing">{{ $t('amoSyncing') }}</template>
           <template v-else-if="sync?.last_sync_at">
             {{ $t('amoLastSync') }}: {{ formatDateTime(sync.last_sync_at) }}
@@ -13,22 +16,47 @@
           <template v-else>{{ $t('amoNeverSynced') }}</template>
         </span>
       </div>
-      <div class="amo-filters">
-        <el-radio-group v-model="preset" size="small" @change="applyPreset">
-          <el-radio-button v-for="p in presets" :key="p.key" :value="p.key">
-            {{ $t(p.label) }}
-          </el-radio-button>
-        </el-radio-group>
-        <el-date-picker
-          v-model="range"
-          type="daterange"
-          size="small"
-          value-format="YYYY-MM-DD"
-          format="DD.MM.YYYY"
-          :clearable="false"
-          class="amo-range"
-          @change="onRangeChange"
-        />
+      <div class="amo-top__actions">
+        <el-button :icon="UserFilled" @click="exclusionsOpen = true">
+          {{ $t('amoExclusionsBtn') }}
+        </el-button>
+        <el-button
+          type="primary"
+          plain
+          :icon="Refresh"
+          :loading="syncing"
+          :disabled="!sync?.configured"
+          @click="startSync"
+        >
+          {{ $t('amoRefresh') }}
+        </el-button>
+      </div>
+    </header>
+
+    <!-- ═══ Filtrlar ═══ -->
+    <div class="amo-toolbar">
+      <div class="amo-field amo-field--period">
+        <span class="amo-field__label">{{ $t('amoFilterPeriod') }}</span>
+        <div class="amo-field__row">
+          <el-radio-group v-model="preset" size="small" @change="applyPreset">
+            <el-radio-button v-for="p in presets" :key="p.key" :value="p.key">
+              {{ $t(p.label) }}
+            </el-radio-button>
+          </el-radio-group>
+          <el-date-picker
+            v-model="range"
+            type="daterange"
+            size="small"
+            value-format="YYYY-MM-DD"
+            format="DD.MM.YYYY"
+            :clearable="false"
+            class="amo-range"
+            @change="onRangeChange"
+          />
+        </div>
+      </div>
+      <div class="amo-field">
+        <span class="amo-field__label">{{ $t('amoFilterManager') }}</span>
         <el-select
           v-model="userId"
           size="small"
@@ -40,24 +68,15 @@
         >
           <el-option v-for="u in users" :key="u.id" :label="u.name" :value="u.id" />
         </el-select>
-        <el-radio-group v-model="scope" size="small" class="amo-scope" @change="load">
-          <el-radio-button value="clients">
-            <AmoHint :label="$t('amoScopeClients')" :hint="$t('amoHintScopeClients')" />
-          </el-radio-button>
+      </div>
+      <div class="amo-field">
+        <span class="amo-field__label">
+          <AmoHint :label="$t('amoFilterScope')" :hint="$t('amoHintScopeClients')" />
+        </span>
+        <el-radio-group v-model="scope" size="small" @change="load">
+          <el-radio-button value="clients">{{ $t('amoScopeClients') }}</el-radio-button>
           <el-radio-button value="all">{{ $t('amoScopeAll') }}</el-radio-button>
         </el-radio-group>
-        <el-button size="small" :icon="UserFilled" @click="exclusionsOpen = true">
-          {{ $t('amoExclusionsBtn') }}
-        </el-button>
-        <el-button
-          size="small"
-          :icon="Refresh"
-          :loading="syncing"
-          :disabled="!sync?.configured"
-          @click="startSync"
-        >
-          {{ $t('amoRefresh') }}
-        </el-button>
       </div>
     </div>
 
@@ -88,362 +107,381 @@
     />
 
     <template v-if="stats">
-      <p class="amo-click-hint">
-        <el-icon><Pointer /></el-icon>
-        {{ $t('amoClickHint') }}
-      </p>
-
-      <!-- ═══ Qo'ng'iroqlar ═══ -->
-      <div class="amo-block">
-        <div class="amo-block__head">
-          <h4>{{ $t('amoCallsTitle') }}</h4>
-          <span class="amo-summary">
-            <AmoHint :label="$t('amoCallsTotal')" :hint="$t('amoHintCallsTotal')" />:
-            <button type="button" class="amo-num" @click="drillCalls('all', $t('amoCallsTotal'))">
-              {{ fmtNum(calls.total) }}
-            </button>
-            <span class="amo-dot">·</span>
-            <AmoHint :label="$t('amoTalked')" :hint="$t('amoHintTalked')" />:
-            <button type="button" class="amo-num" @click="drillCalls('answered', $t('amoTalked'))">
-              {{ fmtNum(calls.talked) }}
-            </button>
-            <span class="amo-dot">·</span>
-            <AmoHint :label="$t('amoCallsDuration')" :hint="$t('amoHintDuration')" />:
-            <b>{{ fmtDuration(calls.duration, t) }}</b>
+      <!-- ═══ Asosiy ko'rsatkichlar ═══ -->
+      <div class="amo-overview">
+        <component
+          :is="k.onClick ? 'button' : 'div'"
+          v-for="k in overview"
+          :key="k.key"
+          :type="k.onClick ? 'button' : undefined"
+          class="amo-stat"
+          :class="[k.tone && `is-${k.tone}`, { 'is-link': k.onClick }]"
+          @click="k.onClick && k.onClick()"
+        >
+          <span class="amo-stat__label">
+            <AmoHint :label="k.label" :hint="k.hint" />
           </span>
-        </div>
-
-        <!-- Mijoz emas deb chiqarib tashlanganlar -->
-        <div v-if="calls.excluded?.calls" class="amo-excluded">
-          <el-icon><Filter /></el-icon>
-          <AmoHint :hint="$t('amoHintExcluded')">
-            {{
-              $t(scope === 'clients' ? 'amoExcludedSummary' : 'amoExcludedSummaryAll', {
-                calls: fmtNum(calls.excluded.calls),
-                numbers: fmtNum(calls.excluded.numbers),
-              })
-            }}
-          </AmoHint>
-          <button
-            v-for="r in calls.excluded.by_reason"
-            :key="r.reason"
-            type="button"
-            class="amo-chip"
-            @click="drillExcluded(r.reason)"
-          >
-            {{ $t(`amoExcl_${r.reason}`) }}: <b>{{ fmtNum(r.calls) }}</b>
-          </button>
-        </div>
-
-        <div class="amo-dir-grid">
-          <div v-for="dir in directions" :key="dir.key" class="amo-card">
-            <div class="amo-card__title">
-              <AmoHint :hint="dir.hint">
-                <el-icon><component :is="dir.icon" /></el-icon>
-                {{ dir.title }}
-              </AmoHint>
-            </div>
-            <div class="amo-kpis">
-              <component
-                :is="k.onClick ? 'button' : 'div'"
-                v-for="k in dir.tiles"
-                :key="k.key"
-                :type="k.onClick ? 'button' : undefined"
-                class="amo-kpi"
-                :class="[k.tone && `amo-kpi--${k.tone}`, { 'is-link': k.onClick }]"
-                @click="k.onClick && k.onClick()"
-              >
-                <div class="amo-kpi__value">
-                  {{ k.value }}
-                  <small v-if="k.sub">{{ k.sub }}</small>
-                </div>
-                <div class="amo-kpi__label"><AmoHint :label="k.label" :hint="k.hint" /></div>
-              </component>
-            </div>
-
-            <div class="amo-sub">
-              <AmoHint :label="dir.resultsTitle" :hint="dir.resultsHint" />
-            </div>
-            <div v-if="!dir.rows.length" class="amo-empty">{{ $t('amoNoData') }}</div>
-            <div v-else class="amo-bars">
-              <button
-                v-for="r in dir.rows"
-                :key="r.status"
-                type="button"
-                class="amo-bar-row is-link"
-                @click="r.onClick()"
-              >
-                <span class="amo-bar-row__label" :class="{ 'is-bad': r.bad }">
-                  <AmoHint :label="r.label" :hint="r.hint" />
-                </span>
-                <span class="amo-bar-row__track">
-                  <span
-                    class="amo-bar-row__fill"
-                    :class="{ 'is-bad': r.bad }"
-                    :style="{ width: barWidth(r.count, dir.max) }"
-                  ></span>
-                </span>
-                <span class="amo-bar-row__val">
-                  {{ fmtNum(r.count) }} <small>{{ pct(r.count, dir.total) }}%</small>
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Telefoniya platformalari bo'yicha -->
-        <div v-if="calls.by_source?.length" class="amo-card amo-gap">
-          <div class="amo-card__title">
-            <AmoHint :label="$t('amoBySource')" :hint="$t('amoHintBySource')" />
-          </div>
-          <div class="amo-src">
-            <div class="amo-src__row amo-src__row--head">
-              <span>{{ $t('amoColSource') }}</span>
-              <span class="num">
-                <AmoHint :label="$t('amoSrcClients')" :hint="$t('amoHintSrcClients')" />
-              </span>
-              <span class="num">{{ $t('amoTalked') }}</span>
-              <span class="num">{{ $t('amoInMissed') }}</span>
-              <span class="num">
-                <AmoHint :label="$t('amoSrcExcluded')" :hint="$t('amoHintSrcExcluded')" />
-              </span>
-            </div>
-            <div v-for="src in calls.by_source" :key="src.source" class="amo-src__row">
-              <span class="amo-src__name">{{ sourceLabel(src.source) }}</span>
-              <span class="num">
-                <button type="button" class="amo-num" @click="drillSource(src, 'all', 'clients')">
-                  {{ fmtNum(src.clients) }}
-                </button>
-              </span>
-              <span class="num">
-                <button
-                  type="button"
-                  class="amo-num"
-                  @click="drillSource(src, 'answered', 'clients')"
-                >
-                  {{ fmtNum(src.talked) }}
-                </button>
-              </span>
-              <span class="num">
-                <button
-                  type="button"
-                  class="amo-num is-bad"
-                  @click="drillSource(src, 'in_missed', 'clients')"
-                >
-                  {{ fmtNum(src.in_missed) }}
-                </button>
-              </span>
-              <span class="num">
-                <button
-                  v-if="src.excluded"
-                  type="button"
-                  class="amo-num is-muted"
-                  @click="drillSource(src, 'all', 'excluded')"
-                >
-                  {{ fmtNum(src.excluded) }}
-                </button>
-                <span v-else>0</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Kunlar / oylar bo'yicha -->
-        <div class="amo-card amo-gap">
-          <div class="amo-card__title">
-            <AmoHint
-              :label="$t(trendByMonth ? 'amoByMonth' : 'amoByDay')"
-              :hint="$t('amoHintTrend')"
-            />
-            <span class="amo-legend">
-              <span class="amo-legend__item"
-                ><i class="sw sw--answered"></i>{{ $t('amoTalked') }}</span
-              >
-              <span class="amo-legend__item"
-                ><i class="sw sw--other"></i>{{ $t('amoNotTalked') }}</span
-              >
-            </span>
-          </div>
-          <div v-if="!calls.total" class="amo-empty">{{ $t('amoNoData') }}</div>
-          <div v-else class="amo-trend" @mouseleave="hover = null">
-            <button
-              v-for="(d, i) in trend"
-              :key="d.key"
-              type="button"
-              class="amo-trend__col"
-              :aria-label="`${d.title}: ${d.total}`"
-              @mouseenter="hover = i"
-              @focus="hover = i"
-              @click="drillBucket(d)"
-            >
-              <span class="amo-trend__stack" :class="{ 'is-hover': hover === i }">
-                <span
-                  class="amo-trend__seg amo-trend__seg--other"
-                  :style="{ height: segHeight(d.total - d.talked) }"
-                ></span>
-                <span
-                  class="amo-trend__seg amo-trend__seg--answered"
-                  :style="{ height: segHeight(d.talked) }"
-                ></span>
-              </span>
-              <span v-if="showTrendLabel(i)" class="amo-trend__label">{{ d.short }}</span>
-            </button>
-            <div v-if="hover !== null && trend[hover]" class="amo-tip" :style="tipStyle">
-              <b>{{ trend[hover].title }}</b>
-              <div>{{ $t('amoCallsTotal') }}: {{ fmtNum(trend[hover].total) }}</div>
-              <div>{{ $t('amoTalked') }}: {{ fmtNum(trend[hover].talked) }}</div>
-              <div>{{ $t('amoInMissed') }}: {{ fmtNum(trend[hover].in_missed) }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Menejerlar bo'yicha -->
-        <div class="amo-card amo-gap">
-          <div class="amo-card__title">
-            <AmoHint :label="$t('amoByManager')" :hint="$t('amoHintByManager')" />
-          </div>
-          <el-table
-            :data="managerRows"
-            size="small"
-            :empty-text="$t('amoNoData')"
-            :default-sort="{ prop: 'total', order: 'descending' }"
-          >
-            <el-table-column prop="name" :label="$t('amoManager')" min-width="150" fixed />
-            <el-table-column
-              v-for="col in managerCols"
-              :key="col.prop"
-              :prop="col.prop"
-              sortable
-              align="right"
-              :min-width="col.width"
-            >
-              <template #header>
-                <AmoHint :label="col.label" :hint="col.hint" />
-              </template>
-              <template #default="{ row }">
-                <button
-                  v-if="col.kind && row[col.prop]"
-                  type="button"
-                  class="amo-num"
-                  :class="{ 'is-bad': col.bad }"
-                  @click="drillUser(row, col)"
-                >
-                  {{ fmtNum(row[col.prop]) }}
-                </button>
-                <span v-else-if="col.kind">0</span>
-                <span v-else>{{ fmtDuration(row[col.prop], t) }}</span>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
+          <span class="amo-stat__value">{{ k.value }}</span>
+          <span class="amo-stat__sub">{{ k.sub || ' ' }}</span>
+        </component>
       </div>
 
-      <!-- ═══ Lidlar ═══ -->
-      <div class="amo-block">
-        <div class="amo-block__head">
-          <h4>{{ $t('amoLeadsTitle') }}</h4>
-          <span class="amo-hint-text">{{ $t('amoLeadsHint') }}</span>
-        </div>
-
-        <div class="amo-kpis amo-kpis--leads">
-          <component
-            :is="k.onClick ? 'button' : 'div'"
-            v-for="k in leadTiles"
-            :key="k.key"
-            :type="k.onClick ? 'button' : undefined"
-            class="amo-kpi"
-            :class="[k.tone && `amo-kpi--${k.tone}`, { 'is-link': k.onClick }]"
-            @click="k.onClick && k.onClick()"
-          >
-            <div class="amo-kpi__value">
-              {{ k.value }}
-              <small v-if="k.sub">{{ k.sub }}</small>
-            </div>
-            <div class="amo-kpi__label"><AmoHint :label="k.label" :hint="k.hint" /></div>
-          </component>
-        </div>
-
-        <div class="amo-leads-grid">
-          <!-- Bosqichlar -->
-          <div class="amo-card">
-            <div class="amo-card__title">
-              <AmoHint :label="$t('amoStagesTitle')" :hint="$t('amoHintStages')" />
-            </div>
-            <div v-if="!leads.pipelines.length" class="amo-empty">{{ $t('amoNoData') }}</div>
-            <el-tabs v-else v-model="pipelineTab">
-              <el-tab-pane
-                v-for="p in leads.pipelines"
-                :key="p.id"
-                :name="String(p.id)"
-                :label="`${p.name} (${fmtNum(p.total)})`"
+      <!-- ═══ Bo'limlar ═══ -->
+      <el-tabs v-model="tab" class="amo-tabs">
+        <!-- ─── Qo'ng'iroqlar ─── -->
+        <el-tab-pane name="calls" :label="`${$t('amoTabCalls')} · ${fmtNum(calls.total)}`">
+          <!-- Hisobga olinmaganlar -->
+          <div v-if="calls.excluded?.calls" class="amo-note">
+            <el-icon class="amo-note__icon"><Filter /></el-icon>
+            <AmoHint :hint="$t('amoHintExcluded')">
+              {{
+                $t(scope === 'clients' ? 'amoExcludedSummary' : 'amoExcludedSummaryAll', {
+                  calls: fmtNum(calls.excluded.calls),
+                  numbers: fmtNum(calls.excluded.numbers),
+                })
+              }}
+            </AmoHint>
+            <span class="amo-note__chips">
+              <button
+                v-for="r in calls.excluded.by_reason"
+                :key="r.reason"
+                type="button"
+                class="amo-chip"
+                @click="drillExcluded(r.reason)"
               >
-                <div class="amo-stage-head">
-                  <span>{{ $t('amoStage') }}</span>
-                  <span></span>
-                  <span class="num">{{ $t('amoCount') }}</span>
-                  <span class="num">{{ $t('amoSum') }}</span>
+                {{ $t(`amoExcl_${r.reason}`) }} <b>{{ fmtNum(r.calls) }}</b>
+              </button>
+            </span>
+          </div>
+
+          <!-- Kiruvchi / chiquvchi -->
+          <div class="amo-grid-2">
+            <article v-for="dir in directions" :key="dir.key" class="amo-panel">
+              <header class="amo-panel__head">
+                <h4>
+                  <span class="amo-dir-icon" :class="`is-${dir.key}`">
+                    <el-icon><component :is="dir.icon" /></el-icon>
+                  </span>
+                  <AmoHint :label="dir.title" :hint="dir.hint" />
+                </h4>
+                <button type="button" class="amo-num amo-num--lg" @click="dir.onTotal()">
+                  {{ fmtNum(dir.total) }}
+                </button>
+              </header>
+
+              <dl class="amo-dl">
+                <div v-for="r in dir.stats" :key="r.key" class="amo-dl__row">
+                  <dt><AmoHint :label="r.label" :hint="r.hint" /></dt>
+                  <dd>
+                    <button
+                      v-if="r.onClick"
+                      type="button"
+                      class="amo-num"
+                      :class="r.tone && `is-${r.tone}`"
+                      @click="r.onClick()"
+                    >
+                      {{ r.value }}
+                    </button>
+                    <b v-else>{{ r.value }}</b>
+                    <small v-if="r.pct !== undefined">{{ r.pct }}%</small>
+                  </dd>
                 </div>
+              </dl>
+
+              <h5 class="amo-sub">
+                <AmoHint :label="dir.resultsTitle" :hint="dir.resultsHint" />
+              </h5>
+              <div v-if="!dir.rows.length" class="amo-empty">{{ $t('amoNoData') }}</div>
+              <div v-else class="amo-bars">
                 <button
-                  v-for="s in p.statuses"
-                  :key="s.id"
+                  v-for="r in dir.rows"
+                  :key="r.status"
                   type="button"
-                  class="amo-stage is-link"
-                  :disabled="!s.count"
-                  @click="drillLeads(s.name, { pipeline_id: p.id, status_id: s.id })"
+                  class="amo-bar-row is-link"
+                  @click="r.onClick()"
                 >
-                  <span class="amo-stage__name">
-                    <i class="amo-stage__dot" :style="{ background: s.color || '#d5d8db' }"></i>
-                    {{ s.name }}
+                  <span class="amo-bar-row__label">
+                    <AmoHint :label="r.label" :hint="r.hint" />
                   </span>
                   <span class="amo-bar-row__track">
                     <span
                       class="amo-bar-row__fill"
-                      :style="{ width: barWidth(s.count, maxStageCount(p)) }"
+                      :class="{ 'is-bad': r.bad }"
+                      :style="{ width: barWidth(r.count, dir.max) }"
                     ></span>
                   </span>
-                  <span class="num">{{ fmtNum(s.count) }}</span>
-                  <span class="num muted">{{ fmtMoney(s.sum) }}</span>
+                  <span class="amo-bar-row__val">
+                    {{ fmtNum(r.count) }} <small>{{ pct(r.count, dir.total) }}%</small>
+                  </span>
                 </button>
-              </el-tab-pane>
-            </el-tabs>
+              </div>
+            </article>
           </div>
 
-          <!-- Yo'qotish sabablari -->
-          <div class="amo-card">
-            <div class="amo-card__title">
-              <AmoHint :label="$t('amoLossReasonsTitle')" :hint="$t('amoHintLossReasons')" />
-            </div>
-            <div v-if="!leads.loss_reasons?.length" class="amo-empty">{{ $t('amoNoData') }}</div>
-            <div v-else class="amo-bars">
+          <!-- Dinamika -->
+          <article class="amo-panel">
+            <header class="amo-panel__head">
+              <h4>
+                <AmoHint
+                  :label="`${$t('amoTrendTitle')} · ${$t(trendByMonth ? 'amoByMonth' : 'amoByDay')}`"
+                  :hint="$t('amoHintTrend')"
+                />
+              </h4>
+              <span class="amo-legend">
+                <span class="amo-legend__item"
+                  ><i class="sw sw--answered"></i>{{ $t('amoTalked') }}</span
+                >
+                <span class="amo-legend__item"
+                  ><i class="sw sw--other"></i>{{ $t('amoNotTalked') }}</span
+                >
+              </span>
+            </header>
+            <div v-if="!calls.total" class="amo-empty">{{ $t('amoNoData') }}</div>
+            <div v-else class="amo-trend" @mouseleave="hover = null">
               <button
-                v-for="r in leads.loss_reasons"
-                :key="r.id"
+                v-for="(d, i) in trend"
+                :key="d.key"
                 type="button"
-                class="amo-bar-row amo-bar-row--reason is-link"
-                @click="
-                  drillLeads(r.name || $t('amoLossReasonNone'), {
-                    status_id: 143,
-                    loss_reason_id: r.id,
-                  })
-                "
+                class="amo-trend__col"
+                :aria-label="`${d.title}: ${d.total}`"
+                @mouseenter="hover = i"
+                @focus="hover = i"
+                @click="drillBucket(d)"
               >
-                <span class="amo-bar-row__label" :class="{ 'is-strong': isNotOurs(r) }">
-                  {{ r.name || $t('amoLossReasonNone') }}
-                </span>
-                <span class="amo-bar-row__track">
+                <span class="amo-trend__stack" :class="{ 'is-hover': hover === i }">
                   <span
-                    class="amo-bar-row__fill"
-                    :style="{ width: barWidth(r.count, maxReasonCount) }"
+                    class="amo-trend__seg amo-trend__seg--other"
+                    :style="{ height: segHeight(d.total - d.talked) }"
+                  ></span>
+                  <span
+                    class="amo-trend__seg amo-trend__seg--answered"
+                    :style="{ height: segHeight(d.talked) }"
                   ></span>
                 </span>
-                <span class="amo-bar-row__val">
-                  {{ fmtNum(r.count) }} <small>{{ pct(r.count, leads.lost.count) }}%</small>
-                </span>
+                <span v-if="showTrendLabel(i)" class="amo-trend__label">{{ d.short }}</span>
               </button>
+              <div v-if="hover !== null && trend[hover]" class="amo-tip" :style="tipStyle">
+                <b>{{ trend[hover].title }}</b>
+                <div>{{ $t('amoCallsTotal') }}: {{ fmtNum(trend[hover].total) }}</div>
+                <div>{{ $t('amoTalked') }}: {{ fmtNum(trend[hover].talked) }}</div>
+                <div>{{ $t('amoInMissed') }}: {{ fmtNum(trend[hover].in_missed) }}</div>
+              </div>
             </div>
+          </article>
+
+          <!-- Platformalar -->
+          <article v-if="calls.by_source?.length" class="amo-panel">
+            <header class="amo-panel__head">
+              <h4><AmoHint :label="$t('amoBySource')" :hint="$t('amoHintBySource')" /></h4>
+            </header>
+            <el-table :data="calls.by_source" size="small" class="amo-table">
+              <el-table-column :label="$t('amoColSource')" min-width="130">
+                <template #default="{ row }">
+                  <b>{{ sourceLabel(row.source) }}</b>
+                </template>
+              </el-table-column>
+              <el-table-column align="right" min-width="120">
+                <template #header>
+                  <AmoHint :label="$t('amoSrcClients')" :hint="$t('amoHintSrcClients')" />
+                </template>
+                <template #default="{ row }">
+                  <button type="button" class="amo-num" @click="drillSource(row, 'all', 'clients')">
+                    {{ fmtNum(row.clients) }}
+                  </button>
+                </template>
+              </el-table-column>
+              <el-table-column :label="$t('amoTalked')" align="right" min-width="120">
+                <template #default="{ row }">
+                  <button
+                    type="button"
+                    class="amo-num"
+                    @click="drillSource(row, 'answered', 'clients')"
+                  >
+                    {{ fmtNum(row.talked) }}
+                  </button>
+                </template>
+              </el-table-column>
+              <el-table-column :label="$t('amoInMissed')" align="right" min-width="130">
+                <template #default="{ row }">
+                  <button
+                    type="button"
+                    class="amo-num is-bad"
+                    @click="drillSource(row, 'in_missed', 'clients')"
+                  >
+                    {{ fmtNum(row.in_missed) }}
+                  </button>
+                </template>
+              </el-table-column>
+              <el-table-column align="right" min-width="120">
+                <template #header>
+                  <AmoHint :label="$t('amoSrcExcluded')" :hint="$t('amoHintSrcExcluded')" />
+                </template>
+                <template #default="{ row }">
+                  <button
+                    v-if="row.excluded"
+                    type="button"
+                    class="amo-num is-muted"
+                    @click="drillSource(row, 'all', 'excluded')"
+                  >
+                    {{ fmtNum(row.excluded) }}
+                  </button>
+                  <span v-else class="amo-muted">0</span>
+                </template>
+              </el-table-column>
+            </el-table>
+          </article>
+        </el-tab-pane>
+
+        <!-- ─── Menejerlar ─── -->
+        <el-tab-pane name="managers" :label="`${$t('amoTabManagers')} · ${managerRows.length}`">
+          <article class="amo-panel">
+            <header class="amo-panel__head">
+              <h4><AmoHint :label="$t('amoByManager')" :hint="$t('amoHintByManager')" /></h4>
+              <span class="amo-panel__meta">
+                {{ $t('amoCallsDuration') }}: <b>{{ fmtDuration(calls.duration, t) }}</b>
+              </span>
+            </header>
+            <el-table
+              :data="managerRows"
+              size="small"
+              class="amo-table"
+              :empty-text="$t('amoNoData')"
+              :default-sort="{ prop: 'total', order: 'descending' }"
+            >
+              <el-table-column prop="name" :label="$t('amoManager')" min-width="160" fixed />
+              <el-table-column
+                v-for="col in managerCols"
+                :key="col.prop"
+                :prop="col.prop"
+                sortable
+                align="right"
+                :min-width="col.width"
+              >
+                <template #header>
+                  <AmoHint :label="col.label" :hint="col.hint" />
+                </template>
+                <template #default="{ row }">
+                  <button
+                    v-if="col.kind && row[col.prop]"
+                    type="button"
+                    class="amo-num"
+                    :class="{ 'is-bad': col.bad }"
+                    @click="drillUser(row, col)"
+                  >
+                    {{ fmtNum(row[col.prop]) }}
+                  </button>
+                  <span v-else-if="col.kind" class="amo-muted">0</span>
+                  <span v-else>{{ fmtDuration(row[col.prop], t) }}</span>
+                </template>
+              </el-table-column>
+            </el-table>
+          </article>
+        </el-tab-pane>
+
+        <!-- ─── Lidlar ─── -->
+        <el-tab-pane name="leads" :label="`${$t('amoTabLeads')} · ${fmtNum(leads.total)}`">
+          <p class="amo-caption">{{ $t('amoLeadsHint') }}</p>
+          <div class="amo-overview amo-overview--leads">
+            <component
+              :is="k.onClick ? 'button' : 'div'"
+              v-for="k in leadTiles"
+              :key="k.key"
+              :type="k.onClick ? 'button' : undefined"
+              class="amo-stat amo-stat--sm"
+              :class="[k.tone && `is-${k.tone}`, { 'is-link': k.onClick, 'is-money': k.money }]"
+              @click="k.onClick && k.onClick()"
+            >
+              <span class="amo-stat__label"><AmoHint :label="k.label" :hint="k.hint" /></span>
+              <span class="amo-stat__value">{{ k.value }}</span>
+              <span class="amo-stat__sub">{{ k.sub || ' ' }}</span>
+            </component>
           </div>
-        </div>
-      </div>
+
+          <div class="amo-grid-2 amo-grid-2--leads">
+            <!-- Bosqichlar -->
+            <article class="amo-panel">
+              <header class="amo-panel__head">
+                <h4><AmoHint :label="$t('amoStagesTitle')" :hint="$t('amoHintStages')" /></h4>
+              </header>
+              <div v-if="!leads.pipelines.length" class="amo-empty">{{ $t('amoNoData') }}</div>
+              <el-tabs v-else v-model="pipelineTab" class="amo-subtabs">
+                <el-tab-pane
+                  v-for="p in leads.pipelines"
+                  :key="p.id"
+                  :name="String(p.id)"
+                  :label="`${p.name} (${fmtNum(p.total)})`"
+                >
+                  <div class="amo-stage amo-stage--head">
+                    <span>{{ $t('amoStage') }}</span>
+                    <span></span>
+                    <span class="num">{{ $t('amoCount') }}</span>
+                    <span class="num">{{ $t('amoSum') }}</span>
+                  </div>
+                  <button
+                    v-for="s in p.statuses"
+                    :key="s.id"
+                    type="button"
+                    class="amo-stage is-link"
+                    :disabled="!s.count"
+                    @click="drillLeads(s.name, { pipeline_id: p.id, status_id: s.id })"
+                  >
+                    <span class="amo-stage__name">
+                      <i class="amo-stage__dot" :style="{ background: s.color || '#d5d8db' }"></i>
+                      {{ s.name }}
+                    </span>
+                    <span class="amo-bar-row__track">
+                      <span
+                        class="amo-bar-row__fill"
+                        :style="{ width: barWidth(s.count, maxStageCount(p)) }"
+                      ></span>
+                    </span>
+                    <span class="num">{{ fmtNum(s.count) }}</span>
+                    <span class="num muted">{{ fmtMoney(s.sum) }}</span>
+                  </button>
+                </el-tab-pane>
+              </el-tabs>
+            </article>
+
+            <!-- Yo'qotish sabablari -->
+            <article class="amo-panel">
+              <header class="amo-panel__head">
+                <h4>
+                  <AmoHint :label="$t('amoLossReasonsTitle')" :hint="$t('amoHintLossReasons')" />
+                </h4>
+                <span class="amo-panel__meta">{{ fmtNum(leads.lost.count) }}</span>
+              </header>
+              <div v-if="!leads.loss_reasons?.length" class="amo-empty">{{ $t('amoNoData') }}</div>
+              <div v-else class="amo-bars">
+                <button
+                  v-for="r in leads.loss_reasons"
+                  :key="r.id"
+                  type="button"
+                  class="amo-bar-row amo-bar-row--reason is-link"
+                  @click="
+                    drillLeads(r.name || $t('amoLossReasonNone'), {
+                      status_id: 143,
+                      loss_reason_id: r.id,
+                    })
+                  "
+                >
+                  <span class="amo-bar-row__label" :class="{ 'is-strong': isNotOurs(r) }">
+                    {{ r.name || $t('amoLossReasonNone') }}
+                  </span>
+                  <span class="amo-bar-row__track">
+                    <span
+                      class="amo-bar-row__fill"
+                      :style="{ width: barWidth(r.count, maxReasonCount) }"
+                    ></span>
+                  </span>
+                  <span class="amo-bar-row__val">
+                    {{ fmtNum(r.count) }} <small>{{ pct(r.count, leads.lost.count) }}%</small>
+                  </span>
+                </button>
+              </div>
+            </article>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
     </template>
 
     <AmoDrillDrawer v-model="drillOpen" :request="drillRequest" :stats="stats" @changed="load" />
@@ -455,7 +493,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { Bottom, Filter, Loading, Pointer, Refresh, Top, UserFilled } from '@element-plus/icons-vue'
+import { Bottom, Filter, Refresh, Top, UserFilled } from '@element-plus/icons-vue'
 import { useAmocrmStore } from '@/stores/amocrm'
 import AmoHint from './AmoHint.vue'
 import AmoDrillDrawer from './AmoDrillDrawer.vue'
@@ -502,6 +540,24 @@ const scope = ref('clients')
 const exclusionsOpen = ref(false)
 const pipelineTab = ref('')
 const loadError = ref('')
+
+// Oxirgi ochilgan bo'lim eslab qolinadi (faqat shu brauzerda)
+const TAB_KEY = 'amocrm-stats-tab'
+function readTab() {
+  try {
+    return localStorage.getItem(TAB_KEY) || 'calls'
+  } catch {
+    return 'calls'
+  }
+}
+const tab = ref(readTab())
+watch(tab, (v) => {
+  try {
+    localStorage.setItem(TAB_KEY, v)
+  } catch {
+    /* saqlab bo'lmasa — muhim emas */
+  }
+})
 
 function applyPreset(key) {
   range.value = presetRange(key)
@@ -666,7 +722,7 @@ function drillExcluded(reason) {
 
 // Platforma (Moi Zvonki / Sipuni) bo'yicha
 function drillSource(src, kind, srcScope) {
-  const title = `${sourceLabel(src.source)} — ${
+  const what =
     srcScope === 'excluded'
       ? t('amoSrcExcluded')
       : kind === 'all'
@@ -674,10 +730,9 @@ function drillSource(src, kind, srcScope) {
         : kind === 'answered'
           ? t('amoTalked')
           : t('amoInMissed')
-  }`
   drillCalls(
     kind,
-    title,
+    `${sourceLabel(src.source)} — ${what}`,
     { source: src.source, scope: srcScope },
     { groupByPhone: kind === 'in_missed' || srcScope === 'excluded' },
   )
@@ -702,8 +757,75 @@ function drillUser(row, col) {
   )
 }
 
+// ─── Asosiy ko'rsatkichlar (tepadagi qator) ───────────────
+const overview = computed(() => {
+  const c = calls.value
+  const inc = c.incoming
+  const l = leads.value
+  return [
+    {
+      key: 'total',
+      label: t('amoCallsTotal'),
+      hint: t('amoHintCallsTotal'),
+      value: fmtNum(c.total),
+      sub: `${t('amoCallsDuration')}: ${fmtDuration(c.duration, t)}`,
+      onClick: () => drillCalls('all', t('amoCallsTotal')),
+    },
+    {
+      key: 'talked',
+      label: t('amoTalked'),
+      hint: t('amoHintTalked'),
+      value: fmtNum(c.talked),
+      sub: t('amoOfCalls', { pct: pct(c.talked, c.total) }),
+      tone: 'good',
+      onClick: () => drillCalls('answered', t('amoTalked')),
+    },
+    {
+      key: 'in_missed',
+      label: t('amoInMissed'),
+      hint: t('amoHintInMissed'),
+      value: fmtNum(inc.missed),
+      sub: t('amoOfIncoming', { pct: pct(inc.missed, inc.total) }),
+      tone: 'bad',
+      onClick: () => drillCalls('in_missed', t('amoInMissed')),
+    },
+    {
+      key: 'not_called_back',
+      label: t('amoNotCalledBack'),
+      hint: t('amoHintNotCalledBack'),
+      value: fmtNum(inc.not_called_back),
+      sub: t('amoNumbersOf', { n: fmtNum(inc.missed_numbers) }),
+      tone: 'bad',
+      onClick: () =>
+        drillCalls(
+          'in_missed',
+          t('amoNotCalledBack'),
+          {},
+          { groupByPhone: true, onlyNotCalledBack: true },
+        ),
+    },
+    {
+      key: 'leads',
+      label: t('amoLeadsTotal'),
+      hint: t('amoHintLeadsTotal'),
+      value: fmtNum(l.total),
+      sub: fmtMoney(l.sum),
+      onClick: () => drillLeads(t('amoLeadsTotal')),
+    },
+    {
+      key: 'won',
+      label: t('amoLeadsWon'),
+      hint: t('amoHintWon'),
+      value: fmtNum(l.won.count),
+      sub: fmtMoney(l.won.sum),
+      tone: 'good',
+      onClick: () => drillLeads(t('amoLeadsWon'), { status_id: 142 }),
+    },
+  ]
+})
+
 // ─── Qo'ng'iroqlar: kiruvchi / chiquvchi bloklari ─────────
-function statusRows(direction, list, total) {
+function statusRows(direction, list) {
   const kind = direction === 'in' ? 'in' : 'out'
   return (list || [])
     .filter((s) => s.count > 0)
@@ -727,14 +849,13 @@ function statusRows(direction, list, total) {
       }
     })
     .sort((a, b) => b.count - a.count)
-    .map((r) => ({ ...r, total }))
 }
 
 const directions = computed(() => {
   const inc = calls.value.incoming
   const out = calls.value.outgoing
-  const inRows = statusRows('in', inc.by_status, inc.total)
-  const outRows = statusRows('out', out.by_status, out.total)
+  const inRows = statusRows('in', inc.by_status)
+  const outRows = statusRows('out', out.by_status)
   return [
     {
       key: 'in',
@@ -744,22 +865,16 @@ const directions = computed(() => {
       resultsTitle: t('amoInResults'),
       resultsHint: t('amoHintInResults'),
       total: inc.total,
+      onTotal: () => drillCalls('in', t('amoInTotal')),
       rows: inRows,
       max: Math.max(1, ...inRows.map((r) => r.count)),
-      tiles: [
-        {
-          key: 'in',
-          label: t('amoInTotal'),
-          hint: t('amoHintInTotal'),
-          value: fmtNum(inc.total),
-          onClick: () => drillCalls('in', t('amoInTotal')),
-        },
+      stats: [
         {
           key: 'in_answered',
           label: t('amoInAnswered'),
           hint: t('amoHintInAnswered'),
           value: fmtNum(inc.answered),
-          sub: `${pct(inc.answered, inc.total)}%`,
+          pct: pct(inc.answered, inc.total),
           tone: 'good',
           onClick: () => drillCalls('in_answered', t('amoInAnswered')),
         },
@@ -768,7 +883,7 @@ const directions = computed(() => {
           label: t('amoInMissed'),
           hint: t('amoHintInMissed'),
           value: fmtNum(inc.missed),
-          sub: `${pct(inc.missed, inc.total)}%`,
+          pct: pct(inc.missed, inc.total),
           tone: 'bad',
           onClick: () => drillCalls('in_missed', t('amoInMissed')),
         },
@@ -784,7 +899,7 @@ const directions = computed(() => {
           label: t('amoNotCalledBack'),
           hint: t('amoHintNotCalledBack'),
           value: fmtNum(inc.not_called_back),
-          sub: `${pct(inc.not_called_back, inc.missed_numbers)}%`,
+          pct: pct(inc.not_called_back, inc.missed_numbers),
           tone: 'bad',
           onClick: () =>
             drillCalls(
@@ -804,22 +919,16 @@ const directions = computed(() => {
       resultsTitle: t('amoOutResults'),
       resultsHint: t('amoHintOutResults'),
       total: out.total,
+      onTotal: () => drillCalls('out', t('amoOutTotal')),
       rows: outRows,
       max: Math.max(1, ...outRows.map((r) => r.count)),
-      tiles: [
-        {
-          key: 'out',
-          label: t('amoOutTotal'),
-          hint: t('amoHintOutTotal'),
-          value: fmtNum(out.total),
-          onClick: () => drillCalls('out', t('amoOutTotal')),
-        },
+      stats: [
         {
           key: 'out_answered',
           label: t('amoOutAnswered'),
           hint: t('amoHintOutAnswered'),
           value: fmtNum(out.answered),
-          sub: `${pct(out.answered, out.total)}%`,
+          pct: pct(out.answered, out.total),
           tone: 'good',
           onClick: () => drillCalls('out_answered', t('amoOutAnswered')),
         },
@@ -828,9 +937,15 @@ const directions = computed(() => {
           label: t('amoOutNoAnswer'),
           hint: t('amoHintOutNoAnswer'),
           value: fmtNum(out.no_answer),
-          sub: `${pct(out.no_answer, out.total)}%`,
+          pct: pct(out.no_answer, out.total),
           tone: 'warn',
           onClick: () => drillCalls('out_no_answer', t('amoOutNoAnswer')),
+        },
+        {
+          key: 'duration',
+          label: t('amoCallsDuration'),
+          hint: t('amoHintDuration'),
+          value: fmtDuration(calls.value.duration, t),
         },
       ],
     },
@@ -955,7 +1070,6 @@ const maxReasonCount = computed(() =>
   Math.max(1, ...(leads.value?.loss_reasons || []).map((r) => r.count)),
 )
 
-// "Bizniki emas" — shu ma'nodagi yo'qotish sabablari (amoCRM'da nomi har xil bo'lishi mumkin)
 // "Bizniki emas" ma'nosidagi sabablarni backend belgilaydi (is_not_ours)
 const isNotOurs = (r) => Boolean(r.is_not_ours)
 const notOursReasons = computed(() => (leads.value?.loss_reasons || []).filter(isNotOurs))
@@ -975,6 +1089,7 @@ const leadTiles = computed(() => {
       label: t('amoLeadsSum'),
       hint: t('amoHintLeadsSum'),
       value: fmtMoney(l.sum),
+      money: true,
     },
     {
       key: 'won',
@@ -1021,21 +1136,26 @@ const barWidth = (v, max) => (v ? `${Math.max(2, (v / max) * 100)}%` : '0')
 // Grafik ranglari (dataviz validator'dan o'tgan kategoriya juftligi)
 $c-answered: #2a78d6;
 $c-other: #eb6834;
-$c-bar: #2a78d6;
+$c-link: #2a78d6;
 $c-bad: #b91c1c;
 $c-warn: #b45309;
 $c-good: #15803d;
-$ink: #1f2937;
-$ink-2: #4b5563;
+$ink: #111827;
+$ink-2: #374151;
 $muted: #6b7280;
-$line: #eef0f3;
+$faint: #9ca3af;
+$line: #e5e7eb;
+$line-soft: #f1f3f5;
+$surface-2: #f8fafc;
+$radius: 10px;
 
 .amo {
   background: white;
   border-radius: 14px;
-  padding: 18px;
+  padding: 20px 22px 22px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   min-width: 0;
+  color: $ink-2;
 }
 
 button {
@@ -1043,47 +1163,101 @@ button {
   color: inherit;
 }
 
-.amo-head {
+/* ─── Sarlavha ─── */
+.amo-top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid $line;
 
   h3 {
     margin: 0;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
     color: $ink;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 }
-.amo-head__text {
+.amo-top__title {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
+.amo-top__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .amo-sync {
-  font-size: 12px;
-  color: $muted;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  font-size: 12px;
+  color: $muted;
+  &__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: $c-good;
+  }
+  &.is-busy .amo-sync__dot {
+    background: $c-link;
+    animation: amo-pulse 1s ease-in-out infinite;
+  }
   &.is-error {
     color: $c-warn;
+    .amo-sync__dot {
+      background: $c-warn;
+    }
   }
 }
-.amo-filters {
+@keyframes amo-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* ─── Filtrlar ─── */
+.amo-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
+  gap: 14px 28px;
+  align-items: flex-end;
+  margin: 16px 0;
+  padding: 12px 16px;
+  background: $surface-2;
+  border: 1px solid $line;
+  border-radius: $radius;
+}
+.amo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  &__label {
+    font-size: 11px;
+    font-weight: 600;
+    color: $muted;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
 }
 .amo-range {
   width: 240px !important;
 }
 .amo-user {
-  width: 190px;
+  width: 200px;
 }
 .amo-alert {
   margin-bottom: 12px;
@@ -1091,22 +1265,149 @@ button {
     white-space: pre-line;
   }
 }
-.amo-scope :deep(.el-radio-button__inner) {
-  display: inline-flex;
-  align-items: center;
+
+/* ─── Asosiy ko'rsatkichlar ─── */
+.amo-overview {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+  &--leads {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    margin-bottom: 16px;
+  }
 }
-.amo-excluded {
+.amo-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 16px;
+  background: white;
+  border: 1px solid $line;
+  border-radius: $radius;
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+  &.is-link {
+    cursor: pointer;
+    &:hover {
+      border-color: #bfdbfe;
+      box-shadow: 0 4px 12px rgba(42, 120, 214, 0.1);
+    }
+  }
+  &__label {
+    font-size: 12px;
+    line-height: 16px;
+    color: $muted;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    // 2 qatorlik yorliqda ham raqamlar bir tekisda tursin
+    min-height: 32px;
+    &::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      margin-top: 4px;
+      border-radius: 2px;
+      background: #cbd5e1;
+      flex-shrink: 0;
+    }
+  }
+  &.is-good &__label::before {
+    background: $c-good;
+  }
+  &.is-bad &__label::before {
+    background: $c-bad;
+  }
+  &.is-warn &__label::before {
+    background: $c-warn;
+  }
+  &__value {
+    font-size: 24px;
+    font-weight: 700;
+    color: $ink;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  &.is-bad &__value {
+    color: $c-bad;
+  }
+  &__sub {
+    font-size: 12px;
+    line-height: 16px;
+    color: $muted;
+    min-height: 32px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  &--sm &__value {
+    font-size: 20px;
+  }
+  // Katta summalar kesilmasin
+  &.is-money &__value {
+    font-size: 17px;
+    line-height: 1.35;
+    white-space: normal;
+  }
+}
+
+/* ─── Tablar ─── */
+.amo-tabs {
+  margin-top: 8px;
+  :deep(.el-tabs__header) {
+    margin-bottom: 16px;
+  }
+  :deep(.el-tabs__item) {
+    font-size: 14px;
+    font-weight: 600;
+    height: 44px;
+  }
+  :deep(.el-tab-pane) {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+.amo-subtabs :deep(.el-tabs__header) {
+  margin-bottom: 8px;
+}
+.amo-subtabs :deep(.el-tab-pane) {
+  display: block;
+}
+.amo-caption {
+  margin: -4px 0 0;
+  font-size: 12px;
+  color: $muted;
+}
+
+/* ─── Izoh qatori (hisobga olinmaganlar) ─── */
+.amo-note {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 10px;
-  margin: -4px 0 12px;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 10px;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  background: $surface-2;
+  border: 1px solid $line;
+  border-left: 3px solid $faint;
+  border-radius: 8px;
   font-size: 13px;
-  color: $ink-2;
+  &__icon {
+    color: $muted;
+  }
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
 }
 .amo-chip {
   border: 1px solid $line;
@@ -1115,210 +1416,172 @@ button {
   padding: 2px 10px;
   font-size: 12px;
   cursor: pointer;
-  &:hover {
-    border-color: #bfdbfe;
-    color: $c-bar;
-  }
-}
-.amo-src {
-  overflow-x: auto;
-}
-.amo-src__row {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(120px, 1.4fr) repeat(4, minmax(80px, 1fr));
-  gap: 10px;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid $line;
-  font-size: 13px;
-  &:last-child {
-    border-bottom: none;
-  }
-  &--head {
-    font-size: 12px;
-    color: $muted;
-    padding-top: 0;
-  }
-}
-.amo-src__name {
-  font-weight: 600;
-  color: $ink;
-}
-.amo-click-hint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 10px;
-  font-size: 12px;
-  color: $muted;
-}
-
-.amo-block {
-  margin-top: 8px;
-  & + & {
-    margin-top: 26px;
-    padding-top: 20px;
-    border-top: 1px solid $line;
-  }
-}
-.amo-block__head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px 14px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-  h4 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 600;
+  b {
+    margin-left: 2px;
     color: $ink;
   }
-}
-.amo-summary {
-  font-size: 13px;
-  color: $ink-2;
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.amo-dot {
-  color: #cbd5e1;
-  margin: 0 4px;
-}
-.amo-hint-text {
-  font-size: 12px;
-  color: $muted;
+  &:hover {
+    border-color: #bfdbfe;
+    color: $c-link;
+  }
 }
 
-// Bosiladigan son
+/* ─── Panellar ─── */
+.amo-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+  &--leads {
+    grid-template-columns: 3fr 2fr;
+  }
+}
+.amo-panel {
+  border: 1px solid $line;
+  border-radius: $radius;
+  background: white;
+  min-width: 0;
+  padding: 0 16px 16px;
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-height: 48px;
+    margin: 0 -16px 14px;
+    padding: 0 16px;
+    border-bottom: 1px solid $line-soft;
+    h4 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: $ink;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+  &__meta {
+    font-size: 12px;
+    color: $muted;
+    b {
+      color: $ink;
+    }
+  }
+}
+.amo-dir-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  &.is-in {
+    background: #eff6ff;
+    color: $c-link;
+  }
+  &.is-out {
+    background: #f0fdf4;
+    color: $c-good;
+  }
+}
+
+/* Ta'rif ro'yxati: yorliq ... qiymat */
+.amo-dl {
+  margin: 0 0 14px;
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed $line;
+    font-size: 13px;
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+  dt {
+    color: $ink-2;
+    min-width: 0;
+  }
+  dd {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    white-space: nowrap;
+    b {
+      font-weight: 700;
+      color: $ink;
+      font-variant-numeric: tabular-nums;
+    }
+    small {
+      min-width: 34px;
+      text-align: right;
+      font-size: 12px;
+      color: $muted;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+.amo-sub {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: $muted;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.amo-empty {
+  font-size: 13px;
+  color: $muted;
+  padding: 20px 0;
+  text-align: center;
+}
+.amo-muted {
+  color: $faint;
+}
+
+/* Bosiladigan son */
 .amo-num {
   background: none;
   border: none;
-  padding: 0 2px;
+  padding: 0;
   font-weight: 700;
-  color: $c-bar;
+  color: $c-link;
   cursor: pointer;
   border-bottom: 1px dashed currentColor;
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
   &.is-bad {
     color: $c-bad;
   }
+  &.is-good {
+    color: $c-good;
+  }
+  &.is-warn {
+    color: $c-warn;
+  }
   &.is-muted {
     color: $muted;
+  }
+  &--lg {
+    font-size: 20px;
+    color: $ink;
+    border-bottom-color: $faint;
   }
   &:hover {
     border-bottom-style: solid;
   }
 }
-
-.is-link {
-  cursor: pointer;
-}
 .is-link:focus-visible,
-.amo-num:focus-visible {
-  outline: 2px solid $c-bar;
+.amo-num:focus-visible,
+.amo-chip:focus-visible {
+  outline: 2px solid $c-link;
   outline-offset: 2px;
-}
-
-/* KPI */
-.amo-kpis {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 8px;
-  margin-bottom: 14px;
-}
-.amo-kpi {
-  background: #f8fafc;
-  border: 1px solid $line;
-  border-left: 3px solid #cbd5e1;
-  border-radius: 10px;
-  padding: 10px 12px;
-  text-align: left;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-  &.is-link:hover {
-    border-color: #bfdbfe;
-    box-shadow: 0 2px 8px rgba(42, 120, 214, 0.12);
-  }
-  &--good {
-    border-left-color: $c-good;
-  }
-  &--bad {
-    border-left-color: $c-bad;
-    .amo-kpi__value {
-      color: $c-bad;
-    }
-  }
-  &--warn {
-    border-left-color: $c-warn;
-  }
-}
-.amo-kpi__value {
-  font-size: 20px;
-  font-weight: 700;
-  color: $ink;
-  line-height: 1.2;
-  font-variant-numeric: tabular-nums;
-  small {
-    font-size: 12px;
-    font-weight: 500;
-    color: $muted;
-    margin-left: 2px;
-  }
-}
-.amo-kpi__label {
-  font-size: 12px;
-  color: $muted;
-  margin-top: 3px;
-}
-
-/* Kartochkalar */
-.amo-dir-grid,
-.amo-leads-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  align-items: start;
-}
-.amo-leads-grid {
-  grid-template-columns: 3fr 2fr;
-}
-.amo-card {
-  border: 1px solid $line;
-  border-radius: 12px;
-  padding: 14px;
-  min-width: 0;
-}
-.amo-gap {
-  margin-top: 12px;
-}
-.amo-card__title {
-  font-size: 14px;
-  font-weight: 600;
-  color: $ink;
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.amo-sub {
-  font-size: 12px;
-  font-weight: 600;
-  color: $ink-2;
-  margin: 4px 0 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.amo-empty {
-  font-size: 13px;
-  color: $muted;
-  padding: 18px 0;
-  text-align: center;
 }
 
 /* Gorizontal barlar */
@@ -1331,23 +1594,24 @@ button {
   display: grid;
   grid-template-columns: minmax(140px, 1.3fr) 1fr auto;
   align-items: center;
-  gap: 10px;
-  padding: 6px 6px;
-  margin: 0 -6px;
+  gap: 12px;
+  padding: 7px 8px;
+  margin: 0 -8px;
   border: none;
   background: none;
   border-radius: 6px;
   text-align: left;
-  &.is-link:hover {
-    background: #f1f5f9;
+  &.is-link {
+    cursor: pointer;
+    &:hover {
+      background: $surface-2;
+    }
   }
 }
 .amo-bar-row__label {
   font-size: 13px;
   color: $ink-2;
-  &.is-bad {
-    color: $ink;
-  }
+  min-width: 0;
   &.is-strong {
     font-weight: 600;
     color: $ink;
@@ -1355,15 +1619,15 @@ button {
 }
 .amo-bar-row__track {
   display: block;
-  height: 10px;
-  background: #f1f3f5;
+  height: 8px;
+  background: $line-soft;
   border-radius: 4px;
   overflow: hidden;
 }
 .amo-bar-row__fill {
   display: block;
   height: 100%;
-  background: $c-bar;
+  background: $c-answered;
   border-radius: 0 4px 4px 0;
   transition: width 0.3s ease;
   &.is-bad {
@@ -1374,7 +1638,7 @@ button {
   font-size: 13px;
   font-weight: 600;
   color: $ink;
-  min-width: 72px;
+  min-width: 76px;
   text-align: right;
   font-variant-numeric: tabular-nums;
   small {
@@ -1383,18 +1647,27 @@ button {
   }
 }
 
-/* Kunlik grafik */
+/* Jadvallar */
+.amo-table {
+  :deep(th.el-table__cell) {
+    background: $surface-2;
+    color: $muted;
+    font-weight: 600;
+    font-size: 12px;
+  }
+}
+
+/* Grafik */
 .amo-legend {
   display: inline-flex;
-  gap: 12px;
+  gap: 14px;
   font-size: 12px;
-  font-weight: 400;
   color: $muted;
 }
 .amo-legend__item {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 .sw {
   width: 10px;
@@ -1413,8 +1686,8 @@ button {
   display: flex;
   align-items: stretch;
   gap: 2px;
-  height: 190px;
-  padding-bottom: 18px;
+  height: 200px;
+  padding-bottom: 20px;
   border-bottom: 1px solid $line;
 }
 .amo-trend__col {
@@ -1438,7 +1711,7 @@ button {
   gap: 2px;
   border-radius: 4px 4px 0 0;
   &.is-hover {
-    background: #f1f5f9;
+    background: $surface-2;
   }
 }
 .amo-trend__seg {
@@ -1461,10 +1734,10 @@ button {
 }
 .amo-trend__label {
   position: absolute;
-  bottom: -18px;
+  bottom: -20px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 10px;
+  font-size: 11px;
   color: $muted;
   white-space: nowrap;
 }
@@ -1487,36 +1760,39 @@ button {
 }
 
 /* Voronka bosqichlari */
-.amo-stage-head,
 .amo-stage {
   display: grid;
   grid-template-columns: minmax(150px, 220px) 1fr 60px minmax(110px, 150px);
   gap: 12px;
   align-items: center;
-}
-.amo-stage-head {
-  font-size: 12px;
-  color: $muted;
-  padding: 0 6px 6px;
-  border-bottom: 1px solid $line;
-}
-.amo-stage {
   width: 100%;
   padding: 9px 6px;
   border: none;
-  border-bottom: 1px solid $line;
+  border-bottom: 1px solid $line-soft;
   background: none;
   font-size: 13px;
   text-align: left;
   &:last-child {
     border-bottom: none;
   }
-  &.is-link:hover:not(:disabled) {
-    background: #f1f5f9;
+  &.is-link {
+    cursor: pointer;
+    &:hover:not(:disabled) {
+      background: $surface-2;
+    }
   }
   &:disabled {
     cursor: default;
-    opacity: 0.6;
+    opacity: 0.55;
+  }
+  &--head {
+    font-size: 11px;
+    font-weight: 600;
+    color: $muted;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding-top: 0;
+    border-bottom-color: $line;
   }
 }
 .amo-stage__name {
@@ -1543,25 +1819,40 @@ button {
   font-weight: 400;
   color: $ink-2;
 }
-.amo-stage-head .num {
-  font-weight: 400;
+.amo-stage--head .num {
+  font-weight: 600;
   color: $muted;
 }
 
+/* ─── Moslashuvchanlik ─── */
+@media (max-width: 1280px) {
+  .amo-overview {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 @media (max-width: 1100px) {
-  .amo-dir-grid,
-  .amo-leads-grid {
+  .amo-grid-2,
+  .amo-grid-2--leads {
     grid-template-columns: 1fr;
   }
 }
-
 @media (max-width: 900px) {
-  .amo-head {
+  .amo {
+    padding: 16px;
+  }
+  .amo-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
-  .amo-head > * {
-    min-width: 0;
+  .amo-field {
+    width: 100%;
+    max-width: 100%;
+  }
+  .amo-field__row {
+    width: 100%;
+  }
+  .amo-field__row > * {
     max-width: 100%;
   }
   .amo-range,
@@ -1570,15 +1861,12 @@ button {
     flex: 1 1 100%;
     box-sizing: border-box;
   }
+  .amo-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .amo-bar-row {
     grid-template-columns: minmax(110px, 1.2fr) 0.8fr auto;
   }
-  .amo-src__row {
-    grid-template-columns: minmax(72px, 1.1fr) repeat(4, minmax(40px, 1fr));
-    gap: 4px;
-    font-size: 12px;
-  }
-  .amo-stage-head,
   .amo-stage {
     grid-template-columns: 1fr 50px minmax(90px, 120px);
     & > :nth-child(2) {

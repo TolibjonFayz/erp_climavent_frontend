@@ -1581,5 +1581,15 @@
   "amoExcludedTab": "Belgilangan raqamlar",
   "amoAddNumber": "Raqam qo'shish",
   "amoExcludedEmpty": "Hali hech qanday raqam belgilanmagan",
-  "amoColMarkedBy": "Kim belgilagan"
+  "amoColMarkedBy": "Kim belgilagan",
+  "amoFilterPeriod": "Davr",
+  "amoFilterManager": "Menejer",
+  "amoFilterScope": "Qo'ng'iroqlar",
+  "amoTabCalls": "Qo'ng'iroqlar",
+  "amoTabManagers": "Menejerlar",
+  "amoTabLeads": "Lidlar",
+  "amoTrendTitle": "Dinamika",
+  "amoOfCalls": "barcha qo'ng'iroqlarning {pct}%",
+  "amoOfIncoming": "kiruvchilarning {pct}%",
+  "amoNumbersOf": "{n} ta o'tkazib yuborilgan raqamdan"
 }

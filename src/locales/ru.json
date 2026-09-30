@@ -1579,5 +1579,15 @@
   "amoExcludedTab": "Отмеченные номера",
   "amoAddNumber": "Добавить номер",
   "amoExcludedEmpty": "Пока ни один номер не отмечен",
-  "amoColMarkedBy": "Кто отметил"
+  "amoColMarkedBy": "Кто отметил",
+  "amoFilterPeriod": "Период",
+  "amoFilterManager": "Менеджер",
+  "amoFilterScope": "Звонки",
+  "amoTabCalls": "Звонки",
+  "amoTabManagers": "Менеджеры",
+  "amoTabLeads": "Сделки",
+  "amoTrendTitle": "Динамика",
+  "amoOfCalls": "{pct}% от всех звонков",
+  "amoOfIncoming": "{pct}% входящих",
+  "amoNumbersOf": "из {n} пропущенных номеров"
 }
