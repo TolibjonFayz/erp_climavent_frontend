@@ -1605,5 +1605,20 @@
   "custNothingFound": "Filtrga mos mijoz topilmadi",
   "custFormMain": "Asosiy ma'lumot",
   "custFormAddress": "Manzil",
-  "custNoNote": "Izoh yozilmagan"
+  "custNoNote": "Izoh yozilmagan",
+  "uiDayShort": "kun",
+  "siteTotal": "Jami tashriflar",
+  "siteWithContract": "{n} tasida shartnoma yoki KP",
+  "siteHintAdded": "Shu davrda kiritilgan tashriflar soni.",
+  "siteAdded": "kiritilgan tashrif",
+  "siteSearchPh": "Obyekt, kompaniya yoki joylashuv",
+  "siteVisits": "Tashriflar",
+  "siteNotBack": "Kiritilmagan",
+  "siteVisitInfo": "Tashrif ma'lumoti",
+  "siteDuration": "Davomiyligi",
+  "siteUploadHint": "Rasm va video, har biri 200 MB gacha, 10 tagacha",
+  "siteFilesSelected": "{n} ta fayl tanlandi",
+  "siteFormFooterHint": "Saqlanadigan obyektlar: {n} ta",
+  "compSubtitle": "Raqobatchilar narxlari, mahsulotlari va faoliyati",
+  "compSoonTitle": "Raqiblar bo'limi tayyorlanmoqda"
 }

@@ -307,7 +307,6 @@ const getCurrentLocation = () => {
         )
 
         if (distance > 10) {
-
           // Update marker position
           if (marker) {
             marker.setLngLat([longitude, latitude])
@@ -318,8 +317,7 @@ const getCurrentLocation = () => {
         }
       }
     },
-    (error) => {
-    },
+    (error) => {},
     {
       enableHighAccuracy: true,
       timeout: 5000,
@@ -732,7 +730,6 @@ defineExpose({
 <style scoped>
 .location-picker {
   width: 100%;
-  max-width: 800px;
   margin: 0 auto;
 }
 

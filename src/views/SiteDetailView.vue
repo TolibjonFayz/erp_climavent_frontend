@@ -1,9 +1,10 @@
 <template>
-  <TheSidebar active-path="sites" />
-  <SiteMediaUpload />
+  <AppLayout active="sites">
+    <SiteMediaUpload />
+  </AppLayout>
 </template>
 
 <script setup>
-import TheSidebar from '@/components/layout/TheSidebar.vue'
+import AppLayout from '@/components/layout/AppLayout.vue'
 import SiteMediaUpload from '@/components/sites/SiteMediaUpload.vue'
 </script>

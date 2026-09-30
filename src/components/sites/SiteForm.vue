@@ -1,216 +1,196 @@
 <template>
-  <div class="container">
-    <div class="header-row">
-      <el-icon @click="goback()"><Back /></el-icon>
-      <h2>{{ $t('yangiObyektQoshish') }}</h2>
-    </div>
+  <UiPage>
+    <template #title>
+      <el-button class="sf-back" link :icon="ArrowLeft" @click="goback()">
+        {{ $t('yaqindaBorilganObyektlar') }}
+      </el-button>
+      <h1 class="sf-title">{{ $t('yangiObyektQoshish') }}</h1>
+    </template>
 
-    <el-form :model="form" :rules="formRules" ref="formRef" class="form">
-      <div class="form-section-title">{{ $t('asosiyObyekt') }}</div>
+    <UiPanel :title="$t('asosiyObyekt')" :icon="Location">
+      <el-form :model="form" :rules="formRules" ref="formRef" label-position="top" class="sf-form">
+        <el-form-item
+          label-position="top"
+          :label="$t('obyektgaKetishVaqti')"
+          prop="goingtime"
+          required
+        >
+          <el-config-provider :locale="locale">
+            <div class="datetime-split">
+              <el-date-picker
+                v-model="goingDate"
+                type="date"
+                :placeholder="$t('vaqtniTanlang')"
+                :disabled-date="disabledDate"
+                format="YYYY-MM-DD"
+              />
+              <el-time-picker v-model="goingTime" format="HH:mm" :placeholder="$t('soatminut')" />
+            </div>
+          </el-config-provider>
+        </el-form-item>
 
-      <el-form-item
-        label-position="top"
-        :label="$t('obyektgaKetishVaqti')"
-        prop="goingtime"
-        required
-      >
-        <el-config-provider :locale="locale">
-          <div class="datetime-split">
+        <el-form-item :label="$t('qayerga')" prop="where" required>
+          <el-select v-model="form.where" :placeholder="$t('tanlang')">
+            <el-option :label="$t('zavod')" value="Zavod" />
+            <el-option :label="$t('klient')" value="Klient" />
+            <el-option :label="$t('shaxsiy')" value="Shaxsiy" />
+            <el-option :label="$t('boshqa')" value="boshqa" />
+          </el-select>
+          <el-input
+            v-if="isWhereBoshqa"
+            class="sf-other"
+            v-model="form.whereother"
+            :placeholder="$t('whereotherplaceholder')"
+          />
+        </el-form-item>
+
+        <el-form-item :label="$t('kpYokiDogovor')" prop="dogovororkp" required>
+          <el-select v-model="form.dogovororkp" :placeholder="$t('tanlang')">
+            <el-option :label="$t('kp')" value="KP" />
+            <el-option :label="$t('dogovor')" value="Dogovor" />
+            <el-option :label="$t('boshqa')" value="boshqa" />
+          </el-select>
+          <el-input
+            v-if="isDogoKpNotSelected"
+            class="sf-other"
+            :rows="2"
+            v-model="form.dogokpother"
+            :placeholder="$t('whereother2placeholder')"
+            type="textarea"
+          />
+        </el-form-item>
+
+        <el-form-item
+          :label="$t('dogovorRaqami')"
+          v-if="isDogovorSelected"
+          prop="dogovornumber"
+          required
+        >
+          <el-input v-model="form.dogovornumber" :placeholder="$t('Kiriting')" />
+        </el-form-item>
+
+        <el-form-item :label="$t('kpRaqami')" v-if="isKPSelected" prop="kpnumber" required>
+          <el-input v-model="form.kpnumber" :placeholder="$t('Kiriting')" />
+        </el-form-item>
+
+        <el-form-item
+          v-if="isDogovorSelected"
+          :label="$t('dogovorSanasi')"
+          prop="dogovortime"
+          required
+        >
+          <el-config-provider :locale="locale">
             <el-date-picker
-              v-model="goingDate"
+              v-model="form.dogovortime"
               type="date"
               :placeholder="$t('vaqtniTanlang')"
-              :disabled-date="disabledDate"
-              format="YYYY-MM-DD"
-              class="full-width-picker"
+              size="default"
             />
-            <el-time-picker
-              v-model="goingTime"
-              format="HH:mm"
-              :placeholder="$t('soatminut')"
-              class="full-width-picker"
+          </el-config-provider>
+        </el-form-item>
+
+        <el-form-item v-if="isKPSelected" :label="$t('kpSanasi')" prop="kptime" required>
+          <el-config-provider :locale="locale">
+            <el-date-picker
+              v-model="form.kptime"
+              type="date"
+              :placeholder="$t('vaqtniTanlang')"
+              size="default"
             />
-          </div>
-        </el-config-provider>
-      </el-form-item>
+          </el-config-provider>
+        </el-form-item>
 
-      <el-form-item :label="$t('qayerga')" prop="where" required>
-        <el-select v-model="form.where" :placeholder="$t('tanlang')" class="full-width-select">
-          <el-option :label="$t('zavod')" value="Zavod" />
-          <el-option :label="$t('klient')" value="Klient" />
-          <el-option :label="$t('shaxsiy')" value="Shaxsiy" />
-          <el-option :label="$t('boshqa')" value="boshqa" />
-        </el-select>
-        <el-input
-          v-if="isWhereBoshqa"
-          class="whereotherinput"
-          v-model="form.whereother"
-          :placeholder="$t('whereotherplaceholder')"
-        />
-      </el-form-item>
-
-      <el-form-item :label="$t('kpYokiDogovor')" prop="dogovororkp" required>
-        <el-select
-          v-model="form.dogovororkp"
-          :placeholder="$t('tanlang')"
-          class="full-width-select"
+        <el-form-item
+          v-if="isKPSelected || isDogovorSelected"
+          :label="$t('firmaNomi')"
+          prop="firmanomi"
+          required
         >
-          <el-option :label="$t('kp')" value="KP" />
-          <el-option :label="$t('dogovor')" value="Dogovor" />
-          <el-option :label="$t('boshqa')" value="boshqa" />
-        </el-select>
-        <el-input
-          v-if="isDogoKpNotSelected"
-          class="whereotherinput"
-          :rows="2"
-          v-model="form.dogokpother"
-          :placeholder="$t('whereother2placeholder')"
-          type="textarea"
+          <el-input v-model="form.firmanomi" :placeholder="$t('Kiriting')" />
+        </el-form-item>
+
+        <el-form-item prop="location" class="sf-full sf-loc-label">
+          <template #label>
+            <span>{{ $t('obyektjoylashuvinikiriting') }}</span>
+          </template>
+        </el-form-item>
+        <LocationPicker
+          class="sf-full"
+          :access-token="Mapboxtoken"
+          :initial-center="{ lng: -74.006, lat: 40.7128 }"
+          :initial-zoom="12"
+          @location-selected="handleLocationSelected"
+          @current-location="handleLocationSelected"
+          @link-parsed="handleLocationSelected"
         />
-      </el-form-item>
-
-      <el-form-item
-        :label="$t('dogovorRaqami')"
-        v-if="isDogovorSelected"
-        prop="dogovornumber"
-        required
-      >
-        <el-input
-          v-model="form.dogovornumber"
-          :placeholder="$t('Kiriting')"
-          class="full-width-input"
-        />
-      </el-form-item>
-
-      <el-form-item :label="$t('kpRaqami')" v-if="isKPSelected" prop="kpnumber" required>
-        <el-input v-model="form.kpnumber" :placeholder="$t('Kiriting')" class="full-width-input" />
-      </el-form-item>
-
-      <el-form-item
-        v-if="isDogovorSelected"
-        :label="$t('dogovorSanasi')"
-        prop="dogovortime"
-        required
-      >
-        <el-config-provider :locale="locale">
-          <el-date-picker
-            v-model="form.dogovortime"
-            type="date"
-            :placeholder="$t('vaqtniTanlang')"
-            size="default"
-            class="full-width-picker"
+        <el-form-item class="sf-full" :label="$t('qoshimchamalumotlarUchunJoy')">
+          <el-input
+            :rows="5"
+            v-model="form.more_info"
+            :placeholder="$t('qoshimchamalumotlarUchunJoy')"
+            type="textarea"
           />
-        </el-config-provider>
-      </el-form-item>
+        </el-form-item>
 
-      <el-form-item v-if="isKPSelected" :label="$t('kpSanasi')" prop="kptime" required>
-        <el-config-provider :locale="locale">
-          <el-date-picker
-            v-model="form.kptime"
-            type="date"
-            :placeholder="$t('vaqtniTanlang')"
-            size="default"
-            class="full-width-picker"
-          />
-        </el-config-provider>
-      </el-form-item>
+        <!-- Rasm va videolar -->
+        <div class="sf-full sf-media">
+          <h4 class="sf-sub">
+            {{ $t('rasmvavideolar') }}
+            <span class="sf-sub__hint">{{ $t('obyektgaRasmVaVideolar') }}</span>
+          </h4>
 
-      <el-form-item
-        v-if="isKPSelected || isDogovorSelected"
-        :label="$t('firmaNomi')"
-        prop="firmanomi"
-        required
-      >
-        <el-input v-model="form.firmanomi" :placeholder="$t('Kiriting')" class="full-width-input" />
-      </el-form-item>
+          <el-upload
+            ref="uploadRef"
+            class="sf-upload"
+            drag
+            :action="cloudinaryUrl"
+            :data="uploadData"
+            multiple
+            :auto-upload="false"
+            :before-upload="beforeUpload"
+            :on-success="handleUploadSuccess"
+            :on-error="handleUploadError"
+            :accept="acceptedTypes"
+            list-type="picture-card"
+            :limit="10"
+            v-model:file-list="mediaFileList"
+          >
+            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+            <div class="el-upload__text">
+              {{ $t('mediauloadbtn') }}
+              <template v-if="mediaFileList.length > 0">
+                <br />
+                <span class="sf-file-count">
+                  {{ $t('siteFilesSelected', { n: mediaFileList.length }) }}
+                </span>
+              </template>
+            </div>
+          </el-upload>
 
-      <el-form-item prop="location">
-        <template #label>
-          <span class="location-picker-label">{{ $t('obyektjoylashuvinikiriting') }} 👇</span>
-        </template>
-      </el-form-item>
-      <LocationPicker
-        :access-token="Mapboxtoken"
-        :initial-center="{ lng: -74.006, lat: 40.7128 }"
-        :initial-zoom="12"
-        @location-selected="handleLocationSelected"
-        @current-location="handleLocationSelected"
-        @link-parsed="handleLocationSelected"
-      />
-      <br />
-      <el-form-item label-position="top" :label="$t('qoshimchamalumotlarUchunJoy')">
-        <el-input
-          class="more-info-input"
-          :rows="5"
-          v-model="form.more_info"
-          :placeholder="$t('qoshimchamalumotlarUchunJoy')"
-          type="textarea"
-        />
-      </el-form-item>
-
-      <!-- MEDIA UPLOAD SECTION - INTEGRATED -->
-      <div class="upload-media-section">
-        <div class="section-header">
-          <h3>{{ $t('rasmvavideolar') }}</h3>
-          <p class="section-description">{{ $t('obyektgaRasmVaVideolar') }}</p>
+          <p class="sf-hint">{{ $t('siteUploadHint') }}</p>
         </div>
-
-        <el-upload
-          ref="uploadRef"
-          class="upload-area"
-          drag
-          :action="cloudinaryUrl"
-          :data="uploadData"
-          multiple
-          :auto-upload="false"
-          :before-upload="beforeUpload"
-          :on-success="handleUploadSuccess"
-          :on-error="handleUploadError"
-          :accept="acceptedTypes"
-          list-type="picture-card"
-          :limit="10"
-          v-model:file-list="mediaFileList"
-        >
-          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-          <div class="el-upload__text">
-            {{ $t('mediauloadbtn') }}
-            <template v-if="mediaFileList.length > 0">
-              <br />
-              <span class="file-count">{{ mediaFileList.length }} fayl tanlandi</span>
-            </template>
-          </div>
-        </el-upload>
-
-        <div v-if="mediaFileList.length > 0" class="upload-info">
-          <el-alert
-            :title="`${mediaFileList.length} ta fayl yuklashga tayyor`"
-            type="info"
-            :closable="false"
-            show-icon
-          />
-        </div>
-      </div>
-    </el-form>
+      </el-form>
+    </UiPanel>
 
     <!-- QO'SHIMCHA OBYEKTLAR -->
-    <div v-for="(obj, index) in additionalObjects" :key="index" class="additional-object-section">
+    <UiPanel
+      v-for="(obj, index) in additionalObjects"
+      :key="index"
+      :title="`${$t('qoshimchaObyekt')} #${index + 1}`"
+      :icon="Location"
+    >
+      <template #actions>
+        <el-button type="danger" link :icon="Delete" @click="removeAdditionalObject(index)">
+          {{ $t('delete') }}
+        </el-button>
+      </template>
       <el-form
         :model="obj"
         :rules="getAdditionalFormRules(obj)"
         :ref="(el) => setAdditionalFormRef(el, index)"
-        class="form"
+        label-position="top"
+        class="sf-form"
       >
-        <div class="form-section-header">
-          <div class="form-section-title">{{ $t('qoshimchaObyekt') }} #{{ index + 1 }}</div>
-          <el-button
-            type="danger"
-            size="small"
-            :icon="Delete"
-            circle
-            @click="removeAdditionalObject(index)"
-          />
-        </div>
-
         <el-form-item
           label-position="top"
           :label="$t('obyektgaKetishVaqti')"
@@ -225,14 +205,12 @@
                 :placeholder="$t('vaqtniTanlang')"
                 :disabled-date="disabledDate"
                 format="YYYY-MM-DD"
-                class="full-width-picker"
                 @change="syncAdditionalGoingTime(index, obj)"
               />
               <el-time-picker
                 v-model="obj.goingTime"
                 format="HH:mm"
                 :placeholder="$t('soatminut')"
-                class="full-width-picker"
                 @change="syncAdditionalGoingTime(index, obj)"
               />
             </div>
@@ -240,7 +218,7 @@
         </el-form-item>
 
         <el-form-item :label="$t('qayerga')" prop="where" required>
-          <el-select v-model="obj.where" :placeholder="$t('tanlang')" class="full-width-select">
+          <el-select v-model="obj.where" :placeholder="$t('tanlang')">
             <el-option :label="$t('zavod')" value="Zavod" />
             <el-option :label="$t('klient')" value="Klient" />
             <el-option :label="$t('shaxsiy')" value="Shaxsiy" />
@@ -248,25 +226,21 @@
           </el-select>
           <el-input
             v-if="obj.where === 'boshqa'"
-            class="whereotherinput"
+            class="sf-other"
             v-model="obj.whereother"
             :placeholder="$t('whereotherplaceholder')"
           />
         </el-form-item>
 
         <el-form-item :label="$t('kpYokiDogovor')" prop="dogovororkp" required>
-          <el-select
-            v-model="obj.dogovororkp"
-            :placeholder="$t('tanlang')"
-            class="full-width-select"
-          >
+          <el-select v-model="obj.dogovororkp" :placeholder="$t('tanlang')">
             <el-option :label="$t('kp')" value="KP" />
             <el-option :label="$t('dogovor')" value="Dogovor" />
             <el-option :label="$t('boshqa')" value="boshqa" />
           </el-select>
           <el-input
             v-if="obj.dogovororkp === 'boshqa'"
-            class="whereotherinput"
+            class="sf-other"
             :rows="2"
             v-model="obj.dogokpother"
             :placeholder="$t('whereother2placeholder')"
@@ -280,11 +254,7 @@
           prop="dogovornumber"
           required
         >
-          <el-input
-            v-model="obj.dogovornumber"
-            :placeholder="$t('Kiriting')"
-            class="full-width-input"
-          />
+          <el-input v-model="obj.dogovornumber" :placeholder="$t('Kiriting')" />
         </el-form-item>
 
         <el-form-item
@@ -293,7 +263,7 @@
           prop="kpnumber"
           required
         >
-          <el-input v-model="obj.kpnumber" :placeholder="$t('Kiriting')" class="full-width-input" />
+          <el-input v-model="obj.kpnumber" :placeholder="$t('Kiriting')" />
         </el-form-item>
 
         <el-form-item
@@ -308,7 +278,6 @@
               type="date"
               :placeholder="$t('vaqtniTanlang')"
               size="default"
-              class="full-width-picker"
             />
           </el-config-provider>
         </el-form-item>
@@ -325,7 +294,6 @@
               type="date"
               :placeholder="$t('vaqtniTanlang')"
               size="default"
-              class="full-width-picker"
             />
           </el-config-provider>
         </el-form-item>
@@ -336,19 +304,16 @@
           prop="firmanomi"
           required
         >
-          <el-input
-            v-model="obj.firmanomi"
-            :placeholder="$t('Kiriting')"
-            class="full-width-input"
-          />
+          <el-input v-model="obj.firmanomi" :placeholder="$t('Kiriting')" />
         </el-form-item>
 
-        <el-form-item prop="location" required>
+        <el-form-item prop="location" required class="sf-full sf-loc-label">
           <template #label>
-            <span class="location-picker-label">{{ $t('obyektjoylashuvinikiriting') }} 👇</span>
+            <span>{{ $t('obyektjoylashuvinikiriting') }}</span>
           </template>
         </el-form-item>
         <LocationPicker
+          class="sf-full"
           :access-token="Mapboxtoken"
           :initial-center="{ lng: -74.006, lat: 40.7128 }"
           :initial-zoom="12"
@@ -356,11 +321,8 @@
           @current-location="(location) => handleAdditionalLocationSelected(index, location)"
           @link-parsed="(location) => handleAdditionalLocationSelected(index, location)"
         />
-
-        <br />
-        <el-form-item label-position="top" :label="$t('qoshimchamalumotlarUchunJoy')">
+        <el-form-item class="sf-full" :label="$t('qoshimchamalumotlarUchunJoy')">
           <el-input
-            class="more-info-input"
             :rows="3"
             v-model="obj.more_info"
             :placeholder="$t('qoshimchamalumotlarUchunJoy')"
@@ -368,23 +330,31 @@
           />
         </el-form-item>
       </el-form>
-    </div>
+    </UiPanel>
 
-    <!-- QO'SHISH TUGMASI -->
-    <div class="add-button-container" v-if="additionalObjects.length < 5">
-      <el-button type="success" plain @click="addAdditionalObject" class="add-button">
-        <el-icon style="margin-right: 8px"><Plus /></el-icon>
-        <span class="button-text">{{ $t('yangiObyektQoshishBtn') }}</span>
-        <span class="button-text-short">Qo'shimcha obyekt</span>
-      </el-button>
-    </div>
+    <!-- Qo'shimcha obyekt qo'shish (5 tagacha) -->
+    <button
+      v-if="additionalObjects.length < 5"
+      type="button"
+      class="sf-add"
+      @click="addAdditionalObject"
+    >
+      <el-icon><Plus /></el-icon>
+      {{ $t('yangiObyektQoshishBtn') }}
+      <span class="sf-add__hint">{{ additionalObjects.length }}/5</span>
+    </button>
 
-    <!-- SAQLASH VA ORTGA TUGMALARI -->
-    <div class="button-group-container">
-      <el-button :loading="loading" type="primary" @click="onSubmit">{{ $t('save') }}</el-button>
-      <el-button type="warning" plain @click="goback()">{{ $t('cancel') }}</el-button>
+    <!-- Saqlash paneli -->
+    <div class="sf-footer">
+      <span class="sf-hint">{{
+        $t('siteFormFooterHint', { n: additionalObjects.length + 1 })
+      }}</span>
+      <div class="sf-footer__actions">
+        <el-button @click="goback()">{{ $t('cancel') }}</el-button>
+        <el-button :loading="loading" type="primary" @click="onSubmit">{{ $t('save') }}</el-button>
+      </div>
     </div>
-  </div>
+  </UiPage>
 </template>
 
 <script setup>
@@ -396,7 +366,9 @@ import { UploadFilled } from '@element-plus/icons-vue'
 import ru from 'element-plus/dist/locale/ru.mjs'
 import { reactive, ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Delete, Plus } from '@element-plus/icons-vue'
+import { ArrowLeft, Delete, Location, Plus } from '@element-plus/icons-vue'
+import UiPage from '@/components/ui/UiPage.vue'
+import UiPanel from '@/components/ui/UiPanel.vue'
 import router from '@/router'
 
 const comeandgoesStore = useComeAndGoesStore()
@@ -612,7 +584,6 @@ const disabledDate = (time) => {
 }
 
 const beforeUpload = (file) => {
-
   const isValidType = [
     'image/jpeg',
     'image/png',
@@ -640,7 +611,6 @@ const beforeUpload = (file) => {
 }
 
 const handleUploadSuccess = (response, file) => {
-
   const mediaData = {
     url: response.secure_url,
     public_id: response.public_id,
@@ -661,7 +631,6 @@ const handleUploadError = (error, file) => {
 }
 
 const uploadMediaToDatabase = async (comeAndGoId) => {
-
   if (uploadedMediaData.value.length === 0) {
     return { success: true, count: 0 }
   }
@@ -675,15 +644,12 @@ const uploadMediaToDatabase = async (comeAndGoId) => {
         comeandgo_id: comeAndGoId,
       }
 
-
       const result = await videosStore.createVideo(payload)
-
 
       return result
     })
 
     await Promise.all(savePromises)
-
 
     return {
       success: true,
@@ -712,7 +678,6 @@ const createInsidePayload = (obj) => {
 }
 
 const onSubmit = async () => {
-
   let isMainFormValid = false
   try {
     await formRef.value.validate()
@@ -723,7 +688,6 @@ const onSubmit = async () => {
   }
 
   if (additionalObjects.value.length > 0) {
-
     for (let i = 0; i < additionalFormRefs.value.length; i++) {
       if (!additionalFormRefs.value[i]) {
         console.warn(`⚠️ Form ref ${i} is null`)
@@ -744,7 +708,6 @@ const onSubmit = async () => {
   loading.value = true
 
   try {
-
     const parentPayload = {
       user_id: Number(localStorage.getItem('userid')),
     }
@@ -752,11 +715,9 @@ const onSubmit = async () => {
 
     const comeAndGoId = parentResponse?.newCGO?.id
 
-
     if (!comeAndGoId) {
       throw new Error('ComeAndGoes ID olinmadi')
     }
-
 
     const mainInsidePayload = {
       ...createInsidePayload(form),
@@ -764,9 +725,7 @@ const onSubmit = async () => {
     }
     await comeandgoInsideStore.createComeAndGoInside(mainInsidePayload)
 
-
     if (additionalObjects.value.length > 0) {
-
       for (let i = 0; i < additionalObjects.value.length; i++) {
         const additionalInsidePayload = {
           ...createInsidePayload(additionalObjects.value[i]),
@@ -779,7 +738,6 @@ const onSubmit = async () => {
     let mediaUploadCount = 0
 
     if (mediaFileList.value.length > 0) {
-
       uploadedMediaData.value = []
 
       if (uploadRef.value) {
@@ -859,464 +817,169 @@ watch(
 )
 </script>
 
-<style scoped lang="scss">
-:deep(.el-form-item.is-required:not(.is-no-asterisk)) {
-  > .el-form-item__label:before {
-    content: '*';
-    color: var(--el-color-danger);
-    margin-right: 4px;
-  }
+<style scoped>
+.sf-back {
+  align-self: flex-start;
+  margin-bottom: 2px;
+  color: var(--ui-muted);
 }
-
-:deep(.el-form-item.is-error) {
-  .el-input__wrapper {
-    box-shadow: 0 0 0 1px var(--el-color-danger) inset;
-  }
-
-  .el-select .el-input__wrapper {
-    box-shadow: 0 0 0 1px var(--el-color-danger) inset;
-  }
-
-  .el-textarea__inner {
-    box-shadow: 0 0 0 1px var(--el-color-danger) inset;
-  }
-
-  .el-date-editor {
-    .el-input__wrapper {
-      box-shadow: 0 0 0 1px var(--el-color-danger) inset;
-    }
-  }
-}
-
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  min-height: 100vh;
-  padding: 20px;
-  padding-bottom: 40px;
-
-  @media (max-width: 768px) {
-    padding: 12px;
-    padding-bottom: 24px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px;
-    padding-bottom: 20px;
-  }
-}
-
-.header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 600px;
-  margin-bottom: 18px;
-  padding: 0 8px;
-
-  @media (max-width: 768px) {
-    margin-bottom: 14px;
-    padding: 0 4px;
-  }
-
-  @media (max-width: 480px) {
-    margin-bottom: 12px;
-    padding: 0 2px;
-  }
-}
-
-.header-row .el-icon {
-  font-size: 22px;
-  color: #222;
-  cursor: pointer;
-  flex-shrink: 0;
-
-  @media (max-width: 768px) {
-    font-size: 20px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 18px;
-  }
-}
-
-.header-row h2 {
+.sf-title {
   margin: 0;
-  color: #222;
-  font-weight: 600;
-  letter-spacing: 0.5px;
   font-size: 22px;
-  line-height: 1;
-  text-align: center;
-  flex-grow: 1;
-
-  @media (max-width: 768px) {
-    font-size: 20px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 18px;
-  }
+  font-weight: 700;
+  color: var(--ui-ink);
 }
 
-.form {
-  background: #fff;
-  padding: 32px 40px 24px 40px;
-  border-radius: 12px;
-  box-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.07);
+/* Forma: kompyuterda ikki ustun, xarita/izoh/media to'liq kenglikda */
+.sf-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+}
+.sf-form > .sf-full {
+  grid-column: 1 / -1;
+}
+.sf-form :deep(.el-form-item) {
+  margin-bottom: 16px;
+}
+.sf-form :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: var(--ui-ink-2);
+  padding-bottom: 4px;
+}
+.sf-form :deep(.el-select),
+.sf-form :deep(.el-input),
+.sf-form :deep(.el-date-editor) {
   width: 100%;
-  max-width: 600px;
-
-  @media (max-width: 768px) {
-    padding: 24px 20px 18px 20px;
-    border-radius: 10px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 20px 16px 16px 16px;
-    border-radius: 8px;
-  }
-
-  .location-picker-label {
-    font-size: 14px;
-    display: block;
-    font-weight: 400;
-    color: #606266;
-
-    @media (max-width: 480px) {
-      font-size: 13px;
-    }
-  }
-
-  .more-info-input {
-    width: 100%;
-  }
 }
-
-.form-section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #409eff;
-
-  @media (max-width: 768px) {
-    font-size: 15px;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 14px;
-    margin-bottom: 14px;
-    padding-bottom: 6px;
-  }
+.sf-loc-label {
+  margin-bottom: 6px !important;
 }
-
-.form-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  gap: 12px;
-
-  @media (max-width: 480px) {
-    gap: 8px;
-  }
-
-  .form-section-title {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-.additional-object-section {
-  width: 100%;
-  max-width: 600px;
-  margin-top: 24px;
-
-  @media (max-width: 768px) {
-    margin-top: 20px;
-  }
-
-  @media (max-width: 480px) {
-    margin-top: 16px;
-  }
-}
-
-.add-button-container {
-  margin-top: 24px;
-  margin-bottom: 24px;
-  width: 100%;
-  max-width: 600px;
-  display: flex;
-  justify-content: center;
-
-  @media (max-width: 768px) {
-    margin-top: 20px;
-    margin-bottom: 20px;
-  }
-
-  @media (max-width: 480px) {
-    margin-top: 16px;
-    margin-bottom: 16px;
-  }
-
-  .add-button {
-    @media (max-width: 768px) {
-      padding: 8px 16px;
-    }
-
-    @media (max-width: 480px) {
-      padding: 6px 12px;
-      font-size: 14px;
-    }
-
-    .button-text {
-      @media (max-width: 640px) {
-        display: none;
-      }
-    }
-
-    .button-text-short {
-      display: none;
-
-      @media (max-width: 640px) {
-        display: inline;
-      }
-    }
-  }
-}
-
-.button-group-container {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-  width: 100%;
-  max-width: 600px;
-  padding: 0 40px;
-
-  @media (max-width: 768px) {
-    padding: 0 20px;
-    margin-top: 20px;
-    gap: 10px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0 16px;
-    margin-top: 16px;
-    gap: 8px;
-    justify-content: center;
-  }
-
-  .el-button {
-    @media (max-width: 480px) {
-      flex: 1;
-      max-width: 150px;
-    }
-  }
-}
-
-.el-form-item {
-  margin-bottom: 22px;
-
-  @media (max-width: 768px) {
-    margin-bottom: 18px;
-  }
-
-  @media (max-width: 480px) {
-    margin-bottom: 16px;
-  }
-}
-
-.el-form-item:last-child {
-  margin-bottom: 0;
-}
-
-.whereotherinput {
-  padding-top: 5px;
-}
-
-// ✅ YANGI: Split datetime picker uchun stil
 .datetime-split {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   width: 100%;
-
-  .full-width-picker {
-    flex: 1;
-    min-width: 0;
-  }
-
-  // Juda kichik ekranlarda (360px dan kichik) ustma-ust
-  @media (max-width: 360px) {
-    flex-direction: column;
-    gap: 8px;
-  }
+}
+.sf-other {
+  margin-top: 8px;
 }
 
-:deep(.el-upload-list--picture-card) {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
+/* Media */
+.sf-media {
   margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ui-line-soft);
+}
+.sf-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ui-ink);
+}
+.sf-sub__hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ui-muted);
+}
+.sf-upload :deep(.el-upload--picture-card) {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: none;
+  background: none;
+}
+.sf-upload :deep(.el-upload-dragger) {
+  width: 100%;
+  padding: 20px 16px;
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-2);
+}
+.sf-upload :deep(.el-icon--upload) {
+  font-size: 36px;
+  color: var(--ui-faint);
+  margin-bottom: 4px;
+}
+.sf-upload :deep(.el-upload__text) {
+  font-size: 13px;
+  color: var(--ui-muted);
+}
+.sf-file-count {
+  font-weight: 600;
+  color: var(--ui-link);
+}
+.sf-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--ui-muted);
 }
 
-.upload-media-section {
-  margin-top: 32px;
-  padding: 24px;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border: 2px dashed #d0d7de;
-
-  @media (max-width: 768px) {
-    margin-top: 24px;
-    padding: 16px;
-  }
-
-  .section-header {
-    margin-bottom: 20px;
-
-    h3 {
-      font-size: 18px;
-      font-weight: 600;
-      color: #303133;
-      margin: 0 0 8px 0;
-
-      @media (max-width: 768px) {
-        font-size: 16px;
-      }
-    }
-
-    .section-description {
-      font-size: 14px;
-      color: #606266;
-      margin: 0;
-
-      @media (max-width: 768px) {
-        font-size: 13px;
-      }
-    }
-  }
-
-  .upload-area {
-    width: 100%;
-
-    :deep(.el-upload.el-upload--picture-card) {
-      width: 100% !important;
-      height: auto !important;
-      display: block !important;
-      border: 0 !important;
-      background: transparent !important;
-    }
-
-    :deep(.el-upload--picture-card .el-upload-dragger) {
-      width: 100% !important;
-      height: auto !important;
-      min-height: 180px;
-      padding: 24px 16px !important;
-      box-sizing: border-box;
-
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 10px;
-    }
-
-    :deep(.el-upload--picture-card .el-icon--upload) {
-      margin-bottom: 10px;
-    }
-
-    :deep(.el-upload--picture-card .el-upload__text) {
-      text-align: center;
-      line-height: 1.3;
-      white-space: normal;
-      max-width: 360px;
-    }
-
-    .el-upload__text {
-      font-size: 14px;
-      color: #606266;
-
-      @media (max-width: 768px) {
-        font-size: 13px;
-      }
-
-      .file-count {
-        color: #409eff;
-        font-weight: 600;
-        font-size: 13px;
-      }
-    }
-  }
-
-  .upload-info {
-    margin-top: 16px;
-
-    @media (max-width: 768px) {
-      margin-top: 12px;
-    }
-  }
+/* Qo'shimcha obyekt qo'shish */
+.sf-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ui-link);
+  background: var(--ui-surface);
+  border: 1px dashed #bfdbfe;
+  border-radius: var(--ui-radius);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.sf-add:hover {
+  background: var(--ui-link-soft);
+  border-color: var(--ui-link);
+}
+.sf-add:focus-visible {
+  outline: 2px solid var(--ui-link);
+  outline-offset: 2px;
+}
+.sf-add__hint {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ui-muted);
 }
 
-:deep(.el-upload-list) {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+/* Saqlash paneli — pastda yopishib turadi */
+.sf-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 12px;
-  margin-top: 16px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 8px;
-  }
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
+  box-shadow: 0 -4px 16px rgba(17, 24, 39, 0.06);
 }
-
-:deep(.el-upload-list__item) {
+.sf-footer .sf-hint {
   margin: 0;
 }
-
-.full-width-picker,
-.full-width-select,
-.full-width-input {
-  width: 100% !important;
+.sf-footer__actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
 }
 
-:deep(.el-form-item__label) {
-  text-align: left;
-  display: block;
-  margin-bottom: 8px;
-
-  @media (max-width: 768px) {
-    margin-bottom: 8px;
+@media (max-width: 768px) {
+  .sf-form {
+    grid-template-columns: 1fr;
   }
-}
-
-:deep(.el-form-item__content) {
-  width: 100%;
-  display: block;
-}
-
-:deep(.el-date-editor),
-:deep(.el-select),
-:deep(.el-input),
-:deep(.el-textarea) {
-  width: 100% !important;
-}
-
-:deep(.el-date-editor .el-input__wrapper),
-:deep(.el-select .el-input__wrapper),
-:deep(.el-input__wrapper),
-:deep(.el-textarea__inner) {
-  width: 100% !important;
 }
 </style>

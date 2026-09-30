@@ -1603,5 +1603,20 @@
   "custNothingFound": "По фильтрам ничего не найдено",
   "custFormMain": "Основное",
   "custFormAddress": "Адрес",
-  "custNoNote": "Комментария нет"
+  "custNoNote": "Комментария нет",
+  "uiDayShort": "д",
+  "siteTotal": "Всего визитов",
+  "siteWithContract": "с договором или КП: {n}",
+  "siteHintAdded": "Сколько визитов внесено за этот период.",
+  "siteAdded": "внесено визитов",
+  "siteSearchPh": "Объект, компания или место",
+  "siteVisits": "Визиты",
+  "siteNotBack": "Не указано",
+  "siteVisitInfo": "Данные визита",
+  "siteDuration": "Длительность",
+  "siteUploadHint": "Фото и видео, до 200 МБ каждое, до 10 файлов",
+  "siteFilesSelected": "Выбрано файлов: {n}",
+  "siteFormFooterHint": "Будет сохранено объектов: {n}",
+  "compSubtitle": "Цены, продукты и активность конкурентов",
+  "compSoonTitle": "Раздел конкурентов в разработке"
 }

@@ -1,128 +1,130 @@
 <template>
-  <div class="container">
-    <div class="title">
-      <h2>{{ $t('rasmvavideolar') }}</h2>
-      <h3>{{ $t('obyektgaRasmVaVideolar') }}</h3>
-    </div>
-
-    <div class="media">
-      <el-upload
-        ref="uploadRef"
-        class="upload-demo"
-        drag
-        :action="cloudinaryUrl"
-        :data="uploadData"
-        multiple
-        :auto-upload="false"
-        :before-upload="beforeUpload"
-        :on-success="handleSuccess"
-        :on-error="handleError"
-        :accept="acceptedTypes"
-        list-type="picture-card"
-        :limit="10"
-      >
-        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-        <div class="el-upload__text">
-          {{ $t('mediauloadbtn') }}
-        </div>
-      </el-upload>
-    </div>
-    <div class="uploadbtn">
-      <el-button type="primary" @click="submitUpload()" :loading="uploading" size="large">
-        {{ uploading ? $t('uploading') : $t('upload') }}
+  <UiPage>
+    <template #title>
+      <el-button class="sd-back" link :icon="ArrowLeft" @click="router.push({ name: 'sites' })">
+        {{ $t('yaqindaBorilganObyektlar') }}
       </el-button>
-    </div>
+      <h1 class="sd-title">{{ visit?.whereto || $t('rasmvavideolar') }}</h1>
+    </template>
+    <template v-if="visit" #subtitle>
+      <span v-if="visit.company_name">{{ visit.company_name }} · </span>
+      {{ formatDateTime(visit.when_gone) }}
+      <template v-if="visit.locationname"> · {{ visit.locationname }}</template>
+    </template>
 
-    <!-- Gallery Section -->
-    <div class="gallery-section" v-if="existingMedia.length > 0">
-      <div class="gallery-header">
-        <h3>{{ $t('uploadedmedia') }}</h3>
-        <div class="filter-tabs">
-          <el-button
-            :type="activeFilter === 'all' ? 'primary' : 'default'"
-            @click="setFilter('all')"
-            size="small"
-          >
-            {{ $t('Hammasi') }} ({{ existingMedia.length }})
-          </el-button>
-          <el-button
-            :type="activeFilter === 'image' ? 'primary' : 'default'"
-            @click="setFilter('image')"
-            size="small"
-          >
-            {{ $t('Rasmlar') }} ({{ imageCount }})
-          </el-button>
-          <el-button
-            :type="activeFilter === 'video' ? 'primary' : 'default'"
-            @click="setFilter('video')"
-            size="small"
-          >
-            {{ $t('Videolar') }} ({{ videoCount }})
+    <div class="sd-grid">
+      <!-- Tashrif ma'lumoti -->
+      <UiPanel :title="$t('siteVisitInfo')" :icon="Location">
+        <el-skeleton v-if="visitLoading" :rows="5" animated />
+        <UiInfoList v-else-if="visit" :items="visitItems" />
+        <el-empty v-else :image-size="60" :description="$t('Kiritilmagan')" />
+      </UiPanel>
+
+      <!-- Yuklash -->
+      <UiPanel
+        :title="$t('rasmvavideolar')"
+        :hint="$t('obyektgaRasmVaVideolar')"
+        :icon="UploadFilled"
+      >
+        <el-upload
+          ref="uploadRef"
+          class="sd-upload"
+          drag
+          :action="cloudinaryUrl"
+          :data="uploadData"
+          multiple
+          :auto-upload="false"
+          :before-upload="beforeUpload"
+          :on-success="handleSuccess"
+          :on-error="handleError"
+          :accept="acceptedTypes"
+          list-type="picture-card"
+          :limit="10"
+        >
+          <el-icon class="sd-upload__icon"><upload-filled /></el-icon>
+          <div class="sd-upload__text">{{ $t('mediauloadbtn') }}</div>
+        </el-upload>
+        <div class="sd-upload__actions">
+          <span class="sd-hint">{{ $t('siteUploadHint') }}</span>
+          <el-button type="primary" :loading="uploading" @click="submitUpload()">
+            {{ uploading ? $t('uploading') : $t('upload') }}
           </el-button>
         </div>
-      </div>
+      </UiPanel>
+    </div>
 
-      <div class="media-grid">
-        <div v-for="item in filteredMedia" :key="item.id" class="media-item">
-          <div class="media-content" @click="openModal(item)">
+    <!-- Galereya -->
+    <UiPanel>
+      <template #title>
+        {{ $t('uploadedmedia') }}
+        <span class="sd-count">{{ existingMedia.length }}</span>
+      </template>
+      <template #actions>
+        <el-radio-group v-model="activeFilter" size="small">
+          <el-radio-button value="all">
+            {{ $t('Hammasi') }} ({{ existingMedia.length }})
+          </el-radio-button>
+          <el-radio-button value="image">{{ $t('Rasmlar') }} ({{ imageCount }})</el-radio-button>
+          <el-radio-button value="video">{{ $t('Videolar') }} ({{ videoCount }})</el-radio-button>
+        </el-radio-group>
+      </template>
+
+      <el-skeleton v-if="loading" :rows="3" animated />
+      <el-empty v-else-if="!existingMedia.length" :description="$t('nomediamauploaded')" />
+      <div v-else class="sd-media-grid">
+        <article v-for="item in filteredMedia" :key="item.id" class="sd-media">
+          <button type="button" class="sd-media__thumb" @click="openModal(item)">
             <img
               v-if="isImage(item.video_link)"
               :src="item.video_link"
               :alt="item.video_name"
+              loading="lazy"
               @error="handleImageError"
             />
-            <div v-else class="video-container">
+            <span v-else class="sd-media__video">
               <video :src="item.video_link" preload="metadata" @error="handleVideoError" />
-              <div class="play-overlay">
-                <el-icon :size="50">
-                  <VideoPlay />
-                </el-icon>
-              </div>
-            </div>
-
-            <div class="media-overlay" @click.stop>
-              <el-button
-                type="danger"
+              <el-icon class="sd-media__play" :size="40"><VideoPlay /></el-icon>
+            </span>
+          </button>
+          <div class="sd-media__info">
+            <span class="sd-media__name" :title="item.video_name">{{ item.video_name }}</span>
+            <div class="sd-media__meta">
+              <el-tag
                 size="small"
-                circle
-                @click.stop="deleteMedia(item)"
-                :loading="deletingIds.includes(item.id)"
+                effect="plain"
+                :type="isImage(item.video_link) ? 'success' : 'warning'"
               >
-                <el-icon><Delete /></el-icon>
-              </el-button>
-            </div>
-          </div>
-
-          <div class="media-info">
-            <h4 :title="item.video_name">{{ item.video_name }}</h4>
-            <div class="media-meta">
-              <el-tag :type="isImage(item.video_link) ? 'success' : 'warning'" size="small">
                 {{ isImage(item.video_link) ? $t('Rasm') : $t('Video') }}
               </el-tag>
-              <span class="upload-date">
-                {{ formatDate(item.created_at) }}
-              </span>
+              <span>{{ formatDate(item.created_at || item.createdAt) }}</span>
+              <el-button
+                class="sd-media__del"
+                link
+                type="danger"
+                :icon="Delete"
+                :loading="deletingIds.includes(item.id)"
+                :aria-label="$t('delete')"
+                @click="deleteMedia(item)"
+              />
             </div>
           </div>
-        </div>
+        </article>
       </div>
-    </div>
+    </UiPanel>
 
-    <!-- Enhanced Modal -->
+    <!-- Ko'rish oynasi -->
     <el-dialog
       v-model="modalVisible"
       :title="selectedMedia?.video_name || 'Media'"
-      width="95%"
-      top="2vh"
-      :close-on-click-modal="true"
-      :close-on-press-escape="true"
-      class="media-modal"
+      width="90%"
+      top="3vh"
+      append-to-body
       :fullscreen="isFullscreen"
     >
       <template #header>
-        <div class="modal-header">
-          <span class="modal-title">{{ selectedMedia?.video_name }}</span>
-          <div class="modal-actions">
+        <div class="sd-modal__head">
+          <span class="sd-modal__title">{{ selectedMedia?.video_name }}</span>
+          <div class="sd-modal__actions">
             <el-button
               :icon="isFullscreen ? 'Minus' : 'FullScreen'"
               circle
@@ -135,20 +137,17 @@
               download
               @click.stop
             >
-              <el-button circle>
-                <el-icon><Download /></el-icon>
-              </el-button>
+              <el-button circle :icon="Download" />
             </a>
           </div>
         </div>
       </template>
 
-      <div class="modal-content">
+      <div class="sd-modal__body">
         <img
           v-if="selectedMedia && isImage(selectedMedia.video_link)"
           :src="selectedMedia.video_link"
           :alt="selectedMedia.video_name"
-          class="modal-image"
           @error="handleImageError"
         />
         <video
@@ -156,7 +155,6 @@
           :src="selectedMedia.video_link"
           controls
           autoplay
-          class="modal-video"
           @error="handleVideoError"
         >
           {{ $t('yourbrowsersupportvideotag') }}
@@ -164,45 +162,41 @@
       </div>
 
       <template #footer>
-        <div class="modal-footer">
-          <div class="media-details">
-            <el-tag :type="isImage(selectedMedia?.video_link) ? 'success' : 'warning'">
-              {{ isImage(selectedMedia?.video_link) ? $t('Rasm') : $t('Video') }}
-            </el-tag>
-            <span class="upload-date">
-              {{ $t('malumotkiritilganvaqt') }}: {{ formatDate(selectedMedia?.created_at) }}
-            </span>
-          </div>
+        <div class="sd-modal__foot">
+          <span class="sd-hint">
+            {{ $t('malumotkiritilganvaqt') }}: {{ formatDate(selectedMedia?.created_at || selectedMedia?.createdAt) }}
+          </span>
           <el-button
             type="danger"
-            @click="deleteMedia(selectedMedia)"
+            plain
+            :icon="Delete"
             :loading="deletingIds.includes(selectedMedia?.id)"
+            @click="deleteMedia(selectedMedia)"
           >
-            <el-icon><Delete /></el-icon>
             {{ $t('delete') }}
           </el-button>
         </div>
       </template>
     </el-dialog>
-
-    <div v-if="loading" class="loading-state">
-      <el-skeleton :rows="3" animated />
-      <p>{{ $t('MediaFayllarYuklanmoqda') }}</p>
-    </div>
-
-    <div v-if="!loading && existingMedia.length === 0" class="empty-state">
-      <el-empty :description="$t('nomediamauploaded')">
-        <el-button type="primary" @click="() => uploadRef?.focus()">
-          {{ $t('uploadfirstmedia') }}
-        </el-button>
-      </el-empty>
-    </div>
-  </div>
+  </UiPage>
 </template>
 
 <script setup lang="ts">
 import type { UploadInstance, UploadFile } from 'element-plus'
-import { UploadFilled, Delete, VideoPlay, Download } from '@element-plus/icons-vue'
+import {
+  ArrowLeft,
+  Delete,
+  Download,
+  Location,
+  UploadFilled,
+  VideoPlay,
+} from '@element-plus/icons-vue'
+import router from '@/router'
+import checkInOutApi from '@/api/checkInOut'
+import UiPage from '@/components/ui/UiPage.vue'
+import UiPanel from '@/components/ui/UiPanel.vue'
+import UiInfoList from '@/components/ui/UiInfoList.vue'
+import { formatDateTime, formatSpan } from '@/utils/format'
 import { useVideosStore } from '@/stores/videos'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute } from 'vue-router'
@@ -412,27 +406,7 @@ const toggleFullscreen = () => {
   isFullscreen.value = !isFullscreen.value
 }
 
-// Filter functions
-const setFilter = (filter: string) => {
-  activeFilter.value = filter
-}
-
-// Format date function
-const formatDate = (dateString: string) => {
-  if (!dateString) return "Noma'lum"
-  try {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('uz-UZ', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  } catch (error) {
-    return "Noma'lum"
-  }
-}
+const formatDate = (value?: string) => formatDateTime(value)
 
 // Error handlers
 const handleImageError = (event: Event) => {
@@ -456,388 +430,214 @@ defineExpose({
   getUploadedMediaData,
 })
 
+// ─── Tashrif ma'lumoti ────────────────────────────────────
+const visit = ref<any>(null)
+const visitLoading = ref(true)
+
+async function loadVisit() {
+  visitLoading.value = true
+  try {
+    const res: any = await checkInOutApi.getOne(route.params.id)
+    const item = res?.data || res
+    visit.value = item?.comeAndGoInsides?.[0] || null
+  } catch {
+    visit.value = null
+  } finally {
+    visitLoading.value = false
+  }
+}
+
+const visitItems = computed(() => {
+  const v = visit.value || {}
+  const dt = (x?: string) => (x ? formatDateTime(x) : '')
+  return [
+    { key: 'whereto', label: t('qayerga'), value: v.whereto },
+    { key: 'company', label: t('kompaniyaNomi'), value: v.company_name },
+    { key: 'gone', label: t('ketilganvaqt'), value: dt(v.when_gone) },
+    { key: 'came', label: t('kelganvaqt'), value: dt(v.when_came) },
+    { key: 'span', label: t('siteDuration'), value: formatSpan(v.when_gone, v.when_came, t) },
+    { key: 'contract', label: t('shartnomaKp'), value: v.dogovor_or_kp },
+    { key: 'location', label: t('joylashuv'), value: v.locationname },
+    { key: 'created', label: t('malumotkiritilganvaqt'), value: dt(v.createdAt) },
+  ]
+})
+
 onMounted(async () => {
-  await loadExistingMedia()
+  await Promise.all([loadVisit(), loadExistingMedia()])
 })
 </script>
 
-<style lang="scss" scoped>
-.container {
-  margin-bottom: 50px;
-  padding: 0 16px;
+<style scoped>
+.sd-back {
+  align-self: flex-start;
+  margin-bottom: 2px;
+  color: var(--ui-muted);
 }
-
-.title {
-  text-align: center;
-  margin: 40px 0 30px;
-
-  h2 {
-    font-weight: 600;
-    font-size: 28px;
-    color: #303133;
-    margin-bottom: 8px;
-  }
-
-  h3 {
-    font-weight: 400;
-    font-size: 16px;
-    color: #606266;
-  }
+.sd-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ui-ink);
 }
-
-.media {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 30px;
-
-  .upload-demo {
-    width: 100%;
-    max-width: 600px;
-  }
-}
-
-.uploadbtn {
-  display: flex;
-  justify-content: center;
-  margin-top: 30px;
-
-  .el-button {
-    padding: 14px 40px;
-    font-size: 16px;
-  }
-}
-
-.gallery-section {
-  margin-top: 60px;
-  padding: 30px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-}
-
-.gallery-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
-  gap: 15px;
-
-  h3 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #303133;
-    margin: 0;
-  }
-
-  .filter-tabs {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-}
-
-.media-grid {
+.sd-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 16px;
+  align-items: start;
+}
+.sd-count {
+  margin-left: 4px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ui-muted);
+  background: var(--ui-line-soft);
+  border-radius: 999px;
+}
+.sd-hint {
+  font-size: 12px;
+  color: var(--ui-muted);
 }
 
-.media-item {
-  background: white;
-  border-radius: 16px;
+/* Yuklash maydoni */
+.sd-upload :deep(.el-upload--picture-card) {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: none;
+  background: none;
+}
+.sd-upload :deep(.el-upload-dragger) {
+  width: 100%;
+  padding: 22px 16px;
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-2);
+}
+.sd-upload :deep(.el-upload-list--picture-card) {
+  gap: 8px;
+}
+.sd-upload__icon {
+  font-size: 36px;
+  color: var(--ui-faint);
+}
+.sd-upload__text {
+  font-size: 13px;
+  color: var(--ui-muted);
+}
+.sd-upload__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* Galereya */
+.sd-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.sd-media {
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--ui-surface);
+}
+.sd-media__thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  border: none;
+  background: var(--ui-surface-2);
+  cursor: zoom-in;
+}
+.sd-media__thumb img,
+.sd-media__thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sd-media__video {
   position: relative;
-
-  &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-
-    .media-overlay {
-      opacity: 1;
-    }
-  }
-
-  .media-content {
-    position: relative;
-    width: 100%;
-    height: 240px;
-    overflow: hidden;
-    cursor: pointer;
-    background: #f5f5f5;
-
-    img,
-    .video-container {
-      width: 100%;
-      height: 100%;
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    img {
-      object-fit: cover;
-    }
-
-    .video-container {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-
-      video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        pointer-events: none;
-      }
-
-      .play-overlay {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(64, 158, 255, 0.9);
-        border-radius: 50%;
-        width: 70px;
-        height: 70px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-        pointer-events: none;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-
-        .el-icon {
-          color: white;
-          font-size: 32px;
-        }
-      }
-    }
-
-    &:hover {
-      img {
-        transform: scale(1.08);
-      }
-
-      .video-container {
-        transform: scale(1.05);
-
-        .play-overlay {
-          background: rgba(64, 158, 255, 1);
-          transform: translate(-50%, -50%) scale(1.15);
-        }
-      }
-    }
-
-    .media-overlay {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 10;
-
-      .el-button {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(8px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-
-        &:hover {
-          background: #f56c6c;
-          color: white;
-        }
-      }
-    }
-  }
-
-  .media-info {
-    padding: 16px 18px;
-
-    h4 {
-      margin: 0 0 12px 0;
-      font-size: 15px;
-      font-weight: 500;
-      color: #303133;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      line-height: 1.4;
-    }
-
-    .media-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-
-      .upload-date {
-        color: #909399;
-        font-size: 12px;
-      }
-    }
-  }
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sd-media__play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  color: white;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+.sd-media__info {
+  padding: 8px 10px 10px;
+}
+.sd-media__name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sd-media__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.sd-media__del {
+  margin-left: auto;
 }
 
-// Modal styles
-:deep(.media-modal) {
-  .el-dialog__header {
-    padding: 20px 24px;
-    background: linear-gradient(135deg, #409eff 0%, #5cadff 100%);
-    margin: 0;
-  }
-
-  .el-dialog__body {
-    padding: 0;
-    background: #000;
-  }
-
-  .el-dialog__footer {
-    padding: 16px 24px;
-    background: #f8f9fa;
-  }
-}
-
-.modal-header {
+/* Ko'rish oynasi */
+.sd-modal__head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
-
-  .modal-title {
-    color: white;
-    font-weight: 600;
-    font-size: 18px;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .modal-actions {
-    display: flex;
-    gap: 8px;
-
-    .el-button {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: none;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.3);
-      }
-    }
-
-    a {
-      text-decoration: none;
-    }
-  }
+  gap: 12px;
 }
-
-.modal-content {
-  width: 100%;
-  max-height: 80vh;
+.sd-modal__title {
+  font-weight: 600;
+  color: var(--ui-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sd-modal__actions {
   display: flex;
-  align-items: center;
+  gap: 8px;
+}
+.sd-modal__body {
+  display: flex;
   justify-content: center;
-  background: #000;
-
-  .modal-image,
-  .modal-video {
-    max-width: 100%;
-    max-height: 80vh;
-    object-fit: contain;
-  }
+  background: #0b0f17;
+  border-radius: var(--ui-radius);
 }
-
-.modal-footer {
+.sd-modal__body img,
+.sd-modal__body video {
+  max-width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+}
+.sd-modal__foot {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  .media-details {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-
-    .upload-date {
-      color: #606266;
-      font-size: 14px;
-    }
-  }
+  gap: 12px;
 }
 
-.loading-state,
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: #909399;
-
-  p {
-    margin-top: 20px;
-    font-size: 14px;
-  }
-}
-
-// Responsive design
-@media (max-width: 768px) {
-  .container {
-    padding: 0 12px;
-  }
-
-  .title {
-    margin: 30px 0 20px;
-
-    h2 {
-      font-size: 22px;
-    }
-
-    h3 {
-      font-size: 14px;
-    }
-  }
-
-  .media {
-    .upload-demo {
-      width: 100%;
-    }
-  }
-
-  .gallery-section {
-    padding: 20px 16px;
-    margin-top: 40px;
-  }
-
-  .gallery-header {
-    flex-direction: column;
-    align-items: stretch;
-
-    .filter-tabs {
-      justify-content: center;
-    }
-  }
-
-  .media-grid {
+@media (max-width: 1000px) {
+  .sd-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .modal-header {
-    .modal-title {
-      font-size: 16px;
-    }
-  }
-
-  .modal-footer {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-
-    .el-button {
-      width: 100%;
-    }
   }
 }
 </style>

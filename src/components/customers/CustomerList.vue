@@ -224,6 +224,7 @@ import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import CustomerForm from './CustomerForm.vue'
 import { formatLocationName, partnerTypeLabel, partnerTypeTag } from '@/utils/partners'
+import { countByPeriod, digitsOf, fmtNum, formatDate, telHref } from '@/utils/format'
 
 const { t } = useI18n()
 const partnersStore = usePartnersStore()
@@ -286,7 +287,7 @@ function resetFilters() {
   region.value = ''
 }
 
-const digits = (s) => String(s || '').replace(/[^0-9]/g, '')
+const digits = digitsOf
 
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
@@ -338,37 +339,13 @@ const pageRows = computed(() =>
 const rowIndex = (i) => (page.value - 1) * pageSize + i + 1
 
 // ─── Ko'rsatkichlar ───────────────────────────────────────
-const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
-const countSince = (since) =>
-  allPartners.value.filter((p) => p.createdAt && new Date(p.createdAt) >= since).length
+const added = computed(() => countByPeriod(allPartners.value))
+const addedToday = computed(() => added.value.today)
+const addedWeek = computed(() => added.value.week)
+const addedMonth = computed(() => added.value.month)
 
-const addedToday = computed(() => countSince(startOfDay(new Date())))
-const addedWeek = computed(() => {
-  // Hafta dushanbadan boshlanadi
-  const d = startOfDay(new Date())
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
-  return countSince(d)
-})
-const addedMonth = computed(() => {
-  const now = new Date()
-  return countSince(new Date(now.getFullYear(), now.getMonth(), 1))
-})
-
-// ─── Formatlash ───────────────────────────────────────────
-const numberFmt = new Intl.NumberFormat('ru-RU')
-const fmtNum = (n) => numberFmt.format(n || 0)
-const pad = (n) => String(n).padStart(2, '0')
-function formatDate(value) {
-  if (!value) return '—'
-  const d = new Date(value)
-  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
-}
 const regionLine = (p) =>
   [p.viloyat, p.shahar_tuman].filter(Boolean).map(formatLocationName).join(', ')
-const telHref = (phone) => {
-  const d = digits(phone)
-  return d ? `tel:+${d.length === 9 ? `998${d}` : d}` : undefined
-}
 
 // ─── Amallar ──────────────────────────────────────────────
 function openDetail(row) {

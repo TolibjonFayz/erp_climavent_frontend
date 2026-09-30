@@ -1,693 +1,311 @@
 <template>
-  <div class="site-container">
-    <div class="page-header">
-      <div class="header-content">
-        <div class="header-text">
-          <h1>{{ $t('yaqindaBorilganObyektlar') }}</h1>
-          <p class="subtitle">{{ $t('barchaobyektlarmalumotlari') }}</p>
-        </div>
+  <UiPage :title="$t('yaqindaBorilganObyektlar')" :subtitle="$t('barchaobyektlarmalumotlari')">
+    <template #actions>
+      <el-button type="primary" :icon="Plus" @click="goToCreateSite">
+        {{ $t('yangiQoshish') }}
+      </el-button>
+    </template>
 
-        <!-- Date Count Info -->
-        <div class="date-filters">
-          <el-tag size="large" type="success" effect="plain">
-            {{ $t('today') }}: {{ getTodayCount() }}
-          </el-tag>
-          <el-tag size="large" type="primary" effect="plain">
-            {{ $t('thisWeek') }} : {{ getWeekCount() }}
-          </el-tag>
-          <el-tag size="large" type="warning" effect="plain">
-            {{ $t('thisMonth') }}: {{ getMonthCount() }}
-          </el-tag>
-        </div>
-
-        <el-button
-          type="primary"
-          size="large"
-          class="add-btn"
-          :icon="Plus"
-          @click="goToCreateSite()"
-        >
-          {{ $t('yangiQoshish') }}
-        </el-button>
-      </div>
+    <!-- Ko'rsatkichlar -->
+    <div class="sl-stats">
+      <UiStat
+        :label="$t('siteTotal')"
+        :value="fmtNum(rows.length)"
+        :sub="$t('siteWithContract', { n: fmtNum(withContract) })"
+        clickable
+        @click="resetFilters"
+      />
+      <UiStat
+        :label="$t('today')"
+        :hint="$t('siteHintAdded')"
+        :value="fmtNum(added.today)"
+        :sub="$t('siteAdded')"
+        tone="good"
+      />
+      <UiStat
+        :label="$t('thisWeek')"
+        :hint="$t('siteHintAdded')"
+        :value="fmtNum(added.week)"
+        :sub="$t('siteAdded')"
+      />
+      <UiStat
+        :label="$t('thisMonth')"
+        :hint="$t('siteHintAdded')"
+        :value="fmtNum(added.month)"
+        :sub="$t('siteAdded')"
+      />
     </div>
 
-    <div class="table-container" v-loading="loading">
-      <div
-        class="table-wrapper"
-        v-if="
-          Array.isArray(comeandgoesStore.allComeAndGoesofUser) &&
-          comeandgoesStore.allComeAndGoesofUser.length > 0
-        "
+    <!-- Filtrlar -->
+    <UiToolbar>
+      <UiField :label="$t('custSearch')" grow>
+        <el-input
+          v-model="search"
+          :prefix-icon="Search"
+          clearable
+          :placeholder="$t('siteSearchPh')"
+        />
+      </UiField>
+      <UiField :label="$t('qayerga')">
+        <el-select v-model="whereto" clearable :placeholder="$t('custAll')" class="sl-select">
+          <el-option v-for="w in wheretoOptions" :key="w" :label="w" :value="w" />
+        </el-select>
+      </UiField>
+      <UiField :label="$t('shartnomaKp')">
+        <el-select v-model="contract" clearable :placeholder="$t('custAll')" class="sl-select">
+          <el-option v-for="c in contractOptions" :key="c" :label="c" :value="c" />
+        </el-select>
+      </UiField>
+    </UiToolbar>
+
+    <!-- Jadval -->
+    <UiPanel flush>
+      <template #title>
+        {{ $t('siteVisits') }}
+        <span class="sl-count">{{ fmtNum(filtered.length) }}</span>
+      </template>
+      <template #actions>
+        <el-button v-if="hasFilters" link type="primary" @click="resetFilters">
+          {{ $t('custResetFilters') }}
+        </el-button>
+      </template>
+
+      <el-table
+        v-loading="loading"
+        :data="pageRows"
+        :default-sort="{ prop: 'created', order: 'descending' }"
+        class="sl-table"
+        @sort-change="onSort"
+        @row-click="openDetail"
       >
-        <table class="modern-table">
-          <thead>
-            <tr>
-              <th class="table-index">#</th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Location /></el-icon>
-                  {{ $t('qayerga') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Clock /></el-icon>
-                  {{ $t('ketilganvaqt') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Clock /></el-icon>
-                  {{ $t('kelganvaqt') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Document /></el-icon>
-                  {{ $t('shartnomaKp') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><MapLocation /></el-icon>
-                  {{ $t('joylashuv') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><OfficeBuilding /></el-icon>
-                  {{ $t('kompaniyaNomi') }}
-                </div>
-              </th>
+        <el-table-column type="index" :index="rowIndex" label="#" width="56" />
+        <el-table-column prop="whereto" :label="$t('qayerga')" min-width="200" sortable="custom">
+          <template #default="{ row }">
+            <span class="sl-strong">{{ row.whereto || '—' }}</span>
+            <div v-if="row.company" class="sl-sub">{{ row.company }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="gone" :label="$t('ketilganvaqt')" min-width="170" sortable="custom">
+          <template #default="{ row }">{{ formatDateTime(row.gone) }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('kelganvaqt')" min-width="150">
+          <template #default="{ row }">
+            <span v-if="row.came">{{ formatDateTime(row.came) }}</span>
+            <el-tag v-else size="small" type="warning" effect="plain">{{
+              $t('siteNotBack')
+            }}</el-tag>
+            <div v-if="row.came && row.gone" class="sl-sub">
+              {{ formatSpan(row.gone, row.came, t) }}
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('shartnomaKp')" min-width="150">
+          <template #default="{ row }">
+            <el-tag v-if="row.contract" size="small" type="info" effect="plain">
+              {{ row.contract }}
+            </el-tag>
+            <span v-else class="sl-muted">—</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('joylashuv')" min-width="170">
+          <template #default="{ row }">{{ row.location || '—' }}</template>
+        </el-table-column>
+        <el-table-column
+          prop="created"
+          :label="$t('custCreated')"
+          min-width="170"
+          sortable="custom"
+        >
+          <template #default="{ row }">{{ formatDateTime(row.created) }}</template>
+        </el-table-column>
+        <el-table-column width="120" align="right" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" @click.stop="openDetail(row)">
+              {{ $t('viewDetails') }} <el-icon class="sl-arrow"><ArrowRight /></el-icon>
+            </el-button>
+          </template>
+        </el-table-column>
 
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Clock /></el-icon>
-                  {{ $t('malumotkiritilganvaqt') }}
-                </div>
-              </th>
-              <th class="table-actions">{{ $t('actions') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(item, index) in comeandgoesStore.allComeAndGoesofUser"
-              :key="index"
-              class="table-row"
-            >
-              <td class="table-index">
-                <span class="index-badge">
-                  {{ index + 1 }}
-                </span>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text bold">{{ item.comeAndGoInsides[0]?.whereto }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text">{{
-                    formatDate(item.comeAndGoInsides[0]?.when_gone)
-                  }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text">{{
-                    formatDate(item.comeAndGoInsides[0]?.when_came)
-                  }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <el-tag type="info" size="small">{{
-                    item.comeAndGoInsides[0]?.dogovor_or_kp
-                  }}</el-tag>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text">{{ item.comeAndGoInsides[0]?.locationname }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text company">{{
-                    item.comeAndGoInsides[0]?.company_name
-                  }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text company">{{
-                    formatDate(item.comeAndGoInsides[0]?.createdAt)
-                  }}</span>
-                </div>
-              </td>
-              <td class="table-actions">
-                <el-button
-                  type="primary"
-                  link
-                  size="small"
-                  @click="router.push({ name: 'site-detail', params: { id: item.id } })"
-                >
-                  {{ $t('viewDetails') }}
-                  <el-icon class="ml-1"><ArrowRight /></el-icon>
-                </el-button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <template #empty>
+          <el-empty :description="hasFilters ? $t('custNothingFound') : $t('youhaventbeenyet')">
+            <el-button v-if="hasFilters" @click="resetFilters">
+              {{ $t('custResetFilters') }}
+            </el-button>
+            <el-button v-else type="primary" :icon="Plus" @click="goToCreateSite">
+              {{ $t('firstobject') }}
+            </el-button>
+          </el-empty>
+        </template>
+      </el-table>
 
-      <div v-else class="empty-state">
-        <div class="empty-icon">
-          <el-icon :size="64"><FolderOpened /></el-icon>
-        </div>
-        <h3>{{ $t('noobjectfound') }}</h3>
-        <p>{{ $t('youhaventbeenyet') }}</p>
-        <el-button type="primary" :icon="Plus" @click="goToCreateSite()">
-          {{ $t('firstobject') }}
-        </el-button>
+      <div v-if="filtered.length > pageSize" class="sl-pager">
+        <el-pagination
+          v-model:current-page="page"
+          :page-size="pageSize"
+          :total="filtered.length"
+          layout="total, prev, pager, next"
+          background
+        />
       </div>
-    </div>
-  </div>
+    </UiPanel>
+  </UiPage>
 </template>
 
 <script setup>
-import { formatDate } from '@/composables/useDateFormatter'
-import { useComeAndGoesStore } from '@/stores/comeandgoes'
-import {
-  Plus,
-  Clock,
-  Location,
-  Document,
-  MapLocation,
-  OfficeBuilding,
-  ArrowRight,
-  FolderOpened,
-} from '@element-plus/icons-vue'
-import { onMounted, ref, computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { ArrowRight, Plus, Search } from '@element-plus/icons-vue'
 import router from '@/router'
+import { useComeAndGoesStore } from '@/stores/comeandgoes'
+import UiPage from '@/components/ui/UiPage.vue'
+import UiStat from '@/components/ui/UiStat.vue'
+import UiToolbar from '@/components/ui/UiToolbar.vue'
+import UiField from '@/components/ui/UiField.vue'
+import UiPanel from '@/components/ui/UiPanel.vue'
+import { countByPeriod, fmtNum, formatDateTime, formatSpan } from '@/utils/format'
 
+const { t } = useI18n()
 const comeandgoesStore = useComeAndGoesStore()
 const loading = ref(false)
 
-const goToCreateSite = () => {
-  router.push({ name: 'site-create' })
-}
-
-const entries = computed(() =>
-  Array.isArray(comeandgoesStore.allComeAndGoesofUser)
+// Har bir yozuvning birinchi "ichki" qatori — tashrif ma'lumoti
+const rows = computed(() =>
+  (Array.isArray(comeandgoesStore.allComeAndGoesofUser)
     ? comeandgoesStore.allComeAndGoesofUser
-    : [],
+    : []
+  ).map((item) => {
+    const v = item.comeAndGoInsides?.[0] || {}
+    return {
+      id: item.id,
+      whereto: v.whereto || '',
+      company: v.company_name || '',
+      gone: v.when_gone || null,
+      came: v.when_came || null,
+      contract: v.dogovor_or_kp || '',
+      location: v.locationname || '',
+      created: v.createdAt || item.createdAt || null,
+    }
+  }),
 )
 
-const isToday = (date) => {
-  const today = new Date()
-  const itemDate = new Date(date)
-  return (
-    itemDate.getDate() === today.getDate() &&
-    itemDate.getMonth() === today.getMonth() &&
-    itemDate.getFullYear() === today.getFullYear()
-  )
+const added = computed(() => countByPeriod(rows.value, (r) => r.created))
+const withContract = computed(() => rows.value.filter((r) => r.contract).length)
+
+// ─── Filtrlar ─────────────────────────────────────────────
+const search = ref('')
+const whereto = ref('')
+const contract = ref('')
+
+const uniq = (arr) => [...new Set(arr.filter(Boolean))].sort((a, b) => a.localeCompare(b))
+const wheretoOptions = computed(() => uniq(rows.value.map((r) => r.whereto)))
+const contractOptions = computed(() => uniq(rows.value.map((r) => r.contract)))
+
+const hasFilters = computed(() => Boolean(search.value || whereto.value || contract.value))
+function resetFilters() {
+  search.value = ''
+  whereto.value = ''
+  contract.value = ''
 }
 
-const isThisWeek = (date) => {
-  const today = new Date()
-  const itemDate = new Date(date)
-  const weekStart = new Date(today)
-  weekStart.setDate(today.getDate() - today.getDay()) // Start of week (Sunday)
-  weekStart.setHours(0, 0, 0, 0)
-  const weekEnd = new Date(weekStart)
-  weekEnd.setDate(weekStart.getDate() + 6) // End of week (Saturday)
-  weekEnd.setHours(23, 59, 59, 999)
-  return itemDate >= weekStart && itemDate <= weekEnd
+const filtered = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  return rows.value.filter((r) => {
+    if (whereto.value && r.whereto !== whereto.value) return false
+    if (contract.value && r.contract !== contract.value) return false
+    if (!q) return true
+    return [r.whereto, r.company, r.location, r.contract].some((v) =>
+      String(v).toLowerCase().includes(q),
+    )
+  })
+})
+
+// ─── Saralash va sahifalash ───────────────────────────────
+const sort = ref({ prop: 'created', order: 'descending' })
+function onSort({ prop, order }) {
+  sort.value = { prop, order }
 }
+const DATE_PROPS = ['gone', 'created']
+const sorted = computed(() => {
+  const { prop, order } = sort.value
+  if (!prop || !order) return filtered.value
+  const dir = order === 'ascending' ? 1 : -1
+  return [...filtered.value].sort((a, b) => {
+    if (DATE_PROPS.includes(prop)) return (new Date(a[prop] || 0) - new Date(b[prop] || 0)) * dir
+    return String(a[prop] || '').localeCompare(String(b[prop] || '')) * dir
+  })
+})
 
-const isThisMonth = (date) => {
-  const today = new Date()
-  const itemDate = new Date(date)
-  return itemDate.getMonth() === today.getMonth() && itemDate.getFullYear() === today.getFullYear()
-}
+const pageSize = 50
+const page = ref(1)
+watch([search, whereto, contract], () => (page.value = 1))
+const pageRows = computed(() =>
+  sorted.value.slice((page.value - 1) * pageSize, page.value * pageSize),
+)
+const rowIndex = (i) => (page.value - 1) * pageSize + i + 1
 
-const getTodayCount = () =>
-  entries.value.filter((item) => item.createdAt && isToday(item.createdAt)).length
-
-const getWeekCount = () =>
-  entries.value.filter((item) => item.createdAt && isThisWeek(item.createdAt)).length
-
-const getMonthCount = () =>
-  entries.value.filter((item) => item.createdAt && isThisMonth(item.createdAt)).length
+// ─── Amallar ──────────────────────────────────────────────
+const goToCreateSite = () => router.push({ name: 'site-create' })
+const openDetail = (row) => router.push({ name: 'site-detail', params: { id: row.id } })
 
 onMounted(async () => {
   loading.value = true
-  const userId = localStorage.getItem('userid')
-  await comeandgoesStore.getComeAndGoesOfUser(Number(userId))
-  loading.value = false
+  try {
+    await comeandgoesStore.getComeAndGoesOfUser(Number(localStorage.getItem('userid')))
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
-<style lang="scss" scoped>
-.site-container {
-  width: 100%;
-  padding: 32px;
-  background: #f5f7fa;
-  min-height: 100vh;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-.page-header {
-  margin-bottom: 32px;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.header-text {
-  flex: 1;
-  min-width: 250px;
-
-  h1 {
-    font-size: 32px;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 0 0 8px 0;
-    word-break: break-word;
-  }
-
-  .subtitle {
-    font-size: 15px;
-    color: #6b7280;
-    margin: 0;
-    word-break: break-word;
-  }
-}
-
-.date-filters {
-  display: flex;
+<style scoped>
+.sl-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-
-  .el-tag {
-    font-size: 15px;
-    font-weight: 600;
-    padding: 10px 20px;
-    border-radius: 8px;
-  }
 }
-
-.add-btn {
-  padding: 12px 24px;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
-  flex-shrink: 0;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
-  }
+.sl-select {
+  width: 200px;
 }
-
-.table-container {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  width: 100%;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.modern-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-
-  thead {
-    background: linear-gradient(to bottom, #f9fafb 0%, #f3f4f6 100%);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  th {
-    padding: 18px 20px;
-    text-align: left;
-    font-weight: 600;
-    color: #374151;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid #e5e7eb;
-    white-space: nowrap;
-
-    &.table-index {
-      width: 60px;
-      text-align: center;
-    }
-
-    &.table-actions {
-      width: 120px;
-      text-align: right;
-    }
-  }
-
-  .th-content {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .th-icon {
-    color: #409eff;
-    font-size: 16px;
-  }
-
-  tbody {
-    tr {
-      transition: all 0.2s ease;
-      border-bottom: 1px solid #f3f4f6;
-
-      &:hover {
-        background: #f9fafb;
-        transform: scale(1.001);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      }
-
-      &:last-child {
-        border-bottom: none;
-      }
-    }
-  }
-
-  td {
-    padding: 16px 20px;
-    color: #4b5563;
-    font-size: 14px;
-    vertical-align: middle;
-
-    &.table-index {
-      text-align: center;
-    }
-
-    &.table-actions {
-      text-align: right;
-    }
-  }
-
-  .index-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #409eff 0%, #3a8ee6 100%);
-    color: white;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 13px;
-    box-shadow: 0 2px 4px rgba(64, 158, 255, 0.3);
-  }
-
-  .cell-content {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .cell-text {
-    color: #374151;
-
-    &.bold {
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    &.company {
-      color: #409eff;
-      font-weight: 500;
-    }
-  }
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 40px;
-  text-align: center;
-
-  .empty-icon {
-    margin-bottom: 24px;
-    color: #d1d5db;
-  }
-
-  h3 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0 0 12px 0;
-  }
-
-  p {
-    font-size: 15px;
-    color: #6b7280;
-    margin: 0 0 24px 0;
-    max-width: 400px;
-  }
-}
-
-.ml-1 {
+.sl-count {
   margin-left: 4px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ui-muted);
+  background: var(--ui-line-soft);
+  border-radius: 999px;
+}
+.sl-table :deep(.el-table__row) {
+  cursor: pointer;
+}
+.sl-strong {
+  font-weight: 600;
+  color: var(--ui-ink);
+}
+.sl-sub {
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.sl-muted {
+  color: var(--ui-faint);
+}
+.sl-arrow {
+  margin-left: 2px;
+}
+.sl-pager {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid var(--ui-line-soft);
 }
 
-/* Responsive Design */
-@media (max-width: 1200px) {
-  .site-container {
-    padding: 24px;
+@media (max-width: 900px) {
+  .sl-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .modern-table {
-    th,
-    td {
-      padding: 14px 16px;
-      font-size: 13px;
-    }
-  }
-}
-
-@media (max-width: 992px) {
-  .site-container {
-    padding: 20px;
-  }
-
-  .page-header {
-    margin-bottom: 24px;
-  }
-
-  .header-content {
-    gap: 20px;
-  }
-
-  .header-text {
-    min-width: 200px;
-
-    h1 {
-      font-size: 26px;
-    }
-
-    .subtitle {
-      font-size: 14px;
-    }
-  }
-
-  .date-filters {
-    gap: 10px;
-
-    .el-tag {
-      padding: 8px 16px;
-      font-size: 14px;
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .site-container {
-    padding: 16px;
-  }
-
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-
-  .header-text {
-    min-width: auto;
-
-    h1 {
-      font-size: 24px;
-    }
-
-    .subtitle {
-      font-size: 14px;
-    }
-  }
-
-  .date-filters {
-    gap: 8px;
-    justify-content: center;
-    order: 2;
-
-    .el-tag {
-      flex: 1;
-      min-width: 0;
-      padding: 8px 12px;
-      font-size: 13px;
-      text-align: center;
-    }
-  }
-
-  .add-btn {
+  .sl-select {
     width: 100%;
-    order: 3;
-  }
-
-  .table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .modern-table {
-    min-width: 900px;
-  }
-}
-
-@media (max-width: 640px) {
-  .site-container {
-    padding: 12px;
-  }
-
-  .page-header {
-    margin-bottom: 16px;
-  }
-
-  .header-text {
-    h1 {
-      font-size: 20px;
-      margin-bottom: 6px;
-    }
-
-    .subtitle {
-      font-size: 12px;
-    }
-  }
-
-  .date-filters {
-    gap: 6px;
-
-    .el-tag {
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .site-container {
-    padding: 10px;
-  }
-
-  .page-header {
-    margin-bottom: 14px;
-  }
-
-  .header-text h1 {
-    font-size: 18px;
-    margin-bottom: 4px;
-  }
-
-  .header-text .subtitle {
-    font-size: 11px;
-  }
-
-  .date-filters {
-    gap: 6px;
-
-    .el-tag {
-      flex: 1;
-      padding: 8px 12px;
-      font-size: 12px;
-      text-align: center;
-    }
-  }
-
-  .empty-state {
-    padding: 60px 20px;
-
-    h3 {
-      font-size: 18px;
-    }
-
-    p {
-      font-size: 14px;
-    }
-  }
-}
-
-@media (max-width: 360px) {
-  .site-container {
-    padding: 8px;
-  }
-
-  .header-text h1 {
-    font-size: 16px;
-  }
-
-  .header-text .subtitle {
-    font-size: 10px;
-  }
-
-  .date-filters {
-    .el-tag {
-      font-size: 11px;
-      padding: 6px 10px;
-    }
-  }
-}
-
-// Scrollbar styling
-.table-wrapper::-webkit-scrollbar {
-  height: 8px;
-}
-
-.table-wrapper::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 4px;
-}
-
-.table-wrapper::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 4px;
-
-  &:hover {
-    background: #9ca3af;
   }
 }
 </style>

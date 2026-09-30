@@ -167,6 +167,7 @@ import UiPage from '@/components/ui/UiPage.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import UiInfoList from '@/components/ui/UiInfoList.vue'
 import { partnerTypeLabel } from '@/utils/partners'
+import { formatDate, telHref } from '@/utils/format'
 
 const partnersStore = usePartnersStore()
 const route = useRoute()
@@ -233,16 +234,6 @@ function formatLocationName(name) {
       return capitalize(word)
     })
     .join(' ')
-}
-
-const pad = (n) => String(n).padStart(2, '0')
-function formatDate(value) {
-  const d = new Date(value)
-  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
-}
-const telHref = (phone) => {
-  const d = String(phone || '').replace(/[^0-9]/g, '')
-  return d ? `tel:+${d.length === 9 ? `998${d}` : d}` : undefined
 }
 
 const mainItems = computed(() => {
