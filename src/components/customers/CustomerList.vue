@@ -1,234 +1,206 @@
 <template>
-  <div class="mijozlar-container" v-loading="loading">
-    <div class="page-header">
-      <div class="header-main">
-        <div class="header-top">
-          <div class="header-text">
-            <h1>{{ $t('mijozlarVaHamkorlar') }}</h1>
-            <p class="subtitle">{{ $t('mijozlarHamkorlarTable') }}</p>
-          </div>
+  <UiPage :title="$t('mijozlarVaHamkorlar')" :subtitle="$t('mijozlarHamkorlarTable')">
+    <template #actions>
+      <el-button type="primary" :icon="Plus" @click="openAddDialog">
+        {{ $t('yangiQoshish') }}
+      </el-button>
+    </template>
 
-          <div class="statistics-tags-horizontal">
-            <el-tag size="large" type="success" effect="plain">
-              {{ $t('today') }}: {{ getTodayCount() }}
-            </el-tag>
-            <el-tag size="large" type="primary" effect="plain">
-              {{ $t('thisWeek') }}: {{ getWeekCount() }}
-            </el-tag>
-            <el-tag size="large" type="warning" effect="plain">
-              {{ $t('thisMonth') }}: {{ getMonthCount() }}
-            </el-tag>
-          </div>
-        </div>
-      </div>
+    <!-- Ko'rsatkichlar -->
+    <div class="cl-stats">
+      <UiStat
+        :label="$t('custTotal')"
+        :value="fmtNum(allPartners.length)"
+        :sub="$t('custGroupsCount', { n: activeGroupsCount })"
+        clickable
+        @click="resetFilters"
+      />
+      <UiStat
+        :label="$t('today')"
+        :hint="$t('custHintAdded')"
+        :value="fmtNum(addedToday)"
+        :sub="$t('custAdded')"
+        tone="good"
+      />
+      <UiStat
+        :label="$t('thisWeek')"
+        :hint="$t('custHintAdded')"
+        :value="fmtNum(addedWeek)"
+        :sub="$t('custAdded')"
+      />
+      <UiStat
+        :label="$t('thisMonth')"
+        :hint="$t('custHintAdded')"
+        :value="fmtNum(addedMonth)"
+        :sub="$t('custAdded')"
+      />
     </div>
 
-    <el-tabs v-model="activeTab" class="modern-tabs" @tab-click="handleClick">
-      <el-tab-pane
-        :label="`${$t('doimiymijoz')} (${getFilteredPartners('doimiymijoz').length})`"
-        name="doimiymijoz"
+    <!-- Filtrlar -->
+    <UiToolbar>
+      <UiField :label="$t('guruh')" class="cl-groups-field">
+        <div class="cl-groups">
+          <button
+            v-for="g in groups"
+            :key="g.value"
+            type="button"
+            class="cl-group"
+            :class="{ 'is-active': group === g.value }"
+            @click="group = g.value"
+          >
+            {{ g.label }}
+            <span class="cl-group__count">{{ g.count }}</span>
+          </button>
+        </div>
+      </UiField>
+      <UiField :label="$t('custSearch')" grow>
+        <el-input
+          v-model="search"
+          :prefix-icon="Search"
+          clearable
+          :placeholder="$t('custSearchPh')"
+        />
+      </UiField>
+      <UiField :label="$t('turi')">
+        <el-select v-model="legalType" clearable :placeholder="$t('custAll')" class="cl-select">
+          <el-option v-for="t in legalTypes" :key="t" :label="t" :value="t" />
+        </el-select>
+      </UiField>
+      <UiField :label="$t('viloyat')">
+        <el-select
+          v-model="region"
+          clearable
+          filterable
+          :placeholder="$t('custAll')"
+          class="cl-select"
+        >
+          <el-option v-for="r in regions" :key="r.value" :label="r.label" :value="r.value" />
+        </el-select>
+      </UiField>
+    </UiToolbar>
+
+    <!-- Jadval -->
+    <UiPanel flush>
+      <template #title>
+        {{ activeGroupLabel }}
+        <span class="cl-count">{{ fmtNum(filtered.length) }}</span>
+      </template>
+      <template #actions>
+        <el-button v-if="hasFilters" link type="primary" @click="resetFilters">
+          {{ $t('custResetFilters') }}
+        </el-button>
+      </template>
+
+      <el-table
+        v-loading="loading"
+        :data="pageRows"
+        :default-sort="{ prop: 'createdAt', order: 'descending' }"
+        class="cl-table"
+        @sort-change="onSort"
+        @row-click="openDetail"
       >
-        <div class="tab-content">
-          <div class="tab-header">
-            <h2>{{ $t('doimiymijozlar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
+        <el-table-column type="index" :index="rowIndex" label="#" width="56" />
+        <el-table-column prop="fullname" :label="$t('ism')" min-width="190" sortable="custom">
+          <template #default="{ row }">
+            <span class="cl-name">{{ row.fullname || '—' }}</span>
+            <span v-if="group === 'all'" class="cl-group-tag">
+              {{ partnerTypeLabel(row.partner_type) }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('telefon')" min-width="170">
+          <template #default="{ row }">
+            <a
+              v-if="row.phone_number"
+              :href="telHref(row.phone_number)"
+              class="cl-phone"
+              @click.stop
+            >
+              {{ row.phone_number }}
+            </a>
+            <span v-else class="cl-muted">—</span>
+            <div v-if="row.additional_phone_number" class="cl-sub">
+              <a :href="telHref(row.additional_phone_number)" class="cl-phone" @click.stop>
+                {{ row.additional_phone_number }}
+              </a>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('custRegion')" min-width="200">
+          <template #default="{ row }">
+            <span>{{ regionLine(row) || '—' }}</span>
+            <div v-if="row.republic" class="cl-sub">{{ formatLocationName(row.republic) }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('turi')" min-width="130">
+          <template #default="{ row }">
+            <el-tag
+              v-if="row.mijozturi"
+              :type="partnerTypeTag(row.mijozturi)"
+              size="small"
+              effect="plain"
+            >
+              {{ row.mijozturi }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="inn" :label="$t('inn')" min-width="110">
+          <template #default="{ row }">{{ row.inn || '—' }}</template>
+        </el-table-column>
+        <el-table-column
+          prop="createdAt"
+          :label="$t('custCreated')"
+          min-width="140"
+          sortable="custom"
+        >
+          <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+        </el-table-column>
+        <el-table-column width="120" align="right" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" @click.stop="openDetail(row)">
+              {{ $t('viewDetails') }} <el-icon class="cl-arrow"><ArrowRight /></el-icon>
+            </el-button>
+          </template>
+        </el-table-column>
+
+        <template #empty>
+          <el-empty :description="hasFilters ? $t('custNothingFound') : $t('hozirchamijozlaryoq')">
+            <el-button v-if="hasFilters" @click="resetFilters">{{
+              $t('custResetFilters')
+            }}</el-button>
+            <el-button v-else type="primary" :icon="Plus" @click="openAddDialog">
               {{ $t('yangiQoshish') }}
             </el-button>
-          </div>
+          </el-empty>
+        </template>
+      </el-table>
 
-          <CustomerCard
-            v-if="getFilteredPartners('doimiymijoz').length > 0"
-            :partners="getFilteredPartners('doimiymijoz')"
-            @delete="handleDelete"
-            @edit="handleEdit"
-          />
+      <div v-if="filtered.length > pageSize" class="cl-pager">
+        <el-pagination
+          v-model:current-page="page"
+          :page-size="pageSize"
+          :total="filtered.length"
+          layout="total, prev, pager, next"
+          background
+        />
+      </div>
+    </UiPanel>
 
-          <el-empty v-else :description="$t('noPartnersFound')" />
-        </div>
-      </el-tab-pane>
-
-      <el-tab-pane
-        :label="`${$t('montajguruhlar')} (${getFilteredPartners('montajnik').length})`"
-        name="montajnik"
-      >
-        <div class="tab-content">
-          <div class="tab-header">
-            <h2>{{ $t('montajguruhlar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
-              {{ $t('yangiQoshish') }}
-            </el-button>
-          </div>
-
-          <CustomerCard
-            v-if="getFilteredPartners('montajnik').length > 0"
-            :partners="getFilteredPartners('montajnik')"
-            @delete="handleDelete"
-            @edit="handleEdit"
-          />
-
-          <el-empty v-else :description="$t('noMantajnikFound')" />
-        </div>
-      </el-tab-pane>
-
-      <el-tab-pane
-        :label="`${$t('quruvchi')} (${getFilteredPartners('quruvchi').length})`"
-        name="quruvchi"
-      >
-        <div class="tab-content">
-          <div class="tab-header">
-            <h2>{{ $t('quruvchilar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
-              {{ $t('yangiQoshish') }}
-            </el-button>
-          </div>
-
-          <CustomerCard
-            v-if="getFilteredPartners('quruvchi').length > 0"
-            :partners="getFilteredPartners('quruvchi')"
-            @delete="handleDelete"
-            @edit="handleEdit"
-          />
-
-          <el-empty v-else :description="$t('noQuruvchiFound')" />
-        </div>
-      </el-tab-pane>
-
-      <el-tab-pane
-        :label="`${$t('dokonchitadbirkor')} (${getFilteredPartners('dokonchitadbirkor').length})`"
-        name="dokonchitadbirkor"
-      >
-        <div class="tab-content">
-          <div class="tab-header">
-            <h2>{{ $t('dokonchitadbirkorlar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
-              {{ $t('yangiQoshish') }}
-            </el-button>
-          </div>
-
-          <CustomerCard
-            v-if="getFilteredPartners('dokonchitadbirkor').length > 0"
-            :partners="getFilteredPartners('dokonchitadbirkor')"
-            @delete="handleDelete"
-            @edit="handleEdit"
-          />
-
-          <el-empty v-else :description="$t('noDokonchitadbirkorFound')" />
-        </div>
-      </el-tab-pane>
-
-      <el-tab-pane
-        :label="`${$t('proyektinstitut')} (${getFilteredPartners('proyektinstitut').length})`"
-        name="proyektinstitut"
-      >
-        <div class="tab-content">
-          <div class="tab-header">
-            <h2>{{ $t('proyektinstitutlar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
-              {{ $t('yangiQoshish') }}
-            </el-button>
-          </div>
-
-          <CustomerCard
-            v-if="getFilteredPartners('proyektinstitut').length > 0"
-            :partners="getFilteredPartners('proyektinstitut')"
-            @delete="handleDelete"
-            @edit="handleEdit"
-          />
-
-          <el-empty v-else :description="$t('noProyektInstitutFound')" />
-        </div>
-      </el-tab-pane>
-
-      <el-tab-pane
-        :label="`${$t('tenderfirmalar')} (${getFilteredPartners('tenderfirmalar').length})`"
-        name="tenderfirmalar"
-      >
-        <div class="tab-content">
-          <div class="tab-header">
-            <h2>{{ $t('tenderfirmalar') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
-              {{ $t('yangiQoshish') }}
-            </el-button>
-          </div>
-
-          <CustomerCard
-            v-if="getFilteredPartners('tenderfirmalar').length > 0"
-            :partners="getFilteredPartners('tenderfirmalar')"
-            @delete="handleDelete"
-            @edit="handleEdit"
-          />
-
-          <el-empty v-else :description="$t('noTenderFirmalarFound')" />
-        </div>
-      </el-tab-pane>
-
-      <el-tab-pane :label="`${$t('uks')} (${getFilteredPartners('uks').length})`" name="uks">
-        <div class="tab-content">
-          <div class="tab-header">
-            <h2>{{ $t('uks2') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
-              {{ $t('yangiQoshish') }}
-            </el-button>
-          </div>
-
-          <CustomerCard
-            v-if="getFilteredPartners('uks').length > 0"
-            :partners="getFilteredPartners('uks')"
-            @delete="handleDelete"
-            @edit="handleEdit"
-          />
-
-          <el-empty v-else :description="$t('noUksFound')" />
-        </div>
-      </el-tab-pane>
-
-      <el-tab-pane
-        :label="`${$t('boshqa')} (${getFilteredPartners('boshqa').length})`"
-        name="boshqa"
-      >
-        <div class="tab-content">
-          <div class="tab-header">
-            <h2>{{ $t('boshqa') }}</h2>
-            <el-button type="primary" size="large" :icon="Plus" @click="openAddDialog">
-              {{ $t('yangiQoshish') }}
-            </el-button>
-          </div>
-
-          <CustomerCard
-            v-if="getFilteredPartners('boshqa').length > 0"
-            :partners="getFilteredPartners('boshqa')"
-            @delete="handleDelete"
-            @edit="handleEdit"
-          />
-
-          <el-empty v-else :description="$t('noBoshqaFound')" />
-        </div>
-      </el-tab-pane>
-
-      <el-tab-pane :label="`${$t('jami')} (${getFilteredPartners('jami').length})`" name="jami">
-        <div class="tab-content">
-          <CustomerSummaryCard
-            v-if="getFilteredPartners('jami').length > 0"
-            :partners="getFilteredPartners('jami')"
-            @delete="handleDelete"
-            @edit="handleEdit"
-          />
-
-          <el-empty v-else :description="$t('noJamiFound')" />
-        </div>
-      </el-tab-pane>
-    </el-tabs>
-
-    <!-- Yangi mijoz qo'shish dialogi -->
+    <!-- Yangi mijoz qo'shish -->
     <el-dialog
       v-model="addDialogVisible"
       :title="$t('yangiMijozQoshishText')"
-      class="add-mijoz-dialog"
       width="640px"
       top="6vh"
       append-to-body
       destroy-on-close
     >
+      <div class="cl-add-group">
+        <span class="cl-add-group__label">{{ $t('guruh') }}</span>
+        <el-select v-model="newGroup" class="cl-add-group__select">
+          <el-option v-for="g in partnerGroups" :key="g.value" :label="g.label" :value="g.value" />
+        </el-select>
+      </div>
       <CustomerForm
         v-if="addDialogVisible"
         embedded
@@ -236,643 +208,342 @@
         @cancel="addDialogVisible = false"
       />
     </el-dialog>
-  </div>
+  </UiPage>
 </template>
 
 <script setup>
 import router from '@/router'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { usePartnersStore } from '@/stores/partners'
-import { Plus } from '@element-plus/icons-vue'
-import CustomerCard from './CustomerCard.vue'
-import { ElMessage } from 'element-plus'
-import CustomerSummaryCard from './CustomerSummaryCard.vue'
+import { ArrowRight, Plus, Search } from '@element-plus/icons-vue'
+import UiPage from '@/components/ui/UiPage.vue'
+import UiStat from '@/components/ui/UiStat.vue'
+import UiToolbar from '@/components/ui/UiToolbar.vue'
+import UiField from '@/components/ui/UiField.vue'
+import UiPanel from '@/components/ui/UiPanel.vue'
 import CustomerForm from './CustomerForm.vue'
+import { formatLocationName, partnerTypeLabel, partnerTypeTag } from '@/utils/partners'
+
+const { t } = useI18n()
+const partnersStore = usePartnersStore()
 
 const loading = ref(false)
-const activeTab = ref('doimiymijoz')
-const partnersStore = usePartnersStore()
 const addDialogVisible = ref(false)
 
-const openAddDialog = () => {
-  // partner_type in the form payload is read from this value
-  localStorage.setItem('mijozTur', activeTab.value)
+// Guruhlar tartibi (partner_type) — yorliqlar i18n'dan
+const PARTNER_GROUPS = [
+  { value: 'doimiymijoz', labelKey: 'doimiymijoz' },
+  { value: 'montajnik', labelKey: 'montajguruhlar' },
+  { value: 'quruvchi', labelKey: 'quruvchi' },
+  { value: 'dokonchitadbirkor', labelKey: 'dokonchitadbirkor' },
+  { value: 'proyektinstitut', labelKey: 'proyektinstitut' },
+  { value: 'tenderfirmalar', labelKey: 'tenderfirmalar' },
+  { value: 'uks', labelKey: 'uks' },
+  { value: 'boshqa', labelKey: 'boshqa' },
+]
+const partnerGroups = computed(() =>
+  PARTNER_GROUPS.map((g) => ({ value: g.value, label: t(g.labelKey) })),
+)
+
+const allPartners = computed(() => partnersStore.allPartnersofUser || [])
+
+// ─── Filtrlar ─────────────────────────────────────────────
+const group = ref('all')
+const search = ref('')
+const legalType = ref('')
+const region = ref('')
+
+const countBy = computed(() => {
+  const m = {}
+  for (const p of allPartners.value) m[p.partner_type] = (m[p.partner_type] || 0) + 1
+  return m
+})
+const groups = computed(() => [
+  { value: 'all', label: t('custAll'), count: allPartners.value.length },
+  ...partnerGroups.value.map((g) => ({ ...g, count: countBy.value[g.value] || 0 })),
+])
+const activeGroupsCount = computed(() => Object.keys(countBy.value).length)
+const activeGroupLabel = computed(() => groups.value.find((g) => g.value === group.value)?.label)
+
+const legalTypes = computed(() =>
+  [...new Set(allPartners.value.map((p) => p.mijozturi).filter(Boolean))].sort(),
+)
+const regions = computed(() =>
+  [...new Set(allPartners.value.map((p) => p.viloyat).filter(Boolean))]
+    .map((v) => ({ value: v, label: formatLocationName(v) }))
+    .sort((a, b) => a.label.localeCompare(b.label)),
+)
+
+const hasFilters = computed(
+  () => group.value !== 'all' || Boolean(search.value || legalType.value || region.value),
+)
+
+function resetFilters() {
+  group.value = 'all'
+  search.value = ''
+  legalType.value = ''
+  region.value = ''
+}
+
+const digits = (s) => String(s || '').replace(/[^0-9]/g, '')
+
+const filtered = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  const qDigits = digits(q)
+  return allPartners.value.filter((p) => {
+    if (group.value !== 'all' && p.partner_type !== group.value) return false
+    if (legalType.value && p.mijozturi !== legalType.value) return false
+    if (region.value && p.viloyat !== region.value) return false
+    if (!q) return true
+    if (
+      String(p.fullname || '')
+        .toLowerCase()
+        .includes(q)
+    )
+      return true
+    if (qDigits.length >= 3) {
+      return [p.phone_number, p.additional_phone_number, p.inn].some((v) =>
+        digits(v).includes(qDigits),
+      )
+    }
+    return false
+  })
+})
+
+// ─── Saralash va sahifalash ───────────────────────────────
+const sort = ref({ prop: 'createdAt', order: 'descending' })
+function onSort({ prop, order }) {
+  sort.value = { prop, order }
+}
+
+const sorted = computed(() => {
+  const { prop, order } = sort.value
+  if (!prop || !order) return filtered.value
+  const dir = order === 'ascending' ? 1 : -1
+  return [...filtered.value].sort((a, b) => {
+    const x = a[prop] ?? ''
+    const y = b[prop] ?? ''
+    if (prop === 'createdAt') return (new Date(x) - new Date(y)) * dir
+    return String(x).localeCompare(String(y)) * dir
+  })
+})
+
+const pageSize = 50
+const page = ref(1)
+watch([group, search, legalType, region], () => (page.value = 1))
+const pageRows = computed(() =>
+  sorted.value.slice((page.value - 1) * pageSize, page.value * pageSize),
+)
+const rowIndex = (i) => (page.value - 1) * pageSize + i + 1
+
+// ─── Ko'rsatkichlar ───────────────────────────────────────
+const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
+const countSince = (since) =>
+  allPartners.value.filter((p) => p.createdAt && new Date(p.createdAt) >= since).length
+
+const addedToday = computed(() => countSince(startOfDay(new Date())))
+const addedWeek = computed(() => {
+  // Hafta dushanbadan boshlanadi
+  const d = startOfDay(new Date())
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+  return countSince(d)
+})
+const addedMonth = computed(() => {
+  const now = new Date()
+  return countSince(new Date(now.getFullYear(), now.getMonth(), 1))
+})
+
+// ─── Formatlash ───────────────────────────────────────────
+const numberFmt = new Intl.NumberFormat('ru-RU')
+const fmtNum = (n) => numberFmt.format(n || 0)
+const pad = (n) => String(n).padStart(2, '0')
+function formatDate(value) {
+  if (!value) return '—'
+  const d = new Date(value)
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
+}
+const regionLine = (p) =>
+  [p.viloyat, p.shahar_tuman].filter(Boolean).map(formatLocationName).join(', ')
+const telHref = (phone) => {
+  const d = digits(phone)
+  return d ? `tel:+${d.length === 9 ? `998${d}` : d}` : undefined
+}
+
+// ─── Amallar ──────────────────────────────────────────────
+function openDetail(row) {
+  router.push({ name: 'customer-detail', params: { id: row.id } })
+}
+
+// Forma partner_type'ni localStorage'dan o'qiydi — tanlangan guruh shu yerga yoziladi
+const newGroup = ref('doimiymijoz')
+watch(newGroup, (v) => localStorage.setItem('mijozTur', v))
+
+function openAddDialog() {
+  newGroup.value = group.value !== 'all' ? group.value : 'doimiymijoz'
+  localStorage.setItem('mijozTur', newGroup.value)
   addDialogVisible.value = true
 }
 
-const handleAddSuccess = async () => {
-  addDialogVisible.value = false
+async function reload() {
   loading.value = true
-  await partnersStore.getAllPartnersOfUser(Number(localStorage.getItem('userid')))
-  loading.value = false
-}
-
-const handleEdit = (id) => {
-  router.push({ name: 'customer-detail', params: { id } })
-}
-
-const handleDelete = async (id) => {
   try {
-    loading.value = true
-    await partnersStore.deleteOnePartner(id)
     await partnersStore.getAllPartnersOfUser(Number(localStorage.getItem('userid')))
-    ElMessage.success("Muvaffaqiyatli o'chirildi!")
-  } catch (error) {
-    console.error('Delete error:', error)
-    ElMessage.error("O'chirishda xatolik yuz berdi!")
   } finally {
     loading.value = false
   }
 }
 
-// Date counting functions
-const isToday = (date) => {
-  const today = new Date()
-  const itemDate = new Date(date)
-  return (
-    itemDate.getDate() === today.getDate() &&
-    itemDate.getMonth() === today.getMonth() &&
-    itemDate.getFullYear() === today.getFullYear()
-  )
+async function handleAddSuccess() {
+  addDialogVisible.value = false
+  await reload()
 }
 
-const isThisWeek = (date) => {
-  const today = new Date()
-  const itemDate = new Date(date)
-  const weekStart = new Date(today)
-  weekStart.setDate(today.getDate() - today.getDay()) // Start of week (Sunday)
-  weekStart.setHours(0, 0, 0, 0)
-  const weekEnd = new Date(weekStart)
-  weekEnd.setDate(weekStart.getDate() + 6) // End of week (Saturday)
-  weekEnd.setHours(23, 59, 59, 999)
-  return itemDate >= weekStart && itemDate <= weekEnd
-}
-
-const isThisMonth = (date) => {
-  const today = new Date()
-  const itemDate = new Date(date)
-  return itemDate.getMonth() === today.getMonth() && itemDate.getFullYear() === today.getFullYear()
-}
-
-const getTodayCount = () => {
-  return partnersStore.allPartnersofUser.filter((item) => item.createdAt && isToday(item.createdAt))
-    .length
-}
-
-const getWeekCount = () => {
-  return partnersStore.allPartnersofUser.filter(
-    (item) => item.createdAt && isThisWeek(item.createdAt),
-  ).length
-}
-
-const getMonthCount = () => {
-  return partnersStore.allPartnersofUser.filter(
-    (item) => item.createdAt && isThisMonth(item.createdAt),
-  ).length
-}
-
-const getAllCount = () => {
-  return partnersStore.allPartnersofUser.length
-}
-
-const getFilteredPartners = (type) => {
-  if (type === 'jami') {
-    return partnersStore.allPartnersofUser.filter(() => true)
-  }
-
-  return partnersStore.allPartnersofUser.filter((item) => item.partner_type === type)
-}
-
-const handleClick = () => {
-  // Tab click handler
-}
-
-onMounted(async () => {
-  loading.value = true
-  await partnersStore.getAllPartnersOfUser(Number(localStorage.getItem('userid')))
-  loading.value = false
-})
+onMounted(reload)
 </script>
 
-<style lang="scss" scoped>
-.mijozlar-container {
-  width: 100%;
-  padding: 32px;
-  background: #f5f7fa;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-.page-header {
-  margin-bottom: 32px;
-}
-
-.header-main {
-  margin-bottom: 24px;
-}
-
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 24px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.header-text {
-  flex: 1;
-  min-width: 250px;
-
-  h1 {
-    font-size: 32px;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 0 0 8px 0;
-    word-break: break-word;
-  }
-
-  .subtitle {
-    font-size: 15px;
-    color: #6b7280;
-    margin: 0;
-    word-break: break-word;
-  }
-}
-
-.statistics-tags-horizontal {
-  display: flex;
+<style scoped>
+.cl-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
+}
+
+/* Guruh tanlash — yorliq + son */
+.cl-groups-field {
+  flex: 1 1 100%;
+}
+.cl-groups {
+  display: flex;
   flex-wrap: wrap;
+  gap: 6px;
+}
+.cl-group {
+  display: inline-flex;
   align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ui-ink-2);
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.cl-group:hover {
+  border-color: #bfdbfe;
+}
+.cl-group.is-active {
+  background: var(--ui-link-soft);
+  border-color: var(--ui-link);
+  color: var(--ui-link);
+  font-weight: 600;
+}
+.cl-group:focus-visible {
+  outline: 2px solid var(--ui-link);
+  outline-offset: 2px;
+}
+.cl-group__count {
+  min-width: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+  color: var(--ui-muted);
+  background: var(--ui-line-soft);
+  border-radius: 999px;
+}
+.cl-group.is-active .cl-group__count {
+  color: white;
+  background: var(--ui-link);
+}
+.cl-select {
+  width: 190px;
+}
+
+.cl-count {
+  margin-left: 4px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ui-muted);
+  background: var(--ui-line-soft);
+  border-radius: 999px;
+}
+
+/* Jadval */
+.cl-table :deep(.el-table__row) {
+  cursor: pointer;
+}
+.cl-name {
+  font-weight: 600;
+  color: var(--ui-ink);
+}
+.cl-group-tag {
+  display: block;
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.cl-phone {
+  color: var(--ui-link);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+.cl-phone:hover {
+  text-decoration: underline;
+}
+.cl-sub {
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.cl-muted {
+  color: var(--ui-faint);
+}
+.cl-arrow {
+  margin-left: 2px;
+}
+.cl-pager {
+  display: flex;
   justify-content: flex-end;
-
-  .el-tag {
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px 16px;
-    border-radius: 8px;
-    white-space: nowrap;
-  }
+  padding: 12px 16px;
+  border-top: 1px solid var(--ui-line-soft);
 }
 
-.statistics-header {
-  margin-bottom: 18px;
-
-  h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0 0 4px 0;
-  }
-
-  .statistics-subtitle {
-    font-size: 13px;
-    color: #6b7280;
-    margin: 0;
-  }
-}
-
-.date-filters {
+/* Qo'shish dialogidagi guruh tanlovi */
+.cl-add-group {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-
-  .el-tag {
-    font-size: 15px;
-    font-weight: 600;
-    padding: 10px 20px;
-    border-radius: 8px;
-  }
-}
-
-.modern-tabs {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-
-  :deep(.el-tabs__header) {
-    margin-bottom: 32px;
-  }
-
-  :deep(.el-tabs__nav-wrap::after) {
-    background: #e5e7eb;
-  }
-
-  :deep(.el-tabs__item) {
-    font-size: 15px;
-    font-weight: 500;
-    color: #6b7280;
-    padding: 0 24px;
-    height: 48px;
-    line-height: 48px;
-    white-space: nowrap;
-
-    &:hover {
-      color: #409eff;
-    }
-
-    &.is-active {
-      color: #409eff;
-      font-weight: 600;
-    }
-  }
-
-  :deep(.el-tabs__active-bar) {
-    height: 3px;
-    background: #409eff;
-  }
-}
-
-.tab-content {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.tab-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #f3f4f6;
-  gap: 16px;
-  flex-wrap: wrap;
-
-  h2 {
-    font-size: 24px;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0;
-    word-break: break-word;
-    flex: 1;
-    min-width: 200px;
-  }
-
-  .el-button {
-    flex-shrink: 0;
-  }
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: var(--ui-surface-2);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
+}
+.cl-add-group__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ui-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cl-add-group__select {
+  flex: 1;
 }
 
-// Desktop Large
-@media (max-width: 1400px) {
-  .mijozlar-container {
-    padding: 28px;
+@media (max-width: 900px) {
+  .cl-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .header-text h1 {
-    font-size: 30px;
-  }
-}
-
-// Desktop
-@media (max-width: 1200px) {
-  .mijozlar-container {
-    padding: 24px;
-  }
-
-  .header-text h1 {
-    font-size: 28px;
-  }
-
-  .modern-tabs {
-    padding: 20px;
-  }
-}
-
-// Tablet Large
-@media (max-width: 992px) {
-  .mijozlar-container {
-    padding: 20px;
-  }
-
-  .page-header {
-    margin-bottom: 24px;
-  }
-
-  .header-main {
-    margin-bottom: 20px;
-  }
-
-  .header-top {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-    margin-bottom: 18px;
-  }
-
-  .header-text {
-    min-width: 200px;
-
-    h1 {
-      font-size: 26px;
-    }
-
-    .subtitle {
-      font-size: 14px;
-    }
-  }
-
-  .statistics-tags-horizontal {
-    justify-content: flex-start;
-
-    .el-tag {
-      padding: 8px 14px;
-      font-size: 13px;
-    }
-  }
-
-  .modern-tabs {
-    padding: 18px;
-    border-radius: 12px;
-  }
-
-  .tab-header {
-    flex-direction: column;
-    align-items: stretch;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    gap: 12px;
-
-    h2 {
-      font-size: 20px;
-      min-width: auto;
-    }
-
-    .el-button {
-      width: 100%;
-    }
-  }
-}
-
-// Tablet
-@media (max-width: 768px) {
-  .mijozlar-container {
-    padding: 16px;
-  }
-
-  .page-header {
-    margin-bottom: 18px;
-  }
-
-  .header-main {
-    margin-bottom: 16px;
-  }
-
-  .header-top {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-
-  .header-text {
-    min-width: auto;
-
-    h1 {
-      font-size: 22px;
-    }
-
-    .subtitle {
-      font-size: 13px;
-    }
-  }
-
-  .statistics-tags-horizontal {
-    gap: 8px;
-    justify-content: flex-start;
-
-    .el-tag {
-      padding: 8px 12px;
-      font-size: 12px;
-    }
-  }
-
-  .modern-tabs {
-    padding: 16px;
-    border-radius: 12px;
-  }
-
-  :deep(.el-tabs__item) {
-    padding: 0 16px;
-    font-size: 14px;
-    height: 44px;
-    line-height: 44px;
-  }
-
-  .tab-header {
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-    gap: 10px;
-
-    h2 {
-      font-size: 18px;
-    }
-  }
-}
-
-// Small Tablet / Large Mobile
-@media (max-width: 640px) {
-  .mijozlar-container {
-    padding: 12px;
-  }
-
-  .page-header {
-    margin-bottom: 16px;
-  }
-
-  .header-main {
-    margin-bottom: 14px;
-  }
-
-  .header-top {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-
-  .header-text h1 {
-    font-size: 20px;
-    margin-bottom: 6px;
-  }
-
-  .header-text .subtitle {
-    font-size: 12px;
-    margin-bottom: 10px;
-  }
-
-  .statistics-tags-horizontal {
-    gap: 8px;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-
-    .el-tag {
-      padding: 8px 10px;
-      font-size: 11px;
-      flex: 1;
-      min-width: 90px;
-      text-align: center;
-    }
-  }
-
-  .modern-tabs {
-    padding: 12px;
-    border-radius: 10px;
-  }
-
-  :deep(.el-tabs__item) {
-    padding: 0 12px;
-    font-size: 13px;
-    height: 40px;
-    line-height: 40px;
-  }
-
-  .tab-header {
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-
-    h2 {
-      font-size: 16px;
-    }
-  }
-}
-
-// Mobile
-@media (max-width: 480px) {
-  .mijozlar-container {
-    padding: 10px;
-  }
-
-  .page-header {
-    margin-bottom: 14px;
-  }
-
-  .header-main {
-    margin-bottom: 12px;
-  }
-
-  .header-top {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .header-text h1 {
-    font-size: 18px;
-    margin-bottom: 4px;
-  }
-
-  .header-text .subtitle {
-    font-size: 11px;
-    margin-bottom: 8px;
-  }
-
-  .statistics-tags-horizontal {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    justify-content: stretch;
-
-    .el-tag {
-      padding: 10px 8px;
-      font-size: 11px;
-      text-align: center;
-      white-space: normal;
-      height: auto;
-      line-height: 1.2;
-    }
-  }
-
-  .modern-tabs {
-    padding: 10px;
-    border-radius: 8px;
-  }
-
-  :deep(.el-tabs__item) {
-    padding: 0 10px;
-    font-size: 12px;
-    height: 38px;
-    line-height: 38px;
-  }
-
-  :deep(.el-tabs__header) {
-    margin-bottom: 20px;
-  }
-
-  .tab-header {
-    margin-bottom: 14px;
-    padding-bottom: 10px;
-
-    h2 {
-      font-size: 14px;
-    }
-  }
-}
-
-// Extra Small Mobile
-@media (max-width: 360px) {
-  .mijozlar-container {
-    padding: 8px;
-  }
-
-  .header-text h1 {
-    font-size: 16px;
-  }
-
-  .header-text .subtitle {
-    font-size: 10px;
-  }
-
-  .statistics-tags-horizontal {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-
-    .el-tag {
-      padding: 8px 6px;
-      font-size: 10px;
-    }
-  }
-
-  .tab-header h2 {
-    font-size: 13px;
-  }
-}
-</style>
-
-<!-- Dialog body'ga tegishli (append-to-body sabab unscoped bo'lishi kerak) -->
-<style lang="scss">
-.add-mijoz-dialog {
-  max-width: 92vw;
-  border-radius: 14px;
-
-  .el-dialog__body {
-    max-height: 74vh;
-    overflow-y: auto;
-    padding-top: 8px;
-  }
-
-  @media (max-width: 768px) {
-    width: 94vw !important;
-    top: 4vh !important;
-
-    .el-dialog__body {
-      max-height: 80vh;
-    }
+  .cl-select {
+    width: 100%;
   }
 }
 </style>

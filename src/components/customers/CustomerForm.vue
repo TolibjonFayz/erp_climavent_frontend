@@ -1,129 +1,118 @@
 <template>
-  <div class="container" :class="{ embedded }">
-    <div class="header-row" v-if="!embedded">
-      <el-icon @click="goback()"><Back /></el-icon>
+  <div class="cf" :class="{ 'cf--page': !embedded }">
+    <div v-if="!embedded" class="cf__head">
+      <el-button :icon="Back" link @click="goback()" />
       <h2>{{ $t('yangiMijozQoshishText') }}</h2>
     </div>
 
-    <el-form :model="form" :rules="rules" ref="formRef" label-width="auto" class="form">
-      <!-- ISM FAMILIYA -->
+    <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="cf__form">
+      <!-- Asosiy ma'lumot -->
+      <h4 class="cf__section">{{ $t('custFormMain') }}</h4>
       <el-form-item :label="$t('ismFamiliya')" prop="fullname" required>
-        <el-input v-model="form.fullname" :placeholder="$t('kiriting')" class="full-width-input" />
+        <el-input v-model="form.fullname" :placeholder="$t('kiriting')" />
       </el-form-item>
 
-      <!-- MIJOZ TURI -->
-      <el-form-item :label="$t('mijozTuri')" prop="mijozturi" required>
-        <el-radio-group v-model="form.mijozturi" class="responsive-radio-group">
-          <el-radio value="yuridik">{{ $t('yuridikShaxs') }}</el-radio>
-          <el-radio value="jismoniy">{{ $t('jismoniyShaxs') }}</el-radio>
-        </el-radio-group>
-      </el-form-item>
+      <div class="cf__grid">
+        <el-form-item :label="$t('mijozTuri')" prop="mijozturi" required>
+          <el-radio-group v-model="form.mijozturi">
+            <el-radio-button value="yuridik">{{ $t('yuridikShaxs') }}</el-radio-button>
+            <el-radio-button value="jismoniy">{{ $t('jismoniyShaxs') }}</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <!-- INN faqat yuridik shaxs uchun -->
+        <el-form-item v-if="form.mijozturi === 'yuridik'" :label="$t('inn')">
+          <el-input v-model="form.inn" :placeholder="$t('kiriting')" />
+        </el-form-item>
+      </div>
 
-      <!-- INN (faqat yuridik shaxs uchun) -->
-      <el-form-item :label="$t('inn')" v-if="form.mijozturi === 'yuridik'">
-        <el-input v-model="form.inn" :placeholder="$t('kiriting')" class="full-width-input" />
-      </el-form-item>
-
-      <!-- TELEFON -->
-      <el-form-item :label="$t('telefon')" prop="phone_number" required>
-        <el-input
-          v-model="form.phone_number"
-          :placeholder="$t('kiriting')"
-          class="full-width-input"
-        />
-      </el-form-item>
-
-      <!-- QO'SHIMCHA TELEFON -->
-      <el-form-item :label="$t('form_qoshimchaTelefon')">
-        <el-input
-          v-model="form.additional_phone_number"
-          :placeholder="$t('form_qoshimchaTelefon_placeholder')"
-          class="full-width-input"
-        />
-      </el-form-item>
-
-      <!-- RESPUBLIKA -->
-      <el-form-item :label="$t('respublika')" prop="republic" required>
-        <el-select
-          v-model="form.republic"
-          filterable
-          :placeholder="$t('tanlang')"
-          class="full-width-select"
-          @change="onRepublicChange"
-        >
-          <el-option
-            v-for="item in republicOptions"
-            :key="item.key"
-            :label="item.label"
-            :value="item.key"
+      <div class="cf__grid">
+        <el-form-item :label="$t('telefon')" prop="phone_number" required>
+          <el-input v-model="form.phone_number" placeholder="+998 90 123 45 67" />
+        </el-form-item>
+        <el-form-item :label="$t('form_qoshimchaTelefon')">
+          <el-input
+            v-model="form.additional_phone_number"
+            :placeholder="$t('form_qoshimchaTelefon_placeholder')"
           />
-        </el-select>
-        <el-input
-          v-if="form.republic === 'boshqa'"
-          class="whereotherinput"
-          v-model="form.otherrepublic"
-          :placeholder="$t('qaysiRespublika')"
-        />
-      </el-form-item>
+        </el-form-item>
+      </div>
 
-      <!-- VILOYAT -->
-      <el-form-item :label="$t('viloyat')" prop="viloyat" required>
-        <el-select
-          v-model="form.viloyat"
-          filterable
-          :placeholder="$t('tanlang')"
-          class="full-width-select"
-          :disabled="!form.republic || (form.republic === 'boshqa' && !form.otherrepublic)"
-          @change="onViloyatChange"
-        >
-          <el-option
-            v-for="item in availableViloyatlar"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
+      <!-- Manzil -->
+      <h4 class="cf__section">{{ $t('custFormAddress') }}</h4>
+      <div class="cf__grid cf__grid--3">
+        <el-form-item :label="$t('respublika')" prop="republic" required>
+          <el-select
+            v-model="form.republic"
+            filterable
+            :placeholder="$t('tanlang')"
+            @change="onRepublicChange"
+          >
+            <el-option
+              v-for="item in republicOptions"
+              :key="item.key"
+              :label="item.label"
+              :value="item.key"
+            />
+          </el-select>
+          <el-input
+            v-if="form.republic === 'boshqa'"
+            v-model="form.otherrepublic"
+            class="cf__other"
+            :placeholder="$t('qaysiRespublika')"
           />
-        </el-select>
-        <el-input
-          v-if="form.viloyat === 'boshqa'"
-          class="whereotherinput"
-          :rows="2"
-          v-model="form.otherviloyat"
-          :placeholder="$t('qaysiViloyat')"
-          type="textarea"
-        />
-      </el-form-item>
+        </el-form-item>
 
-      <!-- SHAHAR / TUMAN -->
-      <el-form-item :label="$t('shaharTuman')" prop="shahar_tuman" required>
-        <el-select
-          v-model="form.shahar_tuman"
-          filterable
-          :placeholder="$t('tanlang')"
-          class="full-width-select"
-          :disabled="!form.viloyat || (form.viloyat === 'boshqa' && !form.otherviloyat)"
-          @change="onShaharTumanChange"
-        >
-          <el-option
-            v-for="item in availableShaharTumanlar"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
+        <el-form-item :label="$t('viloyat')" prop="viloyat" required>
+          <el-select
+            v-model="form.viloyat"
+            filterable
+            :placeholder="$t('tanlang')"
+            :disabled="!form.republic || (form.republic === 'boshqa' && !form.otherrepublic)"
+            @change="onViloyatChange"
+          >
+            <el-option
+              v-for="item in availableViloyatlar"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+          <el-input
+            v-if="form.viloyat === 'boshqa'"
+            v-model="form.otherviloyat"
+            class="cf__other"
+            :placeholder="$t('qaysiViloyat')"
           />
-        </el-select>
-        <el-input
-          v-if="form.shahar_tuman === 'boshqa'"
-          class="whereotherinput"
-          :rows="2"
-          v-model="form.other_shahar_tuman"
-          :placeholder="$t('qaysiShaharTuman')"
-          type="textarea"
-        />
-      </el-form-item>
+        </el-form-item>
+
+        <el-form-item :label="$t('shaharTuman')" prop="shahar_tuman" required>
+          <el-select
+            v-model="form.shahar_tuman"
+            filterable
+            :placeholder="$t('tanlang')"
+            :disabled="!form.viloyat || (form.viloyat === 'boshqa' && !form.otherviloyat)"
+            @change="onShaharTumanChange"
+          >
+            <el-option
+              v-for="item in availableShaharTumanlar"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+          <el-input
+            v-if="form.shahar_tuman === 'boshqa'"
+            v-model="form.other_shahar_tuman"
+            class="cf__other"
+            :placeholder="$t('qaysiShaharTuman')"
+          />
+        </el-form-item>
+      </div>
     </el-form>
 
-    <div class="button-group-container">
+    <div class="cf__footer">
+      <el-button @click="goback()">{{ $t('cancel') }}</el-button>
       <el-button :loading="loading" type="primary" @click="onSubmit">{{ $t('save') }}</el-button>
-      <el-button type="warning" plain @click="goback()">{{ $t('cancel') }}</el-button>
     </div>
   </div>
 </template>
@@ -132,6 +121,7 @@
 import { usePartnersStore } from '@/stores/partners'
 import { reactive, ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Back } from '@element-plus/icons-vue'
 import router from '@/router'
 import { useI18n } from 'vue-i18n'
 import { createLocationData, createRepublicOptions } from '@/constants/locations'
@@ -363,224 +353,71 @@ const goback = () => {
 }
 </script>
 
-<style scoped lang="scss">
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  min-height: 100vh;
-  padding: 20px;
-  padding-bottom: 40px;
-
-  @media (max-width: 768px) {
-    padding: 12px;
-    padding-bottom: 24px;
-  }
-  @media (max-width: 480px) {
-    padding: 8px;
-    padding-bottom: 20px;
-  }
+<style scoped>
+.cf--page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--ui-page-pad);
 }
-
-/* Inside a dialog: no full-screen centering or shadow needed */
-.container.embedded {
-  min-height: auto;
-  padding: 0;
-
-  .form {
-    box-shadow: none;
-    padding: 4px 2px;
-    max-width: 100%;
-    border-radius: 0;
-  }
-
-  .button-group-container {
-    padding: 0;
-    max-width: 100%;
-    margin-top: 20px;
-  }
-}
-
-.header-row {
+.cf__head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 600px;
-  margin-bottom: 18px;
-  padding: 0 8px;
-
-  @media (max-width: 768px) {
-    margin-bottom: 14px;
-    padding: 0 4px;
-  }
-  @media (max-width: 480px) {
-    margin-bottom: 12px;
-    padding: 0 2px;
-  }
-
-  .el-icon {
-    font-size: 22px;
-    color: #222;
-    cursor: pointer;
-    flex-shrink: 0;
-
-    @media (max-width: 768px) {
-      font-size: 20px;
-    }
-    @media (max-width: 480px) {
-      font-size: 18px;
-    }
-  }
-
-  h2 {
-    margin: 0;
-    color: #222;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    font-size: 22px;
-    line-height: 1;
-    text-align: center;
-    flex-grow: 1;
-
-    @media (max-width: 768px) {
-      font-size: 20px;
-    }
-    @media (max-width: 480px) {
-      font-size: 18px;
-      letter-spacing: 0.3px;
-    }
-    @media (max-width: 380px) {
-      font-size: 16px;
-    }
-  }
+  gap: 8px;
+  margin-bottom: 16px;
 }
-
-.form {
-  background: #fff;
-  padding: 32px 40px 24px 40px;
-  border-radius: 12px;
-  box-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.07);
-  width: 100%;
-  max-width: 600px;
-
-  @media (max-width: 768px) {
-    padding: 24px 20px 18px 20px;
-    border-radius: 10px;
-  }
-  @media (max-width: 480px) {
-    padding: 20px 16px 16px 16px;
-    border-radius: 8px;
-  }
+.cf__head h2 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--ui-ink);
 }
-
-.button-group-container {
+.cf__section {
+  margin: 4px 0 12px;
+  padding-bottom: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ui-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--ui-line-soft);
+}
+.cf__section:not(:first-child) {
+  margin-top: 8px;
+}
+.cf__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+.cf__grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.cf__form :deep(.el-form-item) {
+  margin-bottom: 16px;
+}
+.cf__form :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: var(--ui-ink-2);
+  padding-bottom: 4px;
+}
+.cf__form :deep(.el-select),
+.cf__form :deep(.el-input) {
+  width: 100%;
+}
+.cf__other {
+  margin-top: 8px;
+}
+.cf__footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-  width: 100%;
-  max-width: 600px;
-  padding: 0 40px;
-
-  @media (max-width: 768px) {
-    padding: 0 20px;
-    margin-top: 20px;
-    gap: 10px;
-  }
-  @media (max-width: 480px) {
-    padding: 0 16px;
-    margin-top: 16px;
-    gap: 8px;
-    justify-content: center;
-
-    .el-button {
-      flex: 1;
-      max-width: 150px;
-    }
-  }
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ui-line-soft);
 }
 
-.el-form-item {
-  margin-bottom: 22px;
-
-  @media (max-width: 768px) {
-    margin-bottom: 18px;
-  }
-  @media (max-width: 480px) {
-    margin-bottom: 16px;
-  }
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.whereotherinput {
-  padding-top: 5px;
-}
-
-.full-width-select {
-  width: 100%;
-}
-
-.full-width-input {
-  width: 100%;
-
-  @media (min-width: 769px) {
-    max-width: 240px;
-  }
-}
-
-.responsive-radio-group {
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    gap: 12px;
-  }
-}
-
-:deep(.el-form-item__label) {
-  @media (max-width: 768px) {
-    width: 100% !important;
-    text-align: left !important;
-    margin-bottom: 8px;
-  }
-}
-
-:deep(.el-form-item__content) {
-  @media (max-width: 768px) {
-    margin-left: 0 !important;
-    width: 100%;
-  }
-}
-
-:deep(.el-select) {
-  width: 100%;
-}
-
-:deep(.el-form-item) {
-  @media (max-width: 768px) {
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-:deep(.el-radio) {
-  @media (max-width: 480px) {
-    margin-right: 0;
-    display: flex;
-    align-items: center;
-  }
-}
-
-:deep(.el-radio__label) {
-  @media (max-width: 480px) {
-    font-size: 14px;
+@media (max-width: 640px) {
+  .cf__grid,
+  .cf__grid--3 {
+    grid-template-columns: 1fr;
   }
 }
 </style>

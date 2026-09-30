@@ -1589,5 +1589,19 @@
   "amoTrendTitle": "Динамика",
   "amoOfCalls": "{pct}% от всех звонков",
   "amoOfIncoming": "{pct}% входящих",
-  "amoNumbersOf": "из {n} пропущенных номеров"
+  "amoNumbersOf": "из {n} пропущенных номеров",
+  "custTotal": "Всего клиентов",
+  "custGroupsCount": "в {n} группах",
+  "custHintAdded": "Сколько клиентов добавлено в ERP за этот период.",
+  "custAdded": "добавлено",
+  "custSearch": "Поиск",
+  "custSearchPh": "Имя, телефон или ИНН",
+  "custAll": "Все",
+  "custResetFilters": "Сбросить фильтры",
+  "custRegion": "Регион",
+  "custCreated": "Добавлен",
+  "custNothingFound": "По фильтрам ничего не найдено",
+  "custFormMain": "Основное",
+  "custFormAddress": "Адрес",
+  "custNoNote": "Комментария нет"
 }

@@ -130,7 +130,7 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useAmocrmStore } from '@/stores/amocrm'
-import AmoHint from './AmoHint.vue'
+import AmoHint from '@/components/ui/UiHint.vue'
 import AmoExcludeDialog from './AmoExcludeDialog.vue'
 import { formatDateTime, telHref } from './amoFormat'
 

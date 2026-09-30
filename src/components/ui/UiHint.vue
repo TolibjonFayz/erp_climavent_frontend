@@ -5,11 +5,11 @@
     placement="top"
     :show-after="150"
     :disabled="!hint"
-    popper-class="amo-hint-popper"
+    popper-class="ui-hint-popper"
   >
-    <span class="amo-hint" :class="{ 'has-hint': hint }" tabindex="0">
+    <span class="ui-hint" :class="{ 'has-hint': hint }" :tabindex="hint ? 0 : undefined">
       <slot>{{ label }}</slot>
-      <el-icon v-if="hint" class="amo-hint__icon"><QuestionFilled /></el-icon>
+      <el-icon v-if="hint" class="ui-hint__icon"><QuestionFilled /></el-icon>
     </span>
   </el-tooltip>
 </template>
@@ -23,30 +23,31 @@ defineProps({
 })
 </script>
 
-<style lang="scss" scoped>
-.amo-hint {
+<style scoped>
+.ui-hint {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  &.has-hint {
-    cursor: help;
-  }
-  &:focus-visible {
-    outline: 2px solid #2a78d6;
-    outline-offset: 2px;
-    border-radius: 3px;
-  }
 }
-.amo-hint__icon {
+.ui-hint.has-hint {
+  cursor: help;
+}
+.ui-hint:focus-visible {
+  outline: 2px solid var(--ui-link);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.ui-hint__icon {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--ui-faint);
   flex-shrink: 0;
 }
 </style>
 
 <style>
-.amo-hint-popper {
+.ui-hint-popper {
   max-width: 320px;
   line-height: 1.45;
+  white-space: pre-line;
 }
 </style>

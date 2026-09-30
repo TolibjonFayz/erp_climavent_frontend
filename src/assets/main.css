@@ -14,6 +14,29 @@
   --shadow-sm: 0 2px 6px rgba(18, 38, 63, 0.03);
   --shadow-md: 0 10px 30px rgba(18, 38, 63, 0.05);
   --shadow-hover: 0 15px 35px rgba(18, 38, 63, 0.08);
+
+  /* ─── UI tizimi (klassik uslub, components/ui/* shu tokenlardan foydalanadi) ─── */
+  --ui-ink: #111827;
+  --ui-ink-2: #374151;
+  --ui-muted: #6b7280;
+  --ui-faint: #9ca3af;
+  --ui-line: #e5e7eb;
+  --ui-line-soft: #f1f3f5;
+  --ui-surface: #ffffff;
+  --ui-surface-2: #f8fafc;
+  --ui-link: #2a78d6;
+  --ui-link-soft: #eff6ff;
+  --ui-good: #15803d;
+  --ui-good-soft: #f0fdf4;
+  --ui-bad: #b91c1c;
+  --ui-bad-soft: #fef2f2;
+  --ui-warn: #b45309;
+  --ui-warn-soft: #fffbeb;
+  --ui-radius: 10px;
+  --ui-radius-lg: 14px;
+  --ui-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --ui-shadow-hover: 0 4px 12px rgba(42, 120, 214, 0.1);
+  --ui-page-pad: 24px;
 }
 
 * {
@@ -87,14 +110,14 @@ body {
   letter-spacing: 0.2px;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
-.el-button--primary {
+/* Gradient faqat to'ldirilgan tugmalarga — link/text/plain tugmalar o'z ko'rinishida qoladi */
+.el-button--primary:not(.is-link):not(.is-text):not(.is-plain) {
   background: linear-gradient(135deg, var(--primary-color) 0%, #3a8ee6 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3) !important;
 }
-.el-button--primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4) !important;
+.el-button--primary:not(.is-link):not(.is-text):not(.is-plain):hover {
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.35) !important;
 }
 
 /* Inputs */

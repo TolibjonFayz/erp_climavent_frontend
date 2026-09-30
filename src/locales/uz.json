@@ -1591,5 +1591,19 @@
   "amoTrendTitle": "Dinamika",
   "amoOfCalls": "barcha qo'ng'iroqlarning {pct}%",
   "amoOfIncoming": "kiruvchilarning {pct}%",
-  "amoNumbersOf": "{n} ta o'tkazib yuborilgan raqamdan"
+  "amoNumbersOf": "{n} ta o'tkazib yuborilgan raqamdan",
+  "custTotal": "Jami mijozlar",
+  "custGroupsCount": "{n} ta guruhda",
+  "custHintAdded": "Shu davrda ERP'ga qo'shilgan mijozlar soni.",
+  "custAdded": "yangi qo'shilgan",
+  "custSearch": "Qidiruv",
+  "custSearchPh": "Ism, telefon yoki INN",
+  "custAll": "Hammasi",
+  "custResetFilters": "Filtrlarni tozalash",
+  "custRegion": "Hudud",
+  "custCreated": "Qo'shilgan",
+  "custNothingFound": "Filtrga mos mijoz topilmadi",
+  "custFormMain": "Asosiy ma'lumot",
+  "custFormAddress": "Manzil",
+  "custNoNote": "Izoh yozilmagan"
 }

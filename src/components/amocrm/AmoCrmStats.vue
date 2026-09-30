@@ -495,7 +495,7 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Bottom, Filter, Refresh, Top, UserFilled } from '@element-plus/icons-vue'
 import { useAmocrmStore } from '@/stores/amocrm'
-import AmoHint from './AmoHint.vue'
+import AmoHint from '@/components/ui/UiHint.vue'
 import AmoDrillDrawer from './AmoDrillDrawer.vue'
 import AmoExclusionsDrawer from './AmoExclusionsDrawer.vue'
 import {
