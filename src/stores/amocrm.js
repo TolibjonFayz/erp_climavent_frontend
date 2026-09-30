@@ -16,6 +16,15 @@ export const useAmocrmStore = defineStore('amocrm', {
       })
     },
 
+    // Ro'yxatlar drawer'da o'z holatini saqlaydi — umumiy isLoading'ga tegmaymiz
+    async listCalls(params) {
+      return amocrmApi.listCalls(params)
+    },
+
+    async listLeads(params) {
+      return amocrmApi.listLeads(params)
+    },
+
     async getSyncStatus() {
       return amocrmApi.getSyncStatus()
     },
