@@ -58,6 +58,9 @@
       <el-table-column :label="$t('amoColPhone')" min-width="160">
         <template #default="{ row }"><PhoneCell :phone="row.phone" /></template>
       </el-table-column>
+      <el-table-column :label="$t('amoColContact')" min-width="150">
+        <template #default="{ row }">{{ row.contact_name || '—' }}</template>
+      </el-table-column>
       <el-table-column :label="$t('amoColDirection')" min-width="100">
         <template #default="{ row }">
           <el-tag size="small" :type="row.direction === 'in' ? 'primary' : 'info'" effect="plain">
@@ -81,6 +84,12 @@
       <el-table-column v-if="isMissed" :label="$t('amoColCallback')" min-width="190">
         <template #default="{ row }"><CallbackCell :row="row" /></template>
       </el-table-column>
+      <el-table-column v-if="isExcludedScope" :label="$t('amoColExclReason')" min-width="150">
+        <template #default="{ row }">{{ $t(`amoExcl_${row.excl_reason}`) }}</template>
+      </el-table-column>
+      <el-table-column width="120" align="right">
+        <template #default="{ row }"><RowAction :row="row" /></template>
+      </el-table-column>
       <el-table-column width="56" align="center">
         <template #default="{ row }"><AmoLink :row="row" /></template>
       </el-table-column>
@@ -98,6 +107,9 @@
       <el-table-column :label="$t('amoColPhone')" min-width="170">
         <template #default="{ row }"><PhoneCell :phone="row.phone" /></template>
       </el-table-column>
+      <el-table-column :label="$t('amoColContact')" min-width="150">
+        <template #default="{ row }">{{ row.contact_name || '—' }}</template>
+      </el-table-column>
       <el-table-column :label="$t('amoColCalls')" min-width="90" align="right" prop="calls" />
       <el-table-column :label="$t('amoColLastCall')" min-width="140">
         <template #default="{ row }">
@@ -114,6 +126,12 @@
       </el-table-column>
       <el-table-column v-if="isMissed" :label="$t('amoColCallback')" min-width="190">
         <template #default="{ row }"><CallbackCell :row="row" /></template>
+      </el-table-column>
+      <el-table-column v-if="isExcludedScope" :label="$t('amoColExclReason')" min-width="150">
+        <template #default="{ row }">{{ $t(`amoExcl_${row.excl_reason}`) }}</template>
+      </el-table-column>
+      <el-table-column width="120" align="right">
+        <template #default="{ row }"><RowAction :row="row" /></template>
       </el-table-column>
       <el-table-column width="56" align="center">
         <template #default="{ row }"><AmoLink :row="row" /></template>
@@ -182,6 +200,13 @@
       small
       @current-change="goPage"
     />
+
+    <AmoExcludeDialog
+      v-model="excludeOpen"
+      :phone="excludeRow?.phone || ''"
+      :contact-name="excludeRow?.contact_name || ''"
+      @saved="onChanged"
+    />
   </el-drawer>
 </template>
 
@@ -198,6 +223,7 @@ import {
 } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 import { useAmocrmStore } from '@/stores/amocrm'
+import AmoExcludeDialog from './AmoExcludeDialog.vue'
 import {
   TALKED,
   callStatusKey,
@@ -215,7 +241,7 @@ const props = defineProps({
   // getStats javobi: users, amo_url, leads.pipelines, leads.loss_reasons
   stats: { type: Object, default: null },
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'changed'])
 
 const { t } = useI18n()
 const amoStore = useAmocrmStore()
@@ -238,6 +264,7 @@ const groupByPhone = ref(false)
 const onlyNotCalledBack = ref(false)
 
 const isCalls = computed(() => props.request?.type === 'calls')
+const isExcludedScope = computed(() => props.request?.params?.scope === 'excluded')
 const isMissed = computed(() => isCalls.value && props.request?.params?.kind === 'in_missed')
 const amoUrl = computed(() => props.stats?.amo_url || '')
 
@@ -314,6 +341,32 @@ watch(
   },
 )
 
+// ─── "Mijoz emas" belgilash / qaytarish ───────────────────
+const excludeOpen = ref(false)
+const excludeRow = ref(null)
+// Qisqa ichki raqamlar avtomatik chiqariladi — ularga tugma kerak emas
+const canExclude = (phone) => String(phone || '').replace(/[^0-9]/g, '').length >= 7
+
+function askExclude(row) {
+  excludeRow.value = row
+  excludeOpen.value = true
+}
+
+async function restore(row) {
+  try {
+    await amoStore.restorePhone(row.phone_key)
+    ElMessage.success(t('amoRestoreDone'))
+    onChanged()
+  } catch (err) {
+    ElMessage.error(err?.response?.data?.message || err?.message)
+  }
+}
+
+function onChanged() {
+  load()
+  emit('changed')
+}
+
 // ─── Excel ────────────────────────────────────────────────
 function callbackText(row) {
   if (!row.callback_at) return t('amoCallbackNone')
@@ -351,8 +404,10 @@ function toSheetRow(row) {
         }
   return {
     ...base,
+    [t('amoColContact')]: row.contact_name || '',
     [t('amoManager')]: userName(row.responsible_user_id),
     ...(isMissed.value && { [t('amoColCallback')]: callbackText(row) }),
+    ...(isExcludedScope.value && { [t('amoColExclReason')]: t(`amoExcl_${row.excl_reason}`) }),
     amoCRM:
       amoUrl.value && row.entity_id
         ? `${amoUrl.value}/${row.entity_type}/detail/${row.entity_id}`
@@ -429,6 +484,30 @@ const CallbackCell = defineComponent({
         h(ElIcon, null, () => h(CircleCheckFilled)),
         `${who} · ${formatDateTime(r.callback_at)}`,
       ])
+    }
+  },
+})
+
+// Oddiy ro'yxatda — "Mijoz emas"; chiqarilganlar ro'yxatida — qo'lda belgilanganini qaytarish
+const RowAction = defineComponent({
+  props: { row: { type: Object, required: true } },
+  setup(p) {
+    return () => {
+      const r = p.row
+      if (isExcludedScope.value) {
+        return r.excl_reason === 'manual'
+          ? h(ElButton, { size: 'small', plain: true, onClick: () => restore(r) }, () =>
+              t('amoRestoreBtn'),
+            )
+          : null
+      }
+      return canExclude(r.phone)
+        ? h(
+            ElButton,
+            { size: 'small', type: 'danger', plain: true, onClick: () => askExclude(r) },
+            () => t('amoNotClientBtn'),
+          )
+        : null
     }
   },
 })

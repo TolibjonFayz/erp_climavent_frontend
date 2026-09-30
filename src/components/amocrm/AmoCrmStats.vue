@@ -40,6 +40,15 @@
         >
           <el-option v-for="u in users" :key="u.id" :label="u.name" :value="u.id" />
         </el-select>
+        <el-radio-group v-model="scope" size="small" class="amo-scope" @change="load">
+          <el-radio-button value="clients">
+            <AmoHint :label="$t('amoScopeClients')" :hint="$t('amoHintScopeClients')" />
+          </el-radio-button>
+          <el-radio-button value="all">{{ $t('amoScopeAll') }}</el-radio-button>
+        </el-radio-group>
+        <el-button size="small" :icon="UserFilled" @click="exclusionsOpen = true">
+          {{ $t('amoExclusionsBtn') }}
+        </el-button>
         <el-button
           size="small"
           :icon="Refresh"
@@ -104,6 +113,28 @@
           </span>
         </div>
 
+        <!-- Mijoz emas deb chiqarib tashlanganlar -->
+        <div v-if="calls.excluded?.calls" class="amo-excluded">
+          <el-icon><Filter /></el-icon>
+          <AmoHint :hint="$t('amoHintExcluded')">
+            {{
+              $t(scope === 'clients' ? 'amoExcludedSummary' : 'amoExcludedSummaryAll', {
+                calls: fmtNum(calls.excluded.calls),
+                numbers: fmtNum(calls.excluded.numbers),
+              })
+            }}
+          </AmoHint>
+          <button
+            v-for="r in calls.excluded.by_reason"
+            :key="r.reason"
+            type="button"
+            class="amo-chip"
+            @click="drillExcluded(r.reason)"
+          >
+            {{ $t(`amoExcl_${r.reason}`) }}: <b>{{ fmtNum(r.calls) }}</b>
+          </button>
+        </div>
+
         <div class="amo-dir-grid">
           <div v-for="dir in directions" :key="dir.key" class="amo-card">
             <div class="amo-card__title">
@@ -156,6 +187,63 @@
                   {{ fmtNum(r.count) }} <small>{{ pct(r.count, dir.total) }}%</small>
                 </span>
               </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telefoniya platformalari bo'yicha -->
+        <div v-if="calls.by_source?.length" class="amo-card amo-gap">
+          <div class="amo-card__title">
+            <AmoHint :label="$t('amoBySource')" :hint="$t('amoHintBySource')" />
+          </div>
+          <div class="amo-src">
+            <div class="amo-src__row amo-src__row--head">
+              <span>{{ $t('amoColSource') }}</span>
+              <span class="num">
+                <AmoHint :label="$t('amoSrcClients')" :hint="$t('amoHintSrcClients')" />
+              </span>
+              <span class="num">{{ $t('amoTalked') }}</span>
+              <span class="num">{{ $t('amoInMissed') }}</span>
+              <span class="num">
+                <AmoHint :label="$t('amoSrcExcluded')" :hint="$t('amoHintSrcExcluded')" />
+              </span>
+            </div>
+            <div v-for="src in calls.by_source" :key="src.source" class="amo-src__row">
+              <span class="amo-src__name">{{ sourceLabel(src.source) }}</span>
+              <span class="num">
+                <button type="button" class="amo-num" @click="drillSource(src, 'all', 'clients')">
+                  {{ fmtNum(src.clients) }}
+                </button>
+              </span>
+              <span class="num">
+                <button
+                  type="button"
+                  class="amo-num"
+                  @click="drillSource(src, 'answered', 'clients')"
+                >
+                  {{ fmtNum(src.talked) }}
+                </button>
+              </span>
+              <span class="num">
+                <button
+                  type="button"
+                  class="amo-num is-bad"
+                  @click="drillSource(src, 'in_missed', 'clients')"
+                >
+                  {{ fmtNum(src.in_missed) }}
+                </button>
+              </span>
+              <span class="num">
+                <button
+                  v-if="src.excluded"
+                  type="button"
+                  class="amo-num is-muted"
+                  @click="drillSource(src, 'all', 'excluded')"
+                >
+                  {{ fmtNum(src.excluded) }}
+                </button>
+                <span v-else>0</span>
+              </span>
             </div>
           </div>
         </div>
@@ -358,7 +446,8 @@
       </div>
     </template>
 
-    <AmoDrillDrawer v-model="drillOpen" :request="drillRequest" :stats="stats" />
+    <AmoDrillDrawer v-model="drillOpen" :request="drillRequest" :stats="stats" @changed="load" />
+    <AmoExclusionsDrawer v-model="exclusionsOpen" :users="users" @changed="load" />
   </section>
 </template>
 
@@ -366,10 +455,11 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { Loading, Pointer, Refresh, Bottom, Top } from '@element-plus/icons-vue'
+import { Bottom, Filter, Loading, Pointer, Refresh, Top, UserFilled } from '@element-plus/icons-vue'
 import { useAmocrmStore } from '@/stores/amocrm'
 import AmoHint from './AmoHint.vue'
 import AmoDrillDrawer from './AmoDrillDrawer.vue'
+import AmoExclusionsDrawer from './AmoExclusionsDrawer.vue'
 import {
   AMO_CALL_STATUS_RU,
   TALKED,
@@ -407,6 +497,9 @@ function presetRange(key) {
 const preset = ref('month')
 const range = ref(presetRange('month'))
 const userId = ref(null)
+// Standart — faqat mijozlar bilan qo'ng'iroqlar (hamkasb, tanish, ichki raqamlar chiqariladi)
+const scope = ref('clients')
+const exclusionsOpen = ref(false)
 const pipelineTab = ref('')
 const loadError = ref('')
 
@@ -434,6 +527,7 @@ async function load() {
       from: range.value[0],
       to: range.value[1],
       responsible_user_id: userId.value || undefined,
+      scope: scope.value,
     })
   } catch (err) {
     loadError.value = err?.response?.data?.message || err?.message || t('amoLoadError')
@@ -521,6 +615,7 @@ const baseParams = () => ({
   from: range.value[0],
   to: range.value[1],
   responsible_user_id: userId.value || undefined,
+  scope: scope.value,
 })
 
 // O'tkazib yuborilgan kiruvchilar odatda raqam bo'yicha ko'rilgani qulay
@@ -557,6 +652,43 @@ function drillBucket(d) {
     { from, to },
     { subtitle: sub, groupByPhone: false },
   )
+}
+
+// Chiqarib tashlangan raqamlar (sabab bo'yicha)
+function drillExcluded(reason) {
+  drillCalls(
+    'all',
+    `${t('amoExcludedTitle')} — ${t(`amoExcl_${reason}`)}`,
+    { scope: 'excluded', reason },
+    { groupByPhone: true },
+  )
+}
+
+// Platforma (Moi Zvonki / Sipuni) bo'yicha
+function drillSource(src, kind, srcScope) {
+  const title = `${sourceLabel(src.source)} — ${
+    srcScope === 'excluded'
+      ? t('amoSrcExcluded')
+      : kind === 'all'
+        ? t('amoSrcClients')
+        : kind === 'answered'
+          ? t('amoTalked')
+          : t('amoInMissed')
+  }`
+  drillCalls(
+    kind,
+    title,
+    { source: src.source, scope: srcScope },
+    { groupByPhone: kind === 'in_missed' || srcScope === 'excluded' },
+  )
+}
+
+// Telefoniya manbasining chiroyli nomi
+function sourceLabel(src) {
+  if (!src) return t('amoSourceUnknown')
+  if (/moi|мои|zvonki|звонки/i.test(src)) return 'Moi Zvonki'
+  if (/sipuni/i.test(src)) return 'Sipuni'
+  return src
 }
 
 function drillUser(row, col) {
@@ -824,8 +956,8 @@ const maxReasonCount = computed(() =>
 )
 
 // "Bizniki emas" — shu ma'nodagi yo'qotish sabablari (amoCRM'da nomi har xil bo'lishi mumkin)
-const NOT_OURS_RE = /не\s*наш|нецелев|не\s*целев|спам|bizniki\s*emas|maqsadsiz|not\s*our/i
-const isNotOurs = (r) => Boolean(r.name && NOT_OURS_RE.test(r.name))
+// "Bizniki emas" ma'nosidagi sabablarni backend belgilaydi (is_not_ours)
+const isNotOurs = (r) => Boolean(r.is_not_ours)
 const notOursReasons = computed(() => (leads.value?.loss_reasons || []).filter(isNotOurs))
 
 const leadTiles = computed(() => {
@@ -959,6 +1091,60 @@ button {
     white-space: pre-line;
   }
 }
+.amo-scope :deep(.el-radio-button__inner) {
+  display: inline-flex;
+  align-items: center;
+}
+.amo-excluded {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: -4px 0 12px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  font-size: 13px;
+  color: $ink-2;
+}
+.amo-chip {
+  border: 1px solid $line;
+  background: white;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  &:hover {
+    border-color: #bfdbfe;
+    color: $c-bar;
+  }
+}
+.amo-src {
+  overflow-x: auto;
+}
+.amo-src__row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(120px, 1.4fr) repeat(4, minmax(80px, 1fr));
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid $line;
+  font-size: 13px;
+  &:last-child {
+    border-bottom: none;
+  }
+  &--head {
+    font-size: 12px;
+    color: $muted;
+    padding-top: 0;
+  }
+}
+.amo-src__name {
+  font-weight: 600;
+  color: $ink;
+}
 .amo-click-hint {
   display: flex;
   align-items: center;
@@ -1018,6 +1204,9 @@ button {
   font-variant-numeric: tabular-nums;
   &.is-bad {
     color: $c-bad;
+  }
+  &.is-muted {
+    color: $muted;
   }
   &:hover {
     border-bottom-style: solid;
@@ -1383,6 +1572,11 @@ button {
   }
   .amo-bar-row {
     grid-template-columns: minmax(110px, 1.2fr) 0.8fr auto;
+  }
+  .amo-src__row {
+    grid-template-columns: minmax(72px, 1.1fr) repeat(4, minmax(40px, 1fr));
+    gap: 4px;
+    font-size: 12px;
   }
   .amo-stage-head,
   .amo-stage {

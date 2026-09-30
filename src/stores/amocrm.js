@@ -25,6 +25,22 @@ export const useAmocrmStore = defineStore('amocrm', {
       return amocrmApi.listLeads(params)
     },
 
+    async getSuspicious(params) {
+      return amocrmApi.getSuspicious(params)
+    },
+
+    async listExcluded() {
+      return amocrmApi.listExcluded()
+    },
+
+    async excludePhone(payload) {
+      return amocrmApi.excludePhone(payload)
+    },
+
+    async restorePhone(key) {
+      return amocrmApi.restorePhone(key)
+    },
+
     async getSyncStatus() {
       return amocrmApi.getSyncStatus()
     },
