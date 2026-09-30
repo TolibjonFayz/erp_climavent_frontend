@@ -1,194 +1,271 @@
 <template>
-  <div class="loyiha-container" v-loading="loyihaStore.isLoading">
-    <div class="page-header">
-      <div class="header-main">
-        <div class="header-content">
-          <h1>{{ $t('loyihaPageTitle') }}</h1>
-          <p class="subtitle">{{ $t('loyihaPageSubtitle') }}</p>
-        </div>
+  <UiPage :title="$t('loyihaPageTitle')" :subtitle="$t('loyihaPageSubtitle')">
+    <template #actions>
+      <el-button :icon="Download" @click="exportExcel">{{ $t('loyihaExportExcel') }}</el-button>
+      <el-button type="primary" :icon="Plus" @click="openCreateDialog">
+        {{ $t('loyihaButtonAdd') }}
+      </el-button>
+    </template>
 
-        <div class="header-actions">
-          <el-button size="large" :icon="Download" @click="exportExcel">
-            {{ $t('loyihaExportExcel') }}
-          </el-button>
-          <el-button type="primary" size="large" :icon="Plus" @click="openCreateDialog">
-            {{ $t('loyihaButtonAdd') }}
-          </el-button>
-        </div>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('loyihaStatTotal') }}</div>
-          <div class="stat-value">{{ loyihas.length }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('loyihaStatArea') }}</div>
-          <div class="stat-value">{{ formatNumber(totalArea) }} m²</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('loyihaStatusInProgress') }}</div>
-          <div class="stat-value stat-progress">{{ statusCount.in_progress }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('loyihaStatusDone') }}</div>
-          <div class="stat-value stat-done">{{ statusCount.done }}</div>
-        </div>
-      </div>
+    <!-- Ko'rsatkichlar -->
+    <div class="ly-stats">
+      <UiStat
+        :label="$t('loyihaStatTotal')"
+        :value="fmtNum(loyihas.length)"
+        clickable
+        @click="filters.status = ''"
+      />
+      <UiStat :label="$t('loyihaStatArea')" :value="`${formatNumber(totalArea)} m²`" />
+      <UiStat
+        :label="$t('loyihaStatusInProgress')"
+        :value="fmtNum(statusCount.in_progress)"
+        tone="warn"
+        clickable
+        @click="filters.status = 'in_progress'"
+      />
+      <UiStat
+        :label="$t('loyihaStatusDone')"
+        :value="fmtNum(statusCount.done)"
+        tone="good"
+        clickable
+        @click="filters.status = 'done'"
+      />
     </div>
 
-    <div v-if="loyihaStore.error" class="error-banner">{{ loyihaStore.error }}</div>
+    <el-alert
+      v-if="loyihaStore.error"
+      type="error"
+      show-icon
+      :closable="false"
+      :title="loyihaStore.error"
+    />
 
-    <div class="toolbar" v-if="loyihas.length">
-      <span class="toolbar-count">
-        {{ $t('loyihaFilteredCount', { count: filteredLoyihas.length }) }}
-      </span>
-      <span class="toolbar-hint">{{ $t('loyihaRowClickHint') }}</span>
-      <button class="toolbar-reset-btn" @click="resetFilters">
-        {{ $t('loyihaResetFilters') }}
-      </button>
-    </div>
+    <!-- Filtrlar -->
+    <UiToolbar v-if="loyihas.length">
+      <UiField :label="$t('loyihaTableManager')" grow>
+        <el-input
+          v-model="filters.manager"
+          :prefix-icon="Search"
+          clearable
+          :placeholder="$t('loyihaFilterPlaceholder')"
+        />
+      </UiField>
+      <UiField :label="$t('loyihaTableStatus')">
+        <el-select
+          v-model="filters.status"
+          clearable
+          :placeholder="$t('loyihaAllStatuses')"
+          class="ly-select"
+        >
+          <el-option
+            v-for="opt in statusOptions"
+            :key="opt.value"
+            :label="$t(opt.labelKey)"
+            :value="opt.value"
+          />
+        </el-select>
+      </UiField>
+      <UiField :label="$t('loyihaTableSystem')">
+        <el-input
+          v-model="filters.system"
+          clearable
+          :placeholder="$t('loyihaFilterPlaceholder')"
+          class="ly-select"
+        />
+      </UiField>
+      <UiField :label="$t('loyihaTableDifficulty')">
+        <el-select
+          v-model="filters.difficulty"
+          clearable
+          :placeholder="$t('loyihaAllDifficulties')"
+          class="ly-select-sm"
+        >
+          <el-option v-for="n in 10" :key="n" :label="`${n}/10`" :value="String(n)" />
+        </el-select>
+      </UiField>
 
-    <div class="table-container" v-if="loyihas.length">
-      <div class="table-wrapper">
-        <table class="modern-table">
-          <thead>
-            <tr>
-              <th class="table-index">#</th>
-              <th>{{ $t('loyihaTableNumber') }}</th>
-              <th>{{ $t('loyihaTableStatus') }}</th>
-              <th>{{ $t('loyihaTableManager') }}</th>
-              <th>{{ $t('loyihaTableOther') }}</th>
-              <th>{{ $t('loyihaTableSystem') }}</th>
-              <th>{{ $t('loyihaTableArea') }}</th>
-              <th>{{ $t('loyihaTableDifficulty') }}</th>
-              <th>{{ $t('loyihaTableKp') }}</th>
-              <th>{{ $t('loyihaTableDogovor') }}</th>
-              <th>{{ $t('loyihaTableContact') }}</th>
-              <th>{{ $t('loyihaTableComment') }}</th>
-              <th>{{ $t('loyihaTableFiles') }}</th>
-              <th>{{ $t('actions') }}</th>
-            </tr>
-            <tr class="filter-row">
-              <th></th>
-              <th><input v-model="filters.number" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
-              <th>
-                <select v-model="filters.status" class="col-filter">
-                  <option value="">{{ $t('loyihaAllStatuses') }}</option>
-                  <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
-                    {{ $t(opt.labelKey) }}
-                  </option>
-                </select>
-              </th>
-              <th><input v-model="filters.manager" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
-              <th><input v-model="filters.other" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
-              <th><input v-model="filters.system" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
-              <th><input v-model="filters.area" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
-              <th>
-                <select v-model="filters.difficulty" class="col-filter">
-                  <option value="">{{ $t('loyihaAllDifficulties') }}</option>
-                  <option v-for="n in 10" :key="n" :value="String(n)">{{ n }}</option>
-                </select>
-              </th>
-              <th><input v-model="filters.kp" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
-              <th><input v-model="filters.dogovor" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
-              <th><input v-model="filters.contact" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" /></th>
-              <th class="comment-filter-col">
-                <input v-model="filters.comment" class="col-filter" :placeholder="$t('loyihaFilterPlaceholder')" />
-              </th>
-              <th></th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(row, index) in pagedLoyihas"
-              :key="row.id"
-              class="clickable-row"
-              @click="openDetail(row)"
+      <template v-if="moreFilters">
+        <UiField v-for="f in extraFilters" :key="f.key" :label="$t(f.labelKey)">
+          <el-input
+            v-model="filters[f.key]"
+            clearable
+            :placeholder="$t('loyihaFilterPlaceholder')"
+            class="ly-select-sm"
+          />
+        </UiField>
+      </template>
+
+      <template #actions>
+        <el-button link type="primary" @click="moreFilters = !moreFilters">
+          {{ moreFilters ? $t('kpLessFilters') : $t('kpMoreFilters') }}
+          <span v-if="!moreFilters && hiddenFilterCount" class="ly-badge">{{
+            hiddenFilterCount
+          }}</span>
+        </el-button>
+      </template>
+    </UiToolbar>
+
+    <!-- Jadval -->
+    <UiPanel v-if="loyihas.length" flush>
+      <template #title>
+        {{ $t('loyihaListTitle') }}
+        <span class="ly-count">{{ fmtNum(filteredLoyihas.length) }}</span>
+      </template>
+      <template #actions>
+        <span class="ly-hint">{{ $t('loyihaRowClickHint') }}</span>
+        <el-button v-if="hasFilters" link type="primary" @click="resetFilters">
+          {{ $t('loyihaResetFilters') }}
+        </el-button>
+      </template>
+
+      <el-table
+        :data="pagedLoyihas"
+        class="ly-table"
+        :empty-text="$t('custNothingFound')"
+        @row-click="openDetail"
+      >
+        <el-table-column type="index" :index="rowIndex" label="#" width="56" />
+        <el-table-column :label="$t('loyihaTableNumber')" min-width="80">
+          <template #default="{ row }">
+            <span class="ly-id">{{ formatLoyihaId(row.order_number) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('loyihaTableStatus')" min-width="120">
+          <template #default="{ row }">
+            <el-tag
+              :type="row.status === 'done' ? 'success' : 'warning'"
+              size="small"
+              effect="light"
             >
-              <td class="table-index">
-                <span class="index-badge">{{ (currentPage - 1) * pageSize + index + 1 }}</span>
-              </td>
-              <td><span class="loyiha-id">{{ formatLoyihaId(row.order_number) }}</span></td>
-              <td>
-                <span class="status-pill" :class="statusClass(row.status)">
-                  {{ statusIcon(row.status) }} {{ $t(statusLabelKey(row.status)) }}
-                </span>
-              </td>
-              <td><span class="cell-text">{{ row.manager_name || '—' }}</span></td>
-              <td><span class="cell-text">{{ row.other_source || '—' }}</span></td>
-              <td class="wrap-cell"><span class="cell-text">{{ row.system_info || '—' }}</span></td>
-              <td><span class="cell-text">{{ row.area != null ? formatNumber(row.area) + ' m²' : '—' }}</span></td>
-              <td>
-                <span v-if="row.difficulty" class="difficulty-badge" :class="difficultyClass(row.difficulty)">
-                  {{ row.difficulty }}/10
-                </span>
-                <span v-else class="cell-text">—</span>
-              </td>
-              <td class="doc-cell">
-                <template v-if="row.kp_number || row.kp_sum || row.kp_date">
-                  <span v-if="row.kp_number" class="doc-num">№{{ row.kp_number }}</span>
-                  <span v-if="row.kp_sum" class="doc-sum">{{ formatMoney(row.kp_sum) }}</span>
-                  <span v-if="row.kp_date" class="doc-date">{{ formatDate(row.kp_date) }}</span>
+              {{ $t(statusLabelKey(row.status)) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('loyihaTableManager')" min-width="170">
+          <template #default="{ row }">
+            <span class="ly-strong">{{ row.manager_name || '—' }}</span>
+            <div v-if="row.other_source" class="ly-sub">
+              {{ $t('loyihaTableOther') }}: {{ row.other_source }}
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('loyihaTableSystem')" min-width="170" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.system_info || '—' }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('loyihaTableArea')" min-width="125" align="right">
+          <template #default="{ row }">
+            {{ row.area != null ? `${formatNumber(row.area)} m²` : '—' }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('loyihaTableDifficulty')" min-width="100" align="center">
+          <template #default="{ row }">
+            <el-tag
+              v-if="row.difficulty"
+              :type="difficultyTag(row.difficulty)"
+              size="small"
+              effect="plain"
+            >
+              {{ row.difficulty }}/10
+            </el-tag>
+            <span v-else class="ly-muted">—</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          v-for="doc in docCols"
+          :key="doc.key"
+          :label="$t(doc.labelKey)"
+          min-width="150"
+        >
+          <template #default="{ row }">
+            <template
+              v-if="row[`${doc.key}_number`] || row[`${doc.key}_sum`] || row[`${doc.key}_date`]"
+            >
+              <span v-if="row[`${doc.key}_number`]" class="ly-strong"
+                >№{{ row[`${doc.key}_number`] }}</span
+              >
+              <div v-if="row[`${doc.key}_sum`]" class="ly-money">
+                {{ formatMoney(row[`${doc.key}_sum`]) }} {{ $t('amoCurrency') }}
+              </div>
+              <div v-if="row[`${doc.key}_date`]" class="ly-sub">
+                {{ formatDate(row[`${doc.key}_date`]) }}
+              </div>
+            </template>
+            <span v-else class="ly-muted">—</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('loyihaTableContact')" min-width="180">
+          <template #default="{ row }">
+            <a
+              v-if="row.contact_phone"
+              :href="telHref(row.contact_phone)"
+              class="ly-link"
+              @click.stop
+            >
+              {{ row.contact_phone }}
+            </a>
+            <div v-if="row.contact_address" class="ly-sub">{{ row.contact_address }}</div>
+            <span v-if="!row.contact_phone && !row.contact_address" class="ly-muted">—</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('loyihaTableComment')" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span :class="{ 'ly-muted': !row.comment }">{{ row.comment || '—' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('loyihaTableFiles')" min-width="110">
+          <template #default="{ row }">
+            <span class="ly-files">
+              <el-tooltip :content="$t('loyihaArchiveSection')" placement="top">
+                <span class="ly-file"
+                  ><el-icon><Lock /></el-icon>{{ fileCount(row, 'archive') }}</span
+                >
+              </el-tooltip>
+              <el-tooltip :content="$t('loyihaWorkingSection')" placement="top">
+                <span class="ly-file"
+                  ><el-icon><Folder /></el-icon>{{ fileCount(row, 'working') }}</span
+                >
+              </el-tooltip>
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column width="112" align="right" fixed="right">
+          <template #default="{ row }">
+            <div class="ly-actions" @click.stop>
+              <el-tooltip :content="$t('loyihaOpenDetail')" placement="top">
+                <el-button
+                  link
+                  :icon="View"
+                  :aria-label="$t('loyihaOpenDetail')"
+                  @click="openDetail(row)"
+                />
+              </el-tooltip>
+              <el-tooltip :content="$t('edit')" placement="top">
+                <el-button
+                  link
+                  type="primary"
+                  :icon="EditPen"
+                  :aria-label="$t('edit')"
+                  @click="openEditDialog(row)"
+                />
+              </el-tooltip>
+              <el-popconfirm
+                :title="$t('loyihaDeleteConfirm')"
+                width="270"
+                placement="top-end"
+                :confirm-button-text="$t('deleteConfirm')"
+                :cancel-button-text="$t('cancel')"
+                @confirm="handleDelete(row.id)"
+              >
+                <template #reference>
+                  <el-button link type="danger" :icon="Delete" :aria-label="$t('delete')" />
                 </template>
-                <span v-else class="cell-text">—</span>
-              </td>
-              <td class="doc-cell">
-                <template v-if="row.dogovor_number || row.dogovor_sum || row.dogovor_date">
-                  <span v-if="row.dogovor_number" class="doc-num">№{{ row.dogovor_number }}</span>
-                  <span v-if="row.dogovor_sum" class="doc-sum">{{ formatMoney(row.dogovor_sum) }}</span>
-                  <span v-if="row.dogovor_date" class="doc-date">{{ formatDate(row.dogovor_date) }}</span>
-                </template>
-                <span v-else class="cell-text">—</span>
-              </td>
-              <td class="wrap-cell">
-                <div class="contact-lines">
-                  <span v-if="row.contact_phone">📞 {{ row.contact_phone }}</span>
-                  <span v-if="row.contact_address">📍 {{ row.contact_address }}</span>
-                  <span v-if="!row.contact_phone && !row.contact_address">—</span>
-                </div>
-              </td>
-              <td class="wrap-cell comment-cell"><span class="cell-text">{{ row.comment || '—' }}</span></td>
-              <td>
-                <div class="file-counts">
-                  <span class="file-chip archive" :title="$t('loyihaArchiveSection')">
-                    🔒 {{ fileCount(row, 'archive') }}
-                  </span>
-                  <span class="file-chip working" :title="$t('loyihaWorkingSection')">
-                    📁 {{ fileCount(row, 'working') }}
-                  </span>
-                </div>
-              </td>
-              <!-- Qatorga bosilganda detail ochiladi, tugmalar esa o'z ishini qiladi -->
-              <td class="actions-cell" @click.stop>
-                <div class="actions-row">
-                  <el-tooltip :content="$t('loyihaOpenDetail')" placement="top">
-                    <el-button circle size="small" :icon="View" @click="openDetail(row)" />
-                  </el-tooltip>
-                  <el-tooltip :content="$t('edit')" placement="top">
-                    <el-button circle size="small" :icon="EditPen" @click="openEditDialog(row)" />
-                  </el-tooltip>
-                  <el-popconfirm
-                    :title="$t('loyihaDeleteConfirm')"
-                    width="270"
-                    placement="top-end"
-                    :confirm-button-text="$t('deleteConfirm')"
-                    :cancel-button-text="$t('cancel')"
-                    @confirm="handleDelete(row.id)"
-                  >
-                    <template #reference>
-                      <el-button circle size="small" type="danger" plain :icon="Delete" />
-                    </template>
-                  </el-popconfirm>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </el-popconfirm>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
 
-      <div class="pagination-bar" v-if="filteredLoyihas.length > pageSize">
+      <div v-if="filteredLoyihas.length > pageSize" class="ly-pager">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
@@ -198,20 +275,23 @@
           background
         />
       </div>
-    </div>
+    </UiPanel>
 
-    <div v-else class="empty-state">
-      <div class="empty-card">
-        <h3 class="empty-title">{{ $t('loyihaEmptyTitle') }}</h3>
-        <p class="empty-description">{{ $t('loyihaEmptyDescription') }}</p>
+    <!-- Hali loyiha yo'q -->
+    <UiPanel v-else>
+      <el-empty>
+        <template #description>
+          <h3 class="ly-empty-title">{{ $t('loyihaEmptyTitle') }}</h3>
+          <p class="ly-muted">{{ $t('loyihaEmptyDescription') }}</p>
+        </template>
         <el-button type="primary" :icon="Plus" @click="openCreateDialog">
           {{ $t('loyihaButtonAdd') }}
         </el-button>
-      </div>
-    </div>
+      </el-empty>
+    </UiPanel>
 
     <LoyihaFormDialog v-model="dialogVisible" :model-value-data="editing" @saved="refresh" />
-  </div>
+  </UiPage>
 </template>
 
 <script setup>
@@ -220,7 +300,22 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
-import { Plus, EditPen, Delete, Download, View } from '@element-plus/icons-vue'
+import {
+  Delete,
+  Download,
+  EditPen,
+  Folder,
+  Lock,
+  Plus,
+  Search,
+  View,
+} from '@element-plus/icons-vue'
+import UiPage from '@/components/ui/UiPage.vue'
+import UiStat from '@/components/ui/UiStat.vue'
+import UiToolbar from '@/components/ui/UiToolbar.vue'
+import UiField from '@/components/ui/UiField.vue'
+import UiPanel from '@/components/ui/UiPanel.vue'
+import { fmtNum, telHref } from '@/utils/format'
 import { useLoyihaStore } from '@/stores/loyiha'
 import { useUsersStore } from '@/stores/user'
 import LoyihaFormDialog from './LoyihaFormDialog.vue'
@@ -229,8 +324,7 @@ import {
   formatDate,
   formatMoney,
   formatLoyihaId,
-  difficultyClass,
-  statusClass,
+  difficultyTag,
   statusLabelKey,
   LOYIHA_STATUS_OPTIONS,
 } from '@/utils/loyihaFormat'
@@ -244,8 +338,11 @@ const loyihas = computed(() => loyihaStore.allLoyihas || [])
 const currentUserId = Number(localStorage.getItem('userid'))
 
 const statusOptions = LOYIHA_STATUS_OPTIONS
-const statusIcon = (status) =>
-  LOYIHA_STATUS_OPTIONS.find((o) => o.value === status)?.icon || '🔧'
+// KP va shartnoma ustunlari (raqam, summa, sana)
+const docCols = [
+  { key: 'kp', labelKey: 'loyihaTableKp' },
+  { key: 'dogovor', labelKey: 'loyihaTableDogovor' },
+]
 
 // ─── Filtrlar ───
 const filters = reactive({
@@ -264,12 +361,36 @@ const filters = reactive({
 
 const currentPage = ref(1)
 const pageSize = ref(20)
+const moreFilters = ref(false)
 
-const textMatch = (value, filter) =>
-  !filter.trim() || String(value ?? '').toLowerCase().includes(filter.trim().toLowerCase())
+// "Ko'proq filtr" ortidagi maydonlar
+const extraFilters = [
+  { key: 'number', labelKey: 'loyihaTableNumber' },
+  { key: 'other', labelKey: 'loyihaTableOther' },
+  { key: 'area', labelKey: 'loyihaTableArea' },
+  { key: 'kp', labelKey: 'loyihaTableKp' },
+  { key: 'dogovor', labelKey: 'loyihaTableDogovor' },
+  { key: 'contact', labelKey: 'loyihaTableContact' },
+  { key: 'comment', labelKey: 'loyihaTableComment' },
+]
+const filled = (v) => Boolean(String(v ?? '').trim())
+const hiddenFilterCount = computed(() => extraFilters.filter((f) => filled(filters[f.key])).length)
+const hasFilters = computed(() => Object.values(filters).some(filled))
+const rowIndex = (i) => (currentPage.value - 1) * pageSize.value + i + 1
 
-const contactText = (row) =>
-  [row.contact_phone, row.contact_address].filter(Boolean).join(' ')
+const textMatch = (value, filter) => {
+  const f = String(filter ?? '')
+    .trim()
+    .toLowerCase()
+  return (
+    !f ||
+    String(value ?? '')
+      .toLowerCase()
+      .includes(f)
+  )
+}
+
+const contactText = (row) => [row.contact_phone, row.contact_address].filter(Boolean).join(' ')
 
 const kpText = (row) => [row.kp_number, row.kp_sum, row.kp_date].filter(Boolean).join(' ')
 const dogovorText = (row) =>
@@ -321,8 +442,7 @@ const statusCount = computed(() => ({
   done: loyihas.value.filter((row) => row.status === 'done').length,
 }))
 
-const fileCount = (row, section) =>
-  (row.files || []).filter((f) => f.section === section).length
+const fileCount = (row, section) => (row.files || []).filter((f) => f.section === section).length
 
 // ─── Amallar ───
 const dialogVisible = ref(false)
@@ -397,420 +517,115 @@ onMounted(async () => {
 })
 </script>
 
-<style lang="scss" scoped>
-.loyiha-container {
-  width: 100%;
-  padding: 32px;
-  background: #f5f7fa;
-  min-height: 100vh;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-.page-header {
-  margin-bottom: 26px;
-  padding: 24px 28px;
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
-}
-
-.header-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.header-content {
-  min-width: 250px;
-
-  h1 {
-    font-size: 34px;
-    font-weight: 700;
-    color: #111827;
-    margin: 0 0 6px 0;
-    letter-spacing: -0.03em;
-  }
-
-  .subtitle {
-    font-size: 15px;
-    color: #6b7280;
-    margin: 0;
-    max-width: 620px;
-    line-height: 1.7;
-  }
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.stats-grid {
+<style scoped>
+.ly-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.stat-card {
-  padding: 18px 20px;
-  border-radius: 18px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
-}
-
-.stat-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 10px;
-}
-
-.stat-value {
-  font-size: 26px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.error-banner {
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
 }
-
-.toolbar-count {
-  font-size: 13px;
-  color: #6b7280;
+.ly-select {
+  width: 190px;
 }
-
-.toolbar-hint {
-  font-size: 12.5px;
-  color: #9ca3af;
+.ly-select-sm {
+  width: 150px;
 }
-
-.toolbar-reset-btn {
-  margin-left: auto;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  color: #4b5563;
-  font-size: 13px;
-  padding: 6px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-
-  &:hover {
-    background: #e5e7eb;
-  }
-}
-
-.table-container {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  width: 100%;
-}
-
-.table-wrapper {
-  overflow-x: auto;
-}
-
-.modern-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-
-  thead {
-    background: linear-gradient(to bottom, #f9fafb 0%, #f3f4f6 100%);
-  }
-
-  th {
-    padding: 16px 18px;
-    text-align: left;
-    font-weight: 600;
-    color: #374151;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid #e5e7eb;
-    white-space: nowrap;
-
-    &.table-index {
-      width: 60px;
-      text-align: center;
-    }
-  }
-
-  tbody tr {
-    border-bottom: 1px solid #f3f4f6;
-
-    &:hover {
-      background: #f9fafb;
-    }
-
-    &.clickable-row {
-      cursor: pointer;
-    }
-  }
-
-  td {
-    padding: 14px 18px;
-    color: #4b5563;
-    font-size: 14px;
-    vertical-align: top;
-
-    &.table-index {
-      text-align: center;
-    }
-  }
-
-  .index-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #409eff 0%, #3a8ee6 100%);
-    color: white;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 13px;
-  }
-
-  .cell-text {
-    color: #374151;
-
-    &.bold {
-      font-weight: 600;
-      color: #1f2937;
-    }
-  }
-}
-
-.wrap-cell {
-  min-width: 180px;
-  max-width: 320px;
-  white-space: normal;
-  word-break: break-word;
-  line-height: 1.6;
-}
-
-.comment-cell {
-  max-width: 360px;
-}
-
-.contact-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 13px;
-}
-
-.filter-row th {
-  padding: 6px 8px;
-  background: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.col-filter {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 6px 8px;
-  font-size: 12px;
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: normal;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: white;
-  color: #374151;
-
-  &:focus {
-    outline: none;
-    border-color: #409eff;
-  }
-}
-
-.comment-filter-col {
-  min-width: 180px;
-}
-
-.stat-value.stat-progress {
-  color: #b45309;
-}
-
-.stat-value.stat-done {
-  color: #047857;
-}
-
-.loyiha-id {
-  font-family: 'SF Mono', Menlo, Consolas, monospace;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #1f2937;
-  background: #eef2f7;
-  padding: 3px 9px;
-  border-radius: 7px;
-  letter-spacing: 0.06em;
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 11px;
+.ly-badge {
+  margin-left: 4px;
+  min-width: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 18px;
+  color: white;
+  background: var(--ui-link);
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-
-  &.status-progress {
-    background: #fef3c7;
-    color: #b45309;
-  }
-
-  &.status-done {
-    background: #d1fae5;
-    color: #047857;
-  }
 }
-
-.doc-cell {
-  min-width: 130px;
-  display: table-cell;
-
-  .doc-num {
-    display: block;
-    font-weight: 600;
-    color: #1f2937;
-    font-size: 13px;
-  }
-
-  .doc-sum {
-    display: block;
-    font-size: 12.5px;
-    color: #4b5563;
-  }
-
-  .doc-date {
-    display: block;
-    font-size: 11.5px;
-    color: #9ca3af;
-  }
-}
-
-.difficulty-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 52px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  white-space: nowrap;
-
-  &.diff-low {
-    background: #10b981;
-  }
-  &.diff-mid {
-    background: #e6a23c;
-  }
-  &.diff-high {
-    background: #f56c6c;
-  }
-}
-
-.file-counts {
-  display: flex;
-  gap: 6px;
-}
-
-.file-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 9px;
-  border-radius: 999px;
+.ly-count {
+  margin-left: 4px;
+  padding: 0 8px;
   font-size: 12px;
   font-weight: 600;
-
-  &.archive {
-    background: #fef3c7;
-    color: #b45309;
-  }
-
-  &.working {
-    background: #e0efff;
-    color: #2563eb;
-  }
+  line-height: 20px;
+  color: var(--ui-muted);
+  background: var(--ui-line-soft);
+  border-radius: 999px;
 }
-
-.actions-cell {
+.ly-hint {
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.ly-table :deep(.el-table__row) {
+  cursor: pointer;
+}
+.ly-table :deep(.el-table__cell) {
+  padding: 10px 0;
+}
+.ly-id {
+  font-weight: 700;
+  color: var(--ui-link);
+  font-variant-numeric: tabular-nums;
+}
+.ly-strong {
+  font-weight: 600;
+  color: var(--ui-ink);
+}
+.ly-sub {
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.ly-money {
+  font-size: 13px;
+  color: var(--ui-ink-2);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-
-.actions-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
+.ly-link {
+  color: var(--ui-link);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
 }
-
-.pagination-bar {
+.ly-link:hover {
+  text-decoration: underline;
+}
+.ly-muted {
+  color: var(--ui-faint);
+}
+.ly-files {
+  display: inline-flex;
+  gap: 10px;
+}
+.ly-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  color: var(--ui-ink-2);
+}
+.ly-file .el-icon {
+  color: var(--ui-muted);
+}
+.ly-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+.ly-pager {
   display: flex;
   justify-content: flex-end;
-  padding: 18px 20px;
-  border-top: 1px solid #f3f4f6;
+  padding: 12px 16px;
+  border-top: 1px solid var(--ui-line-soft);
+}
+.ly-empty-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  color: var(--ui-ink);
 }
 
-.empty-state {
-  padding: 60px 24px;
-  display: flex;
-  justify-content: center;
-}
-
-.empty-card {
-  padding: 44px 36px;
-  border-radius: 20px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  text-align: center;
-}
-
-.empty-title {
-  margin: 0 0 12px;
-  font-size: 22px;
-  color: #111827;
-}
-
-.empty-description {
-  margin: 0 0 22px;
-  color: #6b7280;
-  font-size: 14px;
-}
-
-@media (max-width: 768px) {
-  .loyiha-container {
-    padding: 18px 12px;
+@media (max-width: 900px) {
+  .ly-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ly-select,
+  .ly-select-sm {
+    width: 100%;
   }
 }
 </style>

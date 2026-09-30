@@ -1,198 +1,260 @@
 <template>
-  <div class="dogovor-container" v-loading="dogovorStore.isLoading || uploadLoading">
-    <div class="page-header">
-      <div class="header-main">
-        <div class="header-content">
-          <h1>{{ $t('dogovorPageTitle') }}</h1>
-          <p class="subtitle">
-            {{ isAdmin ? $t('dogovorPageSubtitle') : $t('dogovorPageSubtitleOwn') }}
-          </p>
-        </div>
+  <UiPage
+    :title="$t('dogovorPageTitle')"
+    :subtitle="isAdmin ? $t('dogovorPageSubtitle') : $t('dogovorPageSubtitleOwn')"
+  >
+    <template #actions>
+      <el-upload
+        class="dg-upload"
+        :show-file-list="false"
+        :before-upload="handleBeforeUpload"
+        accept=".xlsx,.xls"
+      >
+        <el-button :icon="Upload" :loading="uploadLoading">
+          {{ $t('dogovorButtonUploadFile') }}
+        </el-button>
+      </el-upload>
+      <el-button :icon="Download" @click="exportExcel">{{ $t('dogovorExportExcel') }}</el-button>
+      <el-button type="primary" :icon="Plus" @click="openCreateDialog">
+        {{ $t('dogovorButtonAdd') }}
+      </el-button>
+    </template>
 
-        <div class="header-actions">
-          <el-upload
-            class="dogovor-upload"
-            :show-file-list="false"
-            :before-upload="handleBeforeUpload"
-            accept=".xlsx,.xls"
-          >
-            <el-button type="default" size="large" :icon="Upload" :loading="uploadLoading">
-              {{ $t('dogovorButtonUploadFile') }}
-            </el-button>
-          </el-upload>
-
-          <el-button size="large" :icon="Download" @click="exportExcel">
-            {{ $t('dogovorExportExcel') }}
-          </el-button>
-
-          <el-button type="primary" size="large" :icon="Plus" @click="openCreateDialog">
-            {{ $t('dogovorButtonAdd') }}
-          </el-button>
-        </div>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('dogovorStatTotal') }}</div>
-          <div class="stat-value">{{ totalDogovors }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('dogovorStatusOpen') }}</div>
-          <div class="stat-value">{{ statusCount.Open }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('dogovorStatusShipped') }}</div>
-          <div class="stat-value">{{ statusCount.Shipped }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('dogovorStatSum') }}</div>
-          <div class="stat-value stat-money">{{ formatMoneyShort(totalSum) }}</div>
-        </div>
-      </div>
+    <!-- Ko'rsatkichlar: bosilsa shu holat bo'yicha filtrlanadi -->
+    <div class="dg-stats">
+      <UiStat
+        :label="$t('dogovorStatTotal')"
+        :value="fmtNum(totalDogovors)"
+        :sub="formatMoneyShort(totalSum)"
+        clickable
+        @click="filters.status = ''"
+      />
+      <UiStat
+        v-for="st in statusStats"
+        :key="st.value"
+        :label="$t(st.labelKey)"
+        :value="fmtNum(st.count)"
+        :sub="formatMoneyShort(st.sum)"
+        :tone="st.tone"
+        clickable
+        @click="filters.status = st.value"
+      />
     </div>
 
-    <div v-if="uploadError" class="error-banner">{{ uploadError }}</div>
-    <div v-if="dogovorStore.error" class="error-banner">{{ dogovorStore.error }}</div>
+    <el-alert
+      v-if="uploadError"
+      type="warning"
+      show-icon
+      :title="uploadError"
+      @close="uploadError = ''"
+    />
+    <el-alert
+      v-if="dogovorStore.error"
+      type="error"
+      show-icon
+      :closable="false"
+      :title="dogovorStore.error"
+    />
 
-    <div class="toolbar" v-if="dogovors.length">
-      <span class="toolbar-count">
-        {{ $t('dogovorFilteredCount', { count: filteredDogovors.length }) }}
-      </span>
-      <button class="toolbar-reset-btn" @click="resetFilters">
-        {{ $t('dogovorResetFilters') }}
-      </button>
-    </div>
+    <!-- Filtrlar -->
+    <UiToolbar v-if="dogovors.length">
+      <UiField :label="$t('dogovorTableClient')" grow>
+        <el-input
+          v-model="filters.client"
+          :prefix-icon="Search"
+          clearable
+          :placeholder="$t('dogovorFilterPlaceholder')"
+        />
+      </UiField>
+      <UiField :label="$t('dogovorTableStatus')">
+        <el-select
+          v-model="filters.status"
+          clearable
+          :placeholder="$t('dogovorAllStatuses')"
+          class="dg-select"
+        >
+          <el-option
+            v-for="opt in statusOptions"
+            :key="opt.value"
+            :label="$t(opt.labelKey)"
+            :value="opt.value"
+          />
+        </el-select>
+      </UiField>
+      <UiField :label="$t('dogovorTableManager')">
+        <el-input
+          v-model="filters.manager"
+          clearable
+          :placeholder="$t('dogovorFilterPlaceholder')"
+          class="dg-select"
+        />
+      </UiField>
+      <UiField :label="$t('dogovorTableComment')">
+        <el-input
+          v-model="filters.comment"
+          clearable
+          :placeholder="$t('dogovorFilterPlaceholder')"
+          class="dg-select"
+        />
+      </UiField>
 
-    <div class="table-container" v-if="dogovors.length && !showSkeleton">
-      <div class="table-wrapper">
-        <table class="modern-table">
-          <thead>
-            <tr>
-              <th class="table-index">#</th>
-              <th>{{ $t('dogovorTableNumber') }}</th>
-              <th>{{ $t('dogovorTableStatus') }}</th>
-              <th>{{ $t('dogovorTableClient') }}</th>
-              <th>{{ $t('dogovorTableManager') }}</th>
-              <th>{{ $t('dogovorTableDate') }}</th>
-              <th>{{ $t('dogovorTablePaymentDate') }}</th>
-              <th>{{ $t('dogovorTableSum') }}</th>
-              <th>{{ $t('dogovorTablePrepayment') }}</th>
-              <th>{{ $t('dogovorTableInn') }}</th>
-              <th>{{ $t('dogovorTablePhone') }}</th>
-              <th>{{ $t('dogovorTableComment') }}</th>
-              <th v-if="isAdmin" class="admin-col">{{ $t('dogovorTableAdminComment') }}</th>
-              <th>{{ $t('actions') }}</th>
-            </tr>
-            <tr class="filter-row">
-              <th></th>
-              <th>
-                <input v-model="filters.number" class="col-filter" :placeholder="$t('dogovorFilterPlaceholder')" />
-              </th>
-              <th>
-                <select v-model="filters.status" class="col-filter">
-                  <option value="">{{ $t('dogovorAllStatuses') }}</option>
-                  <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
-                    {{ $t(opt.labelKey) }}
-                  </option>
-                </select>
-              </th>
-              <th>
-                <input v-model="filters.client" class="col-filter" :placeholder="$t('dogovorFilterPlaceholder')" />
-              </th>
-              <th>
-                <input v-model="filters.manager" class="col-filter" :placeholder="$t('dogovorFilterPlaceholder')" />
-              </th>
-              <th>
-                <input v-model="filters.date" class="col-filter" :placeholder="$t('dogovorFilterPlaceholder')" />
-              </th>
-              <th>
-                <input v-model="filters.paymentDate" class="col-filter" :placeholder="$t('dogovorFilterPlaceholder')" />
-              </th>
-              <th>
-                <input v-model="filters.sum" class="col-filter" :placeholder="$t('dogovorFilterPlaceholder')" />
-              </th>
-              <th>
-                <input v-model="filters.prepayment" class="col-filter" :placeholder="$t('dogovorFilterPlaceholder')" />
-              </th>
-              <th>
-                <input v-model="filters.inn" class="col-filter" :placeholder="$t('dogovorFilterPlaceholder')" />
-              </th>
-              <th>
-                <input v-model="filters.phone" class="col-filter" :placeholder="$t('dogovorFilterPlaceholder')" />
-              </th>
-              <th class="comment-filter-col">
-                <input v-model="filters.comment" class="col-filter" :placeholder="$t('dogovorFilterPlaceholder')" />
-              </th>
-              <th v-if="isAdmin" class="admin-col">
-                <input v-model="filters.adminComment" class="col-filter" :placeholder="$t('dogovorFilterPlaceholder')" />
-              </th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody class="table-row">
-            <tr v-for="(row, index) in pagedDogovors" :key="row.id">
-              <td class="table-index">
-                <span class="index-badge">{{ (currentPage - 1) * pageSize + index + 1 }}</span>
-              </td>
-              <td>
-                <span class="cell-text bold">{{ row.dogovor_number ?? '—' }}</span>
-              </td>
-              <td>
-                <span class="status-pill" :class="statusClass(row.dogovor_status)">
-                  {{ statusLabel(row.dogovor_status) }}
-                </span>
-              </td>
-              <td class="client-cell">
-                <span class="cell-text bold">{{ row.client_name || '—' }}</span>
-              </td>
-              <td><span class="cell-text">{{ row.manager_name || '—' }}</span></td>
-              <td><span class="cell-text">{{ formatDate(row.dogovor_date) }}</span></td>
-              <td><span class="cell-text">{{ formatDate(row.payment_date) }}</span></td>
-              <td><span class="cell-text">{{ formatMoney(row.dogovor_sum) }}</span></td>
-              <td>
-                <span class="cell-text">
-                  {{ row.prepayment_percent != null ? row.prepayment_percent + '%' : '—' }}
-                </span>
-              </td>
-              <td><span class="cell-text">{{ row.client_inn || '—' }}</span></td>
-              <td><span class="cell-text">{{ row.client_phone || '—' }}</span></td>
-              <td class="comment-cell"><span class="cell-text">{{ row.comment || '—' }}</span></td>
-              <td v-if="isAdmin" class="comment-cell admin-col">
-                <span class="cell-text admin-comment-text">{{ row.admin_comment || '—' }}</span>
-              </td>
-              <td class="actions-cell">
-                <div class="actions-row">
-                  <el-button text size="small" :icon="Printer" @click="printDogovor(row)">
-                    {{ $t('dogovorPrint') }}
-                  </el-button>
-                  <template v-if="canModify(row)">
-                    <el-button text size="small" :icon="Edit" @click="openEditDialog(row)">
-                      {{ $t('edit') }}
-                    </el-button>
-                    <el-popconfirm
-                      :title="$t('dogovorDeleteConfirm')"
-                      width="240"
-                      placement="top"
-                      :confirm-button-text="t('deleteConfirm')"
-                      :cancel-button-text="t('cancel')"
-                      @confirm="handleDelete(row.id)"
-                    >
-                      <template #reference>
-                        <el-button text size="small" type="danger" :icon="Delete">
-                          {{ $t('delete') }}
-                        </el-button>
-                      </template>
-                    </el-popconfirm>
+      <template v-if="moreFilters">
+        <UiField
+          v-for="f in extraFilters"
+          :key="f.key"
+          :label="$t(f.labelKey)"
+          :hint="f.hint ? $t(f.hint) : ''"
+        >
+          <el-input
+            v-model="filters[f.key]"
+            clearable
+            :placeholder="f.placeholder || $t('dogovorFilterPlaceholder')"
+            class="dg-select-sm"
+          />
+        </UiField>
+      </template>
+
+      <template #actions>
+        <el-button link type="primary" @click="moreFilters = !moreFilters">
+          {{ moreFilters ? $t('kpLessFilters') : $t('kpMoreFilters') }}
+          <span v-if="!moreFilters && hiddenFilterCount" class="dg-badge">{{
+            hiddenFilterCount
+          }}</span>
+        </el-button>
+      </template>
+    </UiToolbar>
+
+    <!-- Jadval -->
+    <UiPanel v-if="dogovors.length || showSkeleton" flush>
+      <template #title>
+        {{ $t('dogovorListTitle') }}
+        <span class="dg-count">{{ fmtNum(filteredDogovors.length) }}</span>
+      </template>
+      <template #actions>
+        <el-button v-if="hasFilters" link type="primary" @click="resetFilters">
+          {{ $t('dogovorResetFilters') }}
+        </el-button>
+      </template>
+
+      <el-skeleton v-if="showSkeleton" :rows="6" animated class="dg-skeleton" />
+      <el-table
+        v-else
+        :data="pagedDogovors"
+        class="dg-table"
+        :empty-text="$t('dogovorNoMatchDescription')"
+      >
+        <el-table-column type="index" :index="rowIndex" label="#" width="60" />
+        <el-table-column :label="$t('dogovorTableNumber')" min-width="90">
+          <template #default="{ row }">
+            <span class="dg-strong">{{ row.dogovor_number ?? '—' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('dogovorTableStatus')" min-width="150">
+          <template #default="{ row }">
+            <el-tag :type="statusTag(row.dogovor_status)" size="small" effect="light">
+              {{ statusLabel(row.dogovor_status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('dogovorTableClient')" min-width="210">
+          <template #default="{ row }">
+            <span class="dg-strong">{{ row.client_name || '—' }}</span>
+            <div v-if="row.client_inn" class="dg-sub">
+              {{ $t('dogovorTableInn') }}: {{ row.client_inn }}
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('dogovorTableManager')" min-width="160">
+          <template #default="{ row }">{{ row.manager_name || '—' }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('dogovorTableDate')" min-width="110">
+          <template #default="{ row }">{{ formatDate(row.dogovor_date) }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('dogovorTablePaymentDate')" min-width="120">
+          <template #default="{ row }">
+            <span :class="{ 'dg-muted': !row.payment_date }">{{
+              formatDate(row.payment_date)
+            }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('dogovorTableSum')" min-width="150" align="right">
+          <template #default="{ row }">
+            <span class="dg-money">{{ fmtMoney(row.dogovor_sum) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('dogovorTablePrepayment')" min-width="100" align="right">
+          <template #default="{ row }">
+            {{ row.prepayment_percent != null ? `${row.prepayment_percent}%` : '—' }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('dogovorTablePhone')" min-width="150">
+          <template #default="{ row }">
+            <a v-if="row.client_phone" :href="telHref(row.client_phone)" class="dg-link">
+              {{ row.client_phone }}
+            </a>
+            <span v-else class="dg-muted">—</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('dogovorTableComment')" min-width="190" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span :class="{ 'dg-muted': !row.comment }">{{ row.comment || '—' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          v-if="isAdmin"
+          :label="$t('dogovorTableAdminComment')"
+          min-width="170"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            <span :class="row.admin_comment ? 'dg-admin-note' : 'dg-muted'">
+              {{ row.admin_comment || '—' }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column width="120" align="right" fixed="right">
+          <template #default="{ row }">
+            <div class="dg-actions">
+              <el-tooltip :content="$t('dogovorPrint')" placement="top">
+                <el-button
+                  link
+                  :icon="Printer"
+                  :aria-label="$t('dogovorPrint')"
+                  @click="printDogovor(row)"
+                />
+              </el-tooltip>
+              <template v-if="canModify(row)">
+                <el-tooltip :content="$t('edit')" placement="top">
+                  <el-button
+                    link
+                    type="primary"
+                    :icon="Edit"
+                    :aria-label="$t('edit')"
+                    @click="openEditDialog(row)"
+                  />
+                </el-tooltip>
+                <el-popconfirm
+                  :title="$t('dogovorDeleteConfirm')"
+                  width="240"
+                  placement="top"
+                  :confirm-button-text="t('deleteConfirm')"
+                  :cancel-button-text="t('cancel')"
+                  @confirm="handleDelete(row.id)"
+                >
+                  <template #reference>
+                    <el-button link type="danger" :icon="Delete" :aria-label="$t('delete')" />
                   </template>
-                  <span v-else class="locked-hint" :title="$t('dogovorLockedHint')">🔒</span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                </el-popconfirm>
+              </template>
+              <el-tooltip v-else :content="$t('dogovorLockedHint')" placement="left">
+                <el-icon class="dg-lock"><Lock /></el-icon>
+              </el-tooltip>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
 
-      <div class="pagination-bar" v-if="filteredDogovors.length > pageSize">
+      <div v-if="filteredDogovors.length > pageSize" class="dg-pager">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
@@ -202,29 +264,27 @@
           background
         />
       </div>
-    </div>
+    </UiPanel>
 
-    <div v-else-if="dogovors.length && !filteredDogovors.length" class="empty-state">
-      <el-empty :description="$t('dogovorNoMatchDescription')" />
-    </div>
-    <div v-else-if="showSkeleton" class="skeleton-state">
-      <div class="skeleton-card"><el-skeleton :rows="6" animated /></div>
-    </div>
-    <div v-else class="empty-state">
-      <div class="empty-card">
-        <h3 class="empty-title">{{ $t('dogovorEmptyTitle') }}</h3>
-        <p class="empty-description">{{ $t('dogovorEmptyDescription') }}</p>
+    <!-- Hali shartnoma yo'q -->
+    <UiPanel v-else>
+      <el-empty>
+        <template #description>
+          <h3 class="dg-empty-title">{{ $t('dogovorEmptyTitle') }}</h3>
+          <p class="dg-muted">{{ $t('dogovorEmptyDescription') }}</p>
+        </template>
         <el-button type="primary" :icon="Plus" @click="openCreateDialog">
           {{ $t('dogovorButtonAdd') }}
         </el-button>
-      </div>
-    </div>
+      </el-empty>
+    </UiPanel>
 
     <!-- Qo'shish / tahrirlash -->
     <el-dialog
       v-model="dialogVisible"
       :title="editing ? $t('edit') : $t('dogovorDialogTitle')"
       width="880px"
+      append-to-body
       class="dogovor-dialog"
       destroy-on-close
     >
@@ -233,7 +293,12 @@
         <el-row :gutter="18">
           <el-col :span="8">
             <el-form-item :label="$t('dogovorNumberLabel')" prop="dogovor_number">
-              <el-input-number v-model="form.dogovor_number" :min="1" :controls="false" style="width: 100%" />
+              <el-input-number
+                v-model="form.dogovor_number"
+                :min="1"
+                :controls="false"
+                style="width: 100%"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -283,7 +348,12 @@
           </el-col>
           <el-col :span="8">
             <el-form-item :label="$t('dogovorSumLabel')" prop="dogovor_sum">
-              <el-input-number v-model="form.dogovor_sum" :min="0" :controls="false" style="width: 100%" />
+              <el-input-number
+                v-model="form.dogovor_sum"
+                :min="0"
+                :controls="false"
+                style="width: 100%"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -300,7 +370,12 @@
 
           <el-col :span="8">
             <el-form-item :label="$t('dogovorInitialPaymentLabel')" prop="initial_payment">
-              <el-input-number v-model="form.initial_payment" :min="0" :controls="false" style="width: 100%" />
+              <el-input-number
+                v-model="form.initial_payment"
+                :min="0"
+                :controls="false"
+                style="width: 100%"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -316,7 +391,12 @@
           </el-col>
           <el-col :span="8">
             <el-form-item :label="$t('dogovorProductionDaysLabel')" prop="production_days">
-              <el-input-number v-model="form.production_days" :min="0" :controls="false" style="width: 100%" />
+              <el-input-number
+                v-model="form.production_days"
+                :min="0"
+                :controls="false"
+                style="width: 100%"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -376,13 +456,27 @@
           <tbody>
             <tr v-for="(item, i) in form.items" :key="i">
               <td class="items-index">{{ i + 1 }}</td>
-              <td><el-input v-model="item.name" size="small" :placeholder="$t('dogovorItemName')" /></td>
+              <td>
+                <el-input v-model="item.name" size="small" :placeholder="$t('dogovorItemName')" />
+              </td>
               <td><el-input v-model="item.unit" size="small" placeholder="шт" /></td>
               <td>
-                <el-input-number v-model="item.qty" :min="0" :controls="false" size="small" style="width: 100%" />
+                <el-input-number
+                  v-model="item.qty"
+                  :min="0"
+                  :controls="false"
+                  size="small"
+                  style="width: 100%"
+                />
               </td>
               <td>
-                <el-input-number v-model="item.price" :min="0" :controls="false" size="small" style="width: 100%" />
+                <el-input-number
+                  v-model="item.price"
+                  :min="0"
+                  :controls="false"
+                  size="small"
+                  style="width: 100%"
+                />
               </td>
               <td class="items-total">{{ formatMoney((item.qty || 0) * (item.price || 0)) }}</td>
               <td>
@@ -395,7 +489,9 @@
           </tbody>
         </table>
         <div class="items-actions">
-          <el-button size="small" :icon="Plus" @click="addItem">{{ $t('dogovorAddItem') }}</el-button>
+          <el-button size="small" :icon="Plus" @click="addItem">{{
+            $t('dogovorAddItem')
+          }}</el-button>
           <span class="items-summary" v-if="form.items.length">
             {{ $t('dogovorItemsSubtotal') }}: <b>{{ formatMoney(itemsSubtotal) }}</b> ·
             {{ $t('dogovorVat') }}: <b>{{ formatMoney(itemsVat) }}</b> ·
@@ -416,12 +512,28 @@
         <el-row :gutter="18">
           <el-col :span="24">
             <el-form-item :label="$t('dogovorCommentLabel')" prop="comment">
-              <el-input v-model="form.comment" type="textarea" :rows="2" maxlength="500" show-word-limit />
+              <el-input
+                v-model="form.comment"
+                type="textarea"
+                :rows="2"
+                maxlength="500"
+                show-word-limit
+              />
             </el-form-item>
           </el-col>
           <el-col v-if="isAdmin" :span="24">
-            <el-form-item :label="$t('dogovorAdminCommentLabel')" prop="admin_comment" class="admin-comment-field">
-              <el-input v-model="form.admin_comment" type="textarea" :rows="2" maxlength="400" show-word-limit />
+            <el-form-item
+              :label="$t('dogovorAdminCommentLabel')"
+              prop="admin_comment"
+              class="admin-comment-field"
+            >
+              <el-input
+                v-model="form.admin_comment"
+                type="textarea"
+                :rows="2"
+                maxlength="400"
+                show-word-limit
+              />
               <span class="admin-field-hint">{{ $t('dogovorAdminCommentHint') }}</span>
             </el-form-item>
           </el-col>
@@ -435,7 +547,7 @@
         </el-button>
       </template>
     </el-dialog>
-  </div>
+  </UiPage>
 </template>
 
 <script setup>
@@ -443,7 +555,22 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
-import { Plus, Upload, Edit, Delete, Download, Printer } from '@element-plus/icons-vue'
+import {
+  Delete,
+  Download,
+  Edit,
+  Lock,
+  Plus,
+  Printer,
+  Search,
+  Upload,
+} from '@element-plus/icons-vue'
+import UiPage from '@/components/ui/UiPage.vue'
+import UiStat from '@/components/ui/UiStat.vue'
+import UiToolbar from '@/components/ui/UiToolbar.vue'
+import UiField from '@/components/ui/UiField.vue'
+import UiPanel from '@/components/ui/UiPanel.vue'
+import { fmtNum, formatDate, telHref } from '@/utils/format'
 import { useDogovorStore } from '@/stores/dogovor'
 import { useUsersStore } from '@/stores/user'
 import { printDogovorDocument } from '@/utils/dogovorPdf'
@@ -477,13 +604,9 @@ const statusLabel = (status) => {
   const found = statusOptions.find((o) => o.value === status)
   return found ? t(found.labelKey) : status || '—'
 }
-const statusClass = (status) =>
-  ({
-    Open: 'status-open',
-    Shipped: 'status-shipped',
-    PartlyShipped: 'status-partly',
-    Closed: 'status-closed',
-  })[status] || 'status-default'
+// Holat rangi: ochiq — ko'k, qisman — sariq, yuklangan — yashil, yopilgan — kulrang
+const STATUS_TAG = { Open: 'primary', PartlyShipped: 'warning', Shipped: 'success', Closed: 'info' }
+const statusTag = (status) => STATUS_TAG[status] || 'info'
 
 // ─── Filtrlar ───
 const filters = reactive({
@@ -503,9 +626,50 @@ const filters = reactive({
 
 const currentPage = ref(1)
 const pageSize = ref(20)
+const moreFilters = ref(false)
 
-const textMatch = (value, filter) =>
-  !filter.trim() || String(value ?? '').toLowerCase().includes(filter.trim().toLowerCase())
+// "Ko'proq filtr" ortidagi maydonlar
+const extraFilters = [
+  { key: 'number', labelKey: 'dogovorTableNumber' },
+  {
+    key: 'date',
+    labelKey: 'dogovorTableDate',
+    placeholder: 'dd.mm.yyyy',
+    hint: 'kpDateFilterHint',
+  },
+  {
+    key: 'paymentDate',
+    labelKey: 'dogovorTablePaymentDate',
+    placeholder: 'dd.mm.yyyy',
+    hint: 'kpDateFilterHint',
+  },
+  { key: 'sum', labelKey: 'dogovorTableSum' },
+  { key: 'prepayment', labelKey: 'dogovorTablePrepayment' },
+  { key: 'inn', labelKey: 'dogovorTableInn' },
+  { key: 'phone', labelKey: 'dogovorTablePhone' },
+]
+if (isAdmin.value) extraFilters.push({ key: 'adminComment', labelKey: 'dogovorTableAdminComment' })
+
+const filled = (v) => Boolean(String(v ?? '').trim())
+const hiddenFilterCount = computed(
+  () =>
+    extraFilters.filter((f) => filled(filters[f.key])).length +
+    (filled(filters.adminComment) && !isAdmin.value ? 1 : 0),
+)
+const hasFilters = computed(() => Object.values(filters).some(filled))
+const rowIndex = (i) => (currentPage.value - 1) * pageSize.value + i + 1
+
+const textMatch = (value, filter) => {
+  const f = String(filter ?? '')
+    .trim()
+    .toLowerCase()
+  return (
+    !f ||
+    String(value ?? '')
+      .toLowerCase()
+      .includes(f)
+  )
+}
 
 // Backend dogovor_number bo'yicha kamayish tartibida qaytaradi — tartibni saqlaymiz
 const filteredDogovors = computed(() =>
@@ -555,18 +719,30 @@ const statusCount = computed(() => ({
 const totalSum = computed(() =>
   dogovors.value.reduce((acc, d) => acc + (Number(d.dogovor_sum) || 0), 0),
 )
+// Har holat: soni va summasi (ko'rsatkich kartalari uchun)
+const STATUS_TONE = { Open: '', PartlyShipped: 'warn', Shipped: 'good', Closed: '' }
+const statusStats = computed(() =>
+  statusOptions.map((o) => {
+    const list = dogovors.value.filter((d) => d.dogovor_status === o.value)
+    return {
+      ...o,
+      tone: STATUS_TONE[o.value],
+      count: list.length,
+      sum: list.reduce((acc, d) => acc + (Number(d.dogovor_sum) || 0), 0),
+    }
+  }),
+)
 const showSkeleton = computed(() => dogovorStore.isLoading && !dogovors.value.length)
 
 // ─── Formatlash ───
-const formatDate = (value) => {
-  if (!value) return '—'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('uz-UZ')
-}
-
 const formatMoney = (value) => {
   if (value === null || value === undefined || value === '') return '—'
   return new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 2 }).format(value)
+}
+// Jadval uchun: "13 090 872 so'm"
+const fmtMoney = (value) => {
+  if (value === null || value === undefined || value === '') return '—'
+  return `${fmtNum(Math.round(Number(value)))} ${t('amoCurrency')}`
 }
 
 // 1 225 936 013 096 -> "1.23 trln"
@@ -793,364 +969,107 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.dogovor-container {
-  width: 100%;
-  padding: 32px;
-  background: #f5f7fa;
-  min-height: 100vh;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-.page-header {
-  margin-bottom: 26px;
-  padding: 24px 28px;
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
-}
-
-.header-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.header-content {
-  min-width: 250px;
-
-  h1 {
-    font-size: 34px;
-    font-weight: 700;
-    color: #111827;
-    margin: 0 0 6px 0;
-    letter-spacing: -0.03em;
-  }
-
-  .subtitle {
-    font-size: 15px;
-    color: #6b7280;
-    margin: 0;
-    max-width: 560px;
-    line-height: 1.7;
-  }
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.stats-grid {
+.dg-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.stat-card {
-  padding: 18px 20px;
-  border-radius: 18px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
-}
-
-.stat-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 10px;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #111827;
-
-  &.stat-money {
-    font-size: 22px;
-  }
-}
-
-.error-banner {
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
 }
-
-.toolbar-count {
-  font-size: 13px;
-  color: #6b7280;
+.dg-select {
+  width: 190px;
 }
-
-.toolbar-reset-btn {
-  margin-left: auto;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  color: #4b5563;
-  font-size: 13px;
-  padding: 6px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-
-  &:hover {
-    background: #e5e7eb;
-  }
+.dg-select-sm {
+  width: 150px;
 }
-
-.table-container {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  width: 100%;
+.dg-badge {
+  margin-left: 4px;
+  min-width: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 18px;
+  color: white;
+  background: var(--ui-link);
+  border-radius: 999px;
 }
-
-.table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.modern-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-
-  thead {
-    background: linear-gradient(to bottom, #f9fafb 0%, #f3f4f6 100%);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  th {
-    padding: 16px 18px;
-    text-align: left;
-    font-weight: 600;
-    color: #374151;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid #e5e7eb;
-    white-space: nowrap;
-
-    &.table-index {
-      width: 60px;
-      text-align: center;
-    }
-  }
-
-  tbody tr {
-    transition: background 0.2s ease;
-    border-bottom: 1px solid #f3f4f6;
-
-    &:hover {
-      background: #f9fafb;
-    }
-  }
-
-  td {
-    padding: 14px 18px;
-    color: #4b5563;
-    font-size: 14px;
-    vertical-align: middle;
-
-    &.table-index {
-      text-align: center;
-    }
-  }
-
-  .index-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #409eff 0%, #3a8ee6 100%);
-    color: white;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 13px;
-  }
-
-  .cell-text {
-    color: #374151;
-
-    &.bold {
-      font-weight: 600;
-      color: #1f2937;
-    }
-  }
-}
-
-.filter-row th {
-  padding: 6px 8px;
-  background: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.col-filter {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 6px 8px;
+.dg-count {
+  margin-left: 4px;
+  padding: 0 8px;
   font-size: 12px;
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: normal;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: white;
-  color: #374151;
-
-  &:focus {
-    outline: none;
-    border-color: #409eff;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ui-muted);
+  background: var(--ui-line-soft);
+  border-radius: 999px;
+}
+.dg-skeleton {
+  padding: 16px;
+}
+.dg-strong {
+  font-weight: 600;
+  color: var(--ui-ink);
+}
+.dg-sub {
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.dg-money {
+  font-weight: 600;
+  color: var(--ui-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dg-link {
+  color: var(--ui-link);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+  &:hover {
+    text-decoration: underline;
   }
 }
-
-.client-cell {
-  min-width: 220px;
-  max-width: 360px;
-  white-space: normal;
-  word-break: break-word;
+.dg-muted {
+  color: var(--ui-faint);
 }
-
-.comment-cell {
-  min-width: 200px;
-  max-width: 360px;
-  white-space: normal;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  line-height: 1.6;
+.dg-admin-note {
+  color: var(--ui-warn);
 }
-
-.comment-filter-col {
-  min-width: 200px;
-}
-
-.admin-col {
-  background: #fffaf0;
-}
-
-.admin-comment-text {
-  color: #b45309;
-  font-style: italic;
-}
-
-.status-pill {
+.dg-actions {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 96px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: white;
-  white-space: nowrap;
-}
-
-.status-open {
-  background: #10b981;
-}
-.status-shipped {
-  background: #6366f1;
-}
-.status-partly {
-  background: #e6a23c;
-}
-.status-closed {
-  background: #6b7280;
-}
-.status-default {
-  background: #9ca3af;
-}
-
-.actions-cell {
-  white-space: nowrap;
-}
-
-.actions-row {
-  display: flex;
   gap: 4px;
-  align-items: center;
 }
-
-.locked-hint {
-  color: #9ca3af;
-  font-size: 13px;
-  cursor: default;
+.dg-lock {
+  color: var(--ui-faint);
 }
-
-.pagination-bar {
+.dg-pager {
   display: flex;
   justify-content: flex-end;
-  padding: 18px 20px;
-  border-top: 1px solid #f3f4f6;
+  padding: 12px 16px;
+  border-top: 1px solid var(--ui-line-soft);
+}
+.dg-empty-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  color: var(--ui-ink);
+}
+.dg-table :deep(.el-table__cell) {
+  padding: 10px 0;
 }
 
-.empty-state {
-  padding: 60px 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #6b7280;
+@media (max-width: 1280px) {
+  .dg-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 900px) {
+  .dg-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dg-select,
+  .dg-select-sm {
+    width: 100%;
+  }
 }
 
-.empty-card {
-  padding: 44px 36px;
-  border-radius: 20px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  text-align: center;
-}
-
-.empty-title {
-  margin: 0 0 12px;
-  font-size: 22px;
-  color: #111827;
-}
-
-.empty-description {
-  margin: 0 0 22px;
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.skeleton-state {
-  display: flex;
-  justify-content: center;
-}
-
-.skeleton-card {
-  width: 100%;
-  padding: 34px;
-  border-radius: 24px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-}
-
-/* ─── Bandlar tahrirlagichi ─────────────────────── */
+/* ─── Qo'shish / tahrirlash dialogi (mahsulotlar jadvali) ─── */
 .items-editor {
   width: 100%;
   border-collapse: collapse;
@@ -1217,11 +1136,5 @@ onMounted(async () => {
 
 :deep(.dogovor-dialog .el-dialog) {
   border-radius: 16px;
-}
-
-@media (max-width: 768px) {
-  .dogovor-container {
-    padding: 18px 12px;
-  }
 }
 </style>

@@ -1,198 +1,132 @@
 <template>
-  <div class="detail-container" v-loading="loading">
-    <div v-if="loyiha" class="detail-inner">
-      <!-- Sarlavha -->
-      <div class="detail-header">
-        <div class="header-left">
-          <el-button class="back-btn" :icon="ArrowLeft" text @click="goBack">
-            {{ $t('loyihaBack') }}
-          </el-button>
-          <h1>
-            {{ $t('loyihaDetailTitle') }}
-            <span class="order-badge">{{ formatLoyihaId(loyiha.order_number) }}</span>
-            <span class="status-pill" :class="statusClass(loyiha.status)">
-              {{ statusIcon(loyiha.status) }} {{ $t(statusLabelKey(loyiha.status)) }}
-            </span>
-          </h1>
-          <p class="created-line">
-            {{ $t('loyihaCreatedBy') }}:
-            <strong>{{ fullName(loyiha.creator) || '—' }}</strong>
-            · {{ formatDateTime(loyiha.createdAt) }}
-          </p>
+  <UiPage>
+    <template #title>
+      <el-button class="ld-back" link :icon="ArrowLeft" @click="goBack">
+        {{ $t('loyihaPageTitle') }}
+      </el-button>
+      <h1 class="ld-title">
+        {{ $t('loyihaDetailTitle') }}
+        <span v-if="loyiha" class="ld-id">{{ formatLoyihaId(loyiha.order_number) }}</span>
+        <el-tag
+          v-if="loyiha"
+          :type="loyiha.status === 'done' ? 'success' : 'warning'"
+          size="small"
+          effect="light"
+        >
+          {{ $t(statusLabelKey(loyiha.status)) }}
+        </el-tag>
+      </h1>
+    </template>
+    <template v-if="loyiha" #subtitle>
+      {{ $t('loyihaCreatedBy') }}: <b>{{ fullName(loyiha.creator) || '—' }}</b> ·
+      {{ formatDateTime(loyiha.createdAt) }}
+    </template>
+    <template v-if="loyiha" #actions>
+      <el-button :icon="EditPen" @click="openEditDialog">{{ $t('edit') }}</el-button>
+      <el-popconfirm
+        :title="$t('loyihaDeleteConfirm')"
+        width="280"
+        placement="bottom-end"
+        :confirm-button-text="$t('deleteConfirm')"
+        :cancel-button-text="$t('cancel')"
+        @confirm="handleDelete"
+      >
+        <template #reference>
+          <el-button type="danger" plain :icon="Delete">{{ $t('delete') }}</el-button>
+        </template>
+      </el-popconfirm>
+    </template>
+
+    <div v-loading="loading">
+      <template v-if="loyiha">
+        <div class="ld-grid">
+          <UiPanel :title="$t('loyihaSectionMain')" :icon="Document">
+            <UiInfoList :items="mainItems" />
+          </UiPanel>
+
+          <UiPanel :title="$t('loyihaDifficultyLabel')" :icon="TrendCharts">
+            <div v-if="loyiha.difficulty" class="ld-diff">
+              <div class="ld-diff__value" :class="`is-${difficultyTag(loyiha.difficulty)}`">
+                {{ loyiha.difficulty }}<small>/10</small>
+              </div>
+              <div class="ld-diff__bar">
+                <div
+                  class="ld-diff__fill"
+                  :class="`is-${difficultyTag(loyiha.difficulty)}`"
+                  :style="{ width: `${loyiha.difficulty * 10}%` }"
+                ></div>
+              </div>
+              <span class="ld-muted">{{ difficultyLabel(loyiha.difficulty) }}</span>
+            </div>
+            <p v-else class="ld-empty">{{ $t('loyihaNotRated') }}</p>
+          </UiPanel>
+
+          <UiPanel :title="$t('loyihaSectionClient')" :icon="Phone">
+            <UiInfoList v-if="hasContact" :items="contactItems" />
+            <p v-else class="ld-empty">{{ $t('loyihaNoContact') }}</p>
+          </UiPanel>
         </div>
 
-        <div class="header-actions">
-          <el-button :icon="EditPen" @click="openEditDialog">{{ $t('edit') }}</el-button>
-          <el-popconfirm
-            :title="$t('loyihaDeleteConfirm')"
-            width="280"
-            placement="bottom-end"
-            :confirm-button-text="$t('deleteConfirm')"
-            :cancel-button-text="$t('cancel')"
-            @confirm="handleDelete"
-          >
-            <template #reference>
-              <el-button type="danger" plain :icon="Delete">{{ $t('delete') }}</el-button>
-            </template>
-          </el-popconfirm>
-        </div>
-      </div>
-
-      <!-- Asosiy ma'lumotlar -->
-      <div class="cards-grid">
-        <div class="info-card">
-          <h3 class="card-title">{{ $t('loyihaSectionMain') }}</h3>
-          <dl class="info-list">
-            <div class="info-row">
-              <dt>{{ $t('loyihaManagerLabel') }}</dt>
-              <dd>{{ loyiha.manager_name || '—' }}</dd>
-            </div>
-            <div class="info-row">
-              <dt>{{ $t('loyihaOtherLabel') }}</dt>
-              <dd>{{ loyiha.other_source || '—' }}</dd>
-            </div>
-            <div class="info-row">
-              <dt>{{ $t('loyihaSystemLabel') }}</dt>
-              <dd>{{ loyiha.system_info || '—' }}</dd>
-            </div>
-            <div class="info-row">
-              <dt>{{ $t('loyihaAreaLabel') }}</dt>
-              <dd>
-                <strong v-if="loyiha.area != null">{{ formatNumber(loyiha.area) }} m²</strong>
-                <span v-else>—</span>
-              </dd>
-            </div>
-          </dl>
+        <div class="ld-grid ld-grid--2">
+          <UiPanel :title="$t('loyihaSectionKp')" :icon="Tickets">
+            <UiInfoList v-if="hasKp" :items="kpItems" />
+            <p v-else class="ld-empty">{{ $t('loyihaNoKp') }}</p>
+          </UiPanel>
+          <UiPanel :title="$t('loyihaSectionDogovor')" :icon="Files">
+            <UiInfoList v-if="hasDogovor" :items="dogovorItems" />
+            <p v-else class="ld-empty">{{ $t('loyihaNoDogovor') }}</p>
+          </UiPanel>
         </div>
 
-        <div class="info-card">
-          <h3 class="card-title">{{ $t('loyihaDifficultyLabel') }}</h3>
-          <div v-if="loyiha.difficulty" class="difficulty-block">
-            <div class="difficulty-value" :class="difficultyClass(loyiha.difficulty)">
-              {{ loyiha.difficulty }}<small>/10</small>
-            </div>
-            <div class="difficulty-bar">
-              <div
-                class="difficulty-fill"
-                :class="difficultyClass(loyiha.difficulty)"
-                :style="{ width: loyiha.difficulty * 10 + '%' }"
-              ></div>
-            </div>
-            <span class="difficulty-label">{{ difficultyLabel(loyiha.difficulty) }}</span>
-          </div>
-          <p v-else class="empty-value">{{ $t('loyihaNotRated') }}</p>
-        </div>
+        <UiPanel :title="$t('loyihaCommentLabel')" :icon="ChatLineSquare" class="ld-gap">
+          <p v-if="loyiha.comment" class="ld-comment">{{ loyiha.comment }}</p>
+          <p v-else class="ld-empty">{{ $t('loyihaNoComment') }}</p>
+        </UiPanel>
 
-        <div class="info-card">
-          <h3 class="card-title">{{ $t('loyihaSectionClient') }}</h3>
-          <ul class="contact-list">
-            <li v-if="loyiha.contact_phone">
-              <span class="contact-icon">📞</span>
-              <a :href="`tel:${loyiha.contact_phone}`">{{ loyiha.contact_phone }}</a>
-            </li>
-            <li v-if="loyiha.contact_address">
-              <span class="contact-icon">📍</span>
-              <span>{{ loyiha.contact_address }}</span>
-            </li>
-            <li v-if="!hasContact" class="empty-value">{{ $t('loyihaNoContact') }}</li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- KP va Dogovor -->
-      <div class="docs-grid">
-        <div class="info-card doc-card kp">
-          <h3 class="card-title">{{ $t('loyihaSectionKp') }}</h3>
-          <div v-if="hasKp" class="doc-rows">
-            <div class="doc-row">
-              <span>{{ $t('loyihaKpNumberLabel') }}</span>
-              <strong>{{ loyiha.kp_number || '—' }}</strong>
-            </div>
-            <div class="doc-row">
-              <span>{{ $t('loyihaKpSumLabel') }}</span>
-              <strong>{{ formatMoney(loyiha.kp_sum) }}</strong>
-            </div>
-            <div class="doc-row">
-              <span>{{ $t('loyihaKpDateLabel') }}</span>
-              <strong>{{ formatDate(loyiha.kp_date) }}</strong>
-            </div>
-          </div>
-          <p v-else class="empty-value">{{ $t('loyihaNoKp') }}</p>
-        </div>
-
-        <div class="info-card doc-card dogovor">
-          <h3 class="card-title">{{ $t('loyihaSectionDogovor') }}</h3>
-          <div v-if="hasDogovor" class="doc-rows">
-            <div class="doc-row">
-              <span>{{ $t('loyihaDogovorNumberLabel') }}</span>
-              <strong>{{ loyiha.dogovor_number || '—' }}</strong>
-            </div>
-            <div class="doc-row">
-              <span>{{ $t('loyihaDogovorSumLabel') }}</span>
-              <strong>{{ formatMoney(loyiha.dogovor_sum) }}</strong>
-            </div>
-            <div class="doc-row">
-              <span>{{ $t('loyihaDogovorDateLabel') }}</span>
-              <strong>{{ formatDate(loyiha.dogovor_date) }}</strong>
-            </div>
-          </div>
-          <p v-else class="empty-value">{{ $t('loyihaNoDogovor') }}</p>
-        </div>
-      </div>
-
-      <!-- Izoh -->
-      <div class="info-card comment-card">
-        <h3 class="card-title">{{ $t('loyihaCommentLabel') }}</h3>
-        <p v-if="loyiha.comment" class="comment-text">{{ loyiha.comment }}</p>
-        <p v-else class="empty-value">{{ $t('loyihaNoComment') }}</p>
-      </div>
-
-      <el-alert
-        v-if="!loyihaStore.storageReady"
-        class="storage-warning"
-        type="warning"
-        :closable="false"
-        show-icon
-        :title="$t('loyihaStorageNotReady')"
-      />
-
-      <!-- Fayllar: ishchi bo'lim faqat arxiv fayli yuklangach ochiladi -->
-      <div class="files-grid" :class="{ 'single-column': !archiveFile }">
-        <LoyihaFileSection
-          archive
-          :file="archiveFile"
-          :storage-ready="loyihaStore.storageReady"
-          @upload="(e) => handleUpload(e, 'archive')"
-          @download="downloadFile"
+        <el-alert
+          v-if="!loyihaStore.storageReady"
+          class="ld-gap"
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="$t('loyihaStorageNotReady')"
         />
-        <LoyihaFileSection
-          v-if="archiveFile"
-          :file="workingFile"
-          :storage-ready="loyihaStore.storageReady"
-          @upload="(e) => handleUpload(e, 'working')"
-          @download="downloadFile"
-          @rename="handleRename"
-          @remove="handleFileDelete"
-        />
-        <div v-else class="working-locked">
-          <span class="locked-icon">📁</span>
-          <h4>{{ $t('loyihaWorkingSection') }}</h4>
-          <p>{{ $t('loyihaWorkingLockedHint') }}</p>
+
+        <!-- Fayllar: ishchi bo'lim faqat arxiv fayli yuklangach ochiladi -->
+        <div class="ld-grid ld-grid--2 ld-gap">
+          <LoyihaFileSection
+            archive
+            :file="archiveFile"
+            :storage-ready="loyihaStore.storageReady"
+            @upload="(e) => handleUpload(e, 'archive')"
+            @download="downloadFile"
+          />
+          <LoyihaFileSection
+            v-if="archiveFile"
+            :file="workingFile"
+            :storage-ready="loyihaStore.storageReady"
+            @upload="(e) => handleUpload(e, 'working')"
+            @download="downloadFile"
+            @rename="handleRename"
+            @remove="handleFileDelete"
+          />
+          <UiPanel v-else :title="$t('loyihaWorkingSection')" :icon="Folder">
+            <div class="ld-locked">
+              <el-icon :size="28"><Lock /></el-icon>
+              <p>{{ $t('loyihaWorkingLockedHint') }}</p>
+            </div>
+          </UiPanel>
         </div>
-      </div>
+      </template>
+
+      <el-empty v-else-if="!loading" :description="$t('loyihaNotFound')">
+        <el-button type="primary" @click="goBack">{{ $t('loyihaBack') }}</el-button>
+      </el-empty>
     </div>
 
-    <el-empty v-else-if="!loading" :description="$t('loyihaNotFound')">
-      <el-button type="primary" @click="goBack">{{ $t('loyihaBack') }}</el-button>
-    </el-empty>
-
     <!-- Tahrirlash -->
-    <LoyihaFormDialog
-      v-model="dialogVisible"
-      :model-value-data="loyiha"
-      @saved="reload"
-    />
-  </div>
+    <LoyihaFormDialog v-model="dialogVisible" :model-value-data="loyiha" @saved="reload" />
+  </UiPage>
 </template>
 
 <script setup>
@@ -200,7 +134,23 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, EditPen, Delete } from '@element-plus/icons-vue'
+import {
+  ArrowLeft,
+  ChatLineSquare,
+  Delete,
+  Document,
+  EditPen,
+  Files,
+  Folder,
+  Lock,
+  Phone,
+  Tickets,
+  TrendCharts,
+} from '@element-plus/icons-vue'
+import UiPage from '@/components/ui/UiPage.vue'
+import UiPanel from '@/components/ui/UiPanel.vue'
+import UiInfoList from '@/components/ui/UiInfoList.vue'
+import { telHref } from '@/utils/format'
 import { useLoyihaStore } from '@/stores/loyiha'
 import loyihaApi from '@/api/loyiha'
 import LoyihaFileSection from './LoyihaFileSection.vue'
@@ -211,11 +161,9 @@ import {
   formatDateTime,
   formatMoney,
   formatLoyihaId,
-  difficultyClass,
-  statusClass,
+  difficultyTag,
   statusLabelKey,
   fullName,
-  LOYIHA_STATUS_OPTIONS,
 } from '@/utils/loyihaFormat'
 
 const { t } = useI18n()
@@ -236,24 +184,63 @@ const archiveFile = computed(
 const workingFile = computed(
   () => (loyiha.value?.files || []).find((f) => f.section === 'working') || null,
 )
-const hasContact = computed(
-  () => !!(loyiha.value?.contact_phone || loyiha.value?.contact_address),
-)
+const hasContact = computed(() => !!(loyiha.value?.contact_phone || loyiha.value?.contact_address))
 const hasKp = computed(
-  () =>
-    !!(loyiha.value?.kp_number || loyiha.value?.kp_sum || loyiha.value?.kp_date),
+  () => !!(loyiha.value?.kp_number || loyiha.value?.kp_sum || loyiha.value?.kp_date),
 )
 const hasDogovor = computed(
-  () =>
-    !!(
-      loyiha.value?.dogovor_number ||
-      loyiha.value?.dogovor_sum ||
-      loyiha.value?.dogovor_date
-    ),
+  () => !!(loyiha.value?.dogovor_number || loyiha.value?.dogovor_sum || loyiha.value?.dogovor_date),
 )
 
-const statusIcon = (status) =>
-  LOYIHA_STATUS_OPTIONS.find((o) => o.value === status)?.icon || '🔧'
+const money = (v) => (v || v === 0 ? `${formatMoney(v)} ${t('amoCurrency')}` : '')
+
+const mainItems = computed(() => {
+  const l = loyiha.value || {}
+  return [
+    { key: 'manager', label: t('loyihaManagerLabel'), value: l.manager_name },
+    { key: 'other', label: t('loyihaOtherLabel'), value: l.other_source },
+    { key: 'system', label: t('loyihaSystemLabel'), value: l.system_info },
+    {
+      key: 'area',
+      label: t('loyihaAreaLabel'),
+      value: l.area != null ? `${formatNumber(l.area)} m²` : '',
+    },
+  ]
+})
+const contactItems = computed(() => {
+  const l = loyiha.value || {}
+  return [
+    {
+      key: 'phone',
+      label: t('loyihaPhoneLabel'),
+      value: l.contact_phone,
+      href: telHref(l.contact_phone),
+    },
+    { key: 'address', label: t('loyihaAddressLabel'), value: l.contact_address },
+  ]
+})
+const docItems = (prefix, labels) => {
+  const l = loyiha.value || {}
+  return [
+    { key: 'number', label: t(labels[0]), value: l[`${prefix}_number`] },
+    { key: 'sum', label: t(labels[1]), value: money(l[`${prefix}_sum`]) },
+    {
+      key: 'date',
+      label: t(labels[2]),
+      value: l[`${prefix}_date`] ? formatDate(l[`${prefix}_date`]) : '',
+    },
+  ]
+}
+const kpItems = computed(() =>
+  docItems('kp', ['loyihaKpNumberLabel', 'loyihaKpSumLabel', 'loyihaKpDateLabel']),
+)
+const dogovorItems = computed(() =>
+  docItems('dogovor', [
+    'loyihaDogovorNumberLabel',
+    'loyihaDogovorSumLabel',
+    'loyihaDogovorDateLabel',
+  ]),
+)
 
 const difficultyLabel = (value) => {
   const n = Number(value) || 0
@@ -339,362 +326,128 @@ onMounted(async () => {
 })
 </script>
 
-<style lang="scss" scoped>
-.detail-container {
-  width: 100%;
-  min-height: 100vh;
-  padding: 32px;
-  background: #f5f7fa;
-  box-sizing: border-box;
+<style scoped>
+.ld-back {
+  align-self: flex-start;
+  margin-bottom: 2px;
+  color: var(--ui-muted);
 }
-
-.detail-inner {
-  max-width: 1240px;
-  margin: 0 auto;
-}
-
-/* ─── Sarlavha ──────────────────────────────────── */
-.detail-header {
+.ld-title {
+  margin: 0;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
   flex-wrap: wrap;
-  background: #fff;
-  border-radius: 22px;
-  padding: 22px 26px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.07);
-  margin-bottom: 20px;
-}
-
-.back-btn {
-  margin-bottom: 6px;
-  padding-left: 0;
-}
-
-.header-left h1 {
-  margin: 0 0 6px;
-  font-size: 28px;
-  font-weight: 700;
-  color: #111827;
-  display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.order-badge {
-  background: linear-gradient(135deg, #409eff, #3a8ee6);
-  color: #fff;
-  font-size: 16px;
+  gap: 10px;
+  font-size: 22px;
   font-weight: 700;
-  padding: 4px 14px;
-  border-radius: 999px;
-  letter-spacing: 0.04em;
+  color: var(--ui-ink);
 }
-
-.status-pill {
-  font-size: 13px;
-  font-weight: 700;
-  padding: 5px 14px;
-  border-radius: 999px;
-
-  &.status-progress {
-    background: #fef3c7;
-    color: #b45309;
-  }
-
-  &.status-done {
-    background: #d1fae5;
-    color: #047857;
-  }
+.ld-id {
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-link);
 }
-
-/* ─── KP / Dogovor ──────────────────────────────── */
-.docs-grid {
+.ld-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin-bottom: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
 }
-
-.doc-card {
-  &.kp {
-    background: #f7fbff;
-    border-color: #dbeafe;
-  }
-
-  &.dogovor {
-    background: #fbfaf5;
-    border-color: #f0e6d2;
-  }
+.ld-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
 }
-
-.doc-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.ld-gap {
+  margin-top: 16px;
 }
-
-.doc-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  span {
-    font-size: 13px;
-    color: #6b7280;
-  }
-
-  strong {
-    font-size: 14px;
-    color: #1f2937;
-    text-align: right;
-    word-break: break-word;
-  }
-}
-
-/* Ishchi fayllar hali ochilmagan holat */
-.working-locked {
-  border: 1.5px dashed #e5e7eb;
-  border-radius: 18px;
-  padding: 28px 22px;
-  text-align: center;
-  background: #fafbfc;
-  color: #9ca3af;
-
-  h4 {
-    margin: 8px 0 6px;
-    font-size: 15px;
-    color: #6b7280;
-  }
-
-  p {
-    margin: 0;
-    font-size: 12.5px;
-    line-height: 1.6;
-    max-width: 300px;
-    margin-inline: auto;
-  }
-}
-
-.locked-icon {
-  font-size: 26px;
-  opacity: 0.45;
-}
-
-.created-line {
+.ld-empty {
   margin: 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--ui-faint);
 }
-
-.header-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-/* ─── Kartalar ──────────────────────────────────── */
-.cards-grid {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr;
-  gap: 18px;
-  margin-bottom: 18px;
-}
-
-.info-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 20px 22px;
-}
-
-.card-title {
-  margin: 0 0 14px;
+.ld-muted {
   font-size: 12px;
-  font-weight: 700;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  color: var(--ui-muted);
 }
-
-.info-list {
+.ld-comment {
   margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ui-ink-2);
+  white-space: pre-line;
 }
 
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 9px 0;
-  border-bottom: 1px solid #f3f4f6;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  dt {
-    font-size: 13px;
-    color: #6b7280;
-    flex-shrink: 0;
-  }
-
-  dd {
-    margin: 0;
-    font-size: 14px;
-    color: #1f2937;
-    font-weight: 500;
-    text-align: right;
-    word-break: break-word;
-  }
-}
-
-.empty-value {
-  color: #9ca3af;
-  font-size: 13.5px;
-  margin: 0;
-}
-
-/* Og'irlik */
-.difficulty-block {
+/* Qiyinlik shkalasi */
+.ld-diff {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
-
-.difficulty-value {
-  font-size: 40px;
-  font-weight: 800;
+.ld-diff__value {
+  font-size: 30px;
+  font-weight: 700;
   line-height: 1;
-
-  small {
-    font-size: 18px;
-    font-weight: 600;
-    color: #9ca3af;
-  }
-
-  &.diff-low {
-    color: #10b981;
-  }
-  &.diff-mid {
-    color: #e6a23c;
-  }
-  &.diff-high {
-    color: #f56c6c;
-  }
+  font-variant-numeric: tabular-nums;
 }
-
-.difficulty-bar {
+.ld-diff__value small {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ui-muted);
+}
+.ld-diff__bar {
   height: 8px;
-  background: #f1f3f6;
-  border-radius: 999px;
+  background: var(--ui-line-soft);
+  border-radius: 4px;
   overflow: hidden;
 }
-
-.difficulty-fill {
+.ld-diff__fill {
   height: 100%;
-  border-radius: 999px;
-  transition: width 0.3s ease;
-
-  &.diff-low {
-    background: #10b981;
-  }
-  &.diff-mid {
-    background: #e6a23c;
-  }
-  &.diff-high {
-    background: #f56c6c;
-  }
+  border-radius: 0 4px 4px 0;
+}
+.is-success {
+  color: var(--ui-good);
+}
+.is-warning {
+  color: var(--ui-warn);
+}
+.is-danger {
+  color: var(--ui-bad);
+}
+.ld-diff__fill.is-success {
+  background: var(--ui-good);
+}
+.ld-diff__fill.is-warning {
+  background: #f59e0b;
+}
+.ld-diff__fill.is-danger {
+  background: var(--ui-bad);
 }
 
-.difficulty-label {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-/* Kontaktlar */
-.contact-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* Ishchi bo'lim yopiq */
+.ld-locked {
   display: flex;
   flex-direction: column;
-  gap: 11px;
-
-  li {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    font-size: 14px;
-    color: #1f2937;
-    word-break: break-word;
-  }
-
-  a {
-    color: #409eff;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
+  align-items: center;
+  gap: 8px;
+  padding: 20px 8px;
+  text-align: center;
+  color: var(--ui-faint);
 }
-
-.contact-icon {
-  flex-shrink: 0;
-}
-
-/* Izoh */
-.comment-card {
-  margin-bottom: 18px;
-}
-
-.comment-text {
+.ld-locked p {
   margin: 0;
-  font-size: 14.5px;
-  line-height: 1.75;
-  color: #374151;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.storage-warning {
-  margin-bottom: 18px;
-}
-
-/* Fayllar */
-.files-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  max-width: 320px;
+  font-size: 13px;
+  color: var(--ui-muted);
 }
 
 @media (max-width: 1100px) {
-  .cards-grid {
+  .ld-grid {
     grid-template-columns: 1fr 1fr;
   }
-  .files-grid,
-  .docs-grid {
-    grid-template-columns: 1fr;
-  }
 }
-
-@media (max-width: 768px) {
-  .detail-container {
-    padding: 18px 12px;
-  }
-  .cards-grid {
+@media (max-width: 700px) {
+  .ld-grid,
+  .ld-grid--2 {
     grid-template-columns: 1fr;
-  }
-  .detail-header {
-    flex-direction: column;
   }
 }
 </style>

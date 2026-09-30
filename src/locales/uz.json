@@ -1620,5 +1620,11 @@
   "siteFilesSelected": "{n} ta fayl tanlandi",
   "siteFormFooterHint": "Saqlanadigan obyektlar: {n} ta",
   "compSubtitle": "Raqobatchilar narxlari, mahsulotlari va faoliyati",
-  "compSoonTitle": "Raqiblar bo'limi tayyorlanmoqda"
+  "compSoonTitle": "Raqiblar bo'limi tayyorlanmoqda",
+  "kpMoreFilters": "Ko'proq filtr",
+  "kpLessFilters": "Kamroq filtr",
+  "kpListTitle": "KP ro'yxati",
+  "kpDateFilterHint": "Sana yoki uning bir qismini yozing, masalan 03.08 yoki 2026",
+  "dogovorListTitle": "Shartnomalar ro'yxati",
+  "loyihaListTitle": "Loyihalar ro'yxati"
 }

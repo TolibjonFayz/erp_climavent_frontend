@@ -1,230 +1,274 @@
 <template>
-  <div class="kp-container" v-loading="kpStore.isLoading || uploadLoading">
-    <div class="page-header">
-      <div class="header-main">
-        <div class="header-content">
-            <h1>{{ $t('kpPageTitle') }}</h1>
-            <p class="subtitle">{{ isAdmin ? $t('kpPageSubtitle') : $t('kpPageSubtitleOwn') }}</p>
-          </div>
+  <UiPage
+    :title="$t('kpPageTitle')"
+    :subtitle="isAdmin ? $t('kpPageSubtitle') : $t('kpPageSubtitleOwn')"
+  >
+    <template #actions>
+      <el-upload
+        class="kp-upload"
+        :show-file-list="false"
+        :before-upload="handleBeforeUpload"
+        accept=".xlsx,.xls"
+      >
+        <el-button :icon="Upload" :loading="uploadLoading">
+          {{ uploadLoading ? $t('kpUploading') : uploadButtonText }}
+        </el-button>
+      </el-upload>
+      <el-button type="primary" :icon="Plus" @click="openCreateDialog">
+        {{ $t('kpButtonAdd') }}
+      </el-button>
+    </template>
 
-          <div class="header-actions">
-            <el-upload
-              class="kp-upload"
-              :show-file-list="false"
-              :before-upload="handleBeforeUpload"
-              accept=".xlsx,.xls"
-            >
-              <el-button
-                type="default"
-                size="large"
-                :icon="Upload"
-                :loading="uploadLoading"
-              >
-                {{ uploadButtonText }}
-              </el-button>
-            </el-upload>
-            <span v-if="uploadLoading" class="upload-status">
-              <el-icon class="status-icon is-loading"><Loading /></el-icon>
-              {{ $t('kpUploading') }}
+    <!-- Ko'rsatkichlar: bosilsa shu holat bo'yicha filtrlanadi -->
+    <div class="kp-stats">
+      <UiStat
+        :label="$t('kpStatTotal')"
+        :value="fmtNum(totalKPs)"
+        :sub="fmtMoney(statusSum.all)"
+        clickable
+        @click="filterStatus = ''"
+      />
+      <UiStat
+        :label="$t('kpStatOpen')"
+        :value="fmtNum(statusCount.Open)"
+        :sub="fmtMoney(statusSum.Open)"
+        clickable
+        @click="filterStatus = 'Open'"
+      />
+      <UiStat
+        :label="$t('kpStatNegotiation')"
+        :value="fmtNum(statusCount.Negotiation)"
+        :sub="fmtMoney(statusSum.Negotiation)"
+        tone="warn"
+        clickable
+        @click="filterStatus = 'Negotiation'"
+      />
+      <UiStat
+        :label="$t('kpStatClosed')"
+        :value="fmtNum(statusCount.Closed)"
+        :sub="fmtMoney(statusSum.Closed)"
+        tone="good"
+        clickable
+        @click="filterStatus = 'Closed'"
+      />
+    </div>
+
+    <el-alert
+      v-if="uploadError"
+      type="warning"
+      show-icon
+      :title="uploadError"
+      @close="uploadError = ''"
+    />
+    <el-alert
+      v-if="kpStore.error"
+      type="error"
+      show-icon
+      :closable="false"
+      :title="kpStore.error"
+    />
+
+    <!-- Filtrlar -->
+    <UiToolbar v-if="kps.length">
+      <UiField :label="$t('kpTableClient')" grow>
+        <el-input
+          v-model="filterClient"
+          :prefix-icon="Search"
+          clearable
+          :placeholder="$t('kpFilterPlaceholder')"
+        />
+      </UiField>
+      <UiField :label="$t('kpTableStatus')">
+        <el-select
+          v-model="filterStatus"
+          clearable
+          :placeholder="$t('kpAllStatuses')"
+          class="kp-select"
+        >
+          <el-option
+            v-for="opt in statusOptions"
+            :key="opt.value"
+            :label="$t(opt.labelKey)"
+            :value="opt.value"
+          />
+        </el-select>
+      </UiField>
+      <UiField :label="$t('kpTableManager')">
+        <el-input
+          v-model="filterManager"
+          clearable
+          :placeholder="$t('kpFilterPlaceholder')"
+          class="kp-select"
+        />
+      </UiField>
+      <UiField :label="$t('kpTableComment')">
+        <el-select
+          v-model="filterComment"
+          clearable
+          filterable
+          :placeholder="$t('kpAllComments')"
+          class="kp-select"
+        >
+          <el-option
+            v-for="opt in KP_COMMENT_FILTER_OPTIONS"
+            :key="opt"
+            :label="opt"
+            :value="opt"
+          />
+        </el-select>
+      </UiField>
+
+      <template v-if="moreFilters">
+        <UiField :label="$t('kpTableNumber')">
+          <el-input
+            v-model="filterKpNumber"
+            clearable
+            :placeholder="$t('kpFilterPlaceholder')"
+            class="kp-select-sm"
+          />
+        </UiField>
+        <UiField :label="$t('kpTableDate')" :hint="$t('kpDateFilterHint')">
+          <el-input
+            v-model="filterKpDate"
+            clearable
+            placeholder="dd.mm.yyyy"
+            class="kp-select-sm"
+          />
+        </UiField>
+        <UiField :label="$t('kpTableClosedDate')" :hint="$t('kpDateFilterHint')">
+          <el-input
+            v-model="filterClosedDate"
+            clearable
+            placeholder="dd.mm.yyyy"
+            class="kp-select-sm"
+          />
+        </UiField>
+        <UiField :label="$t('kpTableSum')">
+          <el-input
+            v-model="filterSum"
+            clearable
+            :placeholder="$t('kpFilterPlaceholder')"
+            class="kp-select-sm"
+          />
+        </UiField>
+        <UiField v-if="isAdmin" :label="$t('kpTableAdminComment')">
+          <el-input
+            v-model="filterAdminComment"
+            clearable
+            :placeholder="$t('kpFilterPlaceholder')"
+            class="kp-select"
+          />
+        </UiField>
+      </template>
+
+      <template #actions>
+        <el-button link type="primary" @click="moreFilters = !moreFilters">
+          {{ moreFilters ? $t('kpLessFilters') : $t('kpMoreFilters') }}
+          <span v-if="!moreFilters && hiddenFilterCount" class="kp-badge">{{
+            hiddenFilterCount
+          }}</span>
+        </el-button>
+      </template>
+    </UiToolbar>
+
+    <!-- Jadval -->
+    <UiPanel v-if="kps.length || showSkeleton" flush>
+      <template #title>
+        {{ $t('kpListTitle') }}
+        <span class="kp-count">{{ fmtNum(filteredKps.length) }}</span>
+      </template>
+      <template #actions>
+        <el-button v-if="hasFilters" link type="primary" @click="resetFilters">
+          {{ $t('kpResetFilters') }}
+        </el-button>
+      </template>
+
+      <el-skeleton v-if="showSkeleton" :rows="6" animated class="kp-skeleton" />
+      <el-table v-else :data="pagedKps" class="kp-table" :empty-text="$t('kpNoMatchDescription')">
+        <el-table-column type="index" :index="rowIndex" label="#" width="60" />
+        <el-table-column :label="$t('kpTableNumber')" min-width="90">
+          <template #default="{ row }">
+            <span class="kp-num">{{ row.kp_number ?? '—' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('kpTableStatus')" min-width="130">
+          <template #default="{ row }">
+            <el-tag :type="statusTag(row.kp_status || row.status)" size="small" effect="light">
+              {{ statusLabel(row.kp_status || row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('kpTableClient')" min-width="200">
+          <template #default="{ row }">
+            <span class="kp-strong">{{ row.client_name || row.client || '—' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('kpTableManager')" min-width="170">
+          <template #default="{ row }">{{ row.manager_name || row.manager || '—' }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('kpTableDate')" min-width="115">
+          <template #default="{ row }">{{ formatDate(row.kp_date || row.kpDate) }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('kpTableClosedDate')" min-width="125">
+          <template #default="{ row }">
+            <span :class="{ 'kp-muted': !row.closed_date }">{{ formatDate(row.closed_date) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('kpTableSum')" min-width="150" align="right">
+          <template #default="{ row }">
+            <span class="kp-money">{{ fmtMoney(row.kp_sum || row.sum) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('kpTableComment')" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span :class="{ 'kp-muted': !row.comment }">{{ row.comment || '—' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          v-if="isAdmin"
+          :label="$t('kpTableAdminComment')"
+          min-width="180"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            <span :class="row.admin_comment ? 'kp-admin-note' : 'kp-muted'">
+              {{ row.admin_comment || '—' }}
             </span>
+          </template>
+        </el-table-column>
+        <el-table-column width="100" align="right" fixed="right">
+          <template #default="{ row }">
+            <div v-if="canModify(row)" class="kp-actions">
+              <el-tooltip :content="$t('edit')" placement="top">
+                <el-button
+                  link
+                  type="primary"
+                  :icon="Edit"
+                  :aria-label="$t('edit')"
+                  @click="openEditDialog(row)"
+                />
+              </el-tooltip>
+              <el-popconfirm
+                :title="$t('kpDeleteConfirm')"
+                width="240"
+                placement="top"
+                :confirm-button-text="t('deleteConfirm')"
+                :cancel-button-text="t('cancel')"
+                @confirm="handleDelete(row.id || row._id)"
+              >
+                <template #reference>
+                  <el-button link type="danger" :icon="Delete" :aria-label="$t('delete')" />
+                </template>
+              </el-popconfirm>
+            </div>
+            <el-tooltip v-else :content="$t('kpLockedHint')" placement="left">
+              <el-icon class="kp-lock"><Lock /></el-icon>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+      </el-table>
 
-            <el-button type="primary" size="large" :icon="Plus" @click="openCreateDialog">
-              {{ $t('kpButtonAdd') }}
-            </el-button>
-          </div>
-        </div>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('kpStatTotal') }}</div>
-          <div class="stat-value">{{ totalKPs }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('kpStatOpen') }}</div>
-          <div class="stat-value">{{ statusCount.Open }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('kpStatNegotiation') }}</div>
-          <div class="stat-value">{{ statusCount.Negotiation }}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">{{ $t('kpStatClosed') }}</div>
-          <div class="stat-value">{{ statusCount.Closed }}</div>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="uploadError" class="error-banner">{{ uploadError }}</div>
-    <div v-if="kpStore.error" class="error-banner">{{ kpStore.error }}</div>
-
-    <div class="toolbar" v-if="kps.length">
-      <span class="toolbar-count">{{ $t('kpFilteredCount', { count: filteredKps.length }) }}</span>
-      <button class="toolbar-reset-btn" @click="resetFilters">
-        {{ $t('kpResetFilters') }}
-      </button>
-    </div>
-
-    <div class="table-container" v-if="kps.length && !showSkeleton">
-      <div class="table-wrapper">
-        <table class="modern-table">
-          <thead>
-            <tr>
-              <th class="table-index">#</th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Document /></el-icon> {{ $t('kpTableNumber') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Document /></el-icon> {{ $t('kpTableStatus') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Document /></el-icon> {{ $t('kpTableClient') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Document /></el-icon> {{ $t('kpTableManager') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Document /></el-icon> {{ $t('kpTableDate') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Document /></el-icon> {{ $t('kpTableClosedDate') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Document /></el-icon> {{ $t('kpTableSum') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  <el-icon class="th-icon"><Document /></el-icon> {{ $t('kpTableComment') }}
-                </div>
-              </th>
-              <th v-if="isAdmin" class="admin-col">
-                <div class="th-content">
-                  <el-icon class="th-icon"><Document /></el-icon> {{ $t('kpTableAdminComment') }}
-                </div>
-              </th>
-              <th>
-                <div class="th-content">
-                  {{ $t('actions') }}
-                </div>
-              </th>
-            </tr>
-            <tr class="filter-row">
-              <th></th>
-              <th><input v-model="filterKpNumber" class="col-filter" :placeholder="$t('kpFilterPlaceholder')" /></th>
-              <th>
-                <select v-model="filterStatus" class="col-filter">
-                  <option value="">{{ $t('kpAllStatuses') }}</option>
-                  <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
-                    {{ $t(opt.labelKey) }}
-                  </option>
-                </select>
-              </th>
-              <th><input v-model="filterClient" class="col-filter" :placeholder="$t('kpFilterPlaceholder')" /></th>
-              <th><input v-model="filterManager" class="col-filter" :placeholder="$t('kpFilterPlaceholder')" /></th>
-              <th><input v-model="filterKpDate" class="col-filter" :placeholder="$t('kpFilterPlaceholder')" /></th>
-              <th><input v-model="filterClosedDate" class="col-filter" :placeholder="$t('kpFilterPlaceholder')" /></th>
-              <th><input v-model="filterSum" class="col-filter" :placeholder="$t('kpFilterPlaceholder')" /></th>
-              <th class="comment-filter-col">
-                <select v-model="filterComment" class="col-filter">
-                  <option value="">{{ $t('kpAllComments') }}</option>
-                  <option v-for="opt in KP_COMMENT_FILTER_OPTIONS" :key="opt" :value="opt">{{ opt }}</option>
-                </select>
-              </th>
-              <th v-if="isAdmin" class="admin-col">
-                <input v-model="filterAdminComment" class="col-filter" :placeholder="$t('kpFilterPlaceholder')" />
-              </th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody class="table-row">
-            <tr v-for="(kp, index) in pagedKps" :key="kp.id || kp._id || index">
-              <td class="table-index">
-                <span class="index-badge">{{ (currentPage - 1) * pageSize + index + 1 }}</span>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text">{{ kp.kp_number ?? '—' }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="status-pill" :class="statusClass(kp.kp_status || kp.status)">
-                    {{ statusLabel(kp.kp_status || kp.status) }}
-                  </span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text bold">{{ kp.client_name || kp.client || '—' }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text">{{ kp.manager_name || kp.manager || '—' }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text">{{ formatDate(kp.kp_date || kp.kpDate) }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text">{{ formatDate(kp.closed_date) }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="cell-content">
-                  <span class="cell-text">{{ formatMoney(kp.kp_sum || kp.sum) }}</span>
-                </div>
-              </td>
-              <td class="comment-cell">
-                <div class="cell-content">
-                  <span class="cell-text">{{ kp.comment || '—' }}</span>
-                </div>
-              </td>
-              <td v-if="isAdmin" class="comment-cell admin-col">
-                <div class="cell-content">
-                  <span class="cell-text admin-comment-text">{{ kp.admin_comment || '—' }}</span>
-                </div>
-              </td>
-              <td class="actions-cell">
-                <div class="actions-row" v-if="canModify(kp)">
-                  <el-button text size="small" :icon="Edit" @click="openEditDialog(kp)">{{ $t('edit') }}</el-button>
-                  <el-popconfirm
-                    :title="$t('kpDeleteConfirm')"
-                    width="240"
-                    placement="top"
-                    :confirm-button-text="t('deleteConfirm')"
-                    :cancel-button-text="t('cancel')"
-                    @confirm="handleDelete(kp.id || kp._id)"
-                  >
-                    <template #reference>
-                      <el-button text size="small" type="danger" :icon="Delete">{{ $t('delete') }}</el-button>
-                    </template>
-                  </el-popconfirm>
-                </div>
-                <span v-else class="locked-hint" :title="$t('kpLockedHint')">🔒</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination-bar" v-if="filteredKps.length > pageSize">
+      <div v-if="filteredKps.length > pageSize" class="kp-pager">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
@@ -234,42 +278,26 @@
           background
         />
       </div>
-    </div>
-    <div v-else-if="kps.length && !filteredKps.length && !showSkeleton" class="empty-state">
-      <el-empty :description="$t('kpNoMatchDescription')" />
-    </div>
-    <div v-else-if="showSkeleton" class="skeleton-state">
-      <div class="skeleton-card">
-        <div class="skeleton-heading">
-          <el-skeleton rows="1" animated />
-        </div>
-        <el-skeleton rows="4" animated />
-        <div class="skeleton-actions">
-          <el-skeleton rows="1" animated />
-        </div>
-      </div>
-    </div>
+    </UiPanel>
 
-    <div v-else class="empty-state">
-      <div class="empty-card">
-        <div class="empty-hero">
-          <div class="empty-hero__blob"></div>
-        </div>
-        <h3 class="empty-title">{{ $t('kpEmptyTitle') }}</h3>
-        <p class="empty-description">{{ $t('kpEmptyDescription') }}</p>
-        <div class="empty-actions">
-          <el-button type="primary" size="medium" :icon="Plus" @click="openCreateDialog">
-            {{ $t('kpEmptyAction') }}
-          </el-button>
-        </div>
-      </div>
-    </div>
+    <!-- Hali KP yo'q -->
+    <UiPanel v-else>
+      <el-empty :description="$t('kpEmptyDescription')">
+        <template #description>
+          <h3 class="kp-empty-title">{{ $t('kpEmptyTitle') }}</h3>
+          <p class="kp-muted">{{ $t('kpEmptyDescription') }}</p>
+        </template>
+        <el-button type="primary" :icon="Plus" @click="openCreateDialog">
+          {{ $t('kpEmptyAction') }}
+        </el-button>
+      </el-empty>
+    </UiPanel>
 
     <el-dialog
       v-model="dialogVisible"
       :title="editingKP ? $t('edit') : $t('kpDialogTitle')"
       width="720px"
-      class="kp-dialog"
+      append-to-body
       destroy-on-close
     >
       <el-form
@@ -410,7 +438,11 @@
           </el-col>
 
           <el-col v-if="isAdmin" :span="24">
-            <el-form-item :label="$t('kpAdminCommentLabel')" prop="admin_comment" class="admin-comment-field">
+            <el-form-item
+              :label="$t('kpAdminCommentLabel')"
+              prop="admin_comment"
+              class="admin-comment-field"
+            >
               <el-input
                 type="textarea"
                 v-model="kpForm.admin_comment"
@@ -432,7 +464,7 @@
         </el-button>
       </template>
     </el-dialog>
-  </div>
+  </UiPage>
 </template>
 
 <script setup>
@@ -441,7 +473,13 @@ import { useI18n } from 'vue-i18n'
 import { useKPsStore } from '@/stores/kp'
 import { useUsersStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
-import { Document, Plus, Upload, Edit, Delete, Loading, Search } from '@element-plus/icons-vue'
+import { Delete, Edit, Lock, Plus, Search, Upload } from '@element-plus/icons-vue'
+import UiPage from '@/components/ui/UiPage.vue'
+import UiStat from '@/components/ui/UiStat.vue'
+import UiToolbar from '@/components/ui/UiToolbar.vue'
+import UiField from '@/components/ui/UiField.vue'
+import UiPanel from '@/components/ui/UiPanel.vue'
+import { fmtNum, formatDate } from '@/utils/format'
 import {
   KP_COMMENT_OPTIONS,
   KP_COMMENT_FILTER_OPTIONS,
@@ -498,9 +536,35 @@ const filterComment = ref('')
 const filterAdminComment = ref('')
 const currentPage = ref(1)
 const pageSize = ref(20)
+const moreFilters = ref(false)
 
-const textMatch = (value, filter) =>
-  !filter.trim() || String(value ?? '').toLowerCase().includes(filter.trim().toLowerCase())
+// Yashirin (qo'shimcha) filtrlardan nechtasi to'ldirilgan — tugmada ko'rsatiladi
+const hiddenFilterCount = computed(
+  () =>
+    [filterKpNumber, filterKpDate, filterClosedDate, filterSum, filterAdminComment].filter((f) =>
+      String(f.value ?? '').trim(),
+    ).length,
+)
+const hasFilters = computed(
+  () =>
+    hiddenFilterCount.value > 0 ||
+    [filterStatus, filterClient, filterManager, filterComment].some((f) =>
+      String(f.value ?? '').trim(),
+    ),
+)
+const rowIndex = (i) => (currentPage.value - 1) * pageSize.value + i + 1
+
+const textMatch = (value, filter) => {
+  const f = String(filter ?? '')
+    .trim()
+    .toLowerCase()
+  return (
+    !f ||
+    String(value ?? '')
+      .toLowerCase()
+      .includes(f)
+  )
+}
 
 // Backend KP'larni createdAt bo'yicha (yangilari birinchi) qaytaradi — shu tartibni saqlaymiz
 const filteredKps = computed(() =>
@@ -605,8 +669,7 @@ const handleBeforeUpload = async (file) => {
       uploadError.value = `${t('kpImportPartialErrors')}: ${result.errors.slice(0, 5).join('; ')}`
     }
   } catch (error) {
-    uploadError.value =
-      error?.response?.data?.message || error?.message || t('kpUploadError')
+    uploadError.value = error?.response?.data?.message || error?.message || t('kpUploadError')
   } finally {
     uploadLoading.value = false
   }
@@ -631,28 +694,15 @@ const openEditDialog = (kp) => {
   dialogVisible.value = true
 }
 
-const formatDate = (value) => {
-  if (!value) return '—'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('uz-UZ')
-}
-
-const formatMoney = (value) => {
+// Summa: "51 497 600 so'm"
+const fmtMoney = (value) => {
   if (value === null || value === undefined || value === '') return '—'
-  return new Intl.NumberFormat('uz-UZ', {
-    style: 'currency',
-    currency: 'UZS',
-    maximumFractionDigits: 0,
-  }).format(value)
+  return `${fmtNum(Math.round(Number(value)))} ${t('amoCurrency')}`
 }
 
-const statusClass = (status) => {
-  const normalized = String(status || '').toLowerCase()
-  if (normalized === 'open') return 'status-open'
-  if (normalized === 'negotiation') return 'status-negotiation'
-  if (normalized === 'closed') return 'status-closed'
-  return 'status-default'
-}
+// Holat rangi: ochiq — ko'k, muzokara — sariq, yopilgan — yashil
+const STATUS_TAG = { open: 'primary', negotiation: 'warning', closed: 'success' }
+const statusTag = (status) => STATUS_TAG[String(status || '').toLowerCase()] || 'info'
 
 const statusLabel = (status) => {
   if (!status) return '—'
@@ -669,6 +719,17 @@ const statusCount = computed(() => ({
   Negotiation: kps.value.filter((kp) => (kp.kp_status || kp.status) === 'Negotiation').length,
   Closed: kps.value.filter((kp) => (kp.kp_status || kp.status) === 'Closed').length,
 }))
+// Har holat bo'yicha umumiy summa
+const statusSum = computed(() => {
+  const res = { all: 0, Open: 0, Negotiation: 0, Closed: 0 }
+  for (const kp of kps.value) {
+    const sum = Number(kp.kp_sum || kp.sum) || 0
+    res.all += sum
+    const st = kp.kp_status || kp.status
+    if (st in res) res[st] += sum
+  }
+  return res
+})
 const showSkeleton = computed(() => kpStore.isLoading && !kps.value.length)
 
 const handleSubmit = async () => {
@@ -714,7 +775,8 @@ const handleSubmit = async () => {
     await kpStore.getAllKPs()
   } catch (error) {
     const message =
-      error?.response?.data?.message || error?.message ||
+      error?.response?.data?.message ||
+      error?.message ||
       (editingKP.value ? t('kpMessageUpdateError') : t('kpMessageSaveError'))
     ElMessage.error(message)
   }
@@ -745,550 +807,104 @@ onMounted(async () => {
 })
 </script>
 
-<style lang="scss" scoped>
-.page-header {
-  margin-bottom: 26px;
-  padding: 24px 28px;
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
-}
-
-.header-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.header-content {
-  min-width: 250px;
-}
-
-.header-content h1 {
-  font-size: 34px;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 6px 0;
-  letter-spacing: -0.03em;
-}
-
-.header-content .subtitle {
-  font-size: 15px;
-  color: #6b7280;
-  margin: 0;
-  max-width: 560px;
-  line-height: 1.7;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-}
-.header-actions {
+<style scoped>
+.kp-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
-.upload-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #6b7280;
-  font-size: 14px;
+.kp-select {
+  width: 190px;
 }
-.upload-status .status-icon {
-  color: #409eff;
+.kp-select-sm {
+  width: 140px;
 }
-.upload-status .status-icon.is-loading {
-  animation: kp-spin 1s linear infinite;
+.kp-badge {
+  margin-left: 4px;
+  min-width: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 18px;
+  color: white;
+  background: var(--ui-link);
+  border-radius: 999px;
 }
-@keyframes kp-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-}
-.toolbar-count {
-  font-size: 13px;
-  color: #6b7280;
-}
-.toolbar-reset-btn {
-  margin-left: auto;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  color: #4b5563;
-  font-size: 13px;
-  padding: 6px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-
-  &:hover {
-    background: #e5e7eb;
-  }
-}
-
-.filter-row th {
-  padding: 6px 8px;
-  background: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
-}
-.col-filter {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 6px 8px;
+.kp-count {
+  margin-left: 4px;
+  padding: 0 8px;
   font-size: 12px;
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: normal;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: white;
-  color: #374151;
-
-  &:focus {
-    outline: none;
-    border-color: #409eff;
-  }
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--ui-muted);
+  background: var(--ui-line-soft);
+  border-radius: 999px;
 }
-
-.pagination-bar {
-  display: flex;
-  justify-content: flex-end;
-  padding: 18px 20px;
-  border-top: 1px solid #f3f4f6;
+.kp-skeleton {
+  padding: 16px;
 }
-
-.kp-container {
-  width: 100%;
-  padding: 32px;
-  background: #f5f7fa;
-  min-height: 100vh;
-  overflow-x: hidden;
-  box-sizing: border-box;
+.kp-num {
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-ink-2);
 }
-
-.actions-cell {
+.kp-strong {
+  font-weight: 600;
+  color: var(--ui-ink);
+}
+.kp-money {
+  font-weight: 600;
+  color: var(--ui-ink);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-
-.actions-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+.kp-muted {
+  color: var(--ui-faint);
 }
-
-.table-container {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  width: 100%;
+.kp-admin-note {
+  color: var(--ui-warn);
 }
-
-.table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.modern-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-
-  thead {
-    background: linear-gradient(to bottom, #f9fafb 0%, #f3f4f6 100%);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  th {
-    padding: 18px 20px;
-    text-align: left;
-    font-weight: 600;
-    color: #374151;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 2px solid #e5e7eb;
-    white-space: nowrap;
-
-    &.table-index {
-      width: 60px;
-      text-align: center;
-    }
-
-    &.table-actions {
-      width: 120px;
-      text-align: right;
-    }
-  }
-
-  .th-content {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .th-icon {
-    color: #409eff;
-    font-size: 16px;
-  }
-
-  tbody {
-    tr {
-      transition: all 0.2s ease;
-      border-bottom: 1px solid #f3f4f6;
-
-      &:hover {
-        background: #f9fafb;
-      }
-
-      &:last-child {
-        border-bottom: none;
-      }
-    }
-  }
-
-  td {
-    padding: 16px 20px;
-    color: #4b5563;
-    font-size: 14px;
-    vertical-align: middle;
-
-    &.table-index {
-      text-align: center;
-    }
-
-    &.table-actions {
-      text-align: right;
-    }
-  }
-  .index-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #409eff 0%, #3a8ee6 100%);
-    color: white;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 13px;
-    box-shadow: 0 2px 4px rgba(64, 158, 255, 0.3);
-  }
-  .cell-content {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .error-banner {
-    margin-bottom: 16px;
-    padding: 12px 16px;
-    border-radius: 10px;
-    background: #fef2f2;
-    color: #b91c1c;
-    border: 1px solid #fecaca;
-  }
-
-  .empty-state {
-    padding: 60px 24px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #6b7280;
-  }
-
-  .empty-card {
-    padding: 44px 36px;
-    border-radius: 20px;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    text-align: center;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
-  }
-
-  .empty-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 84px;
-    height: 84px;
-    margin: 0 auto 18px;
-    border-radius: 50%;
-    background: #eef2ff;
-    color: #3b82f6;
-  }
-
-  .empty-card h3 {
-    margin: 0 0 12px;
-    font-size: 20px;
-    color: #111827;
-  }
-
-  .empty-card p {
-    margin: 0 0 22px;
-    color: #6b7280;
-    font-size: 14px;
-    line-height: 1.7;
-  }
-
-  .page-header {
-    padding-bottom: 28px;
-  }
-
-  .cell-text {
-    color: #374151;
-
-    &.bold {
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    &.company {
-      color: #409eff;
-      font-weight: 500;
-    }
-  }
-}
-.table-wrapper::-webkit-scrollbar {
-  height: 8px;
-}
-
-.table-wrapper::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 4px;
-}
-
-.table-wrapper::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 4px;
-
-  &:hover {
-    background: #9ca3af;
-  }
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.stat-card {
-  padding: 18px 20px;
-  border-radius: 18px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
-}
-
-.stat-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 10px;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.status-pill {
+.kp-actions {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 96px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: white;
+  gap: 4px;
+}
+.kp-lock {
+  color: var(--ui-faint);
+}
+.kp-pager {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid var(--ui-line-soft);
+}
+.kp-empty-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  color: var(--ui-ink);
+}
+.kp-table :deep(.el-table__cell) {
+  padding: 10px 0;
 }
 
-.status-open {
-  background: #10b981;
-}
-
-.status-negotiation {
-  background: #f59e0b;
-}
-
-.status-closed {
-  background: #6366f1;
-}
-
-.status-default {
-  background: #6b7280;
-}
-
-.comment-cell {
-  min-width: 240px;
-  max-width: 420px;
-  white-space: normal;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  line-height: 1.6;
-
-  .cell-content {
-    align-items: flex-start;
+@media (max-width: 900px) {
+  .kp-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kp-select,
+  .kp-select-sm {
+    width: 100%;
   }
 }
-
-.comment-filter-col {
-  min-width: 240px;
+/* Qo'shish / tahrirlash dialogi */
+.kp-form :deep(.el-form-item) {
+  margin-bottom: 18px;
 }
-
-.admin-col {
-  background: #fffaf0;
-}
-
-.admin-comment-text {
-  color: #b45309;
-  font-style: italic;
-}
-
-.locked-hint {
-  color: #9ca3af;
-  font-size: 13px;
-  cursor: default;
-}
-
 .admin-comment-field :deep(.el-textarea__inner) {
   border-color: #f59e0b;
   background: #fffaf0;
 }
-
 .admin-field-hint {
   display: block;
   margin-top: 4px;
   font-size: 12px;
-  color: #b45309;
-}
-
-.skeleton-state {
-  // padding: 60px 28px;
-  display: flex;
-  justify-content: center;
-}
-
-.skeleton-card {
-  width: 100%;
-  padding: 34px 34px 28px;
-  border-radius: 24px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
-}
-
-.skeleton-heading {
-  margin-bottom: 22px;
-}
-
-.skeleton-actions {
-  margin-top: 24px;
-  width: 220px;
-}
-
-.empty-card {
-  position: relative;
-  padding: 50px 44px;
-  border-radius: 28px;
-  background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 38%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 247, 250, 0.96));
-  border: 1px solid rgba(59, 130, 246, 0.14);
-  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
-  overflow: hidden;
-}
-
-.empty-hero {
-  position: absolute;
-  top: -24px;
-  right: -24px;
-  width: 190px;
-  height: 190px;
-  pointer-events: none;
-}
-
-.empty-hero__blob {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.18), transparent 60%);
-  filter: blur(24px);
-}
-
-.empty-hero__icon {
-  position: absolute;
-  top: 30px;
-  right: 24px;
-  width: 80px;
-  height: 80px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.88);
-  display: grid;
-  place-items: center;
-  box-shadow: 0 24px 60px rgba(59, 130, 246, 0.16);
-}
-
-.empty-title {
-  margin: 0 0 16px;
-  font-size: 28px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.empty-description {
-  margin: 0 0 28px;
-  color: #4b5563;
-  line-height: 1.8;
-  max-width: 640px;
-  font-size: 15px;
-}
-
-.empty-actions {
-  display: flex;
-  gap: 14px;
-}
-
-.kp-form :deep(.el-form-item) {
-  margin-bottom: 18px;
-}
-
-:deep(.kp-dialog .el-dialog) {
-  border-radius: 16px;
-}
-
-:deep(.kp-dialog .el-dialog__header) {
-  padding: 24px 24px 0;
-}
-
-:deep(.kp-dialog .el-dialog__body) {
-  padding: 20px 24px 24px;
-}
-
-:deep(.kp-dialog .el-dialog__footer) {
-  padding: 0 24px 24px;
+  color: var(--ui-warn);
 }
 </style>
