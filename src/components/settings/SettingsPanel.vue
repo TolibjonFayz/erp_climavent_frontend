@@ -111,12 +111,7 @@
                 :key="lang.value"
                 :label="lang.label"
                 :value="lang.value"
-              >
-                <span class="st-lang__opt">
-                  <span>{{ lang.flag }}</span>
-                  {{ lang.label }}
-                </span>
-              </el-option>
+              />
             </el-select>
           </div>
         </UiPanel>
@@ -216,14 +211,9 @@ function setCookieLanguage(value: string, days = 365) {
 // Til sozlamalari
 const selectedLanguage = ref(getCookie('lang', 'uz'))
 const languages = [
-  { value: 'uz', label: "O'zbekcha", flag: '🇺🇿' },
-  { value: 'ru', label: 'Русский', flag: '🇷🇺' },
+  { value: 'uz', label: "O'zbekcha" },
+  { value: 'ru', label: 'Русский' },
 ]
-
-const selectedLanguageFlag = computed(() => {
-  const lang = languages.find((l) => l.value === selectedLanguage.value)
-  return lang ? lang.flag : '🌐'
-})
 
 const infoItems = computed(() => {
   const u = usersStore?.currentUser
@@ -243,7 +233,7 @@ const infoItems = computed(() => {
 
 const getCurrentLanguageLabel = computed(() => {
   const lang = languages.find((l) => l.value === selectedLanguage.value)
-  return lang ? `${lang.flag} ${lang.label}` : ''
+  return lang ? lang.label : ''
 })
 
 const handleLanguageChange = (value: string) => {
@@ -504,11 +494,6 @@ onMounted(async () => {
 }
 .st-lang {
   width: 200px;
-}
-.st-lang__opt {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
 }
 .st-logout {
   border-color: #fecaca;
