@@ -6,6 +6,20 @@
     wide
   >
     <template #actions>
+      <button
+        v-if="isAdmin"
+        type="button"
+        class="at-cam-sync"
+        :class="{ 'is-stale': cameraSync.stale }"
+        :title="cameraSync.stale ? $t('camSyncStale', { h: cameraSync.hours }) : ''"
+        @click="openCameraDialog"
+      >
+        <el-icon><VideoCamera /></el-icon>
+        <span>{{ cameraSync.label }}</span>
+        <span v-if="unlinkedCount" class="at-cam-sync__badge">
+          {{ $t('camUnlinkedCount', { n: unlinkedCount }) }}
+        </span>
+      </button>
       <el-button v-if="!isCurrentMonth" @click="goCurrentMonth">
         {{ $t('attThisMonth') }}
       </el-button>
@@ -107,6 +121,9 @@
               <span class="at-legend__item">
                 <span class="at-trip-badge">2</span>{{ $t('attLegendTrips') }}
               </span>
+              <span class="at-legend__item">
+                <span class="at-day__cam is-legend">09:00 → 18:00</span>{{ $t('attLegendCamera') }}
+              </span>
             </div>
 
             <div class="at-cal">
@@ -136,6 +153,14 @@
                   </span>
                   <span v-if="day.statusKey && !day.future" class="at-day__status">
                     {{ $t(statusLabelKey(day.statusKey)) }}
+                  </span>
+                  <span
+                    v-if="day.camera && !day.future"
+                    class="at-day__cam"
+                    :class="{ 'is-partial': !day.camera.check_in || !day.camera.check_out }"
+                    :title="cameraTitle(day.camera)"
+                  >
+                    {{ day.camera.check_in || '—' }} → {{ day.camera.check_out || '—' }}
                   </span>
                   <span v-if="day.confirmed && day.hours != null" class="at-day__hours">
                     {{ day.hours }} {{ $t('hours') }}
@@ -217,6 +242,10 @@
             </div>
           </div>
 
+          <p v-if="prefilledFromCamera" class="cam-prefill">
+            <el-icon><VideoCamera /></el-icon>{{ $t('camPrefilled') }}
+          </p>
+
           <label class="field-label">{{ $t('attendanceNote') }}</label>
           <el-input
             v-model="form.note"
@@ -250,6 +279,32 @@
           </p>
         </template>
 
+        <!-- Kamera: kirish/chiqish terminali (har ikki rol uchun) -->
+        <div class="cam-section">
+          <h4>{{ $t('camTitle') }}</h4>
+          <div v-if="activeDay.camera" class="cam-cells">
+            <div class="cam-cell">
+              <span class="cam-cell__label">{{ $t('camIn') }}</span>
+              <b :class="{ 'is-missing': !activeDay.camera.check_in }">
+                {{ activeDay.camera.check_in || $t('camMissingIn') }}
+              </b>
+              <span class="cam-cell__sub">{{
+                $t('camTimes', { n: activeDay.camera.in_count })
+              }}</span>
+            </div>
+            <div class="cam-cell">
+              <span class="cam-cell__label">{{ $t('camOut') }}</span>
+              <b :class="{ 'is-missing': !activeDay.camera.check_out }">
+                {{ activeDay.camera.check_out || $t('camMissingOut') }}
+              </b>
+              <span class="cam-cell__sub">{{
+                $t('camTimes', { n: activeDay.camera.out_count })
+              }}</span>
+            </div>
+          </div>
+          <p v-else class="no-trips">{{ $t('camNoData') }}</p>
+        </div>
+
         <!-- Obyekt tashriflari (har ikki rol uchun) -->
         <div class="trips-section">
           <h4>{{ $t('fieldTripsTitle') }}</h4>
@@ -279,6 +334,63 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- Kamera: terminallar va xodimlarni bog'lash (admin) -->
+    <el-dialog v-model="cameraDialog" :title="$t('camTitle')" width="680px">
+      <div class="cam-setup">
+        <h4>{{ $t('camDevices') }}</h4>
+        <div class="cam-devices">
+          <div v-for="d in attendanceStore.cameraDevices" :key="d.device_serial" class="cam-device">
+            <b>{{ d.direction === 'in' ? $t('camDirIn') : $t('camDirOut') }}</b>
+            <span>{{ d.host }}</span>
+            <span>{{ $t('camLastSync', { t: fmtSync(d.last_sync_at) }) }}</span>
+            <span v-if="d.clock_drift_sec != null">{{
+              $t('camDrift', { n: d.clock_drift_sec })
+            }}</span>
+          </div>
+          <p v-if="!attendanceStore.cameraDevices.length" class="no-trips">
+            {{ $t('camNeverSynced') }}
+          </p>
+        </div>
+
+        <h4>{{ $t('camLinkTitle') }}</h4>
+        <p class="cam-hint">{{ $t('camLinkHint') }}</p>
+        <el-table :data="attendanceStore.cameraEmployees" size="small" max-height="440">
+          <el-table-column label="#" width="56">
+            <template #default="{ row }">{{ Number(row.employee_no) }}</template>
+          </el-table-column>
+          <el-table-column :label="$t('camTerminalName')" prop="name" min-width="180" />
+          <el-table-column :label="$t('camErpUser')" min-width="260">
+            <template #default="{ row }">
+              <el-select
+                :model-value="row.user_id"
+                filterable
+                clearable
+                :placeholder="$t('camNotLinked')"
+                style="width: 100%"
+                @change="(v) => linkEmployee(row, v)"
+              >
+                <el-option
+                  v-for="u in employees"
+                  :key="u.id"
+                  :label="`${u.firstname} ${u.lastname}`"
+                  :value="u.id"
+                />
+              </el-select>
+              <button
+                v-if="!row.user_id && suggestUser(row)"
+                type="button"
+                class="cam-suggest"
+                @click="linkEmployee(row, suggestUser(row).id)"
+              >
+                <el-icon><MagicStick /></el-icon>
+                {{ suggestUser(row).firstname }} {{ suggestUser(row).lastname }}
+              </button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-dialog>
   </UiPage>
 </template>
 
@@ -288,7 +400,7 @@ import { useAttendanceStore } from '@/stores/attendance'
 import { useUsersStore } from '@/stores/user'
 import { useComeAndGoesStore } from '@/stores/comeandgoes'
 import { ElMessage } from 'element-plus'
-import { Search, ArrowLeft, ArrowRight, MagicStick } from '@element-plus/icons-vue'
+import { Search, ArrowLeft, ArrowRight, MagicStick, VideoCamera } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
@@ -411,21 +523,56 @@ const tripsByDate = computed(() => {
   return map
 })
 
+// Kamera: kunlik birinchi kirish / oxirgi chiqish (Hikvision terminallari)
+const cameraByDate = computed(() => {
+  const map = {}
+  for (const r of attendanceStore.cameraRecords) map[r.date] = r
+  return map
+})
+// Xodim terminalga bog'langan va shu oyda qaydi bor — kamerasiz ish kuni "kelmadi" deb taklif qilinadi
+const hasCamera = computed(() => attendanceStore.cameraRecords.length > 0)
+const officeDaySet = computed(() => new Set(attendanceStore.cameraOfficeDays))
+// Shu oyda kamera ishlagan, lekin bu o'tgan kuni ofisda hech kim qayd etilmagan
+const isOfficeClosed = (dateStr) =>
+  officeDaySet.value.size > 0 && dateStr < todayStr && !officeDaySet.value.has(dateStr)
+
+const toMinutes = (hhmm) => {
+  const [h, m] = hhmm.split(':').map(Number)
+  return h * 60 + m
+}
+// Kelgan → ketgan oralig'i soatda (0.5 ga yaxlitlangan)
+const cameraHours = (cam) => {
+  if (!cam?.check_in || !cam?.check_out) return null
+  const diff = toMinutes(cam.check_out) - toMinutes(cam.check_in)
+  return diff > 0 ? Math.round((diff / 60) * 2) / 2 : null
+}
+const cameraTitle = (cam) =>
+  `${t('camIn')}: ${cam.check_in || t('camMissingIn')} · ${t('camOut')}: ${cam.check_out || t('camMissingOut')}`
+
 const isPersonal = (trip) => (trip.whereto || '').trim().toLowerCase() === 'shaxsiy'
 
 const suggestStatus = (dateStr) => {
   if (dateStr > todayStr) return null // future date
   const trips = tripsByDate.value[dateStr] || []
+  const cam = cameraByDate.value[dateStr]
   const d = new Date(dateStr + 'T00:00:00')
   const weekend = d.getDay() === 0 || d.getDay() === 6
   if (trips.length) {
-    const earliest = Math.min(...trips.map((tr) => new Date(tr.when_gone).getHours()))
-    if (earliest < 10) {
+    const firstTrip = new Date(Math.min(...trips.map((tr) => new Date(tr.when_gone).getTime())))
+    const tripMinutes = firstTrip.getHours() * 60 + firstTrip.getMinutes()
+    // Kamera ofisga kirganini ko'rsatsa — ofisdan keyin obyektga
+    if (cam?.check_in && toMinutes(cam.check_in) < tripMinutes && !trips.every(isPersonal)) {
+      return 'office_then_object'
+    }
+    if (firstTrip.getHours() < 10) {
       return trips.every(isPersonal) ? 'absent' : 'direct_object'
     }
     return 'office_then_object'
   }
-  if (weekend) return 'dayoff'
+  if (weekend) return cam ? 'office' : 'dayoff'
+  // Butun ofisda kamera qaydi yo'q ish kuni — bayram/dam olish
+  if (isOfficeClosed(dateStr)) return 'dayoff'
+  if (hasCamera.value && !cam && dateStr < todayStr) return 'absent'
   return 'office'
 }
 
@@ -449,6 +596,7 @@ const calendarDays = computed(() => {
       statusKey: record ? record.status : suggestStatus(dateStr),
       hours: record ? record.work_hours : null,
       record,
+      camera: cameraByDate.value[dateStr] || null,
       tripCount: trips.length,
     })
   }
@@ -478,7 +626,7 @@ const stats = computed(() => {
     else suggested++
     if (WORKED.includes(day.statusKey)) {
       worked++
-      hours += day.confirmed ? day.hours || 0 : 8
+      hours += day.confirmed ? day.hours || 0 : (cameraHours(day.camera) ?? 8)
     } else if (day.statusKey === 'absent') {
       absent++
     }
@@ -497,6 +645,7 @@ const stats = computed(() => {
 // ─── Day dialog ───
 const dayDialog = ref(false)
 const activeDay = ref(null)
+const prefilledFromCamera = ref(false)
 const form = reactive({
   status: 'office',
   work_hours: 8,
@@ -529,19 +678,25 @@ const openDay = (day) => {
   if (day.future) return
   activeDay.value = day
   if (isAdmin.value) {
+    // Bo'sh kelgan/ketgan vaqtlar kameradan to'ldiriladi
+    const cam = day.camera
     if (day.record) {
       form.status = day.record.status
       form.work_hours = day.record.work_hours
-      form.check_in = day.record.check_in || null
-      form.check_out = day.record.check_out || null
+      form.check_in = day.record.check_in || cam?.check_in || null
+      form.check_out = day.record.check_out || cam?.check_out || null
       form.note = day.record.note || ''
     } else {
       form.status = day.statusKey || 'office'
-      form.work_hours = day.statusKey === 'absent' || day.statusKey === 'dayoff' ? 0 : 8
-      form.check_in = null
-      form.check_out = null
+      form.work_hours =
+        day.statusKey === 'absent' || day.statusKey === 'dayoff' ? 0 : (cameraHours(cam) ?? 8)
+      form.check_in = cam?.check_in || null
+      form.check_out = cam?.check_out || null
       form.note = ''
     }
+    prefilledFromCamera.value =
+      !!cam &&
+      ((!day.record?.check_in && !!cam.check_in) || (!day.record?.check_out && !!cam.check_out))
   }
   dayDialog.value = true
 }
@@ -596,8 +751,66 @@ const loadData = async () => {
   if (!selectedUserId.value) return
   await Promise.all([
     attendanceStore.getUserMonth(selectedUserId.value, monthKey.value),
+    attendanceStore.getCameraUserMonth(selectedUserId.value, monthKey.value),
     loadFieldTrips(selectedUserId.value),
   ])
+}
+
+// ─── Kamera sozlamalari (admin) ───
+const cameraDialog = ref(false)
+const unlinkedCount = computed(
+  () => attendanceStore.cameraEmployees.filter((e) => !e.user_id).length,
+)
+
+const fmtSync = (iso) => {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return toDateStr(d) === todayStr ? time : `${pad(d.getDate())}.${pad(d.getMonth() + 1)} ${time}`
+}
+// Agent ofis kompyuterida ishlaydi — 24 soatdan ko'p jim tursa ogohlantiramiz
+const cameraSync = computed(() => {
+  const times = attendanceStore.cameraDevices.map((d) => d.last_sync_at).filter(Boolean)
+  if (!times.length) return { label: t('camNeverSynced'), stale: false, hours: 0 }
+  const last = times.sort().at(-1)
+  const hours = Math.floor((Date.now() - new Date(last).getTime()) / 3600000)
+  return { label: t('camLastSync', { t: fmtSync(last) }), stale: hours >= 24, hours }
+})
+
+const openCameraDialog = async () => {
+  cameraDialog.value = true
+  await attendanceStore.getCameraSetup()
+}
+
+// Terminal ismi ERP'dagi ism/familiyaga to'g'ri kelsa — bitta nomzod bo'lsagina taklif qilamiz
+const normalize = (s) => (s || '').toLowerCase().replace(/[^a-zа-яё0-9]/gi, '')
+const suggestUser = (row) => {
+  const words = (row.name || '')
+    .split(/\s+/)
+    .map(normalize)
+    .filter((w) => w.length > 2)
+  const taken = new Set(attendanceStore.cameraEmployees.map((e) => e.user_id).filter(Boolean))
+  const matches = employees.value.filter(
+    (u) =>
+      !taken.has(u.id) &&
+      words.some((w) => w === normalize(u.firstname) || w === normalize(u.lastname)),
+  )
+  if (matches.length === 1) return matches[0]
+  // Ism ham, familiya ham mos kelgani aniqroq
+  const both = matches.filter(
+    (u) => words.includes(normalize(u.firstname)) && words.includes(normalize(u.lastname)),
+  )
+  return both.length === 1 ? both[0] : null
+}
+
+const linkEmployee = async (row, userId) => {
+  try {
+    await attendanceStore.linkCameraEmployee(row.employee_no, userId || null)
+    ElMessage.success(userId ? t('camLinked') : t('camNotLinked'))
+    await attendanceStore.getCameraUserMonth(selectedUserId.value, monthKey.value)
+  } catch {
+    ElMessage.error(t('xatolikYuzBerdi'))
+  }
 }
 
 const loadFieldTrips = async (userId) => {
@@ -620,6 +833,7 @@ onMounted(async () => {
     await usersStore.getUserInfo(currentUserId)
   }
   if (isAdmin.value) {
+    attendanceStore.getCameraSetup()
     await usersStore.getAllUsers()
     if (employees.value.length) {
       selectedUserId.value = employees.value[0].id
@@ -830,7 +1044,7 @@ onMounted(async () => {
   align-items: flex-start;
   gap: 2px;
   min-width: 0;
-  min-height: 78px;
+  min-height: 88px;
   padding: 6px 8px;
   font-family: inherit;
   text-align: left;
@@ -1024,6 +1238,152 @@ onMounted(async () => {
   color: var(--ui-faint);
 }
 
+/* ─── Kamera ─── */
+.at-cam-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ui-ink-2);
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  border-radius: 8px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--ui-link);
+    color: var(--ui-link);
+  }
+  &.is-stale {
+    color: #b91c1c;
+    border-color: #fca5a5;
+    background: #fef2f2;
+  }
+}
+.at-cam-sync__badge {
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 999px;
+}
+.at-day__cam {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f766e;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  &.is-partial {
+    color: #b45309;
+  }
+  &.is-legend {
+    padding: 1px 6px;
+    background: #f0fdfa;
+    border-radius: 4px;
+  }
+}
+.cam-prefill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -4px 0 0;
+  font-size: 12px;
+  color: #0f766e;
+}
+.cam-section {
+  padding-top: 12px;
+  border-top: 1px solid var(--ui-line-soft);
+
+  h4 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: var(--ui-ink);
+  }
+}
+.cam-cells {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.cam-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--ui-surface-2);
+  border: 1px solid var(--ui-line-soft);
+  border-radius: 6px;
+
+  b {
+    font-size: 18px;
+    color: var(--ui-ink);
+    font-variant-numeric: tabular-nums;
+
+    &.is-missing {
+      font-size: 13px;
+      font-weight: 500;
+      color: #b45309;
+    }
+  }
+}
+.cam-cell__label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ui-muted);
+}
+.cam-cell__sub {
+  font-size: 12px;
+  color: var(--ui-faint);
+}
+.cam-setup h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--ui-ink);
+}
+.cam-devices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.cam-device {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--ui-ink-2);
+  background: var(--ui-surface-2);
+  border: 1px solid var(--ui-line-soft);
+  border-radius: 6px;
+}
+.cam-hint {
+  margin: -2px 0 10px;
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.cam-suggest {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px dashed #fcd34d;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 1280px) {
   .at-stats {
@@ -1050,7 +1410,8 @@ onMounted(async () => {
     min-height: 54px;
     padding: 4px;
   }
-  .at-day__status {
+  .at-day__status,
+  .at-day__cam {
     display: none;
   }
   .at-day__num {

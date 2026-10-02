@@ -6,10 +6,51 @@ export const useAttendanceStore = defineStore('attendance', {
   state: () => ({
     userRecords: [], // selected employee's monthly records
     allRecords: [], // every employee (admin overview)
+    cameraRecords: [], // selected employee's daily first-in / last-out from the face terminals
+    cameraOfficeDays: [], // dates (YYYY-MM-DD) when anyone was recorded in the office
+    cameraEmployees: [], // terminal employees and their ERP links (admin)
+    cameraDevices: [], // terminals + last agent sync (admin)
     isLoading: false,
     error: null,
   }),
   actions: {
+    // Kamera ma'lumoti ixtiyoriy: xato bo'lsa davomat sahifasi odatdagidek ishlayveradi
+    async getCameraUserMonth(userId, month) {
+      try {
+        const [records, officeDays] = await Promise.all([
+          attendanceApi.getCameraUserMonth(userId, month),
+          attendanceApi.getCameraOfficeDays(month),
+        ])
+        this.cameraRecords = records || []
+        this.cameraOfficeDays = officeDays || []
+      } catch {
+        this.cameraRecords = []
+        this.cameraOfficeDays = []
+      }
+      return this.cameraRecords
+    },
+
+    async getCameraSetup() {
+      try {
+        const [employees, devices] = await Promise.all([
+          attendanceApi.getCameraEmployees(),
+          attendanceApi.getCameraDevices(),
+        ])
+        this.cameraEmployees = employees || []
+        this.cameraDevices = devices || []
+      } catch {
+        this.cameraEmployees = []
+        this.cameraDevices = []
+      }
+    },
+
+    async linkCameraEmployee(employeeNo, userId) {
+      const updated = await attendanceApi.linkCameraEmployee(employeeNo, userId)
+      const row = this.cameraEmployees.find((e) => e.employee_no === employeeNo)
+      if (row) row.user_id = updated.user_id
+      return updated
+    },
+
     async getUserMonth(userId, month) {
       try {
         const res = await runRequest(
@@ -41,7 +82,11 @@ export const useAttendanceStore = defineStore('attendance', {
     },
 
     async upsert(payload) {
-      const res = await runRequest(this, () => attendanceApi.upsert(payload), 'Save attendance failed')
+      const res = await runRequest(
+        this,
+        () => attendanceApi.upsert(payload),
+        'Save attendance failed',
+      )
       return res.data || res
     },
 
