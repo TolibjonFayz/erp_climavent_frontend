@@ -6,10 +6,13 @@ export default {
   upsert: (payload) => apiClient.post('attendance/create', payload),
   getUserMonth: (userId, month) => apiClient.get(withMonth(`attendance/user/${userId}`, month)),
   getAllMonth: (month) => apiClient.get(withMonth('attendance/all', month)),
+  // Ko'p kunni bir yo'la yaratish (bor kunlar o'zgarmaydi)
+  bulkCreate: (records) => apiClient.post('attendance/bulk', { records }),
   update: (id, payload) => apiClient.patch(`attendance/update/${id}`, payload),
   remove: (id) => apiClient.delete(`attendance/delete/${id}`),
 
   // Hikvision yuz terminallari (kirish/chiqish kamerasi)
+  getCameraAllMonth: (month) => apiClient.get(withMonth('attendance/hik/daily', month)),
   getCameraUserMonth: (userId, month) =>
     apiClient.get(withMonth(`attendance/hik/daily/user/${userId}`, month)),
   getCameraEmployeeMonth: (employeeNo, month) =>

@@ -20,6 +20,9 @@
           {{ $t('camUnlinkedCount', { n: unlinkedCount }) }}
         </span>
       </button>
+      <el-button v-if="isAdmin" :icon="Check" @click="confirmAllDialog = true">
+        {{ $t('attConfirmAll') }}
+      </el-button>
       <el-button v-if="!isCurrentMonth" @click="goCurrentMonth">
         {{ $t('attThisMonth') }}
       </el-button>
@@ -359,6 +362,17 @@
       </template>
     </el-dialog>
 
+    <!-- Oyni hamma uchun tasdiqlash (admin) -->
+    <ConfirmAllDialog
+      v-if="isAdmin"
+      v-model="confirmAllDialog"
+      :month="monthKey"
+      :month-label="monthLabel"
+      :employees="employees"
+      :status-list="STATUS_LIST"
+      @done="reloadAttendance"
+    />
+
     <!-- Kamera: terminallar va xodimlarni bog'lash (admin) -->
     <el-dialog v-model="cameraDialog" :title="$t('camTitle')" width="680px">
       <div class="cam-setup">
@@ -437,6 +451,15 @@ import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { fmtNum } from '@/utils/format'
+import ConfirmAllDialog from './ConfirmAllDialog.vue'
+import {
+  cameraHours,
+  confirmRecord,
+  flattenTrips,
+  groupTripsByDate,
+  hiredFrom,
+  suggestStatus,
+} from './suggest'
 
 const { t, locale } = useI18n()
 const attendanceStore = useAttendanceStore()
@@ -555,11 +578,7 @@ const hiredAfterCamera = computed(() => {
   const row = selectedTerminalNo.value
     ? selectedTerminal.value
     : rows.find((e) => e.user_id === selectedUserId.value)
-  const cameraStart = rows
-    .map((e) => e.first_seen)
-    .filter(Boolean)
-    .sort()[0]
-  return row?.first_seen && row.first_seen > cameraStart ? row.first_seen : null
+  return hiredFrom(row, rows)
 })
 
 const selectEmployee = (id) => {
@@ -583,15 +602,7 @@ const recordsByDate = computed(() => {
   return map
 })
 
-const tripsByDate = computed(() => {
-  const map = {}
-  for (const trip of fieldTrips.value) {
-    if (!trip.when_gone) continue
-    const d = toDateStr(new Date(trip.when_gone))
-    ;(map[d] ||= []).push(trip)
-  }
-  return map
-})
+const tripsByDate = computed(() => groupTripsByDate(fieldTrips.value))
 
 // Kamera: kunlik birinchi kirish / oxirgi chiqish (Hikvision terminallari)
 const cameraByDate = computed(() => {
@@ -601,51 +612,21 @@ const cameraByDate = computed(() => {
 })
 // Xodim terminalga bog'langan va shu oyda qaydi bor — kamerasiz ish kuni "kelmadi" deb taklif qilinadi
 const hasCamera = computed(() => attendanceStore.cameraRecords.length > 0)
+// Ofis ochiq bo'lgan kunlar (kamida 4 kishi qayd etilgan) — qolgan ish kunlari bayram
 const officeDaySet = computed(() => new Set(attendanceStore.cameraOfficeDays))
-// Shu oyda kamera ishlagan, lekin bu o'tgan kuni ofisda hech kim qayd etilmagan
-const isOfficeClosed = (dateStr) =>
-  officeDaySet.value.size > 0 && dateStr < todayStr && !officeDaySet.value.has(dateStr)
 
-const toMinutes = (hhmm) => {
-  const [h, m] = hhmm.split(':').map(Number)
-  return h * 60 + m
-}
-// Kelgan → ketgan oralig'i soatda (0.5 ga yaxlitlangan)
-const cameraHours = (cam) => {
-  if (!cam?.check_in || !cam?.check_out) return null
-  const diff = toMinutes(cam.check_out) - toMinutes(cam.check_in)
-  return diff > 0 ? Math.round((diff / 60) * 2) / 2 : null
-}
 const cameraTitle = (cam) =>
   `${t('camIn')}: ${cam.check_in || t('camMissingIn')} · ${t('camOut')}: ${cam.check_out || t('camMissingOut')}`
 
-const isPersonal = (trip) => (trip.whereto || '').trim().toLowerCase() === 'shaxsiy'
-
-const suggestStatus = (dateStr) => {
-  if (dateStr > todayStr) return null // future date
-  if (hiredAfterCamera.value && dateStr < hiredAfterCamera.value) return null // hali ishlamagan
-  const trips = tripsByDate.value[dateStr] || []
-  const cam = cameraByDate.value[dateStr]
-  const d = new Date(dateStr + 'T00:00:00')
-  const weekend = d.getDay() === 0 || d.getDay() === 6
-  if (trips.length) {
-    const firstTrip = new Date(Math.min(...trips.map((tr) => new Date(tr.when_gone).getTime())))
-    const tripMinutes = firstTrip.getHours() * 60 + firstTrip.getMinutes()
-    // Kamera ofisga kirganini ko'rsatsa — ofisdan keyin obyektga
-    if (cam?.check_in && toMinutes(cam.check_in) < tripMinutes && !trips.every(isPersonal)) {
-      return 'office_then_object'
-    }
-    if (firstTrip.getHours() < 10) {
-      return trips.every(isPersonal) ? 'absent' : 'direct_object'
-    }
-    return 'office_then_object'
-  }
-  if (weekend) return cam ? 'office' : 'dayoff'
-  // Butun ofisda kamera qaydi yo'q ish kuni — bayram/dam olish
-  if (isOfficeClosed(dateStr)) return 'dayoff'
-  if (hasCamera.value && !cam && dateStr < todayStr) return 'absent'
-  return 'office'
-}
+const suggestDay = (dateStr) =>
+  suggestStatus(dateStr, {
+    today: todayStr,
+    trips: tripsByDate.value[dateStr],
+    cam: cameraByDate.value[dateStr],
+    hasCamera: hasCamera.value,
+    officeOpen: officeDaySet.value,
+    hiredFrom: hiredAfterCamera.value,
+  })
 
 const daysInMonth = computed(() => new Date(year.value, month.value, 0).getDate())
 const leadingBlanks = computed(() => {
@@ -664,7 +645,7 @@ const calendarDays = computed(() => {
       dayNum: dn,
       future: dateStr > todayStr,
       confirmed: !!record,
-      statusKey: record ? record.status : suggestStatus(dateStr),
+      statusKey: record ? record.status : suggestDay(dateStr),
       hours: record ? record.work_hours : null,
       record,
       camera: cameraByDate.value[dateStr] || null,
@@ -817,6 +798,7 @@ const pendingDays = computed(() =>
   calendarDays.value.filter((d) => d.date < todayStr && !d.confirmed && d.statusKey),
 )
 const confirmingMonth = ref(false)
+const confirmAllDialog = ref(false)
 
 const confirmMonth = async () => {
   const days = pendingDays.value
@@ -843,23 +825,19 @@ const confirmMonth = async () => {
   }
 
   confirmingMonth.value = true
-  let saved = 0
   try {
-    for (const day of days) {
-      const off = day.statusKey === 'absent' || day.statusKey === 'dayoff'
-      await attendanceStore.upsert({
-        user_id: selectedUserId.value,
-        date: day.date,
-        status: day.statusKey,
-        work_hours: off ? 0 : (cameraHours(day.camera) ?? 8),
-        check_in: day.camera?.check_in || null,
-        check_out: day.camera?.check_out || null,
-        note: null,
-        created_by: currentUserId,
-      })
-      saved++
-    }
-    ElMessage.success(t('attConfirmMonthDone', { n: saved }))
+    const { created } = await attendanceStore.bulkCreate(
+      days.map((day) =>
+        confirmRecord({
+          userId: selectedUserId.value,
+          date: day.date,
+          status: day.statusKey,
+          cam: day.camera,
+          createdBy: currentUserId,
+        }),
+      ),
+    )
+    ElMessage.success(t('attConfirmMonthDone', { n: created }))
   } catch {
     ElMessage.error(t('xatolikYuzBerdi'))
   } finally {
@@ -957,13 +935,7 @@ const linkEmployee = async (row, userId) => {
 const loadFieldTrips = async (userId) => {
   try {
     await comeandgoesStore.getComeAndGoesOfUser(userId)
-    const containers = comeandgoesStore.allComeAndGoesofUser || []
-    const trips = []
-    for (const c of Array.isArray(containers) ? containers : []) {
-      const insides = c.comeAndGoInsides || c.comeandgoinsides || []
-      for (const ins of insides) trips.push(ins)
-    }
-    fieldTrips.value = trips
+    fieldTrips.value = flattenTrips(comeandgoesStore.allComeAndGoesofUser)
   } catch {
     fieldTrips.value = []
   }

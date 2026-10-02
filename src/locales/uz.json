@@ -1678,5 +1678,13 @@
   "attConfirmMonthBody": "{name} — {month}: {n} ta tasdiqlanmagan kun avtomatik taklif va kamera vaqtlari bilan saqlanadi ({counts}). Keyin har bir kunni alohida o'zgartirish mumkin.",
   "attConfirmMonthDone": "{n} kun tasdiqlandi",
   "camNotInErp": "ERP'da yo'q",
-  "camNotInErpHint": "Bu xodimning ERP akkaunti yo'q — faqat kamera ma'lumoti ko'rsatiladi. Akkaunt ochilsa, 📷 oynasida bog'lang."
+  "camNotInErpHint": "Bu xodimning ERP akkaunti yo'q — faqat kamera ma'lumoti ko'rsatiladi. Akkaunt ochilsa, 📷 oynasida bog'lang.",
+  "attConfirmAll": "Oyni hamma uchun tasdiqlash",
+  "attConfirmAllTitle": "{month} — hamma uchun tasdiqlash",
+  "attConfirmAllHint": "Kamerada yuzi bog'langan xodimlarning bugungacha tasdiqlanmagan kunlari avtomatik taklif va kamera vaqtlari bilan saqlanadi. Tasdiqlangan kunlarga tegilmaydi. Ish kunida ofisda 4 kishidan kam bo'lsa — bayram (dam olish). Keyin istalgan kunni alohida o'zgartirish mumkin.",
+  "attConfirmAllColDays": "Saqlanadigan kunlar",
+  "attConfirmAllBtn": "Tasdiqlash ({n} kun)",
+  "attConfirmAllDone": "{created} kun tasdiqlandi ({skipped} tasi oldin tasdiqlangan edi)",
+  "attConfirmAllNoCam": "bu oy kamerada yo'q",
+  "attConfirmAllEmpty": "Tasdiqlanmagan kun qolmagan"
 }

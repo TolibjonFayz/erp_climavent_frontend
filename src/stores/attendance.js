@@ -99,6 +99,23 @@ export const useAttendanceStore = defineStore('attendance', {
       return res.data || res
     },
 
+    // Ko'p kunni bir yo'la saqlash; so'rov hajmi cheklangani uchun bo'laklab yuboriladi
+    async bulkCreate(records) {
+      const total = { created: 0, skipped: 0 }
+      await runRequest(
+        this,
+        async () => {
+          for (let i = 0; i < records.length; i += 300) {
+            const res = await attendanceApi.bulkCreate(records.slice(i, i + 300))
+            total.created += res.created
+            total.skipped += res.skipped
+          }
+        },
+        'Bulk attendance failed',
+      )
+      return total
+    },
+
     async deleteRecord(id) {
       return runRequest(this, () => attendanceApi.remove(id), 'Delete attendance failed')
     },
