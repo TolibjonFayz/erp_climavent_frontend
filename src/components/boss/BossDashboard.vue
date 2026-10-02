@@ -30,7 +30,7 @@
     <!-- E'lonlar -->
     <UiPanel
       v-if="bossStore.announcements.length"
-      :title="$t('newAnnouncement')"
+      :title="$t('bsAnnouncements')"
       :icon="Bell"
       flush
     >
@@ -727,7 +727,7 @@ onMounted(async () => {
   font-size: 13px;
 
   th {
-    padding: 10px 12px;
+    padding: 10px;
     font-size: 11px;
     font-weight: 600;
     text-align: left;
@@ -739,7 +739,7 @@ onMounted(async () => {
     border-bottom: 1px solid var(--ui-line);
   }
   td {
-    padding: 10px 12px;
+    padding: 9px 10px;
     color: var(--ui-ink-2);
     border-bottom: 1px solid var(--ui-line-soft);
   }
@@ -783,9 +783,10 @@ onMounted(async () => {
   gap: 8px;
 }
 .bs-emp__name {
+  min-width: 0;
   font-weight: 500;
+  line-height: 1.35;
   color: var(--ui-ink);
-  white-space: nowrap;
 }
 .bs-avatar {
   width: 26px;
@@ -801,7 +802,7 @@ onMounted(async () => {
   border-radius: 50%;
 }
 .bs-target {
-  min-width: 130px;
+  min-width: 110px;
 }
 .bs-bar {
   height: 6px;

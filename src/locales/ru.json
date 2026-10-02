@@ -1646,5 +1646,6 @@
   "bsAdminsSub": "из них админов: {n}",
   "bsTypesSub": "типов: {n}",
   "bsAbsentSub": "сегодня отсутствуют: {n}",
-  "bsTasksSub": "выполнено {done} из {total} задач"
+  "bsTasksSub": "выполнено {done} из {total} задач",
+  "bsAnnouncements": "Объявления"
 }

@@ -1648,5 +1648,6 @@
   "bsAdminsSub": "shulardan {n} nafari admin",
   "bsTypesSub": "{n} xil turda",
   "bsAbsentSub": "bugun kelmagan: {n}",
-  "bsTasksSub": "{done} / {total} vazifa bajarilgan"
+  "bsTasksSub": "{done} / {total} vazifa bajarilgan",
+  "bsAnnouncements": "E'lonlar"
 }

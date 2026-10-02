@@ -215,10 +215,10 @@
                   <el-icon><component :is="getAuditIcon(log.action)" /></el-icon>
                 </div>
                 <div class="activity-content">
-                  <span class="activity-actor">{{ log.actor }}</span>
+                  <span class="activity-actor">{{ logActor(log) }}</span>
                   <span class="activity-msg">{{ log.message }}</span>
                 </div>
-                <span class="activity-time">{{ log.time }}</span>
+                <span class="activity-time">{{ logTime(log) }}</span>
               </div>
               <div v-if="!auditLogs.length" class="empty-state">
                 <el-icon><Document /></el-icon> Hali hech qanday amal qayd etilmagan
@@ -549,10 +549,6 @@
 
         <!-- ═══════ amoCRM ═══════ -->
         <div v-if="activeTab === 'amocrm'" class="adm-page">
-          <div class="page-head">
-            <span class="page-accent"></span>
-            <h2 class="page-title">amoCRM</h2>
-          </div>
           <AmoCrmStats />
         </div>
 
@@ -747,13 +743,13 @@
               <div class="audit-entry__body">
                 <div class="audit-entry__top">
                   <span class="audit-entry__actor"
-                    ><el-icon><UserFilled /></el-icon> {{ log.actor }}</span
+                    ><el-icon><UserFilled /></el-icon> {{ logActor(log) }}</span
                   >
                   <span class="audit-entry__action-tag" :class="'tag--' + log.type">{{
                     getActionLabel(log.action)
                   }}</span>
                   <span class="audit-entry__time"
-                    ><el-icon><Timer /></el-icon> {{ log.time }}</span
+                    ><el-icon><Timer /></el-icon> {{ logTime(log) }}</span
                   >
                 </div>
                 <div class="audit-entry__msg">{{ log.message }}</div>
@@ -916,7 +912,7 @@
               ><component :is="getAuditIcon(log.action)"
             /></el-icon>
             <span>{{ log.message }}</span>
-            <span class="user-audit-time">{{ log.time ?? log.created_at }}</span>
+            <span class="user-audit-time">{{ logTime(log) }}</span>
           </div>
           <div
             v-if="!selectedUserLogs.length"
@@ -1047,7 +1043,7 @@ import { usePartnersStore } from '@/stores/partners'
 import { useKPsStore } from '@/stores/kp'
 import AmoCrmStats from '@/components/amocrm/AmoCrmStats.vue'
 import UiStat from '@/components/ui/UiStat.vue'
-import { fmtNum } from '@/utils/format'
+import { fmtNum, formatDate as fmtDay, formatDateTime as fmtDateTime } from '@/utils/format'
 import {
   KP_COMMENT_OPTIONS,
   KP_COMMENT_FILTER_OPTIONS,
@@ -1191,24 +1187,14 @@ function getPartnerTypeLabel(value) {
 
 // ─── Date formatting ───
 function formatDate(isoString) {
-  if (!isoString) return 'Kiritilmagan'
-  const d = new Date(isoString)
-  const months = [
-    'yanvar',
-    'fevral',
-    'mart',
-    'aprel',
-    'may',
-    'iyun',
-    'iyul',
-    'avgust',
-    'sentabr',
-    'oktabr',
-    'noyabr',
-    'dekabr',
-  ]
-  return `${d.getFullYear()} / ${d.getDate()}-${months[d.getMonth()]} / ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  return isoString ? fmtDateTime(isoString) : 'Kiritilmagan'
 }
+
+const logActor = (l) =>
+  (typeof l.actor === 'string' && l.actor) ||
+  (l.admin ? `${l.admin.firstname ?? ''} ${l.admin.lastname ?? ''}`.trim() : '') ||
+  '—'
+const logTime = (l) => l.time || fmtDateTime(l.createdAt || l.created_at) || '—'
 
 // ─── Computed ─────────────────────────────────────────────
 const greeting = computed(() => {
@@ -1219,14 +1205,25 @@ const greeting = computed(() => {
   return 'Xayrli tun'
 })
 
-const todayFormatted = computed(() =>
-  new Date().toLocaleDateString('uz-UZ', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }),
-)
+const UZ_MONTHS = [
+  'yanvar',
+  'fevral',
+  'mart',
+  'aprel',
+  'may',
+  'iyun',
+  'iyul',
+  'avgust',
+  'sentabr',
+  'oktabr',
+  'noyabr',
+  'dekabr',
+]
+const UZ_WEEKDAYS = ['yakshanba', 'dushanba', 'seshanba', 'chorshanba', 'payshanba', 'juma', 'shanba']
+const todayFormatted = computed(() => {
+  const d = new Date()
+  return `${d.getDate()}-${UZ_MONTHS[d.getMonth()]} ${d.getFullYear()}, ${UZ_WEEKDAYS[d.getDay()]}`
+})
 
 const adminCount = computed(() => usersStore.allUsers.filter((u) => u.is_admin).length)
 const userCount = computed(() => usersStore.allUsers.filter((u) => !u.is_admin).length)
@@ -1255,7 +1252,7 @@ const lastObjectDate = computed(() => {
   const sorted = [...comeandgoInsideStore.allComeAndGoInsides].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
   )
-  return sorted[0] ? formatDate(sorted[0].createdAt).split(' / ')[0] : '—'
+  return sorted[0] ? fmtDay(sorted[0].createdAt) : '—'
 })
 
 const topActiveUsers = computed(() => {
@@ -1351,7 +1348,7 @@ const filteredObjects = computed(() =>
 const filteredAuditLogs = computed(() =>
   auditLogs.value.filter((l) => {
     const s = auditSearch.value.toLowerCase().trim()
-    const actor = l.actor?.username ?? l.actor ?? ''
+    const actor = `${logActor(l)} ${l.admin?.username ?? ''}`
     return (
       (!s || l.message.toLowerCase().includes(s) || actor.toLowerCase().includes(s)) &&
       (!auditActionFilter.value || l.action === auditActionFilter.value)
@@ -1836,10 +1833,10 @@ const handleExportAudit = () => {
   try {
     const data = auditLogs.value.map((l, i) => ({
       '№': i + 1,
-      Vaqt: l.time,
+      Vaqt: logTime(l),
       Amal: getActionLabel(l.action),
       Xabar: l.message,
-      Bajardi: l.actor,
+      Bajardi: logActor(l),
     }))
     if (!data.length) {
       ElMessage.warning("Eksport qilish uchun log yo'q!")
