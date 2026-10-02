@@ -1,91 +1,81 @@
 <template>
-  <div class="login-page">
-    <div class="login-container">
-      <!-- Left Side - Illustration -->
-      <div class="login-illustration">
-        <div class="brand-logo">
-          <img src="/biglogo.png" alt="Logo" />
+  <div class="lg-page">
+    <div class="lg-card">
+      <!-- Chap: brend -->
+      <aside class="lg-brand">
+        <img class="lg-brand__logo" src="/biglogo.png" alt="Climavent" />
+        <div class="lg-brand__art">
+          <img src="@/assets/login-illustration.svg" alt="" />
         </div>
-        <div class="illustration-content">
-          <img src="@/assets/login-illustration.svg" alt="Login Illustration" />
-        </div>
-      </div>
+        <p class="lg-brand__foot">Climavent ERP</p>
+      </aside>
 
-      <!-- Right Side - Form -->
-      <div class="login-form-section">
-        <div class="lang-switcher">
-          <div class="lang-toggle">
-            <button
-              type="button"
-              :class="['lang-btn', { active: currentLang === 'uz' }]"
-              @click="changeLanguage('uz')"
-            >
-              UZ
-            </button>
-            <button
-              type="button"
-              :class="['lang-btn', { active: currentLang === 'ru' }]"
-              @click="changeLanguage('ru')"
-            >
-              RU
-            </button>
-          </div>
+      <!-- O'ng: forma -->
+      <section class="lg-form-side">
+        <div class="lg-lang" role="group" aria-label="Language">
+          <button
+            type="button"
+            :class="['lg-lang__btn', { 'is-active': currentLang === 'uz' }]"
+            @click="changeLanguage('uz')"
+          >
+            UZ
+          </button>
+          <button
+            type="button"
+            :class="['lg-lang__btn', { 'is-active': currentLang === 'ru' }]"
+            @click="changeLanguage('ru')"
+          >
+            RU
+          </button>
         </div>
-        <div class="form-wrapper">
-          <div class="form-header">
+
+        <div class="lg-form-wrap">
+          <header class="lg-head">
             <h1>{{ $t('loginPageHeader') }}</h1>
-            <p class="subtitle">{{ $t('adminDashboardSubtitle') }}</p>
-          </div>
+            <p>{{ $t('adminDashboardSubtitle') }}</p>
+          </header>
 
-          <form @submit.prevent="handleLogin" class="login-form">
-            <div class="form-group">
-              <label>{{ $t('login') }}</label>
+          <form class="lg-form" @submit.prevent="handleLogin">
+            <label class="lg-field">
+              <span class="lg-field__label">{{ $t('login') }}</span>
               <el-input
                 v-model="username"
                 :placeholder="$t('login')"
                 size="large"
-                class="modern-input"
+                autocomplete="username"
+                :class="{ 'is-error': showLoginError }"
               />
-              <el-alert
-                v-if="showLoginError"
-                :title="$t('loginError')"
-                type="error"
-                :closable="false"
-                class="field-error"
-              />
-            </div>
+              <span v-if="showLoginError" class="lg-field__error">{{ $t('loginError') }}</span>
+            </label>
 
-            <div class="form-group">
-              <label>{{ $t('password') }}</label>
+            <label class="lg-field">
+              <span class="lg-field__label">{{ $t('password') }}</span>
               <el-input
                 v-model="password"
                 :placeholder="$t('password')"
                 type="password"
                 show-password
                 size="large"
-                class="modern-input"
+                autocomplete="current-password"
+                :class="{ 'is-error': showPasswordError }"
               />
-              <el-alert
-                v-if="showPasswordError"
-                :title="$t('passwordError')"
-                type="error"
-                :closable="false"
-                class="field-error"
-              />
-            </div>
+              <span v-if="showPasswordError" class="lg-field__error">
+                {{ $t('passwordError') }}
+              </span>
+            </label>
 
             <el-button
               :loading="loading"
               type="primary"
               native-type="submit"
               size="large"
-              class="submit-btn"
+              class="lg-submit"
             >
               {{ $t('loginBtn') }}
             </el-button>
           </form>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>
@@ -118,7 +108,7 @@ const handleLogin = async () => {
   showLoginError.value = !username.value
   showPasswordError.value = !password.value
   if (showLoginError.value || showPasswordError.value) return
-  
+
   loading.value = true
   try {
     const res = await usersStore.loginUser({
@@ -146,290 +136,178 @@ const handleLogin = async () => {
 </script>
 
 <style lang="scss" scoped>
-.login-page {
+.lg-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #e3f2fd 0%, #f5f7fa 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  font-family:
-    'Inter',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+  padding: 24px 16px;
+  background: var(--ui-surface-2);
+  box-sizing: border-box;
 }
-
-.login-container {
+.lg-card {
   display: grid;
-  grid-template-columns: 45% 55%;
+  grid-template-columns: 44% 56%;
   width: 100%;
-  max-width: 1100px;
-  min-height: 600px;
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  max-width: 1000px;
+  min-height: 560px;
   overflow: hidden;
-
-  @media (max-width: 968px) {
-    grid-template-columns: 1fr;
-    max-width: 480px;
-  }
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(17, 24, 39, 0.06);
 }
 
-.login-illustration {
-  background: linear-gradient(135deg, #409eff 0%, #5dade2 100%);
-  padding: 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-    animation: pulse 15s ease-in-out infinite;
-  }
-
-  .brand-logo {
-    position: relative;
-    z-index: 2;
-    align-self: flex-start;
-
-    img {
-      width: 160px;
-      height: auto;
-      filter: brightness(0) invert(1);
-    }
-  }
-
-  .illustration-content {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    flex: 1;
-
-    img {
-      width: 85%;
-      height: auto;
-      max-width: 450px;
-      filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.15));
-    }
-  }
-
-  @media (max-width: 968px) {
-    padding: 30px;
-    min-height: 250px;
-
-    .brand-logo img {
-      width: 120px;
-    }
-
-    .illustration-content img {
-      width: 70%;
-      max-width: 280px;
-    }
-  }
-}
-
-.login-form-section {
-  padding: 60px 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #ffffff;
-  position: relative; // added for lang switcher
-
-  .lang-switcher {
-    position: absolute;
-    top: 30px;
-    right: 40px;
-
-    .lang-toggle {
-      display: flex;
-      background: #f1f3f5;
-      border-radius: 20px;
-      padding: 4px;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
-      position: relative;
-      
-      .lang-btn {
-        border: none;
-        background: transparent;
-        padding: 6px 14px;
-        font-size: 13px;
-        font-weight: 600;
-        color: #95a5a6;
-        border-radius: 16px;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 1;
-
-        &.active {
-          background: #ffffff;
-          color: #2c3e50;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        &:hover:not(.active) {
-          color: #34495e;
-        }
-      }
-    }
-  }
-
-  @media (max-width: 968px) {
-    padding: 40px 30px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 30px 20px;
-  }
-}
-
-.form-wrapper {
-  width: 100%;
-  max-width: 420px;
-}
-
-.form-header {
-  margin-bottom: 40px;
-  text-align: center;
-
-  h1 {
-    font-size: 28px;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0 0 8px 0;
-    letter-spacing: -0.5px;
-  }
-
-  .subtitle {
-    font-size: 15px;
-    color: #7f8c8d;
-    margin: 0;
-    font-weight: 400;
-  }
-
-  @media (max-width: 480px) {
-    margin-bottom: 30px;
-
-    h1 {
-      font-size: 24px;
-    }
-
-    .subtitle {
-      font-size: 14px;
-    }
-  }
-}
-
-.login-form {
+/* ─── Brend ─── */
+.lg-brand {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding: 32px;
+  background: var(--ui-link-soft);
+  border-right: 1px solid var(--ui-line);
+}
+.lg-brand__logo {
+  align-self: flex-start;
+  width: 150px;
+  height: auto;
+}
+.lg-brand__art {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 82%;
+    max-width: 380px;
+    height: auto;
+  }
+}
+.lg-brand__foot {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ui-muted);
 }
 
-.form-group {
+/* ─── Forma ─── */
+.lg-form-side {
   position: relative;
-
-  label {
-    display: block;
-    font-size: 14px;
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 8px;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 48px;
 }
-
-.field-error {
-  margin-top: 8px;
-  border-radius: 6px;
-
-  :deep(.el-alert__title) {
-    font-size: 12px !important;
-  }
+.lg-lang {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  display: flex;
+  padding: 3px;
+  background: var(--ui-line-soft);
+  border: 1px solid var(--ui-line);
+  border-radius: 8px;
 }
-
-.submit-btn {
-  margin-top: 8px;
-  width: 100%;
-  height: 48px;
-  font-size: 16px;
+.lg-lang__btn {
+  padding: 4px 12px;
+  font-family: inherit;
+  font-size: 12px;
   font-weight: 600;
-  border-radius: 10px;
-  background: #409eff;
-  border-color: #409eff;
-  transition: all 0.3s ease;
+  color: var(--ui-muted);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 
-  &:hover {
-    background: #66b1ff;
-    border-color: #66b1ff;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(64, 158, 255, 0.3);
+  &.is-active {
+    color: var(--ui-ink);
+    background: var(--ui-surface);
+    box-shadow: 0 1px 2px rgba(17, 24, 39, 0.08);
   }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
+  &:hover:not(.is-active) {
+    color: var(--ui-ink-2);
   }
 }
+.lg-form-wrap {
+  width: 100%;
+  max-width: 380px;
+}
+.lg-head {
+  margin-bottom: 28px;
 
-// Element Plus Input Overrides
-:deep(.modern-input) {
-  .el-input__wrapper {
-    border-radius: 10px;
-    padding: 8px 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e0e6ed;
-    transition: all 0.3s ease;
-
-    &:hover {
-      border-color: #409eff;
-    }
-
-    &.is-focus {
-      border-color: #409eff;
-      box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
-    }
+  h1 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--ui-ink);
   }
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ui-muted);
+  }
+}
+.lg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.lg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lg-field__label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ui-muted);
+}
+.lg-field__error {
+  font-size: 12px;
+  color: var(--ui-bad);
+}
+.lg-field :deep(.is-error .el-input__wrapper) {
+  box-shadow: 0 0 0 1px var(--ui-bad) inset;
+}
+.lg-submit {
+  width: 100%;
+  height: 44px;
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
 
-  .el-input__inner {
-    font-size: 15px;
-    color: #2c3e50;
-
-    &::placeholder {
-      color: #adb5bd;
-    }
+@media (max-width: 900px) {
+  .lg-card {
+    grid-template-columns: 1fr;
+    max-width: 460px;
+    min-height: 0;
+  }
+  .lg-brand {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 20px;
+    border-right: none;
+    border-bottom: 1px solid var(--ui-line);
+  }
+  .lg-brand__logo {
+    width: 120px;
+  }
+  .lg-brand__art,
+  .lg-brand__foot {
+    display: none;
+  }
+  .lg-form-side {
+    padding: 56px 20px 28px;
   }
 }
 </style>
 
 <style lang="scss">
-.el-alert__title {
-  font-size: 12px !important;
-}
-
 .el-button.is-loading {
   pointer-events: none;
 }

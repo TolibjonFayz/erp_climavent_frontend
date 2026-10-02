@@ -1,207 +1,110 @@
 <template>
-  <div class="settings-page" v-loading="loading">
-    <!-- Top Header Banner (Climavent Signature Blue Gradient) -->
-    <div class="settings-banner">
-      <div class="banner-content">
-        <h1>{{ $t('shaxsiymalumotlar') }}</h1>
-        <p>{{ $t('shaxsiymalumotlarSubtitle') }}</p>
-      </div>
-      <div class="banner-decorations">
-        <div class="glow-circle circle-1"></div>
-        <div class="glow-circle circle-2"></div>
-      </div>
-    </div>
-
-    <!-- Main Settings Grid -->
-    <div class="settings-grid">
-      <!-- 1. Avatar Card -->
-      <div class="settings-card avatar-card">
-        <div class="card-body avatar-body">
-          <div class="avatar-wrapper">
-            <el-upload
-              class="avatar-uploader"
-              :action="cloudinaryUrl"
-              :data="uploadData"
-              :show-file-list="false"
-              :on-success="handleAvatarSuccess"
-              :before-upload="beforeAvatarUpload"
-              :on-error="handleAvatarError"
-            >
-              <div class="avatar-image-container" :class="{ uploading: avatarUploading }">
-                <img
-                  v-if="usersStore?.currentUser?.profile_image == 'profile.jpg'"
-                  src="/user.png"
-                  alt="Avatar"
-                />
-                <img v-else :src="usersStore?.currentUser?.profile_image" alt="Avatar" />
-                <div class="avatar-overlay">
-                  <el-icon><Camera /></el-icon>
-                  <span>{{ $t('uploadAvatar') }}</span>
-                </div>
-              </div>
-            </el-upload>
-          </div>
-
-          <div class="avatar-meta">
-            <h3>{{ usersStore?.currentUser?.firstname }} {{ usersStore?.currentUser?.lastname }}</h3>
-            <p class="avatar-hint">{{ $t('profileimageInfo') }}</p>
-
-            <el-upload
-              class="avatar-button-uploader"
-              :action="cloudinaryUrl"
-              :data="uploadData"
-              :show-file-list="false"
-              :on-success="handleAvatarSuccess"
-              :before-upload="beforeAvatarUpload"
-              :on-error="handleAvatarError"
-            >
-              <el-button type="primary" :icon="Upload" :loading="avatarUploading" round>
-                {{ $t('uploadAvatar') }}
-              </el-button>
-            </el-upload>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2. Personal Information Card -->
-      <div class="settings-card info-card" v-loading="updateShaxsiyLoading">
-        <div class="card-header">
-          <div class="card-title-group">
-            <div class="card-icon-badge">
-              <el-icon><User /></el-icon>
-            </div>
-            <div>
-              <h3>{{ $t('shaxsiymalumotlar') }}</h3>
-              <p>{{ $t('shaxsiymalumotlarSubtitle') }}</p>
-            </div>
-          </div>
-          <el-button
-            type="primary"
-            plain
-            round
-            :icon="Edit"
-            @click="changeUserMainInfoDialog = true"
+  <UiPage v-loading="loading" :title="$t('settings')" :subtitle="$t('shaxsiymalumotlarSubtitle')">
+    <div class="st-grid">
+      <!-- Profil: rasm va asosiy ma'lumot -->
+      <UiPanel class="st-profile">
+        <div class="st-profile__body">
+          <el-upload
+            class="avatar-uploader"
+            :action="cloudinaryUrl"
+            :data="uploadData"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
+            :on-error="handleAvatarError"
           >
-            {{ $t('edit') }}
-          </el-button>
-        </div>
-
-        <div class="card-body">
-          <div class="info-grid">
-            <div class="info-cell">
-              <span class="info-label">{{ $t('ism') }}</span>
-              <span class="info-value">{{ usersStore?.currentUser?.firstname || '-' }}</span>
-            </div>
-            <div class="info-cell">
-              <span class="info-label">{{ $t('familiya') }}</span>
-              <span class="info-value">{{ usersStore?.currentUser?.lastname || '-' }}</span>
-            </div>
-            <div class="info-cell">
-              <span class="info-label">{{ $t('telefonRaqam') }}</span>
-              <span class="info-value">{{
-                formatPhoneNumber(usersStore?.currentUser?.phone_number) || '-'
-              }}</span>
-            </div>
-            <div class="info-cell">
-              <span class="info-label">{{ $t('email') }}</span>
-              <span class="info-value">{{ usersStore?.currentUser?.email || '-' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. Security Card -->
-      <div class="settings-card security-card">
-        <div class="card-header">
-          <div class="card-title-group">
-            <div class="card-icon-badge">
-              <el-icon><Lock /></el-icon>
-            </div>
-            <div>
-              <h3>{{ $t('security') }}</h3>
-              <p>Akkaunt ma'lumotlari va xavfsizlik sozlamalari</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="card-body security-body">
-          <!-- Username Row -->
-          <div class="setting-row" v-loading="updateUsernameLoading">
-            <div class="row-left">
-              <div class="row-icon">
-                <el-icon><User /></el-icon>
-              </div>
-              <div class="row-text">
-                <span class="row-label">{{ $t('username') }}</span>
-                <span class="row-value font-mono">{{ usersStore?.currentUser?.username || '-' }}</span>
+            <div class="st-avatar" :class="{ 'is-uploading': avatarUploading }">
+              <img
+                v-if="usersStore?.currentUser?.profile_image == 'profile.jpg'"
+                src="/user.png"
+                alt="Avatar"
+              />
+              <img v-else :src="usersStore?.currentUser?.profile_image" alt="Avatar" />
+              <div class="st-avatar__overlay">
+                <el-icon><Camera /></el-icon>
+                <span>{{ $t('uploadAvatar') }}</span>
               </div>
             </div>
-            <el-button
-              type="primary"
-              plain
-              round
-              :icon="Edit"
-              @click="changeUsernameDialog = true"
-            >
+          </el-upload>
+
+          <h2 class="st-name">
+            {{ usersStore?.currentUser?.firstname }} {{ usersStore?.currentUser?.lastname }}
+          </h2>
+          <p class="st-username">@{{ usersStore?.currentUser?.username || '—' }}</p>
+          <el-tag
+            :type="usersStore?.currentUser?.is_admin ? 'primary' : 'info'"
+            size="small"
+            effect="plain"
+          >
+            {{ usersStore?.currentUser?.is_admin ? $t('admin') : $t('colEmployee') }}
+          </el-tag>
+
+          <p class="st-hint">{{ $t('profileimageInfo') }}</p>
+          <el-upload
+            class="avatar-button-uploader"
+            :action="cloudinaryUrl"
+            :data="uploadData"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
+            :on-error="handleAvatarError"
+          >
+            <el-button :icon="Upload" :loading="avatarUploading">
+              {{ $t('uploadAvatar') }}
+            </el-button>
+          </el-upload>
+        </div>
+      </UiPanel>
+
+      <div class="st-main">
+        <!-- Shaxsiy ma'lumotlar -->
+        <UiPanel v-loading="updateShaxsiyLoading" :title="$t('shaxsiymalumotlar')" :icon="User">
+          <template #actions>
+            <el-button link type="primary" :icon="Edit" @click="changeUserMainInfoDialog = true">
               {{ $t('edit') }}
             </el-button>
-          </div>
+          </template>
+          <UiInfoList :items="infoItems" />
+        </UiPanel>
 
-          <!-- Password Row -->
-          <div class="setting-row" v-loading="updatePasswordLoading">
-            <div class="row-left">
-              <div class="row-icon">
-                <el-icon><Key /></el-icon>
+        <!-- Xavfsizlik -->
+        <UiPanel :title="$t('security')" :hint="$t('setSecuritySub')" :icon="Lock">
+          <div class="st-rows">
+            <div v-loading="updateUsernameLoading" class="st-row">
+              <div class="st-row__text">
+                <span class="st-row__label">{{ $t('username') }}</span>
+                <span class="st-row__value is-mono">
+                  {{ usersStore?.currentUser?.username || '—' }}
+                </span>
               </div>
-              <div class="row-text">
-                <span class="row-label">Maxfiy so'z</span>
-                <span class="row-value password-dots">••••••••••••</span>
+              <el-button :icon="Edit" @click="changeUsernameDialog = true">
+                {{ $t('edit') }}
+              </el-button>
+            </div>
+            <div v-loading="updatePasswordLoading" class="st-row">
+              <div class="st-row__text">
+                <span class="st-row__label">{{ $t('setPasswordLabel') }}</span>
+                <span class="st-row__value is-dots">••••••••••</span>
               </div>
-            </div>
-            <el-button
-              type="primary"
-              plain
-              round
-              :icon="Edit"
-              @click="changePasswordDialog = true"
-            >
-              {{ $t('edit') }}
-            </el-button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4. Language Settings Card -->
-      <div class="settings-card language-card">
-        <div class="card-header">
-          <div class="card-title-group">
-            <div class="card-icon-badge">
-              <el-icon><Setting /></el-icon>
-            </div>
-            <div>
-              <h3>{{ $t('languageSettings') }}</h3>
-              <p>Tizim interfeysi uchun qulay tilni tanlang</p>
+              <el-button :icon="Key" @click="changePasswordDialog = true">
+                {{ $t('edit') }}
+              </el-button>
             </div>
           </div>
-        </div>
+        </UiPanel>
 
-        <div class="card-body language-body">
-          <div class="setting-row" v-loading="languageLoading">
-            <div class="row-left">
-              <div class="row-icon">
-                <span class="language-flag-badge">{{ selectedLanguageFlag }}</span>
-              </div>
-              <div class="row-text">
-                <span class="row-label">{{ $t('currentLanguage') }}</span>
-                <span class="row-value">{{ getCurrentLanguageLabel }}</span>
-              </div>
+        <!-- Til -->
+        <UiPanel :title="$t('languageSettings')" :hint="$t('setLanguageSub')" :icon="Setting">
+          <div v-loading="languageLoading" class="st-row">
+            <div class="st-row__text">
+              <span class="st-row__label">{{ $t('currentLanguage') }}</span>
+              <span class="st-row__value">{{ getCurrentLanguageLabel }}</span>
             </div>
-
             <el-select
               v-model="selectedLanguage"
               :placeholder="$t('selectLanguage')"
+              class="st-lang"
               @change="handleLanguageChange"
-              class="language-selector"
             >
               <el-option
                 v-for="lang in languages"
@@ -209,45 +112,37 @@
                 :label="lang.label"
                 :value="lang.value"
               >
-                <div class="language-option">
-                  <span class="language-flag">{{ lang.flag }}</span>
-                  <span class="language-name">{{ lang.label }}</span>
-                </div>
+                <span class="st-lang__opt">
+                  <span>{{ lang.flag }}</span>
+                  {{ lang.label }}
+                </span>
               </el-option>
             </el-select>
           </div>
-        </div>
-      </div>
+        </UiPanel>
 
-
-
-      <!-- 5. Logout Card (Full Width at Bottom) -->
-      <div class="settings-card logout-card">
-        <div class="logout-content">
-          <div class="logout-info">
-            <div class="logout-icon-box">
-              <el-icon><SwitchButton /></el-icon>
+        <!-- Chiqish -->
+        <UiPanel class="st-logout">
+          <div class="st-row">
+            <div class="st-row__text">
+              <span class="st-row__value">{{ $t('logout') }}</span>
+              <span class="st-row__label">{{ $t('logoutInfo') }}</span>
             </div>
-            <div class="logout-text">
-              <h4>{{ $t('logout') }}</h4>
-              <p>{{ $t('logoutInfo') }}</p>
-            </div>
+            <el-popconfirm
+              :title="$t('logoutConfirmTitle')"
+              width="280"
+              :confirm-button-text="$t('yeah')"
+              :cancel-button-text="$t('no')"
+              @confirm="logout"
+            >
+              <template #reference>
+                <el-button type="danger" plain :icon="SwitchButton">
+                  {{ $t('logout') }}
+                </el-button>
+              </template>
+            </el-popconfirm>
           </div>
-
-          <el-popconfirm
-            :title="$t('logoutConfirmTitle')"
-            width="280"
-            :confirm-button-text="$t('yeah')"
-            :cancel-button-text="$t('no')"
-            @confirm="logout"
-          >
-            <template #reference>
-              <el-button type="danger" size="large" :icon="SwitchButton">
-                {{ $t('logout') }}
-              </el-button>
-            </template>
-          </el-popconfirm>
-        </div>
+        </UiPanel>
       </div>
     </div>
 
@@ -271,7 +166,7 @@
       :loading="updatePasswordLoading"
       @save="handleSavePassword"
     />
-  </div>
+  </UiPage>
 </template>
 
 <script setup lang="ts">
@@ -288,6 +183,9 @@ import {
 import PersonalInfoEditDialog from './PersonalInfoEditDialog.vue'
 import UsernameEditDialog from './UsernameEditDialog.vue'
 import PasswordEditDialog from './PasswordEditDialog.vue'
+import UiPage from '@/components/ui/UiPage.vue'
+import UiPanel from '@/components/ui/UiPanel.vue'
+import UiInfoList from '@/components/ui/UiInfoList.vue'
 import { ElNotification, ElMessage } from 'element-plus'
 import type { UploadProps } from 'element-plus'
 import { onMounted, ref, computed } from 'vue'
@@ -325,6 +223,22 @@ const languages = [
 const selectedLanguageFlag = computed(() => {
   const lang = languages.find((l) => l.value === selectedLanguage.value)
   return lang ? lang.flag : '🌐'
+})
+
+const infoItems = computed(() => {
+  const u = usersStore?.currentUser
+  const t = i18n.global.t
+  return [
+    { key: 'firstname', label: t('ism'), value: u?.firstname },
+    { key: 'lastname', label: t('familiya'), value: u?.lastname },
+    {
+      key: 'phone',
+      label: t('telefonRaqam'),
+      value: u?.phone_number ? formatPhoneNumber(u.phone_number) : '',
+      href: u?.phone_number ? `tel:${u.phone_number}` : '',
+    },
+    { key: 'email', label: t('email'), value: u?.email },
+  ]
 })
 
 const getCurrentLanguageLabel = computed(() => {
@@ -427,7 +341,7 @@ const handleSaveUsername = async (formData: any) => {
   if (userId) {
     await usersStore.updateUser(userId, formData)
     ElNotification({
-      title: "Foydalanuvchi nomi muvaffaqiyatli yangilandi!",
+      title: 'Foydalanuvchi nomi muvaffaqiyatli yangilandi!',
       type: 'success',
     })
     changeUsernameDialog.value = false
@@ -468,477 +382,154 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.settings-page {
-  font-family: 'Montserrat', sans-serif;
-  background-color: #f6f8fb;
-  min-height: 100vh;
-  padding: 28px 36px;
-  color: #1e293b;
-  box-sizing: border-box;
-}
-
-/* ─── Header Banner ─── */
-.settings-banner {
-  background: linear-gradient(135deg, #409eff 0%, #3a8ee6 50%, #5dade2 100%);
-  border-radius: 20px;
-  padding: 34px 44px;
-  margin-bottom: 26px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 10px 26px -6px rgba(64, 158, 255, 0.35);
-}
-
-.banner-decorations .glow-circle {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.banner-decorations .circle-1 {
-  top: -50%;
-  right: -10%;
-  width: 380px;
-  height: 380px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 70%);
-}
-
-.banner-decorations .circle-2 {
-  bottom: -40%;
-  left: 20%;
-  width: 260px;
-  height: 260px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
-}
-
-.banner-content {
-  position: relative;
-  z-index: 2;
-}
-
-.banner-content h1 {
-  font-size: 28px;
-  font-weight: 700;
-  margin: 0 0 6px 0;
-  color: #ffffff;
-  letter-spacing: -0.3px;
-}
-
-.banner-content p {
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  font-weight: 500;
-}
-
-/* ─── Grid Layout ─── */
-.settings-grid {
+.st-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  max-width: 1300px;
-  margin: 0 auto;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
 }
-
-/* ─── Cards Base ─── */
-.settings-card {
-  background: #ffffff;
-  border-radius: 18px;
-  border: 1px solid #eef0f4;
-  box-shadow: 0 2px 14px rgba(17, 24, 39, 0.04);
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    border-color 0.25s ease;
-  overflow: hidden;
+.st-main {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  min-width: 0;
 }
 
-.settings-card:hover {
-  box-shadow: 0 8px 26px rgba(64, 158, 255, 0.08);
-  border-color: #d9ecff;
-}
-
-.card-header {
+/* ─── Profil ─── */
+.st-profile__body {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  padding: 22px 26px;
-  border-bottom: 1px solid #f1f5f9;
+  gap: 6px;
+  padding: 8px 0 4px;
+  text-align: center;
 }
-
-.card-title-group {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.card-icon-badge {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: #ecf5ff;
-  color: #409eff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.card-title-group h3 {
-  font-size: 17px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 3px 0;
-}
-
-.card-title-group p {
-  font-size: 13px;
-  color: #64748b;
-  margin: 0;
-}
-
-.card-body {
-  padding: 24px 26px;
-  flex: 1;
-}
-
-/* ─── Avatar Card ─── */
-.avatar-body {
-  display: flex;
-  align-items: center;
-  gap: 26px;
-  padding: 30px 28px;
-}
-
-.avatar-wrapper {
+.st-avatar {
   position: relative;
-  flex-shrink: 0;
-}
-
-.avatar-image-container {
-  position: relative;
-  width: 116px;
-  height: 116px;
-  border-radius: 50%;
+  width: 112px;
+  height: 112px;
+  margin-bottom: 8px;
   overflow: hidden;
+  border: 1px solid var(--ui-line);
+  border-radius: 50%;
   cursor: pointer;
-  border: 4px solid #ffffff;
-  box-shadow: 0 6px 20px rgba(64, 158, 255, 0.22);
-  transition: transform 0.2s ease;
 }
-
-.avatar-image-container:hover {
-  transform: scale(1.03);
+.st-avatar.is-uploading {
+  opacity: 0.6;
 }
-
-.avatar-image-container img {
+.st-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-
-.avatar-overlay {
+.st-avatar__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(17, 24, 39, 0.55);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  color: #ffffff;
-  opacity: 0;
-  transition: opacity 0.25s ease;
+  padding: 8px;
   font-size: 11px;
   font-weight: 600;
-  text-align: center;
-  padding: 8px;
+  color: white;
+  background: rgba(17, 24, 39, 0.55);
+  opacity: 0;
+  transition: opacity 0.2s;
 }
-
-.avatar-image-container:hover .avatar-overlay {
+.st-avatar:hover .st-avatar__overlay {
   opacity: 1;
 }
-
-.avatar-overlay .el-icon {
-  font-size: 22px;
-}
-
-.avatar-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.avatar-meta h3 {
+.st-avatar__overlay .el-icon {
   font-size: 20px;
-  font-weight: 700;
-  color: #1e293b;
+}
+.st-name {
   margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ui-ink);
 }
-
-.avatar-hint {
+.st-username {
+  margin: 0 0 4px;
   font-size: 13px;
-  color: #64748b;
-  margin: 0 0 6px 0;
+  color: var(--ui-muted);
+}
+.st-hint {
+  margin: 12px 0 4px;
+  padding-top: 12px;
+  width: 100%;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ui-muted);
+  border-top: 1px solid var(--ui-line-soft);
 }
 
-/* ─── Personal Info Card ─── */
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.info-cell {
-  background: #f8fafc;
-  padding: 14px 18px;
-  border-radius: 12px;
-  border: 1px solid #eef0f4;
-  transition: all 0.2s ease;
+/* ─── Sozlama qatorlari ─── */
+.st-rows {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
-
-.info-cell:hover {
-  background: #f0f7ff;
-  border-color: #d9ecff;
+.st-rows .st-row + .st-row {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--ui-line);
 }
-
-.info-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.info-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-/* ─── Security & Language Shared Rows ─── */
-.security-body,
-.language-body {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.setting-row {
+.st-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-radius: 14px;
-  border: 1px solid #eef0f4;
-  background: #ffffff;
-  transition: all 0.2s ease;
+  gap: 16px;
 }
-
-.setting-row:hover {
-  border-color: #d9ecff;
-  box-shadow: 0 4px 14px rgba(64, 158, 255, 0.08);
-  background: #fcfeff;
-}
-
-.row-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.row-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: #ecf5ff;
-  color: #409eff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.row-text {
+.st-row__text {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
-
-.row-label {
+.st-row__label {
   font-size: 12px;
-  color: #64748b;
-  font-weight: 500;
+  color: var(--ui-muted);
 }
-
-.row-value {
+.st-row__value {
   font-size: 14px;
-  color: #1e293b;
   font-weight: 600;
+  color: var(--ui-ink);
 }
-
-.font-mono {
-  font-family: monospace;
-  font-size: 15px;
+.st-row__value.is-mono {
+  font-family: ui-monospace, Consolas, monospace;
 }
-
-.password-dots {
+.st-row__value.is-dots {
   letter-spacing: 2px;
-  font-size: 17px;
 }
-
-/* ─── Language Selector ─── */
-.language-flag-badge {
-  font-size: 20px;
+.st-lang {
+  width: 200px;
 }
-
-.language-selector {
-  width: 190px;
-}
-
-.language-option {
-  display: flex;
+.st-lang__opt {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+.st-logout {
+  border-color: #fecaca;
 }
 
-.language-flag {
-  font-size: 18px;
-}
-
-.language-name {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-/* ─── Logout Card (Full Width) ─── */
-.logout-card {
-  grid-column: 1 / -1;
-  padding: 24px 28px;
-  border-color: #fee2e2;
-  background: #ffffff;
-}
-
-.logout-card:hover {
-  border-color: #fca5a5;
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.08);
-}
-
-.logout-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logout-info {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.logout-icon-box {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: #fee2e2;
-  color: #ef4444;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.logout-text h4 {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 3px 0;
-}
-
-.logout-text p {
-  font-size: 13px;
-  color: #64748b;
-  margin: 0;
-}
-
-/* ─── Responsive Design ─── */
-@media (max-width: 1024px) {
-  .settings-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
+@media (max-width: 900px) {
+  .st-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
-
-  .logout-card {
-    grid-column: 1;
-  }
-}
-
-@media (max-width: 768px) {
-  .settings-page {
-    padding: 18px 14px;
-  }
-
-  .settings-banner {
-    padding: 24px 20px;
-    border-radius: 16px;
-  }
-
-  .banner-content h1 {
-    font-size: 22px;
-  }
-
-  .banner-content p {
-    font-size: 13px;
-  }
-
-  .avatar-body {
+  .st-row {
     flex-direction: column;
-    text-align: center;
-    align-items: center;
+    align-items: stretch;
   }
-
-  .avatar-meta {
-    align-items: center;
-  }
-
-  .info-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .setting-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .setting-row .el-button,
-  .language-selector {
-    width: 100%;
-  }
-
-  .logout-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .logout-content .el-button {
+  .st-lang {
     width: 100%;
   }
 }
 </style>
 
 <style>
-/* El-upload clean resets */
+/* El-upload tozalash */
 .avatar-uploader .el-upload,
 .avatar-button-uploader .el-upload {
   border: none !important;
