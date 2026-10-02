@@ -1670,5 +1670,9 @@
   "camMissingOut": "нет записи выхода",
   "camMissingIn": "нет записи входа",
   "camPrefilled": "Время прихода/ухода взято с камеры",
-  "attLegendCamera": "камера: приход → уход"
+  "attLegendCamera": "камера: приход → уход",
+  "attConfirmMonth": "Подтвердить месяц ({n})",
+  "attConfirmMonthTitle": "Подтвердить месяц",
+  "attConfirmMonthBody": "{name} — {month}: {n} неподтверждённых дней будут сохранены по автопредложению и времени камеры ({counts}). Потом любой день можно изменить отдельно.",
+  "attConfirmMonthDone": "Подтверждено дней: {n}"
 }

@@ -104,6 +104,17 @@
               </span>
               <span v-if="isAdmin" class="at-panel-sub">· {{ monthLabel }}</span>
             </template>
+            <template v-if="isAdmin && pendingDays.length" #actions>
+              <el-button
+                type="primary"
+                size="small"
+                :icon="Check"
+                :loading="confirmingMonth"
+                @click="confirmMonth"
+              >
+                {{ $t('attConfirmMonth', { n: pendingDays.length }) }}
+              </el-button>
+            </template>
 
             <!-- Rang izohi -->
             <div class="at-legend">
@@ -399,8 +410,15 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useAttendanceStore } from '@/stores/attendance'
 import { useUsersStore } from '@/stores/user'
 import { useComeAndGoesStore } from '@/stores/comeandgoes'
-import { ElMessage } from 'element-plus'
-import { Search, ArrowLeft, ArrowRight, MagicStick, VideoCamera } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  Search,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  MagicStick,
+  VideoCamera,
+} from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
@@ -737,6 +755,63 @@ const resetDay = async () => {
     await reloadAttendance()
   } catch {
     ElMessage.error(t('xatolikYuzBerdi'))
+  }
+}
+
+// ─── Oyni ommaviy tasdiqlash (admin) ───
+// Bugungacha bo'lgan tasdiqlanmagan kunlar taklif qilingan holat + kamera vaqtlari bilan saqlanadi
+const pendingDays = computed(() =>
+  calendarDays.value.filter((d) => d.date < todayStr && !d.confirmed && d.statusKey),
+)
+const confirmingMonth = ref(false)
+
+const confirmMonth = async () => {
+  const days = pendingDays.value
+  const counts = STATUS_LIST.map((s) => ({
+    label: t(s.labelKey),
+    n: days.filter((d) => d.statusKey === s.key).length,
+  }))
+    .filter((c) => c.n)
+    .map((c) => `${c.label}: ${c.n}`)
+    .join(', ')
+  try {
+    await ElMessageBox.confirm(
+      t('attConfirmMonthBody', {
+        name: `${selectedEmployee.value?.firstname || ''} ${selectedEmployee.value?.lastname || ''}`,
+        month: monthLabel.value,
+        n: days.length,
+        counts,
+      }),
+      t('attConfirmMonthTitle'),
+      { confirmButtonText: t('save'), cancelButtonText: t('cancel'), type: 'info' },
+    )
+  } catch {
+    return // bekor qilindi
+  }
+
+  confirmingMonth.value = true
+  let saved = 0
+  try {
+    for (const day of days) {
+      const off = day.statusKey === 'absent' || day.statusKey === 'dayoff'
+      await attendanceStore.upsert({
+        user_id: selectedUserId.value,
+        date: day.date,
+        status: day.statusKey,
+        work_hours: off ? 0 : (cameraHours(day.camera) ?? 8),
+        check_in: day.camera?.check_in || null,
+        check_out: day.camera?.check_out || null,
+        note: null,
+        created_by: currentUserId,
+      })
+      saved++
+    }
+    ElMessage.success(t('attConfirmMonthDone', { n: saved }))
+  } catch {
+    ElMessage.error(t('xatolikYuzBerdi'))
+  } finally {
+    confirmingMonth.value = false
+    await reloadAttendance()
   }
 }
 

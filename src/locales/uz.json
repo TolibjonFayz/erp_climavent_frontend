@@ -1672,5 +1672,9 @@
   "camMissingOut": "chiqish qaydi yo'q",
   "camMissingIn": "kirish qaydi yo'q",
   "camPrefilled": "Kelgan/ketgan vaqt kameradan olindi",
-  "attLegendCamera": "kamera: kelgan → ketgan"
+  "attLegendCamera": "kamera: kelgan → ketgan",
+  "attConfirmMonth": "Oyni tasdiqlash ({n})",
+  "attConfirmMonthTitle": "Oyni tasdiqlash",
+  "attConfirmMonthBody": "{name} — {month}: {n} ta tasdiqlanmagan kun avtomatik taklif va kamera vaqtlari bilan saqlanadi ({counts}). Keyin har bir kunni alohida o'zgartirish mumkin.",
+  "attConfirmMonthDone": "{n} kun tasdiqlandi"
 }
