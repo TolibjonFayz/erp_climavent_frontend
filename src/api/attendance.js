@@ -12,6 +12,8 @@ export default {
   // Hikvision yuz terminallari (kirish/chiqish kamerasi)
   getCameraUserMonth: (userId, month) =>
     apiClient.get(withMonth(`attendance/hik/daily/user/${userId}`, month)),
+  getCameraEmployeeMonth: (employeeNo, month) =>
+    apiClient.get(withMonth(`attendance/hik/daily/employee/${employeeNo}`, month)),
   getCameraOfficeDays: (month) => apiClient.get(withMonth('attendance/hik/office-days', month)),
   getCameraEmployees: () => apiClient.get('attendance/hik/employees'),
   linkCameraEmployee: (employeeNo, userId) =>

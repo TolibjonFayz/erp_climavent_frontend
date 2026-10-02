@@ -33,7 +33,7 @@
     <div class="at-body" :class="{ 'is-admin': isAdmin }">
       <!-- Admin: xodimlar ro'yxati -->
       <UiPanel v-if="isAdmin" class="at-emps" :title="$t('colEmployee')" flush>
-        <template #actions>{{ filteredEmployees.length }}</template>
+        <template #actions>{{ filteredEmployees.length + filteredTerminalOnly.length }}</template>
         <div class="at-emps__search">
           <el-input
             v-model="employeeSearch"
@@ -53,12 +53,27 @@
             <span class="at-avatar">{{ initial(u) }}</span>
             <span class="at-emp__name">{{ u.firstname }} {{ u.lastname }}</span>
           </li>
+          <!-- Terminalda bor, ERP'da akkaunti yo'q xodimlar (faqat kamera ma'lumoti) -->
+          <li v-if="filteredTerminalOnly.length" class="at-emps__group">
+            {{ $t('camNotInErp') }} · {{ filteredTerminalOnly.length }}
+          </li>
+          <li
+            v-for="e in filteredTerminalOnly"
+            :key="e.employee_no"
+            class="at-emp"
+            :class="{ 'is-active': e.employee_no === selectedTerminalNo }"
+            @click="selectTerminal(e.employee_no)"
+          >
+            <span class="at-avatar is-terminal">{{ initial({ firstname: e.name }) }}</span>
+            <span class="at-emp__name">{{ e.name }}</span>
+            <span class="at-noerp">{{ $t('camNotInErp') }}</span>
+          </li>
         </ul>
       </UiPanel>
 
       <!-- Kalendar va ko'rsatkichlar -->
       <div class="at-main">
-        <template v-if="selectedUserId">
+        <template v-if="selectedUserId || selectedTerminalNo">
           <div class="at-stats">
             <UiStat
               :label="$t('workedDays')"
@@ -94,17 +109,14 @@
 
           <UiPanel>
             <template #title>
-              <span v-if="isAdmin" class="at-avatar">{{ initial(selectedEmployee) }}</span>
-              <span>
-                {{
-                  isAdmin
-                    ? `${selectedEmployee?.firstname || ''} ${selectedEmployee?.lastname || ''}`
-                    : monthLabel
-                }}
-              </span>
+              <span v-if="isAdmin" class="at-avatar">{{
+                initial({ firstname: selectedName })
+              }}</span>
+              <span>{{ isAdmin ? selectedName : monthLabel }}</span>
+              <span v-if="selectedTerminalNo" class="at-noerp">{{ $t('camNotInErp') }}</span>
               <span v-if="isAdmin" class="at-panel-sub">· {{ monthLabel }}</span>
             </template>
-            <template v-if="isAdmin && pendingDays.length" #actions>
+            <template v-if="canEdit && pendingDays.length" #actions>
               <el-button
                 type="primary"
                 size="small"
@@ -192,7 +204,7 @@
     <el-dialog v-model="dayDialog" :title="dialogTitle" width="460px" destroy-on-close>
       <div v-if="activeDay" class="day-dialog">
         <!-- Admin: tahrirlash formasi -->
-        <template v-if="isAdmin">
+        <template v-if="canEdit">
           <div v-if="!activeDay.confirmed && activeDay.statusKey" class="suggest-hint">
             <el-icon><MagicStick /></el-icon>
             {{ $t('suggestedHint') }}
@@ -267,8 +279,9 @@
           />
         </template>
 
-        <!-- Xodim: read-only -->
+        <!-- Xodim (yoki ERP'da yo'q terminal xodimi): read-only -->
         <template v-else>
+          <p v-if="selectedTerminalNo" class="cam-hint">{{ $t('camNotInErpHint') }}</p>
           <div class="readonly-status">
             <span
               class="legend-dot"
@@ -335,7 +348,7 @@
         </div>
       </div>
 
-      <template #footer v-if="isAdmin">
+      <template #footer v-if="canEdit">
         <el-button v-if="activeDay?.confirmed" type="danger" plain @click="resetDay">
           {{ $t('resetDay') }}
         </el-button>
@@ -517,8 +530,47 @@ const filteredEmployees = computed(() => {
 const selectedEmployee = computed(() => employees.value.find((u) => u.id === selectedUserId.value))
 const initial = (u) => (u?.firstname ? u.firstname.charAt(0).toUpperCase() : '?')
 
+// Terminalda bor, lekin ERP akkauntiga bog'lanmagan xodimlar — faqat kamera kalendari (o'qish uchun)
+const selectedTerminalNo = ref(null)
+const terminalOnly = computed(() => attendanceStore.cameraEmployees.filter((e) => !e.user_id))
+const filteredTerminalOnly = computed(() => {
+  const q = employeeSearch.value.trim().toLowerCase()
+  if (!q) return terminalOnly.value
+  return terminalOnly.value.filter((e) => e.name.toLowerCase().includes(q))
+})
+const selectedTerminal = computed(() =>
+  terminalOnly.value.find((e) => e.employee_no === selectedTerminalNo.value),
+)
+const selectedName = computed(() =>
+  selectedTerminalNo.value
+    ? selectedTerminal.value?.name || ''
+    : `${selectedEmployee.value?.firstname || ''} ${selectedEmployee.value?.lastname || ''}`,
+)
+// ERP'da yo'q xodimning davomatini saqlab bo'lmaydi (attendance user_id talab qiladi)
+const canEdit = computed(() => isAdmin.value && !selectedTerminalNo.value)
+
+// Kamera o'rnatilgandan keyin ishga kelgan xodim: birinchi qaydidan oldingi kunlar uchun taklif yo'q
+const hiredAfterCamera = computed(() => {
+  const rows = attendanceStore.cameraEmployees
+  const row = selectedTerminalNo.value
+    ? selectedTerminal.value
+    : rows.find((e) => e.user_id === selectedUserId.value)
+  const cameraStart = rows
+    .map((e) => e.first_seen)
+    .filter(Boolean)
+    .sort()[0]
+  return row?.first_seen && row.first_seen > cameraStart ? row.first_seen : null
+})
+
 const selectEmployee = (id) => {
+  selectedTerminalNo.value = null
   selectedUserId.value = id
+  loadData()
+}
+
+const selectTerminal = (employeeNo) => {
+  selectedUserId.value = null
+  selectedTerminalNo.value = employeeNo
   loadData()
 }
 
@@ -571,6 +623,7 @@ const isPersonal = (trip) => (trip.whereto || '').trim().toLowerCase() === 'shax
 
 const suggestStatus = (dateStr) => {
   if (dateStr > todayStr) return null // future date
+  if (hiredAfterCamera.value && dateStr < hiredAfterCamera.value) return null // hali ishlamagan
   const trips = tripsByDate.value[dateStr] || []
   const cam = cameraByDate.value[dateStr]
   const d = new Date(dateStr + 'T00:00:00')
@@ -679,7 +732,7 @@ const dialogTitle = computed(() => {
     locale.value === 'ru'
       ? d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
       : `${d.getDate()}-${uzMonths[d.getMonth()].toLowerCase()}`
-  return isAdmin.value ? `${t('editAttendance')} — ${label}` : `${t('dayDetails')} — ${label}`
+  return canEdit.value ? `${t('editAttendance')} — ${label}` : `${t('dayDetails')} — ${label}`
 })
 
 const activeDayTrips = computed(() =>
@@ -695,7 +748,7 @@ const tripTime = (iso) => {
 const openDay = (day) => {
   if (day.future) return
   activeDay.value = day
-  if (isAdmin.value) {
+  if (canEdit.value) {
     // Bo'sh kelgan/ketgan vaqtlar kameradan to'ldiriladi
     const cam = day.camera
     if (day.record) {
@@ -777,7 +830,7 @@ const confirmMonth = async () => {
   try {
     await ElMessageBox.confirm(
       t('attConfirmMonthBody', {
-        name: `${selectedEmployee.value?.firstname || ''} ${selectedEmployee.value?.lastname || ''}`,
+        name: selectedName.value,
         month: monthLabel.value,
         n: days.length,
         counts,
@@ -822,11 +875,22 @@ const reloadAttendance = async () => {
   }
 }
 
+const loadCamera = () =>
+  selectedTerminalNo.value
+    ? attendanceStore.getCameraEmployeeMonth(selectedTerminalNo.value, monthKey.value)
+    : attendanceStore.getCameraUserMonth(selectedUserId.value, monthKey.value)
+
 const loadData = async () => {
+  if (selectedTerminalNo.value) {
+    attendanceStore.userRecords = []
+    fieldTrips.value = []
+    await loadCamera()
+    return
+  }
   if (!selectedUserId.value) return
   await Promise.all([
     attendanceStore.getUserMonth(selectedUserId.value, monthKey.value),
-    attendanceStore.getCameraUserMonth(selectedUserId.value, monthKey.value),
+    loadCamera(),
     loadFieldTrips(selectedUserId.value),
   ])
 }
@@ -882,7 +946,9 @@ const linkEmployee = async (row, userId) => {
   try {
     await attendanceStore.linkCameraEmployee(row.employee_no, userId || null)
     ElMessage.success(userId ? t('camLinked') : t('camNotLinked'))
-    await attendanceStore.getCameraUserMonth(selectedUserId.value, monthKey.value)
+    // Ko'rilayotgan "ERP'da yo'q" xodim bog'lansa — endi uning ERP kalendarini ochamiz
+    if (userId && row.employee_no === selectedTerminalNo.value) selectEmployee(userId)
+    else await loadCamera()
   } catch {
     ElMessage.error(t('xatolikYuzBerdi'))
   }
@@ -1311,6 +1377,36 @@ onMounted(async () => {
   margin: 0;
   font-size: 13px;
   color: var(--ui-faint);
+}
+
+/* ─── ERP'da yo'q (faqat terminalda) ─── */
+.at-emps__group {
+  margin: 10px 0 4px;
+  padding: 8px 8px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ui-muted);
+  border-top: 1px solid var(--ui-line-soft);
+}
+.at-avatar.is-terminal {
+  color: #92400e;
+  background: #fef3c7;
+}
+.at-noerp {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.ui-panel h3 .at-noerp {
+  margin-left: 8px;
 }
 
 /* ─── Kamera ─── */

@@ -14,11 +14,20 @@ export const useAttendanceStore = defineStore('attendance', {
     error: null,
   }),
   actions: {
+    getCameraUserMonth(userId, month) {
+      return this.loadCameraMonth(attendanceApi.getCameraUserMonth(userId, month), month)
+    },
+
+    // ERP akkauntiga bog'lanmagan terminal xodimi (admin)
+    getCameraEmployeeMonth(employeeNo, month) {
+      return this.loadCameraMonth(attendanceApi.getCameraEmployeeMonth(employeeNo, month), month)
+    },
+
     // Kamera ma'lumoti ixtiyoriy: xato bo'lsa davomat sahifasi odatdagidek ishlayveradi
-    async getCameraUserMonth(userId, month) {
+    async loadCameraMonth(recordsRequest, month) {
       try {
         const [records, officeDays] = await Promise.all([
-          attendanceApi.getCameraUserMonth(userId, month),
+          recordsRequest,
           attendanceApi.getCameraOfficeDays(month),
         ])
         this.cameraRecords = records || []

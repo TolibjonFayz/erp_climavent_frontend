@@ -1676,5 +1676,7 @@
   "attConfirmMonth": "Oyni tasdiqlash ({n})",
   "attConfirmMonthTitle": "Oyni tasdiqlash",
   "attConfirmMonthBody": "{name} — {month}: {n} ta tasdiqlanmagan kun avtomatik taklif va kamera vaqtlari bilan saqlanadi ({counts}). Keyin har bir kunni alohida o'zgartirish mumkin.",
-  "attConfirmMonthDone": "{n} kun tasdiqlandi"
+  "attConfirmMonthDone": "{n} kun tasdiqlandi",
+  "camNotInErp": "ERP'da yo'q",
+  "camNotInErpHint": "Bu xodimning ERP akkaunti yo'q — faqat kamera ma'lumoti ko'rsatiladi. Akkaunt ochilsa, 📷 oynasida bog'lang."
 }
