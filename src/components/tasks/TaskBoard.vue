@@ -1,64 +1,110 @@
 <template>
-  <div class="tasks-container" v-loading="tasksStore.isLoading">
-    <div class="page-header">
-      <div class="header-top">
-        <div class="header-text">
-          <h1>{{ $t('tasks') }}</h1>
-          <p class="subtitle">{{ $t('tasksSubtitle') }}</p>
-        </div>
+  <UiPage
+    v-loading="tasksStore.isLoading"
+    :title="$t('tasks')"
+    :subtitle="$t('tasksSubtitle')"
+    wide
+  >
+    <template #actions>
+      <el-button :icon="DataAnalysis" @click="reportDialog = true">
+        {{ $t('taskReport') }}
+      </el-button>
+      <el-button :icon="Download" @click="exportExcel">{{ $t('taskExportExcel') }}</el-button>
+      <!-- Admin: yangi vazifa biriktirish -->
+      <el-button v-if="isAdmin" type="primary" :icon="Plus" @click="openCreateDialog">
+        {{ $t('newTask') }}
+      </el-button>
+    </template>
 
-        <div class="statistics-tags-horizontal">
-          <el-tag size="large" type="info" effect="plain">
-            {{ $t('total') }}: {{ sourceTasks.length }}
-          </el-tag>
-          <el-tag size="large" type="warning" effect="plain">
-            {{ $t('statusInProgress') }}: {{ countByStatus('in_progress') }}
-          </el-tag>
-          <el-tag size="large" type="success" effect="plain">
-            {{ $t('statusDone') }}: {{ countByStatus('done') }}
-          </el-tag>
-          <el-tag v-if="pendingCount > 0" size="large" type="warning" effect="dark">
-            {{ $t('taskPendingCount') }}: {{ pendingCount }}
-          </el-tag>
-          <el-tag v-if="overdueCount > 0" size="large" type="danger" effect="plain">
-            {{ $t('overdue') }}: {{ overdueCount }}
-          </el-tag>
-        </div>
-      </div>
+    <!-- Tasdiqlovchi uchun: kutayotgan so'rovlar banneri -->
+    <el-alert
+      v-if="isApprover && tasksStore.pendingApprovals.length"
+      type="warning"
+      :closable="false"
+      show-icon
+    >
+      <template #title>
+        {{ $t('taskApprovalRequests') }}: <b>{{ tasksStore.pendingApprovals.length }}</b>
+        <el-button link type="primary" class="tb-alert-link" @click="approvalsDrawer = true">
+          {{ $t('taskOpenRequests') }}
+        </el-button>
+      </template>
+    </el-alert>
 
-      <!-- Tasdiqlovchi uchun: kutayotgan so'rovlar banneri -->
-      <el-alert
-        v-if="isApprover && tasksStore.pendingApprovals.length"
-        class="approval-banner"
-        type="warning"
-        :closable="false"
-        show-icon
-      >
-        <template #title>
-          {{ $t('taskApprovalRequests') }}: {{ tasksStore.pendingApprovals.length }}
-          <el-button link type="primary" @click="approvalsDrawer = true">
-            {{ $t('taskOpenRequests') }}
-          </el-button>
-        </template>
-      </el-alert>
+    <!-- Ko'rsatkichlar -->
+    <div class="tb-stats">
+      <UiStat
+        :label="$t('total')"
+        :value="fmtNum(sourceTasks.length)"
+        :sub="$t('taskStatDoneRate', { n: report.completionRate })"
+        :class="{ 'is-active': !quickFilter }"
+        clickable
+        @click="quickFilter = null"
+      />
+      <UiStat
+        :label="$t('statusTodo')"
+        :value="fmtNum(countByStatus('todo'))"
+        :sub="$t('taskStatShare', { n: share(countByStatus('todo')) })"
+      />
+      <UiStat
+        :label="$t('statusInProgress')"
+        tone="warn"
+        :value="fmtNum(countByStatus('in_progress'))"
+        :sub="$t('taskStatShare', { n: share(countByStatus('in_progress')) })"
+      />
+      <UiStat
+        :label="$t('statusDone')"
+        tone="good"
+        :value="fmtNum(countByStatus('done'))"
+        :sub="
+          report.avgDays != null
+            ? `${$t('taskAvgCompletionDays')}: ${report.avgDays}`
+            : $t('taskStatShare', { n: share(countByStatus('done')) })
+        "
+      />
+      <UiStat
+        :label="$t('taskPendingCount')"
+        :hint="$t('taskPendingHint')"
+        tone="warn"
+        :value="fmtNum(pendingCount)"
+        :sub="$t('taskApproverLabel') + ': ' + approverName"
+        :class="{ 'is-active': quickFilter === 'pending' }"
+        clickable
+        @click="toggleQuick('pending')"
+      />
+      <UiStat
+        :label="$t('overdue')"
+        :hint="$t('taskOverdueHint')"
+        :tone="overdueCount ? 'bad' : ''"
+        :value="fmtNum(overdueCount)"
+        :sub="$t('taskStatDueToday', { n: dueTodayCount })"
+        :class="{ 'is-active': quickFilter === 'overdue' }"
+        clickable
+        @click="toggleQuick('overdue')"
+      />
+    </div>
 
-      <div class="toolbar">
+    <!-- Filtrlar -->
+    <UiToolbar>
+      <UiField :label="$t('custSearch')" grow>
         <el-input
           v-model="searchQuery"
           :placeholder="$t('taskSearchPlaceholder')"
           :prefix-icon="Search"
           clearable
-          class="search-input"
         />
-        <el-select v-model="priorityFilter" class="priority-filter">
+      </UiField>
+      <UiField :label="$t('taskPriority')">
+        <el-select v-model="priorityFilter" class="tb-select">
           <el-option :label="$t('allPriorities')" value="all" />
           <el-option :label="$t('priorityHigh')" value="high" />
           <el-option :label="$t('priorityMedium')" value="medium" />
           <el-option :label="$t('priorityLow')" value="low" />
         </el-select>
-
-        <!-- Admin: xodim bo'yicha filtr -->
-        <el-select v-if="isAdmin" v-model="employeeFilter" class="employee-filter" filterable>
+      </UiField>
+      <!-- Admin: xodim bo'yicha filtr -->
+      <UiField v-if="isAdmin" :label="$t('colEmployee')">
+        <el-select v-model="employeeFilter" class="tb-select-lg" filterable>
           <el-option :label="$t('allEmployees')" value="all" />
           <el-option
             v-for="u in employees"
@@ -67,61 +113,49 @@
             :value="u.id"
           />
         </el-select>
-
-        <el-button :icon="DataAnalysis" size="large" @click="reportDialog = true">
-          {{ $t('taskReport') }}
+      </UiField>
+      <template #actions>
+        <el-button v-if="hasFilters" link type="primary" @click="resetFilters">
+          {{ $t('kpResetFilters') }}
         </el-button>
-        <el-button :icon="Download" size="large" @click="exportExcel">
-          {{ $t('taskExportExcel') }}
-        </el-button>
+      </template>
+    </UiToolbar>
 
-        <!-- Admin: yangi vazifa biriktirish -->
-        <el-button
-          v-if="isAdmin"
-          type="primary"
-          size="large"
-          :icon="Plus"
-          @click="openCreateDialog"
-        >
-          {{ $t('newTask') }}
-        </el-button>
-      </div>
-    </div>
-
-    <div class="kanban-board">
-      <div
+    <div class="tb-board">
+      <section
         v-for="column in columns"
         :key="column.status"
-        class="kanban-column"
-        :class="[`column-${column.status}`, { 'drag-over': dragOverColumn === column.status }]"
+        class="tb-col"
+        :class="{ 'is-drag-over': dragOverColumn === column.status }"
         @dragover.prevent
         @dragenter.prevent="dragOverColumn = column.status"
         @dragleave="onDragLeave($event, column.status)"
         @drop="onDrop(column.status)"
       >
-        <div class="column-header">
-          <span class="column-dot" :class="`dot-${column.status}`"></span>
+        <header class="tb-col__head">
+          <span class="tb-dot" :class="`is-${column.status}`"></span>
           <h3>{{ $t(column.labelKey) }}</h3>
-          <span class="column-count">{{ filteredTasks(column.status).length }}</span>
-        </div>
+          <span class="tb-count">{{ filteredTasks(column.status).length }}</span>
+        </header>
 
-        <div class="column-body">
-          <div
+        <div class="tb-col__body">
+          <article
             v-for="task in filteredTasks(column.status)"
             :key="task.id"
-            class="task-card"
-            :class="[`priority-border-${task.priority}`, { 'is-pending': !!task.pending_status }]"
+            class="tb-card"
+            :class="[`is-${task.priority}`, { 'is-pending': !!task.pending_status }]"
             draggable="true"
             @dragstart="onDragStart(task.id)"
             @dragend="onDragEnd"
           >
-            <div class="task-card-top">
+            <div class="tb-card__top">
               <el-tag :type="priorityTagType(task.priority)" size="small" effect="light">
                 {{ $t(priorityLabelKey(task.priority)) }}
               </el-tag>
-
-              <div class="task-actions" v-if="isAdmin">
-                <el-button text size="small" :icon="EditPen" @click="openEditDialog(task)" />
+              <div v-if="isAdmin" class="tb-card__actions">
+                <el-tooltip :content="$t('edit')" placement="top">
+                  <el-button text size="small" :icon="EditPen" @click="openEditDialog(task)" />
+                </el-tooltip>
                 <el-popconfirm
                   :title="$t('taskDeleteConfirm')"
                   :confirm-button-text="$t('yeah')"
@@ -135,59 +169,53 @@
               </div>
             </div>
 
-            <h4 class="task-title" :class="{ 'task-done': task.status === 'done' }">
+            <h4 class="tb-card__title" :class="{ 'is-done': task.status === 'done' }">
               {{ task.title }}
             </h4>
-            <p v-if="task.description" class="task-description">{{ task.description }}</p>
+            <p v-if="task.description" class="tb-card__desc">{{ task.description }}</p>
 
-            <!-- Admin: vazifa kimga biriktirilgani -->
-            <div v-if="isAdmin && task.assignee" class="task-assignee">
-              <span class="assignee-avatar">{{ initial(task.assignee) }}</span>
-              <span class="assignee-name">
+            <!-- Mas'ul (admin ko'radi) va muddat -->
+            <div v-if="(isAdmin && task.assignee) || task.deadline" class="tb-meta">
+              <span v-if="isAdmin && task.assignee" class="tb-assignee">
+                <span class="tb-avatar">{{ initial(task.assignee) }}</span>
                 {{ task.assignee.firstname }} {{ task.assignee.lastname }}
               </span>
-            </div>
-
-            <div v-if="task.deadline" class="task-deadline" :class="deadlineClass(task)">
-              <el-icon><Calendar /></el-icon>
-              <span>{{ formatDeadline(task.deadline) }}</span>
-              <span v-if="isOverdue(task)" class="deadline-badge">{{ $t('overdue') }}</span>
-              <span v-else-if="isDueToday(task)" class="deadline-badge today">
-                {{ $t('dueToday') }}
+              <span v-if="task.deadline" class="tb-deadline" :class="deadlineClass(task)">
+                <el-icon><Calendar /></el-icon>
+                {{ formatDeadline(task.deadline) }}
+                <span v-if="isOverdue(task)" class="tb-badge is-bad">{{ $t('overdue') }}</span>
+                <span v-else-if="isDueToday(task)" class="tb-badge is-warn">
+                  {{ $t('dueToday') }}
+                </span>
               </span>
             </div>
 
             <!-- Tasdiq kutilmoqda -->
-            <div v-if="task.pending_status" class="approval-box pending">
-              <div class="approval-line">
+            <div v-if="task.pending_status" class="tb-note is-warn">
+              <div class="tb-note__line">
                 <el-icon><Clock /></el-icon>
-                <strong>{{ $t('taskApprovalPending') }}</strong>
-                <span class="approval-arrow">→ {{ $t(statusLabelKey(task.pending_status)) }}</span>
+                <b>{{ $t('taskApprovalPending') }}</b>
+                <span>→ {{ $t(statusLabelKey(task.pending_status)) }}</span>
               </div>
-              <p class="approval-meta">
-                {{ $t('taskApproverLabel') }}: {{ approverName }}
-              </p>
-              <p v-if="task.approval_note" class="approval-note">"{{ task.approval_note }}"</p>
+              <p class="tb-note__meta">{{ $t('taskApproverLabel') }}: {{ approverName }}</p>
+              <p v-if="task.approval_note" class="tb-note__quote">"{{ task.approval_note }}"</p>
             </div>
 
             <!-- Rad etilgan -->
-            <div
-              v-else-if="task.approval_result === 'rejected'"
-              class="approval-box rejected"
-            >
-              <div class="approval-line">
+            <div v-else-if="task.approval_result === 'rejected'" class="tb-note is-bad">
+              <div class="tb-note__line">
                 <el-icon><CircleClose /></el-icon>
-                <strong>{{ $t('taskWasRejected') }}</strong>
+                <b>{{ $t('taskWasRejected') }}</b>
               </div>
-              <p v-if="task.approval_reject_reason" class="approval-note">
+              <p v-if="task.approval_reject_reason" class="tb-note__quote">
                 "{{ task.approval_reject_reason }}"
               </p>
             </div>
 
-            <div class="task-footer">
-              <span class="task-created">{{ formatDateRelative(task.createdAt) }}</span>
+            <footer class="tb-card__foot">
+              <span class="tb-created">{{ formatDateRelative(task.createdAt) }}</span>
 
-              <div class="task-move-buttons">
+              <div class="tb-card__moves">
                 <!-- Tasdiqlovchi: qaror qabul qilish -->
                 <template v-if="task.pending_status && isApprover">
                   <el-button size="small" type="success" @click="approve(task)">
@@ -208,8 +236,22 @@
                   {{ $t('taskCancelRequest') }}
                 </el-button>
 
-                <!-- Oldinga siljish -->
+                <!-- Oldinga / orqaga siljish -->
                 <template v-else>
+                  <el-button
+                    v-if="task.status === 'done'"
+                    size="small"
+                    @click="moveBack(task, 'todo')"
+                  >
+                    {{ $t('reopenTask') }}
+                  </el-button>
+                  <el-button
+                    v-else-if="task.status === 'in_progress'"
+                    size="small"
+                    @click="moveBack(task, 'todo')"
+                  >
+                    {{ $t('taskBackToTodo') }}
+                  </el-button>
                   <el-button
                     v-if="nextStatus(task.status)"
                     size="small"
@@ -219,39 +261,19 @@
                   >
                     {{ isAdmin ? $t(advanceLabelKey(task.status)) : $t('taskRequestApproval') }}
                   </el-button>
-                  <el-button
-                    v-if="task.status === 'done'"
-                    size="small"
-                    type="info"
-                    plain
-                    @click="moveBack(task, 'todo')"
-                  >
-                    {{ $t('reopenTask') }}
-                  </el-button>
-                  <el-button
-                    v-else-if="task.status === 'in_progress'"
-                    size="small"
-                    type="info"
-                    plain
-                    @click="moveBack(task, 'todo')"
-                  >
-                    {{ $t('taskBackToTodo') }}
-                  </el-button>
                 </template>
               </div>
-            </div>
-          </div>
+            </footer>
+          </article>
 
-          <el-empty
-            v-if="filteredTasks(column.status).length === 0"
-            :description="emptyText(column.status)"
-            :image-size="64"
-          />
+          <div v-if="filteredTasks(column.status).length === 0" class="tb-empty">
+            {{ emptyText(column.status) }}
+          </div>
         </div>
-      </div>
+      </section>
     </div>
 
-    <p class="drag-hint">{{ isAdmin ? $t('dragHint') : $t('dragHintApproval') }}</p>
+    <p class="tb-drag-hint">{{ isAdmin ? $t('dragHint') : $t('dragHintApproval') }}</p>
 
     <!-- Add / Edit dialog (faqat admin) -->
     <el-dialog
@@ -432,39 +454,35 @@
       width="900px"
       class="report-dialog"
     >
-      <div class="report-cards">
-        <div class="report-card">
-          <span class="report-card-label">{{ $t('total') }}</span>
-          <span class="report-card-value">{{ report.total }}</span>
-        </div>
-        <div class="report-card todo">
-          <span class="report-card-label">{{ $t('statusTodo') }}</span>
-          <span class="report-card-value">{{ report.todo }}</span>
-        </div>
-        <div class="report-card progress">
-          <span class="report-card-label">{{ $t('statusInProgress') }}</span>
-          <span class="report-card-value">{{ report.in_progress }}</span>
-        </div>
-        <div class="report-card done">
-          <span class="report-card-label">{{ $t('statusDone') }}</span>
-          <span class="report-card-value">{{ report.done }}</span>
-        </div>
-        <div class="report-card pending">
-          <span class="report-card-label">{{ $t('taskPendingCount') }}</span>
-          <span class="report-card-value">{{ report.pending }}</span>
-        </div>
-        <div class="report-card overdue">
-          <span class="report-card-label">{{ $t('overdue') }}</span>
-          <span class="report-card-value">{{ report.overdue }}</span>
-        </div>
-        <div class="report-card rate">
-          <span class="report-card-label">{{ $t('taskCompletionRate') }}</span>
-          <span class="report-card-value">{{ report.completionRate }}%</span>
-        </div>
-        <div class="report-card avg">
-          <span class="report-card-label">{{ $t('taskAvgCompletionDays') }}</span>
-          <span class="report-card-value">{{ report.avgDays ?? '—' }}</span>
-        </div>
+      <div class="tb-report-stats">
+        <UiStat size="sm" :label="$t('total')" :value="fmtNum(report.total)" />
+        <UiStat size="sm" :label="$t('statusTodo')" :value="fmtNum(report.todo)" />
+        <UiStat
+          size="sm"
+          tone="warn"
+          :label="$t('statusInProgress')"
+          :value="fmtNum(report.in_progress)"
+        />
+        <UiStat size="sm" tone="good" :label="$t('statusDone')" :value="fmtNum(report.done)" />
+        <UiStat
+          size="sm"
+          tone="warn"
+          :label="$t('taskPendingCount')"
+          :value="fmtNum(report.pending)"
+        />
+        <UiStat
+          size="sm"
+          :tone="report.overdue ? 'bad' : ''"
+          :label="$t('overdue')"
+          :value="fmtNum(report.overdue)"
+        />
+        <UiStat
+          size="sm"
+          tone="good"
+          :label="$t('taskCompletionRate')"
+          :value="`${report.completionRate}%`"
+        />
+        <UiStat size="sm" :label="$t('taskAvgCompletionDays')" :value="report.avgDays ?? '—'" />
       </div>
 
       <div class="report-bar">
@@ -500,7 +518,7 @@
         </el-button>
       </template>
     </el-dialog>
-  </div>
+  </UiPage>
 </template>
 
 <script setup>
@@ -522,6 +540,11 @@ import {
   DataAnalysis,
 } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import UiPage from '@/components/ui/UiPage.vue'
+import UiStat from '@/components/ui/UiStat.vue'
+import UiToolbar from '@/components/ui/UiToolbar.vue'
+import UiField from '@/components/ui/UiField.vue'
+import { fmtNum } from '@/utils/format'
 
 const { t } = useI18n()
 const tasksStore = useTasksStore()
@@ -546,6 +569,24 @@ const employees = computed(() => usersStore.allUsers || [])
 const searchQuery = ref('')
 const priorityFilter = ref('all')
 const employeeFilter = ref('all')
+// Kartadan tanlanadigan tezkor filtr: 'overdue' | 'pending' | null
+const quickFilter = ref(null)
+const toggleQuick = (key) => {
+  quickFilter.value = quickFilter.value === key ? null : key
+}
+const hasFilters = computed(
+  () =>
+    !!searchQuery.value.trim() ||
+    priorityFilter.value !== 'all' ||
+    employeeFilter.value !== 'all' ||
+    !!quickFilter.value,
+)
+const resetFilters = () => {
+  searchQuery.value = ''
+  priorityFilter.value = 'all'
+  employeeFilter.value = 'all'
+  quickFilter.value = null
+}
 
 const columns = [
   { status: 'todo', labelKey: 'statusTodo' },
@@ -572,6 +613,9 @@ const filteredTasks = (status) => {
     list = list.filter((t) => t.assigned_to === employeeFilter.value)
   }
 
+  if (quickFilter.value === 'overdue') list = list.filter((t) => isOverdue(t))
+  else if (quickFilter.value === 'pending') list = list.filter((t) => !!t.pending_status)
+
   const q = searchQuery.value.trim().toLowerCase()
   if (q) {
     list = list.filter(
@@ -597,6 +641,10 @@ const filteredTasks = (status) => {
 const countByStatus = (status) => sourceTasks.value.filter((t) => t.status === status).length
 const overdueCount = computed(() => sourceTasks.value.filter((t) => isOverdue(t)).length)
 const pendingCount = computed(() => sourceTasks.value.filter((t) => !!t.pending_status).length)
+const dueTodayCount = computed(() => sourceTasks.value.filter((t) => isDueToday(t)).length)
+// Umumiy sonning ulushi, %
+const share = (n) =>
+  sourceTasks.value.length ? Math.round((n / sourceTasks.value.length) * 100) : 0
 
 const emptyText = (status) => {
   if (!isAdmin.value && status === 'todo' && sourceTasks.value.length === 0) {
@@ -779,9 +827,7 @@ const approvalsDrawer = ref(false)
 const reportDialog = ref(false)
 
 const employeeName = (task) =>
-  task.assignee
-    ? `${task.assignee.firstname} ${task.assignee.lastname || ''}`.trim()
-    : t('unknown')
+  task.assignee ? `${task.assignee.firstname} ${task.assignee.lastname || ''}`.trim() : t('unknown')
 
 const report = computed(() => {
   const list = sourceTasks.value
@@ -826,8 +872,7 @@ const report = computed(() => {
   }
 })
 
-const barWidth = (value) =>
-  report.value.total ? `${(value / report.value.total) * 100}%` : '0%'
+const barWidth = (value) => (report.value.total ? `${(value / report.value.total) * 100}%` : '0%')
 
 // ─── Excel eksport (2 varaq: vazifalar + hisobot) ───
 const exportExcel = () => {
@@ -846,9 +891,7 @@ const exportExcel = () => {
     [t('taskPriority')]: t(priorityLabelKey(task.priority)),
     [t('taskDeadline')]: task.deadline ? formatDeadline(task.deadline) : '—',
     [t('overdue')]: isOverdue(task) ? t('yeah') : '—',
-    [t('taskPendingCount')]: task.pending_status
-      ? t(statusLabelKey(task.pending_status))
-      : '—',
+    [t('taskPendingCount')]: task.pending_status ? t(statusLabelKey(task.pending_status)) : '—',
     [t('taskApprovalNote')]: task.approval_note || '—',
     [t('taskRejectReason')]: task.approval_reject_reason || '—',
     [t('statusDone')]: task.completed_at
@@ -863,7 +906,10 @@ const exportExcel = () => {
     { [t('colEmployee')]: t('statusDone'), [t('total')]: report.value.done },
     { [t('colEmployee')]: t('taskPendingCount'), [t('total')]: report.value.pending },
     { [t('colEmployee')]: t('overdue'), [t('total')]: report.value.overdue },
-    { [t('colEmployee')]: t('taskCompletionRate'), [t('total')]: `${report.value.completionRate}%` },
+    {
+      [t('colEmployee')]: t('taskCompletionRate'),
+      [t('total')]: `${report.value.completionRate}%`,
+    },
     { [t('colEmployee')]: t('taskAvgCompletionDays'), [t('total')]: report.value.avgDays ?? '—' },
     {},
     ...report.value.byEmployee.map((row) => ({
@@ -979,354 +1025,318 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.tasks-container {
-  width: 100%;
-  padding: 32px;
-  background: #f5f7fa;
-  min-height: 100vh;
-  overflow-x: hidden;
-  box-sizing: border-box;
+.tb-alert-link {
+  margin-left: 8px;
+  vertical-align: baseline;
 }
 
-.page-header {
-  margin-bottom: 24px;
-}
-
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 24px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-
-.header-text {
-  h1 {
-    margin: 0;
-    font-size: 28px;
-    font-weight: 700;
-    color: #1f2937;
-  }
-
-  .subtitle {
-    margin: 4px 0 0;
-    font-size: 14px;
-    color: #6b7280;
-  }
-}
-
-.statistics-tags-horizontal {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.approval-banner {
-  margin-bottom: 16px;
-}
-
-.toolbar {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-
-  .search-input {
-    max-width: 280px;
-    flex: 1;
-    min-width: 180px;
-  }
-
-  .priority-filter {
-    width: 170px;
-  }
-
-  .employee-filter {
-    width: 200px;
-  }
-}
-
-/* ─── Kanban board ───────────────────────────────── */
-.kanban-board {
+/* ─── Ko'rsatkichlar ─── */
+.tb-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+.tb-stats .is-active {
+  border-color: var(--ui-link);
+  box-shadow: inset 0 0 0 1px var(--ui-link);
+}
+.tb-select {
+  width: 170px;
+}
+.tb-select-lg {
+  width: 220px;
+}
+
+/* ─── Kanban ─── */
+.tb-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
   align-items: start;
 }
-
-.kanban-column {
-  background: #eef1f6;
-  border-radius: 16px;
-  padding: 16px;
-  min-height: 320px;
-  border: 2px dashed transparent;
+.tb-col {
+  min-width: 0;
+  background: var(--ui-surface-2);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
   transition:
-    border-color 0.2s ease,
-    background 0.2s ease;
+    border-color 0.15s,
+    background 0.15s;
 
-  &.drag-over {
-    border-color: #409eff;
-    background: #e3efff;
-  }
-
-  /* "Jarayonda" ustuni — sariq ohang */
-  &.column-in_progress {
-    background: #fdf6e3;
+  &.is-drag-over {
+    border-color: var(--ui-link);
+    background: var(--ui-link-soft);
   }
 }
-
-.column-header {
+.tb-col__head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-  padding: 0 4px;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 16px;
+  background: var(--ui-surface);
+  border-bottom: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius) var(--ui-radius) 0 0;
 
   h3 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 600;
-    color: #374151;
     flex: 1;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ui-ink);
   }
 }
-
-.column-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+.tb-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
   flex-shrink: 0;
+  background: #cbd5e1;
 
-  &.dot-todo {
-    background: #909399;
+  &.is-in_progress {
+    background: var(--ui-warn);
   }
-  &.dot-in_progress {
-    background: #e6a23c;
-  }
-  &.dot-done {
-    background: #67c23a;
+  &.is-done {
+    background: var(--ui-good);
   }
 }
-
-.column-count {
-  background: white;
-  color: #6b7280;
-  font-size: 13px;
+.tb-count {
+  min-width: 24px;
+  padding: 0 8px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 2px 10px;
+  line-height: 20px;
+  text-align: center;
+  color: var(--ui-muted);
+  background: var(--ui-line-soft);
   border-radius: 999px;
+  font-variant-numeric: tabular-nums;
 }
-
-.column-body {
+.tb-col__body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  min-height: 160px;
+  padding: 12px;
+}
+.tb-empty {
+  padding: 28px 8px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--ui-faint);
+  border: 1px dashed var(--ui-line);
+  border-radius: 8px;
 }
 
-/* ─── Task card ──────────────────────────────────── */
-.task-card {
-  background: white;
-  border-radius: 12px;
-  padding: 14px 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  border-left: 4px solid #d1d5db;
+/* ─── Vazifa kartasi ─── */
+.tb-card {
+  position: relative;
+  padding: 12px 14px 10px 16px;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  border-radius: 8px;
   cursor: grab;
-  transition: box-shadow 0.2s ease;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 
-  &:hover {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  /* Muhimlik — chapdagi ingichka chiziq */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: #cbd5e1;
+  }
+  &.is-high::before {
+    background: var(--ui-bad);
+  }
+  &.is-medium::before {
+    background: #f59e0b;
   }
 
+  &:hover {
+    border-color: #cbd5e1;
+    box-shadow: var(--ui-shadow-hover);
+  }
   &:active {
     cursor: grabbing;
   }
-
   &.is-pending {
-    box-shadow: 0 0 0 2px #f0c78a inset;
-  }
-
-  &.priority-border-high {
-    border-left-color: #f56c6c;
-  }
-  &.priority-border-medium {
-    border-left-color: #e6a23c;
-  }
-  &.priority-border-low {
-    border-left-color: #909399;
+    border-color: #f5d49a;
   }
 }
-
-.task-card-top {
+.tb-card__top {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 6px 8px;
   min-height: 24px;
+  margin-bottom: 8px;
 }
-
-.task-actions {
+.tb-card__actions {
   display: flex;
-  align-items: center;
+  margin-left: auto;
 
   .el-button + .el-button {
     margin-left: 0;
   }
 }
+.tb-deadline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ui-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 
-.task-title {
-  margin: 0 0 6px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #1f2937;
-  word-break: break-word;
-
-  &.task-done {
-    text-decoration: line-through;
-    color: #9ca3af;
+  &.deadline-overdue {
+    color: var(--ui-bad);
+  }
+  &.deadline-today {
+    color: var(--ui-warn);
   }
 }
+.tb-badge {
+  margin-left: 2px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+  border-radius: 999px;
 
-.task-description {
-  margin: 0 0 10px;
+  &.is-bad {
+    color: var(--ui-bad);
+    background: #fef2f2;
+  }
+  &.is-warn {
+    color: var(--ui-warn);
+    background: #fffbeb;
+  }
+}
+.tb-card__title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ui-ink);
+  word-break: break-word;
+
+  &.is-done {
+    text-decoration: line-through;
+    color: var(--ui-faint);
+  }
+}
+.tb-card__desc {
+  margin: 0 0 8px;
   font-size: 13px;
-  color: #6b7280;
   line-height: 1.5;
+  color: var(--ui-muted);
   word-break: break-word;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
-.task-assignee {
+.tb-meta {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-bottom: 8px;
+}
+.tb-assignee {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ui-ink-2);
 }
-
-.assignee-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #409eff;
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
+.tb-avatar {
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-.assignee-name {
-  font-size: 13px;
-  color: #4b5563;
-  font-weight: 500;
-}
-
-.task-deadline {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 10px;
-
-  &.deadline-overdue {
-    color: #f56c6c;
-  }
-
-  &.deadline-today {
-    color: #e6a23c;
-  }
-}
-
-.deadline-badge {
-  background: #fde2e2;
-  color: #f56c6c;
   font-size: 11px;
-  font-weight: 600;
-  padding: 1px 8px;
-  border-radius: 999px;
-
-  &.today {
-    background: #faecd8;
-    color: #e6a23c;
-  }
+  font-weight: 700;
+  color: var(--ui-link);
+  background: var(--ui-link-soft);
+  border-radius: 50%;
 }
-
-/* ─── Tasdiqlash bloki ───────────────────────────── */
-.approval-box {
-  border-radius: 8px;
+.tb-note {
+  margin-bottom: 8px;
   padding: 8px 10px;
-  margin-bottom: 10px;
   font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid;
 
-  &.pending {
-    background: #fdf6ec;
-    border: 1px solid #f5dab1;
-    color: #b88230;
+  &.is-warn {
+    color: #92400e;
+    background: #fffbeb;
+    border-color: #fde68a;
   }
-
-  &.rejected {
-    background: #fef0f0;
-    border: 1px solid #fbc4c4;
-    color: #c45656;
+  &.is-bad {
+    color: var(--ui-bad);
+    background: #fef2f2;
+    border-color: #fecaca;
   }
 }
-
-.approval-line {
+.tb-note__line {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-
-.approval-arrow {
-  font-weight: 600;
-}
-
-.approval-meta {
+.tb-note__meta {
   margin: 4px 0 0;
   font-size: 11px;
   opacity: 0.85;
 }
-
-.approval-note {
+.tb-note__quote {
   margin: 4px 0 0;
   font-style: italic;
   word-break: break-word;
 }
-
-.task-footer {
+.tb-card__foot {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  border-top: 1px solid #f3f4f6;
-  padding-top: 10px;
-  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--ui-line-soft);
 }
-
-.task-created {
+.tb-created {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--ui-faint);
 }
-
-.task-move-buttons {
+.tb-card__moves {
   display: flex;
-  gap: 6px;
   flex-wrap: wrap;
-}
+  gap: 6px;
+  margin-left: auto;
 
-.drag-hint {
-  margin: 18px 4px 0;
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+.tb-drag-hint {
+  margin: 0;
   font-size: 12px;
-  color: #9ca3af;
   text-align: center;
+  color: var(--ui-faint);
 }
 
+/* ─── Dialoglar ─── */
 .form-row {
   display: flex;
   gap: 16px;
@@ -1335,171 +1345,124 @@ onMounted(async () => {
     flex: 1;
   }
 }
-
-/* ─── So'rov/rad dialoglari ──────────────────────── */
 .request-target {
   margin: 0 0 6px;
   font-size: 15px;
-  color: #1f2937;
+  color: var(--ui-ink);
 }
-
 .request-hint {
   margin: 0 0 12px;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--ui-muted);
 }
 
-/* ─── Tasdiq so'rovlari drawer ───────────────────── */
+/* ─── Tasdiq so'rovlari drawer ─── */
 .drawer-empty {
-  color: #9ca3af;
+  padding: 30px 0;
   font-size: 14px;
   text-align: center;
-  padding: 30px 0;
+  color: var(--ui-faint);
 }
-
 .request-card {
-  border: 1px solid #ebeef5;
-  border-radius: 10px;
-  padding: 12px 14px;
   margin-bottom: 12px;
-  background: #fffdf7;
+  padding: 12px 14px;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
 
   h4 {
     margin: 0 0 6px;
     font-size: 14px;
-    color: #1f2937;
+    color: var(--ui-ink);
   }
 }
-
 .request-card-meta {
   margin: 2px 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ui-muted);
 
   &.muted {
-    color: #b0b4bb;
+    color: var(--ui-faint);
   }
 }
-
+.approval-note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ui-ink-2);
+  word-break: break-word;
+}
 .request-card-actions {
   display: flex;
   gap: 8px;
   margin-top: 10px;
 }
 
-/* ─── Hisobot ────────────────────────────────────── */
-.report-cards {
+/* ─── Hisobot ─── */
+.tb-report-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
-}
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
 
-.report-card {
-  background: #f8fafc;
-  border: 1px solid #eef0f4;
-  border-radius: 12px;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  &.todo {
-    border-left: 4px solid #909399;
+  :deep(.ui-stat__label) {
+    min-height: 0;
   }
-  &.progress {
-    border-left: 4px solid #e6a23c;
-  }
-  &.done {
-    border-left: 4px solid #67c23a;
-  }
-  &.pending {
-    border-left: 4px solid #f0a020;
-  }
-  &.overdue {
-    border-left: 4px solid #f56c6c;
-  }
-  &.rate,
-  &.avg {
-    border-left: 4px solid #409eff;
+  :deep(.ui-stat__sub) {
+    display: none;
   }
 }
-
-.report-card-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #6b7280;
-}
-
-.report-card-value {
-  font-size: 22px;
-  font-weight: 700;
-  color: #1f2937;
-}
-
 .report-bar {
   display: flex;
-  height: 12px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: #eef1f6;
+  height: 10px;
   margin-bottom: 18px;
+  overflow: hidden;
+  background: var(--ui-line-soft);
+  border-radius: 999px;
 
   .bar-seg {
     height: 100%;
     transition: width 0.3s ease;
 
     &.todo {
-      background: #909399;
+      background: #cbd5e1;
     }
     &.progress {
-      background: #e6a23c;
+      background: #f59e0b;
     }
     &.done {
-      background: #67c23a;
+      background: var(--ui-good);
     }
   }
 }
-
 .report-subtitle {
   margin: 0 0 10px;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--ui-ink);
 }
 
-/* ─── Responsive ─────────────────────────────────── */
+/* ─── Responsive ─── */
+@media (max-width: 1280px) {
+  .tb-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 @media (max-width: 1100px) {
-  .kanban-board {
+  .tb-board {
     grid-template-columns: 1fr;
   }
-
-  .kanban-column {
-    min-height: auto;
-  }
 }
-
 @media (max-width: 768px) {
-  .tasks-container {
-    padding: 20px 14px;
+  .tb-stats,
+  .tb-report-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .header-top {
-    flex-direction: column;
-    gap: 12px;
+  .tb-select,
+  .tb-select-lg {
+    width: 100%;
   }
-
-  .toolbar {
-    .search-input,
-    .priority-filter,
-    .employee-filter {
-      max-width: 100%;
-      width: 100%;
-    }
-  }
-
-  .drag-hint {
+  .tb-drag-hint {
     display: none;
   }
 }

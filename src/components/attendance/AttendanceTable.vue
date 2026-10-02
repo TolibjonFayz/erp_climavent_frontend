@@ -1,102 +1,155 @@
 <template>
-  <div class="attendance-container" v-loading="attendanceStore.isLoading">
-    <div class="page-header">
-      <div class="header-top">
-        <div class="header-text">
-          <h1>{{ $t('davomat') }}</h1>
-          <p class="subtitle">{{ $t('davomatSubtitle') }}</p>
-        </div>
-
-        <div class="month-nav">
-          <el-button :icon="ArrowLeft" circle @click="changeMonth(-1)" />
-          <span class="month-label">{{ monthLabel }}</span>
-          <el-button :icon="ArrowRight" circle @click="changeMonth(1)" />
-        </div>
+  <UiPage
+    v-loading="attendanceStore.isLoading"
+    :title="$t('davomat')"
+    :subtitle="$t('davomatSubtitle')"
+    wide
+  >
+    <template #actions>
+      <el-button v-if="!isCurrentMonth" @click="goCurrentMonth">
+        {{ $t('attThisMonth') }}
+      </el-button>
+      <div class="at-month">
+        <el-button :icon="ArrowLeft" @click="changeMonth(-1)" />
+        <span class="at-month__label">{{ monthLabel }}</span>
+        <el-button :icon="ArrowRight" @click="changeMonth(1)" />
       </div>
+    </template>
 
-      <!-- Color legend -->
-      <div class="legend">
-        <span v-for="s in STATUS_LIST" :key="s.key" class="legend-item">
-          <span class="legend-dot" :style="{ background: s.color }"></span>
-          {{ $t(s.labelKey) }}
-        </span>
-      </div>
-    </div>
-
-    <div class="davomat-body">
+    <div class="at-body" :class="{ 'is-admin': isAdmin }">
       <!-- Admin: xodimlar ro'yxati -->
-      <aside v-if="isAdmin" class="employee-panel">
-        <el-input
-          v-model="employeeSearch"
-          :placeholder="$t('searchEmployeePlaceholder')"
-          :prefix-icon="Search"
-          clearable
-          size="small"
-          class="emp-search"
-        />
-        <ul class="employee-list">
+      <UiPanel v-if="isAdmin" class="at-emps" :title="$t('colEmployee')" flush>
+        <template #actions>{{ filteredEmployees.length }}</template>
+        <div class="at-emps__search">
+          <el-input
+            v-model="employeeSearch"
+            :placeholder="$t('searchEmployeePlaceholder')"
+            :prefix-icon="Search"
+            clearable
+          />
+        </div>
+        <ul class="at-emps__list">
           <li
             v-for="u in filteredEmployees"
             :key="u.id"
-            class="employee-item"
-            :class="{ active: u.id === selectedUserId }"
+            class="at-emp"
+            :class="{ 'is-active': u.id === selectedUserId }"
             @click="selectEmployee(u.id)"
           >
-            <span class="emp-avatar">{{ initial(u) }}</span>
-            <span class="emp-name">{{ u.firstname }} {{ u.lastname }}</span>
+            <span class="at-avatar">{{ initial(u) }}</span>
+            <span class="at-emp__name">{{ u.firstname }} {{ u.lastname }}</span>
           </li>
         </ul>
-      </aside>
+      </UiPanel>
 
-      <!-- Calendar + stats -->
-      <main class="calendar-panel">
+      <!-- Kalendar va ko'rsatkichlar -->
+      <div class="at-main">
         <template v-if="selectedUserId">
-          <div class="selected-emp-header" v-if="isAdmin">
-            <span class="emp-avatar big">{{ initial(selectedEmployee) }}</span>
-            <h2>{{ selectedEmployee?.firstname }} {{ selectedEmployee?.lastname }}</h2>
+          <div class="at-stats">
+            <UiStat
+              :label="$t('workedDays')"
+              tone="good"
+              :value="fmtNum(stats.worked)"
+              :sub="monthLabel"
+            />
+            <UiStat
+              :label="$t('absentDays')"
+              :tone="stats.absent ? 'bad' : ''"
+              :value="fmtNum(stats.absent)"
+              :sub="monthLabel"
+            />
+            <UiStat
+              :label="$t('totalHours')"
+              :hint="$t('attHoursHint')"
+              :value="`${fmtNum(stats.hours)} ${$t('hours')}`"
+              :sub="$t('attHoursSub')"
+            />
+            <UiStat
+              :label="$t('attConfirmedDays')"
+              :hint="$t('attConfirmedHint')"
+              :tone="stats.suggested ? 'warn' : 'good'"
+              :value="fmtNum(stats.confirmed)"
+              :sub="$t('attSuggestedSub', { n: stats.suggested })"
+            />
+            <UiStat
+              :label="$t('fieldTripsTitle')"
+              :value="fmtNum(stats.trips)"
+              :sub="$t('attTripsSub', { n: stats.tripDays })"
+            />
           </div>
 
-          <div class="month-stats">
-            <el-tag type="success" effect="plain">
-              {{ $t('workedDays') }}: {{ stats.worked }}
-            </el-tag>
-            <el-tag type="danger" effect="plain">{{ $t('absentDays') }}: {{ stats.absent }}</el-tag>
-            <el-tag type="primary" effect="plain">
-              {{ $t('totalHours') }}: {{ stats.hours }} {{ $t('hours') }}
-            </el-tag>
-          </div>
+          <UiPanel>
+            <template #title>
+              <span v-if="isAdmin" class="at-avatar">{{ initial(selectedEmployee) }}</span>
+              <span>
+                {{
+                  isAdmin
+                    ? `${selectedEmployee?.firstname || ''} ${selectedEmployee?.lastname || ''}`
+                    : monthLabel
+                }}
+              </span>
+              <span v-if="isAdmin" class="at-panel-sub">· {{ monthLabel }}</span>
+            </template>
 
-          <div class="calendar">
-            <div class="weekday-row">
-              <span v-for="wd in weekdays" :key="wd" class="weekday">{{ $t(wd) }}</span>
+            <!-- Rang izohi -->
+            <div class="at-legend">
+              <span v-for="s in STATUS_LIST" :key="s.key" class="at-legend__item">
+                <span class="at-dot" :style="{ background: s.color }"></span>
+                {{ $t(s.labelKey) }}
+              </span>
+              <span class="at-legend__sep"></span>
+              <span class="at-legend__item">
+                <span class="at-swatch is-confirmed"></span>{{ $t('attLegendConfirmed') }}
+              </span>
+              <span class="at-legend__item">
+                <span class="at-swatch is-suggested"></span>{{ $t('attLegendSuggested') }}
+              </span>
+              <span class="at-legend__item">
+                <span class="at-trip-badge">2</span>{{ $t('attLegendTrips') }}
+              </span>
             </div>
-            <div class="days-grid">
-              <span v-for="n in leadingBlanks" :key="'b' + n" class="day-cell blank"></span>
-              <button
-                v-for="day in calendarDays"
-                :key="day.date"
-                class="day-cell"
-                :class="{
-                  confirmed: day.confirmed,
-                  suggested: !day.confirmed && day.statusKey,
-                  today: day.date === todayStr,
-                  future: day.future,
-                }"
-                :style="dayStyle(day)"
-                @click="openDay(day)"
-              >
-                <span class="day-num">{{ day.dayNum }}</span>
-                <span v-if="day.confirmed && day.hours != null" class="day-hours">
-                  {{ day.hours }}{{ $t('hours') }}
-                </span>
-                <span v-if="day.tripCount" class="trip-badge">{{ day.tripCount }}</span>
-              </button>
+
+            <div class="at-cal">
+              <div class="at-cal__week">
+                <span v-for="wd in weekdays" :key="wd">{{ $t(wd) }}</span>
+              </div>
+              <div class="at-cal__grid">
+                <span v-for="n in leadingBlanks" :key="'b' + n" class="at-day is-blank"></span>
+                <button
+                  v-for="day in calendarDays"
+                  :key="day.date"
+                  type="button"
+                  class="at-day"
+                  :class="{
+                    'is-confirmed': day.confirmed,
+                    'is-suggested': !day.confirmed && day.statusKey,
+                    'is-today': day.date === todayStr,
+                    'is-future': day.future,
+                  }"
+                  :style="dayStyle(day)"
+                  :title="day.statusKey ? $t(statusLabelKey(day.statusKey)) : ''"
+                  @click="openDay(day)"
+                >
+                  <span class="at-day__num">{{ day.dayNum }}</span>
+                  <span v-if="day.tripCount" class="at-trip-badge at-day__trips">
+                    {{ day.tripCount }}
+                  </span>
+                  <span v-if="day.statusKey && !day.future" class="at-day__status">
+                    {{ $t(statusLabelKey(day.statusKey)) }}
+                  </span>
+                  <span v-if="day.confirmed && day.hours != null" class="at-day__hours">
+                    {{ day.hours }} {{ $t('hours') }}
+                  </span>
+                </button>
+              </div>
             </div>
-          </div>
+          </UiPanel>
         </template>
 
-        <el-empty v-else :description="$t('selectEmployeeFirst')" />
-      </main>
+        <UiPanel v-else>
+          <el-empty :description="$t('selectEmployeeFirst')" />
+        </UiPanel>
+      </div>
     </div>
 
     <!-- Day dialog -->
@@ -117,7 +170,9 @@
               type="button"
               class="status-chip"
               :class="{ selected: form.status === s.key }"
-              :style="form.status === s.key ? { borderColor: s.color, background: s.color + '22' } : {}"
+              :style="
+                form.status === s.key ? { borderColor: s.color, background: s.color + '22' } : {}
+              "
               @click="selectStatus(s.key)"
             >
               <span class="legend-dot" :style="{ background: s.color }"></span>
@@ -128,38 +183,71 @@
           <div class="form-row">
             <div class="form-col">
               <label class="field-label">{{ $t('workHours') }}</label>
-              <el-input-number v-model="form.work_hours" :min="0" :max="24" :step="0.5" controls-position="right" style="width: 100%" />
+              <el-input-number
+                v-model="form.work_hours"
+                :min="0"
+                :max="24"
+                :step="0.5"
+                controls-position="right"
+                style="width: 100%"
+              />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-col">
               <label class="field-label">{{ $t('checkIn') }}</label>
-              <el-time-picker v-model="form.check_in" format="HH:mm" value-format="HH:mm" :placeholder="$t('checkIn')" style="width: 100%" />
+              <el-time-picker
+                v-model="form.check_in"
+                format="HH:mm"
+                value-format="HH:mm"
+                :placeholder="$t('checkIn')"
+                style="width: 100%"
+              />
             </div>
             <div class="form-col">
               <label class="field-label">{{ $t('checkOut') }}</label>
-              <el-time-picker v-model="form.check_out" format="HH:mm" value-format="HH:mm" :placeholder="$t('checkOut')" style="width: 100%" />
+              <el-time-picker
+                v-model="form.check_out"
+                format="HH:mm"
+                value-format="HH:mm"
+                :placeholder="$t('checkOut')"
+                style="width: 100%"
+              />
             </div>
           </div>
 
           <label class="field-label">{{ $t('attendanceNote') }}</label>
-          <el-input v-model="form.note" type="textarea" :rows="2" :placeholder="$t('attendanceNotePlaceholder')" maxlength="300" />
+          <el-input
+            v-model="form.note"
+            type="textarea"
+            :rows="2"
+            :placeholder="$t('attendanceNotePlaceholder')"
+            maxlength="300"
+          />
         </template>
 
         <!-- Xodim: read-only -->
         <template v-else>
           <div class="readonly-status">
-            <span class="legend-dot" :style="{ background: statusColor(activeDay.statusKey) }"></span>
-            <span>{{ activeDay.statusKey ? $t(statusLabelKey(activeDay.statusKey)) : $t('noStatusYet') }}</span>
+            <span
+              class="legend-dot"
+              :style="{ background: statusColor(activeDay.statusKey) }"
+            ></span>
+            <span>{{
+              activeDay.statusKey ? $t(statusLabelKey(activeDay.statusKey)) : $t('noStatusYet')
+            }}</span>
           </div>
           <p v-if="activeDay.record?.work_hours != null" class="readonly-line">
             {{ $t('workHours') }}: <b>{{ activeDay.record.work_hours }} {{ $t('hours') }}</b>
           </p>
           <p v-if="activeDay.record?.check_in" class="readonly-line">
-            {{ $t('checkIn') }}: {{ activeDay.record.check_in }} — {{ activeDay.record.check_out || '…' }}
+            {{ $t('checkIn') }}: {{ activeDay.record.check_in }} —
+            {{ activeDay.record.check_out || '…' }}
           </p>
-          <p v-if="activeDay.record?.note" class="readonly-line note">{{ activeDay.record.note }}</p>
+          <p v-if="activeDay.record?.note" class="readonly-line note">
+            {{ activeDay.record.note }}
+          </p>
         </template>
 
         <!-- Obyekt tashriflari (har ikki rol uchun) -->
@@ -168,7 +256,10 @@
           <div v-if="activeDayTrips.length" class="trip-list">
             <div v-for="(trip, i) in activeDayTrips" :key="i" class="trip-item">
               <span class="trip-where">{{ trip.whereto || trip.locationname || '—' }}</span>
-              <span class="trip-time">{{ tripTime(trip.when_gone) }}<template v-if="trip.when_came"> – {{ tripTime(trip.when_came) }}</template></span>
+              <span class="trip-time"
+                >{{ tripTime(trip.when_gone)
+                }}<template v-if="trip.when_came"> – {{ tripTime(trip.when_came) }}</template></span
+              >
               <span v-if="trip.company_name || trip.client_name" class="trip-company">
                 {{ trip.company_name || trip.client_name }}
               </span>
@@ -188,7 +279,7 @@
         </el-button>
       </template>
     </el-dialog>
-  </div>
+  </UiPage>
 </template>
 
 <script setup>
@@ -199,6 +290,10 @@ import { useComeAndGoesStore } from '@/stores/comeandgoes'
 import { ElMessage } from 'element-plus'
 import { Search, ArrowLeft, ArrowRight, MagicStick } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import UiPage from '@/components/ui/UiPage.vue'
+import UiStat from '@/components/ui/UiStat.vue'
+import UiPanel from '@/components/ui/UiPanel.vue'
+import { fmtNum } from '@/utils/format'
 
 const { t, locale } = useI18n()
 const attendanceStore = useAttendanceStore()
@@ -220,7 +315,20 @@ const statusColor = (key) => STATUS_LIST.find((s) => s.key === key)?.color || '#
 const statusLabelKey = (key) => STATUS_LIST.find((s) => s.key === key)?.labelKey || 'noStatusYet'
 
 const weekdays = ['wdMon', 'wdTue', 'wdWed', 'wdThu', 'wdFri', 'wdSat', 'wdSun']
-const uzMonths = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr']
+const uzMonths = [
+  'Yanvar',
+  'Fevral',
+  'Mart',
+  'Aprel',
+  'May',
+  'Iyun',
+  'Iyul',
+  'Avgust',
+  'Sentabr',
+  'Oktabr',
+  'Noyabr',
+  'Dekabr',
+]
 
 // ─── Date helpers (local time) ───
 const pad = (n) => String(n).padStart(2, '0')
@@ -253,6 +361,15 @@ const changeMonth = (delta) => {
   }
   month.value = m
   year.value = y
+  loadData()
+}
+
+const isCurrentMonth = computed(
+  () => year.value === now.getFullYear() && month.value === now.getMonth() + 1,
+)
+const goCurrentMonth = () => {
+  year.value = now.getFullYear()
+  month.value = now.getMonth() + 1
   loadData()
 }
 
@@ -349,8 +466,16 @@ const stats = computed(() => {
   let worked = 0
   let absent = 0
   let hours = 0
+  let confirmed = 0
+  let suggested = 0
+  let trips = 0
+  let tripDays = 0
   for (const day of calendarDays.value) {
+    trips += day.tripCount
+    if (day.tripCount) tripDays++
     if (day.future || !day.statusKey) continue
+    if (day.confirmed) confirmed++
+    else suggested++
     if (WORKED.includes(day.statusKey)) {
       worked++
       hours += day.confirmed ? day.hours || 0 : 8
@@ -358,20 +483,35 @@ const stats = computed(() => {
       absent++
     }
   }
-  return { worked, absent, hours: Math.round(hours * 10) / 10 }
+  return {
+    worked,
+    absent,
+    hours: Math.round(hours * 10) / 10,
+    confirmed,
+    suggested,
+    trips,
+    tripDays,
+  }
 })
 
 // ─── Day dialog ───
 const dayDialog = ref(false)
 const activeDay = ref(null)
-const form = reactive({ status: 'office', work_hours: 8, check_in: null, check_out: null, note: '' })
+const form = reactive({
+  status: 'office',
+  work_hours: 8,
+  check_in: null,
+  check_out: null,
+  note: '',
+})
 
 const dialogTitle = computed(() => {
   if (!activeDay.value) return ''
   const d = new Date(activeDay.value.date + 'T00:00:00')
-  const label = locale.value === 'ru'
-    ? d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
-    : `${d.getDate()}-${uzMonths[d.getMonth()].toLowerCase()}`
+  const label =
+    locale.value === 'ru'
+      ? d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
+      : `${d.getDate()}-${uzMonths[d.getMonth()].toLowerCase()}`
   return isAdmin.value ? `${t('editAttendance')} — ${label}` : `${t('dayDetails')} — ${label}`
 })
 
@@ -493,268 +633,277 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.attendance-container {
-  width: 100%;
-  padding: 28px 32px;
-  background: #f5f7fa;
-  min-height: 100vh;
-  box-sizing: border-box;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.header-text {
-  h1 {
-    margin: 0;
-    font-size: 26px;
-    font-weight: 700;
-    color: #1f2937;
-  }
-  .subtitle {
-    margin: 4px 0 0;
-    font-size: 14px;
-    color: #6b7280;
-  }
-}
-
-.month-nav {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  .month-label {
-    font-size: 16px;
-    font-weight: 600;
-    color: #374151;
-    min-width: 130px;
-    text-align: center;
-    text-transform: capitalize;
-  }
-}
-
-.legend {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-top: 16px;
-}
-.legend-item {
+/* ─── Oy tanlash ─── */
+.at-month {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #6b7280;
+  border: 1px solid var(--ui-line);
+  border-radius: 8px;
+  background: var(--ui-surface);
+
+  .el-button {
+    border: none;
+    background: transparent;
+  }
+  .el-button + .el-button {
+    margin-left: 0;
+  }
 }
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.at-month__label {
+  min-width: 140px;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  text-transform: capitalize;
+  color: var(--ui-ink);
 }
 
-/* ─── Body layout ─── */
-.davomat-body {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-}
+/* ─── Joylashuv ─── */
+.at-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
 
-.employee-panel {
-  width: 240px;
-  flex-shrink: 0;
-  background: white;
-  border-radius: 14px;
-  padding: 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  max-height: 70vh;
+  &.is-admin {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+}
+.at-main {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  min-width: 0;
 }
-.emp-search {
-  margin-bottom: 10px;
+
+/* ─── Xodimlar ─── */
+.at-emps {
+  position: sticky;
+  top: 16px;
 }
-.employee-list {
-  list-style: none;
+.at-emps__search {
+  padding: 12px 12px 8px;
+}
+.at-emps__list {
+  max-height: calc(100vh - 220px);
   margin: 0;
-  padding: 0;
+  padding: 0 8px 8px;
+  list-style: none;
   overflow-y: auto;
 }
-.employee-item {
+.at-emp {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  padding: 7px 8px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.12s;
 
   &:hover {
-    background: #f3f4f6;
+    background: var(--ui-surface-2);
   }
-  &.active {
-    background: #409eff;
-    .emp-name {
-      color: white;
+  &.is-active {
+    background: var(--ui-link-soft);
+
+    .at-emp__name {
+      font-weight: 600;
+      color: var(--ui-link);
     }
   }
 }
-.emp-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: #409eff;
-  color: white;
+.at-emp__name {
   font-size: 13px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  &.big {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-  }
-}
-.employee-item.active .emp-avatar {
-  background: white;
-  color: #409eff;
-}
-.emp-name {
-  font-size: 14px;
-  color: #374151;
+  color: var(--ui-ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-.calendar-panel {
-  flex: 1;
-  min-width: 0;
-  background: white;
-  border-radius: 14px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.selected-emp-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-
-  h2 {
-    margin: 0;
-    font-size: 18px;
-    color: #1f2937;
-  }
-}
-
-.month-stats {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-
-/* ─── Calendar grid ─── */
-.weekday-row,
-.days-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-}
-.weekday {
-  text-align: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: #9ca3af;
-  padding-bottom: 4px;
-}
-.days-grid {
-  margin-top: 4px;
-}
-.day-cell {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  border: 1px solid #ebeef5;
-  border-radius: 10px;
-  background: white;
-  cursor: pointer;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 6px 8px;
-  font-family: inherit;
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease;
-
-  &.blank {
-    border: none;
-    background: transparent;
-    cursor: default;
-  }
-  &:not(.blank):hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  }
-  &.suggested {
-    border-style: dashed;
-  }
-  &.confirmed {
-    border-width: 1.5px;
-  }
-  &.today {
-    outline: 2px solid #409eff;
-    outline-offset: 1px;
-  }
-  &.future {
-    cursor: default;
-    opacity: 0.5;
-  }
-}
-.day-num {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-}
-.day-hours {
-  position: absolute;
-  bottom: 5px;
-  left: 8px;
-  font-size: 10px;
-  color: #6b7280;
-}
-.trip-badge {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background: #909399;
-  color: white;
-  font-size: 10px;
-  font-weight: 600;
-  min-width: 15px;
-  height: 15px;
-  padding: 0 3px;
-  border-radius: 999px;
-  display: flex;
+.at-avatar {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ui-link);
+  background: var(--ui-link-soft);
+  border-radius: 50%;
+}
+.at-emp.is-active .at-avatar {
+  color: white;
+  background: var(--ui-link);
+}
+.at-panel-sub {
+  font-weight: 400;
+  color: var(--ui-muted);
+  text-transform: capitalize;
 }
 
-/* ─── Day dialog ─── */
+/* ─── Ko'rsatkichlar ─── */
+.at-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* ─── Izoh ─── */
+.at-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ui-line-soft);
+}
+.at-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.at-legend__sep {
+  width: 1px;
+  height: 14px;
+  background: var(--ui-line);
+}
+.at-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.at-swatch {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+
+  &.is-confirmed {
+    background: #dbeafe;
+    border: 1.5px solid #60a5fa;
+  }
+  &.is-suggested {
+    background: #f8fafc;
+    border: 1.5px dashed #94a3b8;
+  }
+}
+.at-trip-badge {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  background: #64748b;
+  border-radius: 999px;
+  box-sizing: border-box;
+}
+
+/* ─── Kalendar ─── */
+.at-cal__week,
+.at-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+.at-cal__week span {
+  padding-bottom: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ui-muted);
+}
+.at-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  min-height: 78px;
+  padding: 6px 8px;
+  font-family: inherit;
+  text-align: left;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    box-shadow 0.12s,
+    border-color 0.12s;
+
+  &:not(.is-blank):not(.is-future):hover {
+    box-shadow: var(--ui-shadow-hover);
+  }
+  &.is-blank {
+    background: transparent;
+    border: none;
+    cursor: default;
+  }
+  &.is-suggested {
+    border-style: dashed;
+  }
+  &.is-confirmed {
+    border-width: 1.5px;
+  }
+  &.is-today {
+    outline: 2px solid var(--ui-link);
+    outline-offset: 1px;
+  }
+  &.is-future {
+    cursor: default;
+    opacity: 0.45;
+  }
+}
+.at-day__num {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ui-ink);
+  font-variant-numeric: tabular-nums;
+}
+.at-day__trips {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+.at-day__status {
+  max-width: 100%;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--ui-ink-2);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.at-day.is-suggested .at-day__status {
+  color: var(--ui-muted);
+}
+.at-day__hours {
+  margin-top: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ui-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Kun dialogi ─── */
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
 .day-dialog {
   display: flex;
   flex-direction: column;
@@ -764,17 +913,20 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  color: #e6a23c;
-  background: #fdf6ec;
   padding: 6px 10px;
-  border-radius: 8px;
+  font-size: 12px;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
 }
 .field-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #4b5563;
   margin-bottom: -4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ui-muted);
 }
 .status-chips {
   display: flex;
@@ -786,17 +938,17 @@ onMounted(async () => {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 999px;
-  background: white;
-  font-size: 13px;
-  color: #374151;
-  cursor: pointer;
   font-family: inherit;
+  font-size: 13px;
+  color: var(--ui-ink-2);
+  background: var(--ui-surface);
+  border: 1.5px solid var(--ui-line);
+  border-radius: 999px;
+  cursor: pointer;
   transition: all 0.15s ease;
 
   &:hover {
-    border-color: #c0c4cc;
+    border-color: #cbd5e1;
   }
 }
 .form-row {
@@ -815,26 +967,26 @@ onMounted(async () => {
   gap: 8px;
   font-size: 15px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--ui-ink);
 }
 .readonly-line {
   margin: 0;
   font-size: 14px;
-  color: #4b5563;
+  color: var(--ui-ink-2);
 
   &.note {
     font-style: italic;
-    color: #6b7280;
+    color: var(--ui-muted);
   }
 }
 .trips-section {
-  border-top: 1px solid #f0f0f0;
   padding-top: 12px;
+  border-top: 1px solid var(--ui-line-soft);
 
   h4 {
     margin: 0 0 8px;
     font-size: 14px;
-    color: #374151;
+    color: var(--ui-ink);
   }
 }
 .trip-list {
@@ -847,54 +999,61 @@ onMounted(async () => {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px;
-  background: #f9fafb;
-  border-radius: 8px;
   padding: 8px 10px;
   font-size: 13px;
+  background: var(--ui-surface-2);
+  border: 1px solid var(--ui-line-soft);
+  border-radius: 6px;
 }
 .trip-where {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--ui-ink);
 }
 .trip-time {
-  color: #6b7280;
   font-size: 12px;
+  color: var(--ui-muted);
+  font-variant-numeric: tabular-nums;
 }
 .trip-company {
-  color: #9ca3af;
   font-size: 12px;
+  color: var(--ui-faint);
 }
 .no-trips {
   margin: 0;
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--ui-faint);
 }
 
 /* ─── Responsive ─── */
+@media (max-width: 1280px) {
+  .at-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 @media (max-width: 900px) {
-  .attendance-container {
-    padding: 20px 14px;
+  .at-body.is-admin {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .davomat-body {
-    flex-direction: column;
+  .at-emps {
+    position: static;
   }
-  .employee-panel {
-    width: 100%;
-    max-height: none;
-    flex-direction: column;
-  }
-  .employee-list {
+  .at-emps__list {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+    max-height: none;
   }
-  .employee-item {
-    flex: 0 0 auto;
+  .at-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .day-cell {
+  .at-day {
+    min-height: 54px;
     padding: 4px;
   }
-  .day-num {
+  .at-day__status {
+    display: none;
+  }
+  .at-day__num {
     font-size: 12px;
   }
 }
