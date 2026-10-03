@@ -1686,5 +1686,6 @@
   "attConfirmAllBtn": "Tasdiqlash ({n} kun)",
   "attConfirmAllDone": "{created} kun tasdiqlandi ({skipped} tasi oldin tasdiqlangan edi)",
   "attConfirmAllNoCam": "bu oy kamerada yo'q",
-  "attConfirmAllEmpty": "Tasdiqlanmagan kun qolmagan"
+  "attConfirmAllEmpty": "Tasdiqlanmagan kun qolmagan",
+  "camInside": "ofisda"
 }

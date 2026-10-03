@@ -1684,5 +1684,6 @@
   "attConfirmAllBtn": "Подтвердить ({n} дн.)",
   "attConfirmAllDone": "Подтверждено дней: {created} (ранее подтверждено: {skipped})",
   "attConfirmAllNoCam": "в этом месяце нет в камере",
-  "attConfirmAllEmpty": "Неподтверждённых дней нет"
+  "attConfirmAllEmpty": "Неподтверждённых дней нет",
+  "camInside": "в офисе"
 }

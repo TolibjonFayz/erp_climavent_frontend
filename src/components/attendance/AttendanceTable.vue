@@ -183,10 +183,15 @@
                   <span
                     v-if="day.camera && !day.future"
                     class="at-day__cam"
-                    :class="{ 'is-partial': !day.camera.check_in || !day.camera.check_out }"
+                    :class="{
+                      'is-inside': isInsideNow(day),
+                      'is-partial':
+                        !isInsideNow(day) && (!day.camera.check_in || !day.camera.check_out),
+                    }"
                     :title="cameraTitle(day.camera)"
                   >
-                    {{ day.camera.check_in || '—' }} → {{ day.camera.check_out || '—' }}
+                    {{ day.camera.check_in || '—' }} →
+                    {{ isInsideNow(day) ? $t('camInside') : day.camera.check_out || '—' }}
                   </span>
                   <span v-if="day.confirmed && day.hours != null" class="at-day__hours">
                     {{ day.hours }} {{ $t('hours') }}
@@ -321,7 +326,8 @@
             </div>
             <div class="cam-cell">
               <span class="cam-cell__label">{{ $t('camOut') }}</span>
-              <b :class="{ 'is-missing': !activeDay.camera.check_out }">
+              <b v-if="isInsideNow(activeDay)" class="is-inside">{{ $t('camInside') }}</b>
+              <b v-else :class="{ 'is-missing': !activeDay.camera.check_out }">
                 {{ activeDay.camera.check_out || $t('camMissingOut') }}
               </b>
               <span class="cam-cell__sub">{{
@@ -614,6 +620,9 @@ const cameraByDate = computed(() => {
 const hasCamera = computed(() => attendanceStore.cameraRecords.length > 0)
 // Ofis ochiq bo'lgan kunlar (kamida 4 kishi qayd etilgan) — qolgan ish kunlari bayram
 const officeDaySet = computed(() => new Set(attendanceStore.cameraOfficeDays))
+
+// Bugun oxirgi qaydi kirish bo'lgan xodim hozir ofisda — oraliq chiqish (tushlik va h.k.) "ketdi" emas
+const isInsideNow = (day) => day.date === todayStr && !!day.camera?.is_inside
 
 const cameraTitle = (cam) =>
   `${t('camIn')}: ${cam.check_in || t('camMissingIn')} · ${t('camOut')}: ${cam.check_out || t('camMissingOut')}`
@@ -1421,6 +1430,9 @@ onMounted(async () => {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 
+  &.is-inside {
+    color: #15803d;
+  }
   &.is-partial {
     color: #b45309;
   }
@@ -1471,6 +1483,10 @@ onMounted(async () => {
       font-size: 13px;
       font-weight: 500;
       color: #b45309;
+    }
+    &.is-inside {
+      font-size: 15px;
+      color: #15803d;
     }
   }
 }
