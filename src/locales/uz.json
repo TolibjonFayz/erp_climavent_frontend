@@ -1687,5 +1687,7 @@
   "attConfirmAllDone": "{created} kun tasdiqlandi ({skipped} tasi oldin tasdiqlangan edi)",
   "attConfirmAllNoCam": "bu oy kamerada yo'q",
   "attConfirmAllEmpty": "Tasdiqlanmagan kun qolmagan",
-  "camInside": "ofisda"
+  "camInside": "ofisda",
+  "camDeviceOffline": "{dir} terminali {t} dan beri uzilgan",
+  "camDeviceOfflineHint": "Terminal ({host}) tarmoqda yo'q: tokini, kabelini tekshiring yoki qayta yoqing. Qaydlar ulangach o'zi yetib keladi."
 }

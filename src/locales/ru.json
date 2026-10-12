@@ -1685,5 +1685,7 @@
   "attConfirmAllDone": "Подтверждено дней: {created} (ранее подтверждено: {skipped})",
   "attConfirmAllNoCam": "в этом месяце нет в камере",
   "attConfirmAllEmpty": "Неподтверждённых дней нет",
-  "camInside": "в офисе"
+  "camInside": "в офисе",
+  "camDeviceOffline": "Терминал «{dir}» не на связи с {t}",
+  "camDeviceOfflineHint": "Терминал ({host}) недоступен в сети: проверьте питание и кабель или перезагрузите его. Записи подтянутся после подключения."
 }

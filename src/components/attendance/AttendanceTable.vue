@@ -11,7 +11,7 @@
         type="button"
         class="at-cam-sync"
         :class="{ 'is-stale': cameraSync.stale }"
-        :title="cameraSync.stale ? $t('camSyncStale', { h: cameraSync.hours }) : ''"
+        :title="cameraSync.title"
         @click="openCameraDialog"
       >
         <el-icon><VideoCamera /></el-icon>
@@ -384,7 +384,12 @@
       <div class="cam-setup">
         <h4>{{ $t('camDevices') }}</h4>
         <div class="cam-devices">
-          <div v-for="d in attendanceStore.cameraDevices" :key="d.device_serial" class="cam-device">
+          <div
+            v-for="d in attendanceStore.cameraDevices"
+            :key="d.device_serial"
+            class="cam-device"
+            :class="{ 'is-offline': isDeviceOffline(d) }"
+          >
             <b>{{ d.direction === 'in' ? $t('camDirIn') : $t('camDirOut') }}</b>
             <span>{{ d.host }}</span>
             <span>{{ $t('camLastSync', { t: fmtSync(d.last_sync_at) }) }}</span>
@@ -895,12 +900,29 @@ const fmtSync = (iso) => {
   return toDateStr(d) === todayStr ? time : `${pad(d.getDate())}.${pad(d.getMonth() + 1)} ${time}`
 }
 // Agent ofis kompyuterida ishlaydi — 24 soatdan ko'p jim tursa ogohlantiramiz
+// Bitta terminal boshqasidan 1 soatdan ko'p orqada qolsa — o'sha terminal tarmoqdan uzilgan
+const OFFLINE_LAG_MS = 3600000
+const syncTime = (d) => (d.last_sync_at ? new Date(d.last_sync_at).getTime() : 0)
+const newestSync = computed(() => Math.max(0, ...attendanceStore.cameraDevices.map(syncTime)))
+const isDeviceOffline = (d) => newestSync.value - syncTime(d) > OFFLINE_LAG_MS
+const dirLabel = (d) => (d.direction === 'in' ? t('camDirIn') : t('camDirOut'))
+
 const cameraSync = computed(() => {
-  const times = attendanceStore.cameraDevices.map((d) => d.last_sync_at).filter(Boolean)
-  if (!times.length) return { label: t('camNeverSynced'), stale: false, hours: 0 }
-  const last = times.sort().at(-1)
-  const hours = Math.floor((Date.now() - new Date(last).getTime()) / 3600000)
-  return { label: t('camLastSync', { t: fmtSync(last) }), stale: hours >= 24, hours }
+  if (!newestSync.value) return { label: t('camNeverSynced'), stale: false, title: '' }
+  const offline = attendanceStore.cameraDevices.find(isDeviceOffline)
+  if (offline) {
+    const label = t('camDeviceOffline', {
+      dir: dirLabel(offline),
+      t: fmtSync(offline.last_sync_at),
+    })
+    return { label, stale: true, title: t('camDeviceOfflineHint', { host: offline.host }) }
+  }
+  const hours = Math.floor((Date.now() - newestSync.value) / 3600000)
+  return {
+    label: t('camLastSync', { t: fmtSync(newestSync.value) }),
+    stale: hours >= 24,
+    title: hours >= 24 ? t('camSyncStale', { h: hours }) : '',
+  }
 })
 
 const openCameraDialog = async () => {
@@ -1522,6 +1544,11 @@ onMounted(async () => {
   background: var(--ui-surface-2);
   border: 1px solid var(--ui-line-soft);
   border-radius: 6px;
+}
+.cam-device.is-offline {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fca5a5;
 }
 .cam-hint {
   margin: -2px 0 10px;
