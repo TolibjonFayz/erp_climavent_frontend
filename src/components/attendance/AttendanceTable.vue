@@ -170,7 +170,7 @@
                     'is-future': day.future,
                   }"
                   :style="dayStyle(day)"
-                  :title="day.statusKey ? $t(statusLabelKey(day.statusKey)) : ''"
+                  :title="day.statusKey ? $t(dayLabelKey(day)) : ''"
                   @click="openDay(day)"
                 >
                   <span class="at-day__num">{{ day.dayNum }}</span>
@@ -178,20 +178,26 @@
                     {{ day.tripCount }}
                   </span>
                   <span v-if="day.statusKey && !day.future" class="at-day__status">
-                    {{ $t(statusLabelKey(day.statusKey)) }}
+                    {{ $t(dayLabelKey(day)) }}
+                  </span>
+                  <!-- Kelgan vaqti — katakda eng ko'zga tashlanadigan qator -->
+                  <span
+                    v-if="arrivalTime(day) && !day.future"
+                    class="at-day__in"
+                    :title="day.camera ? cameraTitle(day.camera) : ''"
+                  >
+                    {{ arrivalTime(day) }}
                   </span>
                   <span
-                    v-if="day.camera && !day.future"
+                    v-if="(day.camera || leaveTime(day)) && !day.future"
                     class="at-day__cam"
                     :class="{
                       'is-inside': isInsideNow(day),
-                      'is-partial':
-                        !isInsideNow(day) && (!day.camera.check_in || !day.camera.check_out),
+                      'is-partial': !isInsideNow(day) && (!arrivalTime(day) || !leaveTime(day)),
                     }"
-                    :title="cameraTitle(day.camera)"
+                    :title="day.camera ? cameraTitle(day.camera) : ''"
                   >
-                    {{ day.camera.check_in || '—' }} →
-                    {{ isInsideNow(day) ? $t('camInside') : day.camera.check_out || '—' }}
+                    → {{ isInsideNow(day) ? $t('camInside') : leaveTime(day) || '—' }}
                   </span>
                   <span v-if="day.confirmed && day.hours != null" class="at-day__hours">
                     {{ day.hours }} {{ $t('hours') }}
@@ -296,7 +302,7 @@
               :style="{ background: statusColor(activeDay.statusKey) }"
             ></span>
             <span>{{
-              activeDay.statusKey ? $t(statusLabelKey(activeDay.statusKey)) : $t('noStatusYet')
+              activeDay.statusKey ? $t(dayLabelKey(activeDay)) : $t('noStatusYet')
             }}</span>
           </div>
           <p v-if="activeDay.record?.work_hours != null" class="readonly-line">
@@ -469,6 +475,7 @@ import {
   flattenTrips,
   groupTripsByDate,
   hiredFrom,
+  isOffStatus,
   suggestStatus,
 } from './suggest'
 
@@ -628,6 +635,17 @@ const officeDaySet = computed(() => new Set(attendanceStore.cameraOfficeDays))
 
 // Bugun oxirgi qaydi kirish bo'lgan xodim hozir ofisda — oraliq chiqish (tushlik va h.k.) "ketdi" emas
 const isInsideNow = (day) => day.date === todayStr && !!day.camera?.is_inside
+
+// Kelgan/ketgan vaqt: kamera qaydi, u bo'lmasa admin kiritgan vaqt
+const arrivalTime = (day) => day.camera?.check_in || day.record?.check_in || null
+const leaveTime = (day) => (day.camera ? day.camera.check_out : day.record?.check_out) || null
+
+// Shanba — qisqa ish kuni: kelmagan bo'lsa katakda "Dam olish"/"Kelmadi" o'rniga "Qisqa kun"
+const isSaturday = (dateStr) => new Date(dateStr + 'T00:00:00').getDay() === 6
+const dayLabelKey = (day) =>
+  isSaturday(day.date) && isOffStatus(day.statusKey)
+    ? 'attShortDay'
+    : statusLabelKey(day.statusKey)
 
 const cameraTitle = (cam) =>
   `${t('camIn')}: ${cam.check_in || t('camMissingIn')} · ${t('camOut')}: ${cam.check_out || t('camMissingOut')}`
@@ -1445,6 +1463,13 @@ onMounted(async () => {
   background: #fef3c7;
   border-radius: 999px;
 }
+.at-day__in {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0f766e;
+  font-variant-numeric: tabular-nums;
+}
 .at-day__cam {
   font-size: 11px;
   font-weight: 600;
@@ -1602,6 +1627,9 @@ onMounted(async () => {
   }
   .at-day__num {
     font-size: 12px;
+  }
+  .at-day__in {
+    font-size: 11px;
   }
 }
 </style>
