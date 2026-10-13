@@ -170,6 +170,21 @@
             <span v-else class="ly-muted">—</span>
           </template>
         </el-table-column>
+        <el-table-column :label="$t('loyihaTableDates')" min-width="150">
+          <template #default="{ row }">
+            <template v-if="row.given_date || row.finished_date">
+              <div>
+                <span class="ly-sub">{{ $t('loyihaTableGiven') }}:</span>
+                {{ row.given_date ? formatDate(row.given_date) : '—' }}
+              </div>
+              <div>
+                <span class="ly-sub">{{ $t('loyihaTableFinished') }}:</span>
+                {{ row.finished_date ? formatDate(row.finished_date) : '—' }}
+              </div>
+            </template>
+            <span v-else class="ly-muted">—</span>
+          </template>
+        </el-table-column>
         <el-table-column
           v-for="doc in docCols"
           :key="doc.key"
@@ -488,6 +503,8 @@ const exportExcel = () => {
     [t('loyihaTableSystem')]: row.system_info || '—',
     [t('loyihaTableArea')]: row.area ?? '—',
     [t('loyihaTableDifficulty')]: row.difficulty ?? '—',
+    [t('loyihaGivenDateLabel')]: row.given_date || '—',
+    [t('loyihaFinishedDateLabel')]: row.finished_date || '—',
     [t('loyihaKpNumberLabel')]: row.kp_number || '—',
     [t('loyihaKpSumLabel')]: row.kp_sum ?? '—',
     [t('loyihaKpDateLabel')]: row.kp_date || '—',

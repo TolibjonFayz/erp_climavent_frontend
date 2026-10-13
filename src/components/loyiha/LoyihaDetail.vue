@@ -205,6 +205,16 @@ const mainItems = computed(() => {
       label: t('loyihaAreaLabel'),
       value: l.area != null ? `${formatNumber(l.area)} m²` : '',
     },
+    {
+      key: 'given',
+      label: t('loyihaGivenDateLabel'),
+      value: l.given_date ? formatDate(l.given_date) : '',
+    },
+    {
+      key: 'finished',
+      label: t('loyihaFinishedDateLabel'),
+      value: l.finished_date ? formatDate(l.finished_date) : '',
+    },
   ]
 })
 const contactItems = computed(() => {

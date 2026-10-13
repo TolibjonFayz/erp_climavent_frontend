@@ -23,7 +23,7 @@
                   </el-tooltip>
                 </div>
               </template>
-              <el-radio-group v-model="form.status" class="status-picker">
+              <el-radio-group v-model="form.status" class="status-picker" @change="onStatusChange">
                 <el-radio-button
                   v-for="opt in statusOptions"
                   :key="opt.value"
@@ -118,6 +118,46 @@
                   {{ form.difficulty }}/10
                 </span>
               </div>
+            </el-form-item>
+          </el-col>
+
+          <el-col :span="12">
+            <el-form-item prop="given_date">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaGivenDateLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaGivenDateTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
+              <el-date-picker
+                v-model="form.given_date"
+                type="date"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item prop="finished_date">
+              <template #label>
+                <div class="label-with-tooltip">
+                  {{ $t('loyihaFinishedDateLabel') }}
+                  <el-tooltip effect="dark" :content="$t('loyihaFinishedDateTooltip')" placement="top">
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+              </template>
+              <el-date-picker
+                v-model="form.finished_date"
+                type="date"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                :disabled-date="beforeGivenDate"
+                style="width: 100%"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -335,6 +375,8 @@ const initialForm = () => ({
   system_info: '',
   area: null,
   difficulty: 5,
+  given_date: '',
+  finished_date: '',
   contact_phone: '',
   contact_address: '',
   kp_number: '',
@@ -363,6 +405,8 @@ watch(
       system_info: d.system_info || '',
       area: d.area ?? null,
       difficulty: d.difficulty || 5,
+      given_date: d.given_date ? String(d.given_date).slice(0, 10) : '',
+      finished_date: d.finished_date ? String(d.finished_date).slice(0, 10) : '',
       contact_phone: d.contact_phone || '',
       contact_address: d.contact_address || '',
       kp_number: d.kp_number || '',
@@ -377,7 +421,36 @@ watch(
   { immediate: true },
 )
 
-const formRules = {}
+// Xodim "Tugadi"ni tanlasa va tugatilgan kun bo'sh bo'lsa — bugungi sana qo'yiladi (o'zgartirsa bo'ladi).
+// watch emas, @change: forma ochilib to'ldirilayotganda ishlab ketmasin
+const onStatusChange = (status) => {
+  if (status !== 'done' || form.finished_date) return
+  const now = new Date()
+  const pad = (n) => String(n).padStart(2, '0')
+  form.finished_date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
+
+// Tugatilgan kun berilgan kundan oldin bo'lishi mumkin emas
+const beforeGivenDate = (date) => {
+  if (!form.given_date) return false
+  const [y, m, d] = form.given_date.split('-').map(Number)
+  return date < new Date(y, m - 1, d)
+}
+
+const formRules = {
+  finished_date: [
+    {
+      validator: (_rule, value, callback) => {
+        if (value && form.given_date && value < form.given_date) {
+          callback(new Error(t('loyihaFinishedBeforeGiven')))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'change',
+    },
+  ],
+}
 
 const handleSubmit = async () => {
   if (!formRef.value) return
@@ -395,6 +468,9 @@ const handleSubmit = async () => {
     system_info: text(form.system_info),
     area: form.area ?? undefined,
     difficulty: form.difficulty || undefined,
+    // null — tahrirlashda sanani o'chirib qo'yish ham ishlasin
+    given_date: form.given_date || null,
+    finished_date: form.finished_date || null,
     contact_phone: text(form.contact_phone),
     contact_address: text(form.contact_address),
     kp_number: text(form.kp_number),
