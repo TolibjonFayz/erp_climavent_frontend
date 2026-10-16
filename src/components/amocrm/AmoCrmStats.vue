@@ -17,6 +17,9 @@
         </span>
       </div>
       <div class="amo-top__actions">
+        <el-button :icon="Download" :disabled="!stats" @click="reportOpen = true">
+          {{ $t('amoReportBtn') }}
+        </el-button>
         <el-button :icon="UserFilled" @click="exclusionsOpen = true">
           {{ $t('amoExclusionsBtn') }}
         </el-button>
@@ -481,11 +484,156 @@
             </article>
           </div>
         </el-tab-pane>
+
+        <!-- ─── Xorijiy qo'ng'iroqlar ─── -->
+        <el-tab-pane name="foreign" :label="`${$t('amoTabForeign')} · ${fmtNum(foreign.total)}`">
+          <p class="amo-caption">{{ $t('amoForeignCaption') }}</p>
+          <div v-if="!foreign.total" class="amo-empty">{{ $t('amoForeignEmpty') }}</div>
+          <template v-else>
+            <div class="amo-overview amo-overview--leads">
+              <component
+                :is="k.onClick ? 'button' : 'div'"
+                v-for="k in foreignTiles"
+                :key="k.key"
+                :type="k.onClick ? 'button' : undefined"
+                class="amo-stat amo-stat--sm"
+                :class="[k.tone && `is-${k.tone}`, { 'is-link': k.onClick }]"
+                @click="k.onClick && k.onClick()"
+              >
+                <span class="amo-stat__label"><AmoHint :label="k.label" :hint="k.hint" /></span>
+                <span class="amo-stat__value">{{ k.value }}</span>
+                <span class="amo-stat__sub">{{ k.sub || ' ' }}</span>
+              </component>
+            </div>
+
+            <!-- Kiruvchi / chiquvchi natijalari -->
+            <div class="amo-grid-2">
+              <article v-for="dir in foreignDirections" :key="dir.key" class="amo-panel">
+                <header class="amo-panel__head">
+                  <h4>
+                    <span class="amo-dir-icon" :class="`is-${dir.key}`">
+                      <el-icon><component :is="dir.icon" /></el-icon>
+                    </span>
+                    {{ dir.title }}
+                  </h4>
+                  <button type="button" class="amo-num amo-num--lg" @click="dir.onTotal()">
+                    {{ fmtNum(dir.total) }}
+                  </button>
+                </header>
+                <div v-if="!dir.rows.length" class="amo-empty">{{ $t('amoNoData') }}</div>
+                <div v-else class="amo-bars">
+                  <button
+                    v-for="r in dir.rows"
+                    :key="r.status"
+                    type="button"
+                    class="amo-bar-row is-link"
+                    @click="r.onClick()"
+                  >
+                    <span class="amo-bar-row__label">
+                      <AmoHint :label="r.label" :hint="r.hint" />
+                    </span>
+                    <span class="amo-bar-row__track">
+                      <span
+                        class="amo-bar-row__fill"
+                        :class="{ 'is-bad': r.bad }"
+                        :style="{ width: barWidth(r.count, dir.max) }"
+                      ></span>
+                    </span>
+                    <span class="amo-bar-row__val">
+                      {{ fmtNum(r.count) }} <small>{{ pct(r.count, dir.total) }}%</small>
+                    </span>
+                  </button>
+                </div>
+              </article>
+            </div>
+
+            <!-- Davlatlar -->
+            <article class="amo-panel">
+              <header class="amo-panel__head">
+                <h4>
+                  <AmoHint
+                    :label="$t('amoForeignByCountry')"
+                    :hint="$t('amoHintForeignByCountry')"
+                  />
+                </h4>
+                <span class="amo-panel__meta">
+                  {{ $t('amoCallsDuration') }}: <b>{{ fmtDuration(foreign.duration, t) }}</b>
+                </span>
+              </header>
+              <el-table :data="countryRows" size="small" class="amo-table" row-key="country">
+                <el-table-column type="expand">
+                  <template #default="{ row }">
+                    <div class="amo-country-statuses">
+                      <span class="amo-country-statuses__title">{{
+                        $t('amoForeignStatuses')
+                      }}</span>
+                      <button
+                        v-for="st in row.statuses"
+                        :key="`${st.direction}${st.status}`"
+                        type="button"
+                        class="amo-chip"
+                        @click="drillCountryStatus(row, st)"
+                      >
+                        {{ $t(st.direction === 'in' ? 'amoDirIn' : 'amoDirOut') }}:
+                        {{ $t(callStatusKey(st.direction, st.status)) }}
+                        <b>{{ fmtNum(st.count) }}</b>
+                      </button>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column :label="$t('amoColCountry')" min-width="170">
+                  <template #default="{ row }">
+                    <b>{{ row.name }}</b>
+                    <span v-if="row.country !== 'XX'" class="amo-muted"> · {{ row.country }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  v-for="col in countryCols"
+                  :key="col.prop"
+                  :prop="col.prop"
+                  align="right"
+                  :min-width="col.width"
+                >
+                  <template #header>
+                    <AmoHint :label="col.label" :hint="col.hint" />
+                  </template>
+                  <template #default="{ row }">
+                    <button
+                      v-if="col.kind && row[col.prop]"
+                      type="button"
+                      class="amo-num"
+                      :class="{ 'is-bad': col.bad }"
+                      @click="drillCountry(row, col)"
+                    >
+                      {{ fmtNum(row[col.prop]) }}
+                    </button>
+                    <span v-else-if="col.kind" class="amo-muted">0</span>
+                    <span v-else-if="col.prop === 'duration'">{{
+                      fmtDuration(row.duration, t)
+                    }}</span>
+                    <span v-else>{{ fmtNum(row[col.prop]) }}</span>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </article>
+          </template>
+        </el-tab-pane>
+
+        <!-- ─── Ovozli yozuvlar ─── -->
+        <el-tab-pane name="recordings" :label="$t('amoTabRecordings')" lazy>
+          <AmoRecordings :params="filterParams" :users="users" :amo-url="stats.amo_url || ''" />
+        </el-tab-pane>
       </el-tabs>
     </template>
 
     <AmoDrillDrawer v-model="drillOpen" :request="drillRequest" :stats="stats" @changed="load" />
     <AmoExclusionsDrawer v-model="exclusionsOpen" :users="users" @changed="load" />
+    <AmoYearReport
+      v-model="reportOpen"
+      :users="users"
+      :initial-scope="scope"
+      :initial-user-id="userId"
+    />
   </section>
 </template>
 
@@ -493,15 +641,19 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { Bottom, Filter, Refresh, Top, UserFilled } from '@element-plus/icons-vue'
+import { Bottom, Download, Filter, Refresh, Top, UserFilled } from '@element-plus/icons-vue'
 import { useAmocrmStore } from '@/stores/amocrm'
 import AmoHint from '@/components/ui/UiHint.vue'
 import AmoDrillDrawer from './AmoDrillDrawer.vue'
 import AmoExclusionsDrawer from './AmoExclusionsDrawer.vue'
+import AmoRecordings from './AmoRecordings.vue'
+import AmoYearReport from './AmoYearReport.vue'
 import {
   AMO_CALL_STATUS_RU,
+  MONTHS,
   TALKED,
   callStatusKey,
+  countryName,
   fmtDuration,
   fmtNum,
   formatDate,
@@ -538,6 +690,7 @@ const userId = ref(null)
 // Standart — faqat mijozlar bilan qo'ng'iroqlar (hamkasb, tanish, ichki raqamlar chiqariladi)
 const scope = ref('clients')
 const exclusionsOpen = ref(false)
+const reportOpen = ref(false)
 const pipelineTab = ref('')
 const loadError = ref('')
 
@@ -673,6 +826,8 @@ const baseParams = () => ({
   responsible_user_id: userId.value || undefined,
   scope: scope.value,
 })
+// Faqat filtr o'zgarganda yangi obyekt — "Ovozli yozuvlar" ro'yxati shunga qarab yangilanadi
+const filterParams = computed(baseParams)
 
 // O'tkazib yuborilgan kiruvchilar odatda raqam bo'yicha ko'rilgani qulay
 function drillCalls(kind, title, extra = {}, opts = {}) {
@@ -825,7 +980,7 @@ const overview = computed(() => {
 })
 
 // ─── Qo'ng'iroqlar: kiruvchi / chiquvchi bloklari ─────────
-function statusRows(direction, list) {
+function statusRows(direction, list, extra = {}, titlePrefix = '') {
   const kind = direction === 'in' ? 'in' : 'out'
   return (list || [])
     .filter((s) => s.count > 0)
@@ -842,8 +997,8 @@ function statusRows(direction, list) {
         onClick: () =>
           drillCalls(
             kind,
-            label,
-            { status: s.status },
+            `${titlePrefix}${label}`,
+            { status: s.status, ...extra },
             { groupByPhone: direction === 'in' && s.status !== TALKED },
           ),
       }
@@ -952,6 +1107,137 @@ const directions = computed(() => {
   ]
 })
 
+// ─── Xorijiy qo'ng'iroqlar ────────────────────────────────
+const foreign = computed(() => calls.value?.foreign || { total: 0, by_country: [] })
+const foreignPrefix = computed(() => `${t('amoTabForeign')} — `)
+const drillForeign = (kind, label, extra = {}, opts = {}) =>
+  drillCalls(kind, `${foreignPrefix.value}${label}`, { country: 'foreign', ...extra }, opts)
+
+const foreignTiles = computed(() => {
+  const f = foreign.value
+  return [
+    {
+      key: 'total',
+      label: t('amoForeignTotal'),
+      hint: t('amoHintForeignTotal'),
+      value: fmtNum(f.total),
+      sub: t('amoOfCalls', { pct: pct(f.total, calls.value.total) }),
+      onClick: () => drillForeign('all', t('amoCallsTotal')),
+    },
+    {
+      key: 'numbers',
+      label: t('amoForeignNumbers'),
+      hint: t('amoHintForeignNumbers'),
+      value: fmtNum(f.numbers),
+      onClick: () => drillForeign('all', t('amoForeignNumbers'), {}, { groupByPhone: true }),
+    },
+    {
+      key: 'countries',
+      label: t('amoForeignCountries'),
+      hint: t('amoHintForeignCountries'),
+      value: fmtNum(f.by_country.length),
+    },
+    {
+      key: 'talked',
+      label: t('amoTalked'),
+      hint: t('amoHintTalked'),
+      value: fmtNum(f.talked),
+      sub: t('amoOfCalls', { pct: pct(f.talked, f.total) }),
+      tone: 'good',
+      onClick: () => drillForeign('answered', t('amoTalked')),
+    },
+    {
+      key: 'in_missed',
+      label: t('amoInMissed'),
+      hint: t('amoHintInMissed'),
+      value: fmtNum(f.incoming.missed),
+      sub: t('amoOfIncoming', { pct: pct(f.incoming.missed, f.incoming.total) }),
+      tone: 'bad',
+      onClick: () => drillForeign('in_missed', t('amoInMissed')),
+    },
+  ]
+})
+
+const foreignDirections = computed(() => {
+  const f = foreign.value
+  const extra = { country: 'foreign' }
+  const inRows = statusRows('in', f.incoming.by_status, extra, foreignPrefix.value)
+  const outRows = statusRows('out', f.outgoing.by_status, extra, foreignPrefix.value)
+  return [
+    {
+      key: 'in',
+      icon: Bottom,
+      title: t('amoForeignInTitle'),
+      total: f.incoming.total,
+      onTotal: () => drillForeign('in', t('amoInTotal')),
+      rows: inRows,
+      max: Math.max(1, ...inRows.map((r) => r.count)),
+    },
+    {
+      key: 'out',
+      icon: Top,
+      title: t('amoForeignOutTitle'),
+      total: f.outgoing.total,
+      onTotal: () => drillForeign('out', t('amoOutTotal')),
+      rows: outRows,
+      max: Math.max(1, ...outRows.map((r) => r.count)),
+    },
+  ]
+})
+
+const countryCols = computed(() => [
+  { prop: 'total', kind: 'all', label: t('amoColAll'), hint: t('amoHintForeignTotal'), width: 80 },
+  { prop: 'numbers', label: t('amoColNumbers'), hint: t('amoHintForeignNumbers'), width: 90 },
+  {
+    prop: 'in_answered',
+    kind: 'in_answered',
+    label: t('amoColInAnswered'),
+    hint: t('amoHintInAnswered'),
+    width: 110,
+  },
+  {
+    prop: 'in_missed',
+    kind: 'in_missed',
+    label: t('amoColInMissed'),
+    hint: t('amoHintInMissed'),
+    width: 120,
+    bad: true,
+  },
+  {
+    prop: 'out_answered',
+    kind: 'out_answered',
+    label: t('amoColOutAnswered'),
+    hint: t('amoHintOutAnswered'),
+    width: 110,
+  },
+  {
+    prop: 'out_no_answer',
+    kind: 'out_no_answer',
+    label: t('amoColOutNoAnswer'),
+    hint: t('amoHintOutNoAnswer'),
+    width: 125,
+  },
+  { prop: 'duration', label: t('amoCallsDuration'), hint: t('amoHintDuration'), width: 115 },
+])
+
+const countryRows = computed(() =>
+  foreign.value.by_country.map((c) => ({ ...c, name: countryName(c.country, locale.value, t) })),
+)
+
+function drillCountry(row, col) {
+  drillCalls(col.kind, `${row.name} — ${col.label}`, { country: row.country })
+}
+
+function drillCountryStatus(row, st) {
+  const label = t(callStatusKey(st.direction, st.status))
+  drillCalls(
+    st.direction === 'in' ? 'in' : 'out',
+    `${row.name} — ${label}`,
+    { country: row.country, status: st.status },
+    { groupByPhone: st.direction === 'in' && st.status !== TALKED },
+  )
+}
+
 // ─── Menejerlar jadvali ───────────────────────────────────
 const managerCols = computed(() => [
   { prop: 'total', kind: 'all', label: t('amoColAll'), hint: t('amoHintColAll'), width: 80 },
@@ -1003,11 +1289,6 @@ const trendByMonth = computed(() => {
   return (new Date(to) - new Date(from)) / 86400000 > 45
 })
 
-// Brauzerlarda o'zbekcha oy nomlari bo'lmasligi mumkin — o'zimiz beramiz
-const MONTHS = {
-  uz: ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyn', 'Iyl', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'],
-  ru: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],
-}
 const monthNames = computed(() => MONTHS[locale.value] || MONTHS.uz)
 
 const trend = computed(() => {
@@ -1423,6 +1704,21 @@ button {
   &:hover {
     border-color: #bfdbfe;
     color: $c-link;
+  }
+}
+
+/* Xorijiy: davlat qatori ochilganda — barcha statuslar */
+.amo-country-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 8px 48px;
+
+  &__title {
+    font-size: 12px;
+    color: $muted;
+    margin-right: 4px;
   }
 }
 

@@ -58,6 +58,9 @@
       <el-table-column :label="$t('amoColPhone')" min-width="160">
         <template #default="{ row }"><PhoneCell :phone="row.phone" /></template>
       </el-table-column>
+      <el-table-column v-if="isCountry" :label="$t('amoColCountry')" min-width="120">
+        <template #default="{ row }">{{ countryName(row.country, locale, t) }}</template>
+      </el-table-column>
       <el-table-column :label="$t('amoColContact')" min-width="150">
         <template #default="{ row }">{{ row.contact_name || '—' }}</template>
       </el-table-column>
@@ -86,6 +89,16 @@
       </el-table-column>
       <el-table-column v-if="isExcludedScope" :label="$t('amoColExclReason')" min-width="150">
         <template #default="{ row }">{{ $t(`amoExcl_${row.excl_reason}`) }}</template>
+      </el-table-column>
+      <el-table-column v-if="hasRecords" :label="$t('amoColRecord')" min-width="130">
+        <template #default="{ row }">
+          <AmoRecordPlayer
+            v-if="row.record_hash"
+            :key="row.record_hash"
+            :hash="row.record_hash"
+            :status="row.record_status"
+          />
+        </template>
       </el-table-column>
       <el-table-column width="120" align="right">
         <template #default="{ row }"><RowAction :row="row" /></template>
@@ -224,9 +237,11 @@ import {
 import * as XLSX from 'xlsx'
 import { useAmocrmStore } from '@/stores/amocrm'
 import AmoExcludeDialog from './AmoExcludeDialog.vue'
+import AmoRecordPlayer from './AmoRecordPlayer.vue'
 import {
   TALKED,
   callStatusKey,
+  countryName,
   fmtDuration,
   fmtNum,
   formatDate,
@@ -243,7 +258,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'changed'])
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const amoStore = useAmocrmStore()
 
 const open = computed({
@@ -265,6 +280,9 @@ const onlyNotCalledBack = ref(false)
 
 const isCalls = computed(() => props.request?.type === 'calls')
 const isExcludedScope = computed(() => props.request?.params?.scope === 'excluded')
+// Xorijiy qo'ng'iroqlar ro'yxati — davlat ustuni ko'rsatiladi
+const isCountry = computed(() => Boolean(props.request?.params?.country))
+const hasRecords = computed(() => items.value.some((r) => r.record_hash))
 const isMissed = computed(() => isCalls.value && props.request?.params?.kind === 'in_missed')
 const amoUrl = computed(() => props.stats?.amo_url || '')
 
@@ -398,6 +416,9 @@ function toSheetRow(row) {
       : {
           [t('amoColDate')]: formatDateTime(row.amo_created_at),
           [t('amoColPhone')]: row.phone || '',
+          ...(isCountry.value && {
+            [t('amoColCountry')]: countryName(row.country, locale.value, t),
+          }),
           [t('amoColDirection')]: t(row.direction === 'in' ? 'amoDirIn' : 'amoDirOut'),
           [t('amoColResult')]: t(callStatusKey(row.direction, row.call_status)),
           [t('amoColDuration')]: fmtDuration(row.duration, t),

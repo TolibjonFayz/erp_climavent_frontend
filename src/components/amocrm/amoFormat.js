@@ -55,3 +55,100 @@ export const telHref = (phone) => {
   // 9 xonali mahalliy raqam — O'zbekiston kodi qo'shiladi
   return `tel:+${digits.length === 9 ? `998${digits}` : digits}`
 }
+
+// Brauzerlar (Chrome ham) davlat nomlarini o'zbekchada bermaydi — inglizcha
+// qaytaradi. Shuning uchun backend ro'yxatidagi davlatlar nomi shu yerda.
+const COUNTRY_UZ = {
+  UZ: "O'zbekiston",
+  RU: 'Rossiya',
+  KZ: "Qozog'iston",
+  TJ: 'Tojikiston',
+  TM: 'Turkmaniston',
+  KG: "Qirg'iziston",
+  AZ: 'Ozarbayjon',
+  GE: 'Gruziya',
+  AM: 'Armaniston',
+  BY: 'Belarus',
+  UA: 'Ukraina',
+  MD: 'Moldova',
+  TR: 'Turkiya',
+  CN: 'Xitoy',
+  HK: 'Gonkong',
+  TW: 'Tayvan',
+  KR: 'Janubiy Koreya',
+  JP: 'Yaponiya',
+  VN: 'Vyetnam',
+  TH: 'Tailand',
+  MY: 'Malayziya',
+  ID: 'Indoneziya',
+  SG: 'Singapur',
+  IN: 'Hindiston',
+  PK: 'Pokiston',
+  AF: "Afg'oniston",
+  BD: 'Bangladesh',
+  IR: 'Eron',
+  AE: 'BAA',
+  SA: 'Saudiya Arabistoni',
+  QA: 'Qatar',
+  KW: 'Quvayt',
+  OM: 'Ummon',
+  BH: 'Bahrayn',
+  JO: 'Iordaniya',
+  IQ: 'Iroq',
+  LB: 'Livan',
+  IL: 'Isroil',
+  EG: 'Misr',
+  US: 'AQSH / Kanada',
+  GB: 'Buyuk Britaniya',
+  DE: 'Germaniya',
+  FR: 'Fransiya',
+  IT: 'Italiya',
+  ES: 'Ispaniya',
+  NL: 'Niderlandiya',
+  BE: 'Belgiya',
+  CH: 'Shveytsariya',
+  AT: 'Avstriya',
+  PL: 'Polsha',
+  CZ: 'Chexiya',
+  SE: 'Shvetsiya',
+  NO: 'Norvegiya',
+  DK: 'Daniya',
+  FI: 'Finlandiya',
+  LT: 'Litva',
+  LV: 'Latviya',
+  EE: 'Estoniya',
+  GR: 'Gretsiya',
+  HU: 'Vengriya',
+  RO: 'Ruminiya',
+  BG: 'Bolgariya',
+  RS: 'Serbiya',
+  AU: 'Avstraliya',
+}
+
+// Davlat nomi ISO kodi bo'yicha. XX — aniqlanmagan.
+const regionNames = {}
+export function countryName(code, locale, t) {
+  if (!code || code === 'XX') return t('amoCountryUnknown')
+  if (locale === 'uz' && COUNTRY_UZ[code]) return COUNTRY_UZ[code]
+  // +1 — AQSH ham, Kanada ham
+  if (code === 'US' && locale === 'ru') return 'США / Канада'
+  try {
+    regionNames[locale] ||= new Intl.DisplayNames([locale, 'ru'], { type: 'region' })
+    return regionNames[locale].of(code) || code
+  } catch {
+    return code
+  }
+}
+
+export function fmtBytes(bytes) {
+  const b = Number(bytes) || 0
+  if (b >= 1024 ** 3) return `${(b / 1024 ** 3).toFixed(1)} GB`
+  if (b >= 1024 ** 2) return `${(b / 1024 ** 2).toFixed(1)} MB`
+  return `${Math.round(b / 1024)} KB`
+}
+
+// Brauzerlarda o'zbekcha oy nomlari bo'lmasligi mumkin — o'zimiz beramiz
+export const MONTHS = {
+  uz: ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyn', 'Iyl', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'],
+  ru: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],
+}

@@ -41,6 +41,22 @@ export const useAmocrmStore = defineStore('amocrm', {
       return amocrmApi.restorePhone(key)
     },
 
+    async getReport(params) {
+      return amocrmApi.getReport(params)
+    },
+
+    async getRecordingsSummary() {
+      return amocrmApi.getRecordingsSummary()
+    },
+
+    async getRecordingUrl(hash, download = false) {
+      return amocrmApi.getRecordingUrl(hash, download)
+    },
+
+    async runHistorySync() {
+      return amocrmApi.runHistorySync()
+    },
+
     async getSyncStatus() {
       return amocrmApi.getSyncStatus()
     },
