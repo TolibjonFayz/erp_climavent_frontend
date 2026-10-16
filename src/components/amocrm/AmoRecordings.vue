@@ -140,12 +140,13 @@
       <el-table-column :label="$t('amoColDuration')" min-width="110" align="right">
         <template #default="{ row }">{{ fmtDuration(row.duration, t) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('amoColRecord')" min-width="300">
+      <el-table-column :label="$t('amoColRecord')" min-width="330">
         <template #default="{ row }">
           <AmoRecordPlayer
             :key="row.record_hash"
             :hash="row.record_hash"
             :status="row.record_status"
+            :duration="Number(row.duration) || 0"
           />
         </template>
       </el-table-column>

@@ -1775,5 +1775,8 @@
   "amoRecStatus_failed": "Faqat telefoniyada",
   "amoRecStatus_gone": "O'chib ketgan",
   "amoRecStatus_invalid": "Ochilmadi",
-  "amoRecEmpty": "Bu davrda yozuvi bor qo'ng'iroq topilmadi."
+  "amoRecEmpty": "Bu davrda yozuvi bor qo'ng'iroq topilmadi.",
+  "amoRecPause": "To'xtatish",
+  "amoRecSpeed": "Tezlik",
+  "amoRecSeek": "Yozuv bo'ylab o'tish"
 }

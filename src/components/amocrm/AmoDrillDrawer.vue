@@ -90,13 +90,14 @@
       <el-table-column v-if="isExcludedScope" :label="$t('amoColExclReason')" min-width="150">
         <template #default="{ row }">{{ $t(`amoExcl_${row.excl_reason}`) }}</template>
       </el-table-column>
-      <el-table-column v-if="hasRecords" :label="$t('amoColRecord')" min-width="130">
+      <el-table-column v-if="hasRecords" :label="$t('amoColRecord')" min-width="330">
         <template #default="{ row }">
           <AmoRecordPlayer
             v-if="row.record_hash"
             :key="row.record_hash"
             :hash="row.record_hash"
             :status="row.record_status"
+            :duration="Number(row.duration) || 0"
           />
         </template>
       </el-table-column>

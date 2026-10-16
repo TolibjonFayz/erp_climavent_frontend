@@ -1773,5 +1773,8 @@
   "amoRecStatus_failed": "Только в телефонии",
   "amoRecStatus_gone": "Удалена",
   "amoRecStatus_invalid": "Не открылась",
-  "amoRecEmpty": "За этот период звонков с записью не найдено."
+  "amoRecEmpty": "За этот период звонков с записью не найдено.",
+  "amoRecPause": "Пауза",
+  "amoRecSpeed": "Скорость",
+  "amoRecSeek": "Перемотка записи"
 }
