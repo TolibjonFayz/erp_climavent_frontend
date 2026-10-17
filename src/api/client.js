@@ -12,6 +12,18 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
+// Sessiya tugaganda nima qilinadi. Sayt /login sahifasiga o'tadi;
+// mobil ilova (hash router, Capacitor) o'z ishlovchisini o'rnatadi.
+let onUnauthorized = () => {
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login'
+  }
+}
+
+export function setUnauthorizedHandler(handler) {
+  onUnauthorized = handler
+}
+
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
@@ -19,9 +31,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('accesstoken')
       localStorage.removeItem('refreshtoken')
       localStorage.removeItem('userid')
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
-      }
+      onUnauthorized()
     }
     return Promise.reject(error)
   },

@@ -1,0 +1,440 @@
+/* Climavent ERP — mobil ilova uslubi.
+   Ranglar saytning klassik UI tizimi bilan bir xil (assets/main.css --ui-*). */
+
+:root {
+  --m-primary: #2a78d6;
+  --m-primary-soft: #eaf2fc;
+  --m-brand: #55cdf8;
+  --m-bg: #f2f4f7;
+  --m-surface: #ffffff;
+  --m-surface-2: #f8fafc;
+  --m-ink: #111827;
+  --m-ink-2: #374151;
+  --m-muted: #6b7280;
+  --m-faint: #9ca3af;
+  --m-line: #e5e7eb;
+  --m-line-soft: #f1f3f5;
+  --m-good: #15803d;
+  --m-good-soft: #ecfdf3;
+  --m-bad: #b91c1c;
+  --m-bad-soft: #fef2f2;
+  --m-warn: #b45309;
+  --m-warn-soft: #fffbeb;
+  --m-radius: 14px;
+  --m-radius-sm: 10px;
+  --m-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+
+  /* Xavfsiz hududlar: Android'da Capacitor --safe-area-inset-* ni o'zi qo'yadi,
+     iOS va yangi WebView'da env() ishlaydi */
+  --sat: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --sab: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --sal: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --sar: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --tabbar-h: 56px;
+
+  /* Vant mavzusi */
+  --van-primary-color: var(--m-primary);
+  --van-success-color: var(--m-good);
+  --van-danger-color: var(--m-bad);
+  --van-warning-color: #d97706;
+  --van-text-color: var(--m-ink);
+  --van-text-color-2: var(--m-muted);
+  --van-text-color-3: var(--m-faint);
+  --van-border-color: var(--m-line);
+  --van-background: var(--m-bg);
+  --van-background-2: var(--m-surface);
+  --van-active-color: var(--m-line-soft);
+  --van-font-size-md: 15px;
+  --van-cell-font-size: 15px;
+  --van-cell-group-inset-radius: var(--m-radius);
+  --van-cell-group-inset-padding: 0 12px;
+  --van-button-default-height: 44px;
+  --van-button-large-height: 50px;
+  --van-button-radius: 12px;
+  --van-button-large-font-size: 16px;
+  --van-tabbar-height: var(--tabbar-h);
+  --van-tabbar-item-active-color: var(--m-primary);
+  --van-tabbar-item-text-color: var(--m-muted);
+  --van-tabbar-item-font-size: 11px;
+  --van-tabbar-item-icon-size: 23px;
+  --van-search-background: transparent;
+  --van-search-content-background: var(--m-line-soft);
+  --van-popup-round-radius: 18px;
+  --van-tabs-bottom-bar-color: var(--m-primary);
+  --van-tab-active-text-color: var(--m-ink);
+  --van-floating-bubble-background: var(--m-primary);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--m-bg);
+  color: var(--m-ink);
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', 'Helvetica Neue', Arial,
+    sans-serif;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--m-primary);
+  text-decoration: none;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+/* ─── Sahifa sarlavhasi ostidagi bo'limlar ─── */
+.m-section {
+  margin: 18px 0 8px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.m-section__title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--m-muted);
+}
+
+.m-section__action {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--m-primary);
+  background: none;
+  border: 0;
+  padding: 4px 0;
+}
+
+/* ─── Karta ─── */
+.m-card {
+  background: var(--m-surface);
+  border-radius: var(--m-radius);
+  box-shadow: var(--m-shadow);
+  margin: 0 12px 10px;
+  padding: 14px;
+}
+
+.m-card.is-tappable:active {
+  background: var(--m-surface-2);
+}
+
+/* ─── Chiplar (gorizontal aylantiriladigan filtrlar) ─── */
+.m-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 16px 10px;
+  scrollbar-width: none;
+}
+
+.m-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.m-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 17px;
+  border: 1px solid var(--m-line);
+  background: var(--m-surface);
+  color: var(--m-ink-2);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.m-chip__count {
+  font-size: 12px;
+  color: var(--m-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.m-chip.is-active {
+  background: var(--m-ink);
+  border-color: var(--m-ink);
+  color: #fff;
+}
+
+.m-chip.is-active .m-chip__count {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.m-chip.is-bad {
+  color: var(--m-bad);
+  border-color: #fecaca;
+  background: var(--m-bad-soft);
+}
+
+.m-chip.is-bad.is-active {
+  background: var(--m-bad);
+  border-color: var(--m-bad);
+  color: #fff;
+}
+
+.m-chip.is-warn {
+  color: var(--m-warn);
+  border-color: #fde68a;
+  background: var(--m-warn-soft);
+}
+
+.m-chip.is-warn.is-active {
+  background: var(--m-warn);
+  border-color: var(--m-warn);
+  color: #fff;
+}
+
+/* ─── Teglar ─── */
+.m-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--m-line-soft);
+  color: var(--m-ink-2);
+  white-space: nowrap;
+}
+
+.m-tag.is-blue {
+  background: var(--m-primary-soft);
+  color: var(--m-primary);
+}
+
+.m-tag.is-good {
+  background: var(--m-good-soft);
+  color: var(--m-good);
+}
+
+.m-tag.is-bad {
+  background: var(--m-bad-soft);
+  color: var(--m-bad);
+}
+
+.m-tag.is-warn {
+  background: var(--m-warn-soft);
+  color: var(--m-warn);
+}
+
+/* ─── Avatar ─── */
+.m-avatar {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+  background: var(--m-primary);
+}
+
+.m-avatar.is-sm {
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+}
+
+/* ─── Raqamlar ─── */
+.m-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.m-muted {
+  color: var(--m-muted);
+}
+
+.m-faint {
+  color: var(--m-faint);
+}
+
+/* ─── Pastki yopishqoq tugmalar paneli ─── */
+.m-footer {
+  flex: 0 0 auto;
+  padding: 10px 16px calc(10px + var(--sab));
+  background: var(--m-surface);
+  border-top: 1px solid var(--m-line);
+  display: flex;
+  gap: 10px;
+}
+
+.m-footer > * {
+  flex: 1;
+}
+
+/* ─── Bo'sh holat ─── */
+.m-empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--m-muted);
+}
+
+.m-empty__icon {
+  font-size: 44px;
+  color: var(--m-faint);
+  margin-bottom: 10px;
+}
+
+.m-empty__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--m-ink-2);
+  margin-bottom: 4px;
+}
+
+/* ─── Ustunli diagramma (gorizontal) ─── */
+.m-bars {
+  display: grid;
+  gap: 12px;
+}
+
+.m-bar__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.m-bar__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--m-ink-2);
+}
+
+.m-bar__label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-bar__dot {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+
+.m-bar__value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.m-bar__value small {
+  font-weight: 400;
+  color: var(--m-faint);
+  margin-left: 4px;
+}
+
+.m-bar__track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--m-line-soft);
+  overflow: hidden;
+}
+
+.m-bar__fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--m-primary);
+  transition: width 0.4s ease;
+}
+
+/* ─── Vant moslashuvlari ─── */
+.van-cell-group--inset {
+  margin: 0 12px;
+}
+
+.van-popup--bottom.van-popup--round {
+  padding-bottom: var(--sab);
+}
+
+.van-toast {
+  border-radius: 12px;
+}
+
+.van-floating-bubble {
+  box-shadow: 0 6px 20px rgba(42, 120, 214, 0.35);
+}
+
+/* ─── Sahifalar orasidagi o'tish ─── */
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition:
+    transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.28s ease;
+}
+
+.slide-left-enter-from {
+  transform: translateX(100%);
+}
+
+.slide-left-leave-to {
+  transform: translateX(-25%);
+  opacity: 0.6;
+}
+
+.slide-right-enter-from {
+  transform: translateX(-25%);
+  opacity: 0.6;
+}
+
+.slide-right-leave-to {
+  transform: translateX(100%);
+}
+
+.slide-left-enter-active,
+.slide-right-leave-active {
+  z-index: 2;
+}

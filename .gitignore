@@ -29,3 +29,6 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Mobil ilova (Capacitor)
+dist-mobile

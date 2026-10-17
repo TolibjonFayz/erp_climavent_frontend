@@ -1,0 +1,26 @@
+{
+  "appId": "uz.climavent.erp",
+  "appName": "Climavent ERP",
+  "webDir": "dist-mobile",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": false,
+      "backgroundColor": "#ffffff",
+      "showSpinner": false
+    },
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "LIGHT"
+    },
+    "CapacitorHttp": {
+      "enabled": false
+    }
+  }
+}

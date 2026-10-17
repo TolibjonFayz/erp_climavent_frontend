@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Climavent ERP</string>
+    <string name="title_activity_main">Climavent ERP</string>
+    <string name="package_name">uz.climavent.erp</string>
+    <string name="custom_url_scheme">uz.climavent.erp</string>
+</resources>
