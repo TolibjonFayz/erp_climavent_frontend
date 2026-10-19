@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import { PushNotifications } from '@capacitor/push-notifications'
 import { App } from '@capacitor/app'
+import { showNotify } from 'vant'
 import { devicesApi } from './api'
 
 // Android: Firebase sozlamasi (google-services.json) bilan yig'ilgan build'dagina —
@@ -35,6 +36,17 @@ function addListeners() {
   if (listenersReady) return
   listenersReady = true
   PushNotifications.addListener('registration', (t) => sendToken(t.value))
+  // Ilova ochiq turganda Android o'zi bildirishnoma chiqarmaydi — banner ko'rsatamiz
+  PushNotifications.addListener('pushNotificationReceived', (n) => {
+    const route = n?.data?.route
+    const text = [n?.title, n?.body].filter(Boolean).join(' — ')
+    showNotify({
+      type: 'primary',
+      message: text,
+      duration: 5000,
+      onClick: () => route && routerRef && routerRef.push(route).catch(() => {}),
+    })
+  })
   // Bildirishnoma bosilganda — tegishli sahifani ochamiz
   PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
     const route = action?.notification?.data?.route

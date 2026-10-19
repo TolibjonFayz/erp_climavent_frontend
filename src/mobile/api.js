@@ -4,7 +4,7 @@ import apiClient from '@/api/client'
 export const devicesApi = {
   register: (payload) => apiClient.post('devices/register', payload),
   unregister: (token) => apiClient.post('devices/unregister', { token }),
-  test: () => apiClient.post('devices/test'),
+  test: (delay = 0) => apiClient.post('devices/test', null, { params: { delay }, timeout: 45000 }),
   status: () => apiClient.get('devices/status'),
 }
 

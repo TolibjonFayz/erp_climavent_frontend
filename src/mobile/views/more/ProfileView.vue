@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { showFailToast, showSuccessToast } from 'vant'
+import { showFailToast, showSuccessToast, showToast } from 'vant'
 import { useUsersStore } from '@/stores/user'
 import MPage from '../../components/MPage.vue'
 import MSheet from '../../components/MSheet.vue'
@@ -90,8 +90,12 @@ onMounted(async () => (version.value = await currentVersion()))
 async function testPush() {
   testing.value = true
   try {
-    const res = await devicesApi.test()
+    // Ilovani yopib ulgurish uchun xabar 8 soniyadan keyin yuboriladi
+    showToast({ message: t('m.pushTestWait'), duration: 3500 })
+    const res = await devicesApi.test(8)
     if (res?.fcm && !res.fcm.configured) showFailToast(t('m.pushServerOff'))
+    else if (res && res.devices === 0) showFailToast(t('m.pushNoDevice'))
+    else if (res && res.sent === 0) showFailToast(`${t('m.pushFailed')}: ${(res.errors || []).join(' | ').slice(0, 160)}`)
     else showSuccessToast(t('m.pushTestSent'))
   } catch (e) {
     showFailToast(errorText(e, t, locale.value))

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1035425604650",
+    "project_id": "climavent-erp",
+    "storage_bucket": "climavent-erp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1035425604650:android:6a9c08a9c80391424ecf53",
+        "android_client_info": {
+          "package_name": "uz.climavent.erp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuSSNXeiDcV5ukAvFhscJYPiYvJLzOM-E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

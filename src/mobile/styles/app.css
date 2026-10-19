@@ -400,6 +400,24 @@ select {
 
 .van-toast {
   border-radius: 12px;
+  /* Vant standart break-all: matn so'z o'rtasidan bo'linib ketadi */
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Push banneri holat paneli (soat/signal) ostidan boshlansin */
+.van-notify {
+  padding: calc(var(--sat) + 10px) 16px 10px;
+  font-size: 15px;
+  line-height: 20px;
+  border-radius: 0 0 14px 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.van-toast--text {
+  width: auto;
+  max-width: calc(100vw - 48px);
+  min-width: 96px;
 }
 
 .van-floating-bubble {
