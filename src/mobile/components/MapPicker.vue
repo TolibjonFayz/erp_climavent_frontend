@@ -49,7 +49,9 @@ async function ensureMap() {
     const start = props.initial?.lat ? props.initial : TASHKENT
     map = new mapboxgl.Map({
       container: mapEl.value,
-      style: 'mapbox://styles/mapbox/streets-v12',
+      style: document.documentElement.classList.contains('dark')
+        ? 'mapbox://styles/mapbox/dark-v11'
+        : 'mapbox://styles/mapbox/streets-v12',
       center: [start.lng, start.lat],
       zoom: props.initial?.lat ? 16 : 12,
       attributionControl: false,
@@ -234,7 +236,7 @@ onBeforeUnmount(() => {
 <style>
 .mp {
   overflow: hidden;
-  background: #e5e7eb;
+  background: var(--m-map-bg);
 }
 
 /* mapbox-gl.css `.mapboxgl-map { position: relative }` ni bosib ketmasligi uchun aniqroq selektor */
@@ -302,7 +304,7 @@ onBeforeUnmount(() => {
   height: 44px;
   border: 0;
   border-radius: 50%;
-  background: #fff;
+  background: var(--m-surface);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
   display: grid;
   place-items: center;
@@ -315,7 +317,7 @@ onBeforeUnmount(() => {
   height: 44px;
   padding: 0 16px;
   border-radius: 22px;
-  background: #fff;
+  background: var(--m-surface);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
   font-size: 14px;
   font-weight: 500;
@@ -330,7 +332,7 @@ onBeforeUnmount(() => {
   left: 12px;
   right: 12px;
   z-index: 3;
-  background: #fff;
+  background: var(--m-surface);
   border-radius: 14px;
   padding: 10px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
@@ -358,7 +360,7 @@ onBeforeUnmount(() => {
   right: 0;
   bottom: 0;
   z-index: 3;
-  background: #fff;
+  background: var(--m-surface);
   border-radius: 18px 18px 0 0;
   padding: 16px 16px calc(var(--sab) + 14px);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);

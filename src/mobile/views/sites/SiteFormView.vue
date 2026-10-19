@@ -539,7 +539,7 @@ const uploadedCount = computed(() => media.value.filter((m) => m.progress === 10
 
 .sf-loc.is-set {
   background: var(--m-good-soft);
-  border-color: #bbf7d0;
+  border-color: var(--m-good-line);
 }
 
 .sf-loc__text {
@@ -600,7 +600,7 @@ const uploadedCount = computed(() => media.value.filter((m) => m.progress === 10
   width: calc(100% - 24px);
   margin: 4px 12px 0;
   min-height: 48px;
-  border: 1.5px dashed #cbd5e1;
+  border: 1.5px dashed var(--m-dash);
   border-radius: 14px;
   background: transparent;
   color: var(--m-primary);

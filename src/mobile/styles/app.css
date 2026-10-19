@@ -20,6 +20,14 @@
   --m-bad-soft: #fef2f2;
   --m-warn: #b45309;
   --m-warn-soft: #fffbeb;
+  --m-warn-line: #fde68a;
+  --m-good-line: #bbf7d0;
+  --m-good-press: #d1fadf;
+  --m-neutral: #334155;
+  --m-neutral-soft: #f1f5f9;
+  --m-neutral-line: #64748b;
+  --m-dash: #cbd5e1;
+  --m-map-bg: #e5e7eb;
   --m-radius: 14px;
   --m-radius-sm: 10px;
   --m-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
@@ -63,6 +71,48 @@
   --van-tabs-bottom-bar-color: var(--m-primary);
   --van-tab-active-text-color: var(--m-ink);
   --van-floating-bubble-background: var(--m-primary);
+}
+
+/* ─── Tungi rejim: html.dark (composables/useTheme.js + mobile/theme.js).
+   Palitra saytnikiga (assets/main.css html.dark) mos. ─── */
+html.dark {
+  --m-primary: #3b8ae6;
+  --m-primary-soft: rgba(96, 165, 250, 0.14);
+  --m-bg: #0b1120;
+  --m-surface: #151d2e;
+  --m-surface-2: #1b2539;
+  --m-ink: #e5e7eb;
+  --m-ink-2: #cbd5e1;
+  --m-muted: #94a3b8;
+  --m-faint: #64748b;
+  --m-line: #263246;
+  --m-line-soft: #1c2638;
+  --m-good: #4ade80;
+  --m-good-soft: rgba(74, 222, 128, 0.12);
+  --m-good-line: rgba(74, 222, 128, 0.35);
+  --m-good-press: rgba(74, 222, 128, 0.22);
+  --m-bad: #f87171;
+  --m-bad-soft: rgba(248, 113, 113, 0.12);
+  --m-warn: #fbbf24;
+  --m-warn-soft: rgba(251, 191, 36, 0.12);
+  --m-warn-line: rgba(251, 191, 36, 0.35);
+  --m-neutral: #cbd5e1;
+  --m-neutral-soft: #223049;
+  --m-neutral-line: #64748b;
+  --m-dash: #3b4a63;
+  --m-map-bg: #1b2539;
+  --m-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --van-warning-color: #fbbf24;
+  --van-background-3: #223049;
+  color-scheme: dark;
+}
+
+/* Logotip PNG'ida qora yozuv bor — tungi fonda o'qilishi uchun oq "chip" ichida */
+html.dark .lg__logo {
+  background: #ffffff;
+  padding: 10px 16px;
+  border-radius: 14px;
+  box-sizing: content-box;
 }
 
 * {

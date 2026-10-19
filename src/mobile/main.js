@@ -11,9 +11,11 @@ import { installMobileMessages, vantUz } from './i18n'
 import App from './App.vue'
 import router from './router'
 import { initNative } from './native'
+import { initTheme } from './theme'
 import './styles/app.css'
 
 installMobileMessages(i18n)
+initTheme()
 
 // Vant komponentlari tili (o'zbekchasi Vant'da yo'q — o'zimiz beramiz)
 Locale.add({ 'uz-UZ': vantUz })

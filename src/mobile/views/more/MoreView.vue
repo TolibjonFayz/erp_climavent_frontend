@@ -7,6 +7,7 @@ import { useUsersStore } from '@/stores/user'
 import MPage from '../../components/MPage.vue'
 import { clearSession, useSession } from '../../session'
 import { setLanguage } from '../../i18n'
+import { isDark, toggleTheme } from '../../theme'
 import { stopPush } from '../../push'
 import { availableUpdate, promptUpdate } from '../../updater'
 import { avatarColor, initials } from '../../utils'
@@ -113,6 +114,11 @@ async function logout() {
               {{ l === 'uz' ? "O'zbekcha" : 'Русский' }}
             </button>
           </div>
+        </template>
+      </van-cell>
+      <van-cell :title="$t('m.darkMode')" icon="eye-o" center>
+        <template #right-icon>
+          <van-switch :model-value="isDark" size="22" @update:model-value="toggleTheme" />
         </template>
       </van-cell>
       <van-cell :title="$t('m.profile')" icon="user-o" is-link :to="{ name: 'profile' }" />

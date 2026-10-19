@@ -241,7 +241,7 @@ async function onAvatar(e) {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  border: 2px solid #fff;
+  border: 2px solid var(--m-surface);
   background: var(--m-primary);
   color: #fff;
   display: grid;

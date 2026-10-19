@@ -192,7 +192,7 @@ onBeforeUnmount(() => props.modelValue.forEach((i) => URL.revokeObjectURL(i.url)
 }
 
 .mpk__add {
-  border: 1.5px dashed #cbd5e1;
+  border: 1.5px dashed var(--m-dash);
   background: var(--m-surface-2);
   display: flex;
   flex-direction: column;

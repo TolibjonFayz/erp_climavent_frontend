@@ -1,9 +1,10 @@
 import { onBeforeUnmount, watch } from 'vue'
-import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core'
+import { Capacitor } from '@capacitor/core'
 import { App } from '@capacitor/app'
 import { SplashScreen } from '@capacitor/splash-screen'
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 import { Browser } from '@capacitor/browser'
+import { syncSystemBars } from './theme'
 
 export const isNative = Capacitor.isNativePlatform()
 
@@ -35,7 +36,7 @@ export function pushOverlay(close) {
 export function initNative(router) {
   if (!isNative) return
 
-  SystemBars.setStyle({ style: SystemBarsStyle.Light }).catch(() => {})
+  syncSystemBars()
 
   App.addListener('backButton', () => {
     const closeTop = overlayStack.pop()

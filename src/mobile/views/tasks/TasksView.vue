@@ -739,7 +739,7 @@ const report = computed(() => {
   width: calc(100% - 24px);
   margin: 12px 12px 0;
   padding: 12px 14px;
-  border: 1px solid #fde68a;
+  border: 1px solid var(--m-warn-line);
   border-radius: 14px;
   background: var(--m-warn-soft);
   color: var(--m-warn);
@@ -857,9 +857,9 @@ const report = computed(() => {
 }
 
 .tv-prio button.is-active.is-low {
-  border-color: #64748b;
-  background: #f1f5f9;
-  color: #334155;
+  border-color: var(--m-neutral-line);
+  background: var(--m-neutral-soft);
+  color: var(--m-neutral);
 }
 
 .tv-prio button.is-active.is-medium {

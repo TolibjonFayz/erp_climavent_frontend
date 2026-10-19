@@ -336,7 +336,7 @@ function openNew() {
 }
 
 .cl-item__call:active {
-  background: #d1fadf;
+  background: var(--m-good-press);
 }
 
 .m-chips.is-wrap {

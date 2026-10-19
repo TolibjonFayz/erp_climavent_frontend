@@ -466,7 +466,7 @@ const tripTime = (iso) => {
             <span
               v-if="active.statusKey"
               class="av-badge"
-              :style="{ background: statusOf(active.statusKey)?.color + '26', color: '#1f2937' }"
+              :style="{ background: statusOf(active.statusKey)?.color + '26', color: 'var(--m-ink)' }"
             >
               <i :style="{ background: statusOf(active.statusKey)?.color }"></i>
               {{ $t(statusOf(active.statusKey)?.labelKey || 'noStatusYet') }}
