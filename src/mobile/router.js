@@ -101,6 +101,79 @@ const routes = [
     meta: page('amocrm'),
   },
 
+  {
+    path: '/kp',
+    name: 'kp',
+    component: () => import('./views/kp/KpView.vue'),
+    meta: page('kp'),
+  },
+  {
+    path: '/kp/new',
+    name: 'kp-new',
+    component: () => import('./views/kp/KpFormView.vue'),
+    meta: page('kp'),
+  },
+  {
+    path: '/kp/:id/edit',
+    name: 'kp-edit',
+    component: () => import('./views/kp/KpFormView.vue'),
+    meta: page('kp'),
+  },
+  {
+    path: '/dogovor',
+    name: 'dogovor',
+    component: () => import('./views/dogovor/DogovorView.vue'),
+    meta: page('dogovor'),
+  },
+  {
+    path: '/dogovor/new',
+    name: 'dogovor-new',
+    component: () => import('./views/dogovor/DogovorFormView.vue'),
+    meta: page('dogovor'),
+  },
+  {
+    path: '/dogovor/:id',
+    name: 'dogovor-detail',
+    component: () => import('./views/dogovor/DogovorDetailView.vue'),
+    meta: page('dogovor'),
+  },
+  {
+    path: '/dogovor/:id/edit',
+    name: 'dogovor-edit',
+    component: () => import('./views/dogovor/DogovorFormView.vue'),
+    meta: page('dogovor'),
+  },
+  {
+    path: '/loyiha',
+    name: 'loyiha',
+    component: () => import('./views/loyiha/LoyihaView.vue'),
+    meta: page('loyiha'),
+  },
+  {
+    path: '/loyiha/new',
+    name: 'loyiha-new',
+    component: () => import('./views/loyiha/LoyihaFormView.vue'),
+    meta: page('loyiha'),
+  },
+  {
+    path: '/loyiha/:id',
+    name: 'loyiha-detail',
+    component: () => import('./views/loyiha/LoyihaDetailView.vue'),
+    meta: page('loyiha'),
+  },
+  {
+    path: '/loyiha/:id/edit',
+    name: 'loyiha-edit',
+    component: () => import('./views/loyiha/LoyihaFormView.vue'),
+    meta: page('loyiha'),
+  },
+  {
+    path: '/admin',
+    name: 'admin',
+    component: () => import('./views/admin/AdminView.vue'),
+    meta: page('admin'),
+  },
+
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 

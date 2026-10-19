@@ -94,3 +94,31 @@ export function errorText(error, t, locale = 'uz') {
 
 /** Qidiruv uchun: kirill/lotin farqisiz kichik harf */
 export const norm = (s) => String(s || '').toLowerCase().trim()
+
+const numFmt = new Intl.NumberFormat('ru-RU')
+
+/** Summa: "51 497 600 so'm" (bo'sh bo'lsa "—") */
+export function money(value, t) {
+  if (value === null || value === undefined || value === '') return '—'
+  return `${numFmt.format(Math.round(Number(value) || 0))} ${t('amoCurrency')}`
+}
+
+/** Qisqa summa: 1 225 936 013 → "1,23 mlrd" */
+export function moneyShort(value, t) {
+  const n = Number(value) || 0
+  if (n >= 1e12) return `${(n / 1e12).toFixed(2)} ${t('m.trln')}`
+  if (n >= 1e9) return `${(n / 1e9).toFixed(2)} ${t('m.mlrd')}`
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)} ${t('m.mln')}`
+  return numFmt.format(Math.round(n))
+}
+
+/** Matn qidiruvi uchun: qiymat filtrni o'z ichiga oladimi */
+export const includesText = (value, q) =>
+  !q || String(value ?? '').toLowerCase().includes(String(q).trim().toLowerCase())
+
+/** Bo'sh satrni undefined qiladi (backendga bo'sh qiymat yubormaslik uchun) */
+export const textOrUndef = (v) => (v != null && String(v).trim() ? String(v).trim() : undefined)
+
+/** Raqam maydoni: '' → undefined, aks holda Number */
+export const numOrUndef = (v) =>
+  v === '' || v === null || v === undefined || Number.isNaN(Number(v)) ? undefined : Number(v)

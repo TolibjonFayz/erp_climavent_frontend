@@ -23,6 +23,10 @@ const cached = [
   'MoreView',
   'AmoView',
   'BossView',
+  'KpView',
+  'DogovorView',
+  'LoyihaView',
+  'AdminView',
 ]
 
 // Vazifalar belgisi: ochiq vazifalar soni (tasdiq kutayotganlar ham)

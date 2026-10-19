@@ -11,7 +11,11 @@ telefon uchun ekranlar alohida — `src/mobile/`. Native qobiq — [Capacitor 8]
 | Davomat | oylik kalendar (kamera + obyektlar asosida taklif), kun tafsiloti, admin: tahrir va oyni tasdiqlash |
 | Boss | KPI, e'lonlar, reyting va maqsadlar, admin huquqi, grafiklar |
 | amoCRM | davr/menejer filtri, qo'ng'iroqlar, menejerlar, sdelkalar, xorijiy; ro'yxatlar va suhbat yozuvlari |
-| KP, Dogovor, Loyiha, Raqiblar, Admin | hozircha saytda (`.env.mobile` → `VITE_WEB_URL` berilsa Menyu'da havola chiqadi) |
+| KP | ro'yxat (holat/izoh filtri, summalar), batafsil, yaratish/tahrir (2 kunlik oyna), Excel import |
+| Dogovor | ro'yxat, shartnoma sahifasi (rekvizitlar, spetsifikatsiya + NDS), yaratish/tahrir, Excel import |
+| Loyiha | ro'yxat, loyiha sahifasi, arxiv/ishchi fayl (yuklash, ko'rish, nomlash, almashtirish), yaratish/tahrir |
+| Admin | umumiy ko'rsatkichlar, xodimlar (admin/blok/bo'lim ruxsatlari), barcha hamkorlar va obyektlar, audit |
+| Hali saytda | Excel eksport, shartnomani chop etish (PDF), Raqiblar (saytda ham "tez orada") |
 
 ## Ishlab chiqish
 

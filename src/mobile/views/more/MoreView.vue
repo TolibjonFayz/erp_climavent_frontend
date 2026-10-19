@@ -6,7 +6,6 @@ import { showConfirmDialog } from 'vant'
 import { useUsersStore } from '@/stores/user'
 import MPage from '../../components/MPage.vue'
 import { clearSession, useSession } from '../../session'
-import { openExternal } from '../../native'
 import { setLanguage } from '../../i18n'
 import { avatarColor, initials } from '../../utils'
 
@@ -15,27 +14,23 @@ const router = useRouter()
 const usersStore = useUsersStore()
 const { user, can, isAdmin, fullName } = useSession()
 
-const WEB_URL = (import.meta.env.VITE_WEB_URL || '').replace(/\/$/, '')
 const APP_VERSION = __APP_VERSION__
+
+// Savdo va loyiha bo'limlari (pastki menyuda joy yo'q — shu yerda)
+const work = computed(() =>
+  [
+    can('kp') && { key: 'kp', icon: 'description-o', title: t('kp'), sub: t('m.kpSub'), to: { name: 'kp' }, color: '#2a78d6' },
+    can('dogovor') && { key: 'dogovor', icon: 'records-o', title: t('dogovortext'), sub: t('m.dogovorSub'), to: { name: 'dogovor' }, color: '#15803d' },
+    can('loyiha') && { key: 'loyiha', icon: 'cluster-o', title: t('loyihatext'), sub: t('m.loyihaSub'), to: { name: 'loyiha' }, color: '#d97706' },
+  ].filter(Boolean),
+)
 
 const manage = computed(() =>
   [
     can('boss') && { key: 'boss', icon: 'chart-trending-o', title: t('m.bossPanel'), sub: t('m.bossPanelSub'), to: { name: 'boss' }, color: '#7c3aed' },
     can('amocrm') && { key: 'amo', icon: 'phone-circle-o', title: t('m.amoStats'), sub: t('m.amoStatsSub'), to: { name: 'amocrm' }, color: '#0d9488' },
+    isAdmin.value && { key: 'admin', icon: 'setting-o', title: t('m.webAdmin'), sub: t('m.adminSub'), to: { name: 'admin' }, color: '#334155' },
   ].filter(Boolean),
-)
-
-// Ilovada hali yo'q bo'limlar — saytda ochiladi
-const webSections = computed(() =>
-  WEB_URL
-    ? [
-        can('kp') && { key: 'kp', icon: 'description-o', title: t('m.webKp'), path: '/kp' },
-        can('dogovor') && { key: 'dogovor', icon: 'records-o', title: t('m.webDogovor'), path: '/dogovor' },
-        can('loyiha') && { key: 'loyiha', icon: 'cluster-o', title: t('m.webLoyiha'), path: '/loyiha' },
-        can('competitors') && { key: 'comp', icon: 'shop-o', title: t('m.webCompetitors'), path: '/competitors' },
-        isAdmin.value && { key: 'admin', icon: 'setting-o', title: t('m.webAdmin'), path: '/admin' },
-      ].filter(Boolean)
-    : [],
 )
 
 async function logout() {
@@ -68,6 +63,17 @@ async function logout() {
       <van-icon name="arrow" class="mv-arrow" />
     </button>
 
+    <template v-if="work.length">
+      <div class="m-section"><span class="m-section__title">{{ $t('m.workSection') }}</span></div>
+      <div class="mv-tiles">
+        <button v-for="m in work" :key="m.key" type="button" class="mv-tile" @click="router.push(m.to)">
+          <span class="mv-tile__icon" :style="{ background: m.color }"><van-icon :name="m.icon" /></span>
+          <b>{{ m.title }}</b>
+          <small>{{ m.sub }}</small>
+        </button>
+      </div>
+    </template>
+
     <template v-if="manage.length">
       <div class="m-section"><span class="m-section__title">{{ $t('m.management') }}</span></div>
       <div class="mv-tiles">
@@ -79,21 +85,6 @@ async function logout() {
       </div>
     </template>
 
-    <template v-if="webSections.length">
-      <div class="m-section"><span class="m-section__title">{{ $t('m.onWebsite') }}</span></div>
-      <van-cell-group inset>
-        <van-cell
-          v-for="s in webSections"
-          :key="s.key"
-          :title="s.title"
-          :icon="s.icon"
-          is-link
-          @click="openExternal(WEB_URL + s.path)"
-        >
-          <template #right-icon><van-icon name="share-o" class="mv-ext" /></template>
-        </van-cell>
-      </van-cell-group>
-    </template>
 
     <div class="m-section"><span class="m-section__title">{{ $t('settings') }}</span></div>
     <van-cell-group inset>
@@ -210,12 +201,6 @@ async function logout() {
   font-size: 12px;
   color: var(--m-muted);
   line-height: 1.35;
-}
-
-.mv-ext {
-  color: var(--m-faint);
-  font-size: 16px;
-  align-self: center;
 }
 
 .mv-lang {
