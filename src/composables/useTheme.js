@@ -31,6 +31,8 @@ const isDark = ref(stored ? stored === 'dark' : !!media?.matches)
 
 function applyTheme() {
   document.documentElement.classList.toggle('dark', isDark.value)
+  // index.html'dagi oldindan qo'yilgan fon endi kerak emas — rangni main.css boshqaradi
+  document.documentElement.style.background = ''
 }
 
 applyTheme()
@@ -45,7 +47,13 @@ export function useTheme() {
   function toggleTheme() {
     isDark.value = !isDark.value
     writeStored(isDark.value ? 'dark' : 'light')
+    // Almashtirish paytida CSS transition'larni o'chiramiz: aks holda har bir element o'z
+    // tezligida rang o'zgartirib, bir lahza "aralash" (yarim tungi) ko'rinish chiqadi.
+    const root = document.documentElement
+    root.classList.add('theme-switching')
     applyTheme()
+    void root.offsetHeight
+    requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-switching')))
   }
 
   return { isDark, toggleTheme }

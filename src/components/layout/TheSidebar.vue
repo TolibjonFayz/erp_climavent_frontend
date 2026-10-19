@@ -85,11 +85,11 @@
         <button
           type="button"
           class="nav-link theme-toggle"
-          :title="$t('themeToggle')"
+          :title="$t(isDark ? 'themeLight' : 'themeToggle')"
           @click="toggleTheme"
         >
           <el-icon class="icon"><Sunny v-if="isDark" /><Moon v-else /></el-icon>
-          <span class="nav-text">{{ $t('themeToggle') }}</span>
+          <span class="nav-text">{{ $t(isDark ? 'themeLight' : 'themeToggle') }}</span>
         </button>
       </div>
     </nav>
@@ -465,7 +465,7 @@ $accent-dark: #2f7fe0;
 }
 
 .toggle-btn {
-  background: #f3f5f9;
+  background: var(--ui-surface-3);
   border: none;
   cursor: pointer;
   width: 34px;
@@ -478,7 +478,7 @@ $accent-dark: #2f7fe0;
   transition: background 0.2s ease;
 
   &:hover {
-    background: #e6ebf3;
+    background: var(--ui-line);
   }
 }
 

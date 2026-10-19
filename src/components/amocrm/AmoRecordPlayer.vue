@@ -334,14 +334,14 @@ $rail: #e5e9ef;
 
   &:hover,
   &.is-active {
-    border-color: #cfdcef;
+    border-color: var(--ui-link-line);
   }
   &.is-playing {
-    border-color: #b9d2f2;
+    border-color: var(--ui-link-line);
     box-shadow: 0 1px 6px rgba(42, 120, 214, 0.12);
   }
   &.is-error {
-    border-color: #f3c9c9;
+    border-color: var(--ui-bad-line);
   }
 
   button {
@@ -421,7 +421,7 @@ $rail: #e5e9ef;
     border-radius: 2px;
   }
   &__buffer {
-    background: #d3dce8;
+    background: var(--ui-line-strong);
   }
   &__fill {
     background: $blue;
@@ -456,7 +456,7 @@ $rail: #e5e9ef;
   }
 }
 .rp:not(.is-active) .rp-track__fill {
-  background: #c4cfdd;
+  background: var(--ui-line-strong);
 }
 .rp.is-active .rp-track__thumb {
   opacity: 1;
@@ -475,7 +475,7 @@ $rail: #e5e9ef;
   font-variant-numeric: tabular-nums;
 
   &:hover {
-    background: #e9ecf0;
+    background: var(--ui-surface-3);
     color: $ink;
   }
   &.is-on {
@@ -519,7 +519,7 @@ $rail: #e5e9ef;
     height: 11px;
   }
   &.is-ok {
-    background: #dcfce7;
+    background: var(--ui-good-soft);
     color: var(--ui-good);
   }
   &.is-wait {

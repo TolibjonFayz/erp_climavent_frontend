@@ -2274,8 +2274,8 @@ onMounted(async () => {
     background: var(--ui-line);
   }
   &.av--bronze {
-    color: #9a3412;
-    background: #ffedd5;
+    color: var(--ui-orange-ink);
+    background: var(--ui-orange-soft);
   }
 }
 .top-user-info {
@@ -2766,8 +2766,8 @@ onMounted(async () => {
   border-radius: 8px;
 
   &--purple {
-    color: #6d28d9;
-    background: #f5f3ff;
+    color: var(--ui-violet-ink);
+    background: var(--ui-violet-soft);
   }
 }
 .sc-title {

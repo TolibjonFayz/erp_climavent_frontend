@@ -504,16 +504,16 @@ const handleSubmit = async () => {
   border: 1px solid var(--ui-line);
   border-radius: 14px;
   margin-bottom: 16px;
-  background: #fcfdff;
+  background: var(--ui-surface);
 
   &.kp-block {
-    background: #f7fbff;
+    background: var(--ui-link-soft);
     border-color: var(--ui-link-soft);
   }
 
   &.dogovor-block {
-    background: #fbfaf5;
-    border-color: #f0e6d2;
+    background: var(--ui-warn-soft);
+    border-color: var(--ui-warn-line);
   }
 }
 
