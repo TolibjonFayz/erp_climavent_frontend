@@ -1979,8 +1979,8 @@ onMounted(async () => {
   padding: 3px 10px;
   font-weight: 600;
   color: var(--ui-good);
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: var(--ui-good-soft);
+  border: 1px solid var(--ui-good-line);
   border-radius: 999px;
 }
 .status-dot {
@@ -2115,7 +2115,7 @@ onMounted(async () => {
 
   &:hover {
     color: var(--ui-link);
-    border-color: #bfdbfe;
+    border-color: var(--ui-link-line);
   }
 }
 .adm-main {
@@ -2266,12 +2266,12 @@ onMounted(async () => {
   border-radius: 50%;
 
   &.av--gold {
-    color: #b45309;
-    background: #fef3c7;
+    color: var(--ui-warn);
+    background: var(--ui-warn-soft);
   }
   &.av--silver {
-    color: #475569;
-    background: #e2e8f0;
+    color: var(--ui-ink-2);
+    background: var(--ui-line);
   }
   &.av--bronze {
     color: #9a3412;
@@ -2342,7 +2342,7 @@ onMounted(async () => {
     color: var(--ui-muted);
   }
   &.total--gold {
-    color: #b45309;
+    color: var(--ui-warn);
   }
 }
 .show-all-btn {
@@ -2411,15 +2411,15 @@ onMounted(async () => {
 }
 .activity-item--success .activity-icon {
   color: var(--ui-good);
-  background: #f0fdf4;
+  background: var(--ui-good-soft);
 }
 .activity-item--warning .activity-icon {
   color: var(--ui-warn);
-  background: #fffbeb;
+  background: var(--ui-warn-soft);
 }
 .activity-item--danger .activity-icon {
   color: var(--ui-bad);
-  background: #fef2f2;
+  background: var(--ui-bad-soft);
 }
 .activity-content {
   display: flex;
@@ -2475,7 +2475,7 @@ onMounted(async () => {
 
   &:hover:not(:disabled) {
     color: var(--ui-link);
-    border-color: #bfdbfe;
+    border-color: var(--ui-link-line);
   }
   &:disabled {
     cursor: not-allowed;
@@ -2535,7 +2535,7 @@ onMounted(async () => {
 }
 .av--admin {
   color: var(--ui-good);
-  background: #f0fdf4;
+  background: var(--ui-good-soft);
 }
 .av--user {
   color: var(--ui-link);
@@ -2572,10 +2572,10 @@ onMounted(async () => {
   &--promote:hover,
   &--unblock:hover {
     color: var(--ui-link);
-    border-color: #bfdbfe;
+    border-color: var(--ui-link-line);
   }
   &--promote {
-    color: #b45309;
+    color: var(--ui-warn);
   }
   &--unblock {
     color: var(--ui-good);
@@ -2584,7 +2584,7 @@ onMounted(async () => {
   &--block {
     &:hover {
       color: var(--ui-bad);
-      border-color: #fecaca;
+      border-color: var(--ui-bad-line);
     }
   }
 }
@@ -2646,15 +2646,15 @@ onMounted(async () => {
 }
 .audit-entry--success .audit-entry__dot {
   color: var(--ui-good);
-  background: #f0fdf4;
+  background: var(--ui-good-soft);
 }
 .audit-entry--warning .audit-entry__dot {
   color: var(--ui-warn);
-  background: #fffbeb;
+  background: var(--ui-warn-soft);
 }
 .audit-entry--danger .audit-entry__dot {
   color: var(--ui-bad);
-  background: #fef2f2;
+  background: var(--ui-bad-soft);
 }
 .audit-entry__body {
   flex: 1;
@@ -2694,15 +2694,15 @@ onMounted(async () => {
 
   &.tag--success {
     color: var(--ui-good);
-    background: #f0fdf4;
+    background: var(--ui-good-soft);
   }
   &.tag--warning {
     color: var(--ui-warn);
-    background: #fffbeb;
+    background: var(--ui-warn-soft);
   }
   &.tag--danger {
     color: var(--ui-bad);
-    background: #fef2f2;
+    background: var(--ui-bad-soft);
   }
   &.tag--info {
     color: var(--ui-link);
@@ -2800,7 +2800,7 @@ onMounted(async () => {
 
   &:hover:not(:disabled) {
     color: var(--ui-link);
-    border-color: #bfdbfe;
+    border-color: var(--ui-link-line);
   }
   &:disabled {
     cursor: not-allowed;
@@ -2901,8 +2901,8 @@ onMounted(async () => {
   color: var(--ui-warn);
 }
 .admin-comment-textarea :deep(.el-textarea__inner) {
-  background: #fffbeb;
-  border-color: #fcd34d;
+  background: var(--ui-warn-soft);
+  border-color: var(--ui-warn-line);
 }
 .col-filter-admin {
   width: 100%;

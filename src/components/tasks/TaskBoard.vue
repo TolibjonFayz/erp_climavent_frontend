@@ -1091,7 +1091,7 @@ onMounted(async () => {
   height: 8px;
   border-radius: 2px;
   flex-shrink: 0;
-  background: #cbd5e1;
+  background: var(--ui-line-strong);
 
   &.is-in_progress {
     background: var(--ui-warn);
@@ -1149,7 +1149,7 @@ onMounted(async () => {
     left: 0;
     width: 3px;
     border-radius: 0 3px 3px 0;
-    background: #cbd5e1;
+    background: var(--ui-line-strong);
   }
   &.is-high::before {
     background: var(--ui-bad);
@@ -1159,7 +1159,7 @@ onMounted(async () => {
   }
 
   &:hover {
-    border-color: #cbd5e1;
+    border-color: var(--ui-line-strong);
     box-shadow: var(--ui-shadow-hover);
   }
   &:active {
@@ -1212,11 +1212,11 @@ onMounted(async () => {
 
   &.is-bad {
     color: var(--ui-bad);
-    background: #fef2f2;
+    background: var(--ui-bad-soft);
   }
   &.is-warn {
     color: var(--ui-warn);
-    background: #fffbeb;
+    background: var(--ui-warn-soft);
   }
 }
 .tb-card__title {
@@ -1281,14 +1281,14 @@ onMounted(async () => {
   border: 1px solid;
 
   &.is-warn {
-    color: #92400e;
-    background: #fffbeb;
-    border-color: #fde68a;
+    color: var(--ui-warn-ink);
+    background: var(--ui-warn-soft);
+    border-color: var(--ui-warn-line);
   }
   &.is-bad {
     color: var(--ui-bad);
-    background: #fef2f2;
-    border-color: #fecaca;
+    background: var(--ui-bad-soft);
+    border-color: var(--ui-bad-line);
   }
 }
 .tb-note__line {
@@ -1425,7 +1425,7 @@ onMounted(async () => {
     transition: width 0.3s ease;
 
     &.todo {
-      background: #cbd5e1;
+      background: var(--ui-line-strong);
     }
     &.progress {
       background: #f59e0b;

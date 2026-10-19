@@ -199,24 +199,24 @@ function onChanged() {
 .exd-rules,
 .exd-hint {
   font-size: 13px;
-  color: #4b5563;
+  color: var(--ui-ink-2);
   line-height: 1.5;
   margin: 0 0 12px;
   white-space: pre-line;
 }
 .exd-hint {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ui-muted);
 }
 .exd-toolbar {
   margin-bottom: 10px;
 }
 .exd-link {
-  color: #2a78d6;
+  color: var(--ui-link);
   text-decoration: none;
 }
 .exd-muted {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--ui-faint);
 }
 </style>

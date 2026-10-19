@@ -899,7 +899,7 @@ onMounted(async () => {
 }
 .admin-comment-field :deep(.el-textarea__inner) {
   border-color: #f59e0b;
-  background: #fffaf0;
+  background: var(--ui-warn-soft);
 }
 .admin-field-hint {
   display: block;

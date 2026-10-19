@@ -501,14 +501,14 @@ const handleSubmit = async () => {
 <style lang="scss" scoped>
 .form-block {
   padding: 16px 18px 4px;
-  border: 1px solid #eef0f4;
+  border: 1px solid var(--ui-line);
   border-radius: 14px;
   margin-bottom: 16px;
   background: #fcfdff;
 
   &.kp-block {
     background: #f7fbff;
-    border-color: #dbeafe;
+    border-color: var(--ui-link-soft);
   }
 
   &.dogovor-block {
@@ -521,7 +521,7 @@ const handleSubmit = async () => {
   margin: 0 0 12px;
   font-size: 12px;
   font-weight: 700;
-  color: #6b7280;
+  color: var(--ui-muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }

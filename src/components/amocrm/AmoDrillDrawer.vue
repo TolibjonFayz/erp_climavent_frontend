@@ -568,7 +568,7 @@ const AmoLink = defineComponent({
 }
 .dr-sub {
   font-size: 13px;
-  color: #4b5563;
+  color: var(--ui-ink-2);
 }
 .dr-actions {
   display: flex;
@@ -581,7 +581,7 @@ const AmoLink = defineComponent({
   justify-content: center;
 }
 :deep(.dr-link) {
-  color: #2a78d6;
+  color: var(--ui-link);
   text-decoration: none;
   &:hover {
     text-decoration: underline;
@@ -594,7 +594,7 @@ const AmoLink = defineComponent({
   font-variant-numeric: tabular-nums;
 }
 :deep(.dr-muted) {
-  color: #9ca3af;
+  color: var(--ui-faint);
 }
 :deep(.dr-cb) {
   display: inline-flex;
@@ -603,21 +603,21 @@ const AmoLink = defineComponent({
   font-size: 12px;
 }
 :deep(.dr-cb--ok) {
-  color: #15803d;
+  color: var(--ui-good);
 }
 :deep(.dr-cb--none) {
-  color: #b91c1c;
+  color: var(--ui-bad);
   font-weight: 600;
 }
 :deep(.dr-amo) {
-  color: #6b7280;
+  color: var(--ui-muted);
   display: inline-flex;
   &:hover {
-    color: #2a78d6;
+    color: var(--ui-link);
   }
 }
 .is-bad {
-  color: #b45309;
+  color: var(--ui-warn);
 }
 .dr-stage {
   display: inline-flex;

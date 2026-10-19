@@ -311,10 +311,10 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-$blue: #2a78d6;
-$blue-soft: #e8f1fc;
-$ink: #111827;
-$muted: #6b7280;
+$blue: var(--ui-link);
+$blue-soft: var(--ui-link-soft);
+$ink: var(--ui-ink);
+$muted: var(--ui-muted);
 $rail: #e5e9ef;
 
 .rp {
@@ -325,9 +325,9 @@ $rail: #e5e9ef;
   max-width: 100%;
   height: 36px;
   padding: 0 6px 0 3px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--ui-line);
   border-radius: 999px;
-  background: #fff;
+  background: var(--ui-surface);
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
@@ -434,7 +434,7 @@ $rail: #e5e9ef;
     margin-left: -6px;
     margin-top: -6px;
     border-radius: 50%;
-    background: #fff;
+    background: var(--ui-surface);
     border: 2px solid $blue;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
     opacity: 0;
@@ -468,7 +468,7 @@ $rail: #e5e9ef;
   min-width: 32px;
   padding: 0 6px !important;
   border-radius: 6px;
-  background: #f3f4f6;
+  background: var(--ui-surface-3);
   color: $muted;
   font-size: 11px !important;
   font-weight: 600;
@@ -498,7 +498,7 @@ $rail: #e5e9ef;
     height: 15px;
   }
   &:hover:not(:disabled) {
-    background: #f3f4f6;
+    background: var(--ui-surface-3);
     color: $ink;
   }
   &:disabled {
@@ -520,13 +520,13 @@ $rail: #e5e9ef;
   }
   &.is-ok {
     background: #dcfce7;
-    color: #15803d;
+    color: var(--ui-good);
   }
   &.is-wait {
     width: 8px;
     height: 8px;
     margin: 0 4px;
-    background: #d1d5db;
+    background: var(--ui-line-strong);
   }
 }
 
@@ -535,11 +535,11 @@ $rail: #e5e9ef;
   height: 12px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
+  border-top-color: var(--ui-surface);
   animation: rp-spin 0.7s linear infinite;
 
   &--dark {
-    border-color: #d1d5db;
+    border-color: var(--ui-line-strong);
     border-top-color: $muted;
   }
 }
@@ -555,9 +555,9 @@ $rail: #e5e9ef;
   height: 24px;
   padding: 0 10px;
   border-radius: 999px;
-  background: #f3f4f6;
+  background: var(--ui-surface-3);
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--ui-faint);
   text-decoration: line-through;
 }
 </style>

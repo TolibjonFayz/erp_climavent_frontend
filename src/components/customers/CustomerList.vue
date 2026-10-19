@@ -413,7 +413,7 @@ onMounted(reload)
     background 0.15s;
 }
 .cl-group:hover {
-  border-color: #bfdbfe;
+  border-color: var(--ui-link-line);
 }
 .cl-group.is-active {
   background: var(--ui-link-soft);

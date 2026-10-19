@@ -1076,35 +1076,35 @@ onMounted(async () => {
   margin-bottom: 10px;
 
   th {
-    background: #f9fafb;
+    background: var(--ui-surface-2);
     font-size: 12px;
     font-weight: 600;
-    color: #6b7280;
+    color: var(--ui-muted);
     text-align: left;
     padding: 8px 10px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--ui-line);
   }
 
   td {
     padding: 6px 8px;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--ui-surface-3);
     font-size: 13px;
   }
 
   .items-index {
     text-align: center;
-    color: #9ca3af;
+    color: var(--ui-faint);
   }
 
   .items-total {
     text-align: right;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--ui-ink);
   }
 
   .items-empty {
     text-align: center;
-    color: #9ca3af;
+    color: var(--ui-faint);
     padding: 14px;
   }
 }
@@ -1119,19 +1119,19 @@ onMounted(async () => {
 
 .items-summary {
   font-size: 13px;
-  color: #4b5563;
+  color: var(--ui-ink-2);
 }
 
 .admin-comment-field :deep(.el-textarea__inner) {
   border-color: #f59e0b;
-  background: #fffaf0;
+  background: var(--ui-warn-soft);
 }
 
 .admin-field-hint {
   display: block;
   margin-top: 4px;
   font-size: 12px;
-  color: #b45309;
+  color: var(--ui-warn);
 }
 
 :deep(.dogovor-dialog .el-dialog) {
