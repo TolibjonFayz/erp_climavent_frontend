@@ -805,7 +805,7 @@ defineExpose({
 
 .selected-location h3 {
   margin: 0 0 8px 0;
-  color: #1e293b;
+  color: var(--ui-ink);
   font-size: 18px;
 }
 

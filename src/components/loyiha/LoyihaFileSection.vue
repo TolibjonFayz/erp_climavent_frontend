@@ -200,8 +200,8 @@ const fileIcon = (file) => {
   padding: 20px 22px;
 
   &.is-archive {
-    background: #fffdf6;
-    border-color: #f3dfb5;
+    background: var(--ui-warn-soft);
+    border-color: var(--ui-warn-line);
   }
 }
 
@@ -252,7 +252,7 @@ const fileIcon = (file) => {
   }
 
   &.ready {
-    background: #e0efff;
+    background: var(--ui-link-soft);
     color: #2563eb;
   }
 }
@@ -334,7 +334,7 @@ const fileIcon = (file) => {
     transition: background 0.2s ease;
 
     &:hover {
-      background: #eaf3ff;
+      background: var(--ui-link-soft);
     }
   }
 }
@@ -369,7 +369,7 @@ const fileIcon = (file) => {
 }
 
 .upload-progress {
-  border: 1.5px solid #cfe4ff;
+  border: 1.5px solid var(--ui-link-line);
   background: var(--ui-link-soft);
   border-radius: 14px;
   padding: 14px 16px;

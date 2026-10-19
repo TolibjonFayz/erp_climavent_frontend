@@ -1485,7 +1485,7 @@ onMounted(async () => {
   }
   &.is-legend {
     padding: 1px 6px;
-    background: #f0fdfa;
+    background: var(--ui-teal-soft);
     border-radius: 4px;
   }
 }

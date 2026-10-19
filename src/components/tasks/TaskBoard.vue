@@ -1166,7 +1166,7 @@ onMounted(async () => {
     cursor: grabbing;
   }
   &.is-pending {
-    border-color: #f5d49a;
+    border-color: var(--ui-warn-line);
   }
 }
 .tb-card__top {

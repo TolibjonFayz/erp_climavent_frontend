@@ -5,6 +5,17 @@
     <link rel="icon" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ERP Climavent</title>
+    <script>
+      // Tungi rejim JS yuklanguncha qo'llanadi — sahifa yangilanganda oq "chaqnash" bo'lmasin
+      // (asosiy mantiq: src/composables/useTheme.js)
+      try {
+        var t = localStorage.getItem('erp-theme')
+        if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark')
+          document.documentElement.style.background = '#0b1120'
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="app"></div>
