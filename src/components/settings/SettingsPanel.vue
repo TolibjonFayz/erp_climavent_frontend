@@ -496,7 +496,7 @@ onMounted(async () => {
   width: 200px;
 }
 .st-logout {
-  border-color: #fecaca;
+  border-color: var(--ui-bad-line);
 }
 
 @media (max-width: 900px) {

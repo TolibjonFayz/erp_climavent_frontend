@@ -931,7 +931,7 @@ watch(
   font-weight: 600;
   color: var(--ui-link);
   background: var(--ui-surface);
-  border: 1px dashed #bfdbfe;
+  border: 1px dashed var(--ui-link-line);
   border-radius: var(--ui-radius);
   cursor: pointer;
   transition:

@@ -100,7 +100,7 @@ async function save() {
 .ex-note {
   margin: 0 0 14px;
   font-size: 13px;
-  color: #4b5563;
+  color: var(--ui-ink-2);
   line-height: 1.5;
 }
 </style>

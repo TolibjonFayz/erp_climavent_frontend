@@ -1415,23 +1415,23 @@ const barWidth = (v, max) => (v ? `${Math.max(2, (v / max) * 100)}%` : '0')
 
 <style lang="scss" scoped>
 // Grafik ranglari (dataviz validator'dan o'tgan kategoriya juftligi)
-$c-answered: #2a78d6;
+$c-answered: var(--ui-link);
 $c-other: #eb6834;
-$c-link: #2a78d6;
-$c-bad: #b91c1c;
-$c-warn: #b45309;
-$c-good: #15803d;
-$ink: #111827;
-$ink-2: #374151;
-$muted: #6b7280;
-$faint: #9ca3af;
-$line: #e5e7eb;
-$line-soft: #f1f3f5;
-$surface-2: #f8fafc;
+$c-link: var(--ui-link);
+$c-bad: var(--ui-bad);
+$c-warn: var(--ui-warn);
+$c-good: var(--ui-good);
+$ink: var(--ui-ink);
+$ink-2: var(--ui-ink-2);
+$muted: var(--ui-muted);
+$faint: var(--ui-faint);
+$line: var(--ui-line);
+$line-soft: var(--ui-surface-3);
+$surface-2: var(--ui-surface-2);
 $radius: 10px;
 
 .amo {
-  background: white;
+  background: var(--ui-surface);
   border-radius: 14px;
   padding: 20px 22px 22px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -1564,7 +1564,7 @@ button {
   gap: 4px;
   min-width: 0;
   padding: 14px 16px;
-  background: white;
+  background: var(--ui-surface);
   border: 1px solid $line;
   border-radius: $radius;
   text-align: left;
@@ -1574,7 +1574,7 @@ button {
   &.is-link {
     cursor: pointer;
     &:hover {
-      border-color: #bfdbfe;
+      border-color: var(--ui-link-line);
       box-shadow: 0 4px 12px rgba(42, 120, 214, 0.1);
     }
   }
@@ -1593,7 +1593,7 @@ button {
       height: 8px;
       margin-top: 4px;
       border-radius: 2px;
-      background: #cbd5e1;
+      background: var(--ui-line-strong);
       flex-shrink: 0;
     }
   }
@@ -1692,7 +1692,7 @@ button {
 }
 .amo-chip {
   border: 1px solid $line;
-  background: white;
+  background: var(--ui-surface);
   border-radius: 999px;
   padding: 2px 10px;
   font-size: 12px;
@@ -1702,7 +1702,7 @@ button {
     color: $ink;
   }
   &:hover {
-    border-color: #bfdbfe;
+    border-color: var(--ui-link-line);
     color: $c-link;
   }
 }
@@ -1735,7 +1735,7 @@ button {
 .amo-panel {
   border: 1px solid $line;
   border-radius: $radius;
-  background: white;
+  background: var(--ui-surface);
   min-width: 0;
   padding: 0 16px 16px;
   &__head {
@@ -1775,11 +1775,11 @@ button {
   justify-content: center;
   font-size: 14px;
   &.is-in {
-    background: #eff6ff;
+    background: var(--ui-link-soft);
     color: $c-link;
   }
   &.is-out {
-    background: #f0fdf4;
+    background: var(--ui-good-soft);
     color: $c-good;
   }
 }

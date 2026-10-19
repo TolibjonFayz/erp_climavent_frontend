@@ -194,8 +194,8 @@ const fileIcon = (file) => {
 
 <style lang="scss" scoped>
 .file-section {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
   border-radius: 18px;
   padding: 20px 22px;
 
@@ -221,7 +221,7 @@ const fileIcon = (file) => {
     margin: 0 0 3px;
     font-size: 16px;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--ui-ink);
   }
 }
 
@@ -233,7 +233,7 @@ const fileIcon = (file) => {
 .section-hint {
   margin: 0;
   font-size: 12.5px;
-  color: #6b7280;
+  color: var(--ui-muted);
   line-height: 1.5;
   max-width: 340px;
 }
@@ -247,8 +247,8 @@ const fileIcon = (file) => {
   white-space: nowrap;
 
   &.locked {
-    background: #fef3c7;
-    color: #b45309;
+    background: var(--ui-warn-soft);
+    color: var(--ui-warn);
   }
 
   &.ready {
@@ -264,8 +264,8 @@ const fileIcon = (file) => {
   gap: 13px;
   padding: 14px 16px;
   border-radius: 14px;
-  background: #f9fafb;
-  border: 1px solid #eef0f4;
+  background: var(--ui-surface-2);
+  border: 1px solid var(--ui-line);
   flex-wrap: wrap;
 }
 
@@ -285,7 +285,7 @@ const fileIcon = (file) => {
 .file-name {
   font-size: 14.5px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--ui-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -293,7 +293,7 @@ const fileIcon = (file) => {
 
 .file-meta {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--ui-faint);
 }
 
 .rename-input {
@@ -312,7 +312,7 @@ const fileIcon = (file) => {
 .add-file-btn {
   width: 100%;
   border-style: dashed;
-  color: #4b5563;
+  color: var(--ui-ink-2);
 
   &:hover:not(.is-disabled) {
     color: #409eff;
@@ -330,7 +330,7 @@ const fileIcon = (file) => {
     padding: 18px 12px;
     border-radius: 14px;
     border: 1.5px dashed #409eff;
-    background: #f4f9ff;
+    background: var(--ui-link-soft);
     transition: background 0.2s ease;
 
     &:hover {
@@ -354,23 +354,23 @@ const fileIcon = (file) => {
 .slot-text {
   font-size: 14px;
   font-weight: 600;
-  color: #4b5563;
+  color: var(--ui-ink-2);
 }
 
 .slot-sub {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--ui-faint);
 }
 
 .slot-cancel {
   display: block;
   margin: 6px auto 0;
-  color: #9ca3af;
+  color: var(--ui-faint);
 }
 
 .upload-progress {
   border: 1.5px solid #cfe4ff;
-  background: #f4f9ff;
+  background: var(--ui-link-soft);
   border-radius: 14px;
   padding: 14px 16px;
 }
@@ -386,7 +386,7 @@ const fileIcon = (file) => {
 .upload-file-name {
   font-size: 13px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--ui-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

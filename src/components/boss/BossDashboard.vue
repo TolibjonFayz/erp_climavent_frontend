@@ -767,10 +767,10 @@ onMounted(async () => {
     color: #d97706;
   }
   .is-top2 {
-    color: #64748b;
+    color: var(--ui-muted);
   }
   .is-top3 {
-    color: #b45309;
+    color: var(--ui-warn);
   }
   .is-actions {
     text-align: right;

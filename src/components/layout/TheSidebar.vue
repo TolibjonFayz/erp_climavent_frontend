@@ -79,6 +79,19 @@
           </a>
         </li>
       </ul>
+
+      <!-- Tungi/kunduzgi rejim (composables/useTheme.js) -->
+      <div class="nav-item theme-item">
+        <button
+          type="button"
+          class="nav-link theme-toggle"
+          :title="$t('themeToggle')"
+          @click="toggleTheme"
+        >
+          <el-icon class="icon"><Sunny v-if="isDark" /><Moon v-else /></el-icon>
+          <span class="nav-text">{{ $t('themeToggle') }}</span>
+        </button>
+      </div>
     </nav>
 
     <!-- User profile -->
@@ -101,6 +114,7 @@ import { useTasksStore } from '@/stores/tasks'
 import { onMounted, ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSidebar } from '@/composables/useSidebar'
+import { useTheme } from '@/composables/useTheme'
 
 type CurrentUser = {
   profile_image?: string | null
@@ -121,6 +135,7 @@ const props = defineProps({
 const usersStore = useUsersStore()
 const tasksStore = useTasksStore()
 const { t } = useI18n()
+const { isDark, toggleTheme } = useTheme()
 const loading = ref(false)
 
 const { isCollapsed, isMobile, isMobileOpen, toggleCollapsed, openMobile, closeMobile } =
@@ -291,7 +306,7 @@ $accent-dark: #2f7fe0;
 .sidebar {
   width: $expanded;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--ui-sidebar);
   backdrop-filter: blur(20px);
   border-right: 1px solid rgba(226, 232, 240, 0.8);
   box-shadow: 4px 0 24px rgba(18, 38, 63, 0.03);
@@ -369,7 +384,7 @@ $accent-dark: #2f7fe0;
   height: 44px;
   border: none;
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--ui-surface);
   box-shadow: 0 4px 14px rgba(17, 24, 39, 0.12);
   display: flex;
   flex-direction: column;
@@ -383,7 +398,7 @@ $accent-dark: #2f7fe0;
     width: 20px;
     height: 2px;
     border-radius: 2px;
-    background: #374151;
+    background: var(--ui-ink-2);
   }
 }
 
@@ -392,7 +407,7 @@ $accent-dark: #2f7fe0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #eef0f4;
+  border-bottom: 1px solid var(--ui-line);
   transition: padding 0.3s ease;
 
   .sidebar.collapsed & {
@@ -424,7 +439,7 @@ $accent-dark: #2f7fe0;
     height: 26px;
     object-fit: contain;
     border-radius: 6px;
-    background: white;
+    background: var(--ui-surface);
   }
 }
 
@@ -438,13 +453,13 @@ $accent-dark: #2f7fe0;
     margin: 0;
     font-size: 18px;
     font-weight: 700;
-    color: #111827;
+    color: var(--ui-ink);
     line-height: 1.2;
   }
 
   span {
     font-size: 12.5px;
-    color: #6b7280;
+    color: var(--ui-muted);
     line-height: 1.2;
   }
 }
@@ -470,8 +485,8 @@ $accent-dark: #2f7fe0;
 .toggle-icon {
   width: 9px;
   height: 9px;
-  border-left: 2px solid #6b7280;
-  border-bottom: 2px solid #6b7280;
+  border-left: 2px solid var(--ui-muted);
+  border-bottom: 2px solid var(--ui-muted);
   transform: rotate(45deg);
   margin-left: 3px;
   transition: transform 0.3s ease-in-out;
@@ -490,7 +505,7 @@ $accent-dark: #2f7fe0;
     left: 0;
     width: 16px;
     height: 2px;
-    background: #6b7280;
+    background: var(--ui-muted);
     border-radius: 2px;
   }
   &::before {
@@ -527,7 +542,7 @@ $accent-dark: #2f7fe0;
   align-items: center;
   padding: 12px 14px;
   text-decoration: none;
-  color: #4b5563;
+  color: var(--ui-ink-2);
   border-radius: 12px;
   transition:
     background 0.2s ease,
@@ -535,8 +550,8 @@ $accent-dark: #2f7fe0;
   position: relative;
 
   &:hover {
-    background: #eef5ff;
-    color: #1f2937;
+    background: var(--ui-link-soft);
+    color: var(--ui-ink);
   }
 
   .nav-text {
@@ -563,6 +578,25 @@ $accent-dark: #2f7fe0;
   background: linear-gradient(135deg, $accent 0%, $accent-dark 100%);
   color: #fff;
   box-shadow: 0 6px 16px rgba(64, 158, 255, 0.35);
+}
+
+.theme-item {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--ui-line);
+}
+
+.theme-toggle {
+  width: 100%;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  .icon {
+    font-size: 18px;
+  }
 }
 
 /* ─── Vazifalar hisoblagichi ──────────────────────────────── */
@@ -671,7 +705,7 @@ $accent-dark: #2f7fe0;
   padding: 12px 14px;
   margin: 0 12px 16px;
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--ui-surface);
   border: 1px solid rgba(226, 232, 240, 0.6);
   box-shadow: 0 2px 8px rgba(18, 38, 63, 0.02);
   display: flex;
@@ -681,7 +715,7 @@ $accent-dark: #2f7fe0;
   cursor: pointer;
 
   &:hover {
-    background: #f8fafc;
+    background: var(--ui-surface-2);
     border-color: rgba(203, 213, 225, 0.8);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(18, 38, 63, 0.05);
@@ -697,7 +731,7 @@ $accent-dark: #2f7fe0;
     height: 42px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #fff;
+    border: 2px solid var(--ui-surface);
     box-shadow: 0 2px 6px rgba(17, 24, 39, 0.1);
   }
 
@@ -721,7 +755,7 @@ $accent-dark: #2f7fe0;
     margin: 0;
     font-size: 14.5px;
     font-weight: 600;
-    color: #111827;
+    color: var(--ui-ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -730,7 +764,7 @@ $accent-dark: #2f7fe0;
   p {
     margin: 2px 0 0;
     font-size: 12.5px;
-    color: #6b7280;
+    color: var(--ui-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -745,11 +779,11 @@ $accent-dark: #2f7fe0;
   background: transparent;
 }
 .sidebar-nav::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--ui-line-strong);
   border-radius: 2px;
 
   &:hover {
-    background: #9ca3af;
+    background: var(--ui-faint);
   }
 }
 </style>

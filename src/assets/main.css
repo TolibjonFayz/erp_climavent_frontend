@@ -37,6 +37,65 @@
   --ui-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   --ui-shadow-hover: 0 4px 12px rgba(42, 120, 214, 0.1);
   --ui-page-pad: 24px;
+  --ui-surface-3: #f1f3f5;
+  --ui-line-strong: #cbd5e1;
+  --ui-link-line: #bfdbfe;
+  --ui-good-line: #bbf7d0;
+  --ui-bad-line: #fecaca;
+  --ui-warn-ink: #92400e;
+  --ui-warn-line: #fde68a;
+  --ui-sidebar: rgba(255, 255, 255, 0.95);
+  color-scheme: light;
+}
+
+/* ─── Tungi rejim: html.dark (qo'lda yoki tizim sozlamasi bo'yicha, composables/useTheme.js) ─── */
+html.dark {
+  --bg-color: #0b1120;
+  --card-bg: #151d2e;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border-light: #263246;
+  --primary-color: #409eff;
+  --primary-hover: #66b1ff;
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-hover: 0 15px 35px rgba(0, 0, 0, 0.45);
+
+  --ui-ink: #e5e7eb;
+  --ui-ink-2: #cbd5e1;
+  --ui-muted: #94a3b8;
+  --ui-faint: #64748b;
+  --ui-line: #263246;
+  --ui-line-soft: #1c2638;
+  --ui-line-strong: #3b4a63;
+  --ui-surface: #151d2e;
+  --ui-surface-2: #1b2539;
+  --ui-surface-3: #223049;
+  --ui-link: #60a5fa;
+  --ui-link-soft: rgba(96, 165, 250, 0.12);
+  --ui-link-line: rgba(96, 165, 250, 0.35);
+  --ui-good: #4ade80;
+  --ui-good-soft: rgba(74, 222, 128, 0.12);
+  --ui-good-line: rgba(74, 222, 128, 0.35);
+  --ui-bad: #f87171;
+  --ui-bad-soft: rgba(248, 113, 113, 0.12);
+  --ui-bad-line: rgba(248, 113, 113, 0.35);
+  --ui-warn: #fbbf24;
+  --ui-warn-soft: rgba(251, 191, 36, 0.12);
+  --ui-warn-line: rgba(251, 191, 36, 0.35);
+  --ui-warn-ink: #fcd34d;
+  --ui-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --ui-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --ui-sidebar: rgba(21, 29, 46, 0.95);
+  color-scheme: dark;
+}
+
+/* Logotip PNG'ida qora yozuv bor — tungi fonda o'qilishi uchun oq "chip" ichida */
+html.dark .lg-brand__logo {
+  background: #ffffff;
+  padding: 8px 14px;
+  border-radius: 12px;
+  box-sizing: content-box;
 }
 
 * {
@@ -82,12 +141,12 @@ body {
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   --el-table-border-color: var(--border-light) !important;
-  --el-table-header-bg-color: #f8fafc !important;
+  --el-table-header-bg-color: var(--ui-surface-2) !important;
   --el-table-row-hover-bg-color: #f1f5f9 !important;
 }
 .el-table th.el-table__cell {
   background-color: var(--el-table-header-bg-color) !important;
-  color: #64748b;
+  color: var(--ui-muted);
   font-weight: 600 !important;
   text-transform: uppercase;
   font-size: 0.75rem;
@@ -124,14 +183,14 @@ body {
 .el-input__wrapper, .el-select .el-input__wrapper, .el-textarea__inner {
   border-radius: var(--radius-sm) !important;
   box-shadow: 0 0 0 1px var(--border-light) inset !important;
-  background-color: #f8fafc !important;
+  background-color: var(--ui-surface-2) !important;
   transition: all 0.25s ease !important;
 }
 .el-input__wrapper:hover, .el-textarea__inner:hover {
-  box-shadow: 0 0 0 1px #cbd5e1 inset !important;
+  box-shadow: 0 0 0 1px var(--ui-line-strong) inset !important;
 }
 .el-input__wrapper.is-focus, .el-textarea__inner:focus {
-  background-color: #ffffff !important;
+  background-color: var(--ui-surface) !important;
   box-shadow: 0 0 0 2px var(--primary-color) inset, 0 4px 12px rgba(64, 158, 255, 0.1) !important;
 }
 
@@ -144,7 +203,7 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--ui-line-strong);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {

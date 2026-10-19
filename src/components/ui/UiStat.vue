@@ -57,7 +57,7 @@ defineProps({
   cursor: pointer;
 }
 .ui-stat.is-link:hover {
-  border-color: #bfdbfe;
+  border-color: var(--ui-link-line);
   box-shadow: var(--ui-shadow-hover);
 }
 .ui-stat.is-link:focus-visible {
@@ -79,7 +79,7 @@ defineProps({
   height: 8px;
   margin-top: 4px;
   border-radius: 2px;
-  background: #cbd5e1;
+  background: var(--ui-line-strong);
   flex-shrink: 0;
 }
 .ui-stat.is-good .ui-stat__label::before {

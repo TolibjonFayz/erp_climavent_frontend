@@ -750,7 +750,7 @@ defineExpose({
   position: absolute;
   bottom: 30px;
   right: 10px;
-  background: white;
+  background: var(--ui-surface);
   border: none;
   border-radius: 6px;
   padding: 8px 12px;
@@ -759,7 +759,7 @@ defineExpose({
   gap: 6px;
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: var(--ui-ink-2);
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.2s;
@@ -767,7 +767,7 @@ defineExpose({
 }
 
 .current-location-btn:hover:not(:disabled) {
-  background: #f9fafb;
+  background: var(--ui-surface-2);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -780,7 +780,7 @@ defineExpose({
 .spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--ui-line);
   border-top: 2px solid #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -798,9 +798,9 @@ defineExpose({
 .selected-location {
   margin-top: 20px;
   padding: 16px;
-  background: #f8fafc;
+  background: var(--ui-surface-2);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ui-line);
 }
 
 .selected-location h3 {
@@ -811,7 +811,7 @@ defineExpose({
 
 .selected-location p {
   margin: 4px 0;
-  color: #475569;
+  color: var(--ui-ink-2);
   font-size: 14px;
 }
 
@@ -839,16 +839,16 @@ defineExpose({
 .location-input-container {
   margin-top: 16px;
   padding: 16px;
-  background: white;
+  background: var(--ui-surface);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ui-line);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .input-label {
   display: block;
   margin-bottom: 8px;
-  color: #374151;
+  color: var(--ui-ink-2);
   font-size: 14px;
   font-weight: 500;
 }
@@ -861,10 +861,10 @@ defineExpose({
 .location-input {
   flex: 1;
   padding: 10px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--ui-line-strong);
   border-radius: 6px;
   font-size: 14px;
-  color: #374151;
+  color: var(--ui-ink-2);
   transition: border-color 0.2s;
 }
 
@@ -875,7 +875,7 @@ defineExpose({
 }
 
 .location-input::placeholder {
-  color: #9ca3af;
+  color: var(--ui-faint);
 }
 
 .parse-btn {
@@ -896,7 +896,7 @@ defineExpose({
 }
 
 .parse-btn:disabled {
-  background: #9ca3af;
+  background: var(--ui-faint);
   cursor: not-allowed;
 }
 

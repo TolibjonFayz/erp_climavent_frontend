@@ -338,8 +338,8 @@ reload()
 </script>
 
 <style lang="scss" scoped>
-$muted: #6b7280;
-$line: #e5e7eb;
+$muted: var(--ui-muted);
+$line: var(--ui-line);
 
 .rec-caption {
   margin: 0 0 12px;
@@ -368,7 +368,7 @@ $line: #e5e7eb;
   gap: 2px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--ui-surface-2);
   min-width: 0;
 
   &__label {
@@ -378,7 +378,7 @@ $line: #e5e7eb;
   &__value {
     font-size: 20px;
     font-weight: 700;
-    color: #111827;
+    color: var(--ui-ink);
     font-variant-numeric: tabular-nums;
   }
   &__sub {
@@ -386,13 +386,13 @@ $line: #e5e7eb;
     color: $muted;
   }
   &.is-good .rec-tile__value {
-    color: #15803d;
+    color: var(--ui-good);
   }
   &.is-warn .rec-tile__value {
-    color: #b45309;
+    color: var(--ui-warn);
   }
   &.is-bad .rec-tile__value {
-    color: #b91c1c;
+    color: var(--ui-bad);
   }
 }
 .rec-meta {
@@ -407,7 +407,7 @@ $line: #e5e7eb;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #2a78d6;
+  color: var(--ui-link);
 }
 .rec-history {
   display: flex;
@@ -438,7 +438,7 @@ $line: #e5e7eb;
   code {
     display: block;
     word-break: break-all;
-    color: #374151;
+    color: var(--ui-ink-2);
   }
 }
 .rec-toolbar {
@@ -452,7 +452,7 @@ $line: #e5e7eb;
   width: 220px;
 }
 .rec-link {
-  color: #2a78d6;
+  color: var(--ui-link);
   text-decoration: none;
 
   &:hover {

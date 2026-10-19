@@ -292,16 +292,16 @@ async function download() {
   width: 100%;
   margin-top: 6px;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ui-muted);
 }
 .yr-note {
   margin: 0 0 8px;
   font-size: 13px;
   line-height: 1.5;
-  color: #374151;
+  color: var(--ui-ink-2);
 }
 .yr-note--muted {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ui-muted);
 }
 </style>

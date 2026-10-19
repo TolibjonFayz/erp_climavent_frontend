@@ -193,8 +193,8 @@ const save = async () => {
   padding: 1px 6px;
   font-size: 10px;
   font-weight: 600;
-  color: #92400e;
-  background: #fef3c7;
+  color: var(--ui-warn-ink);
+  background: var(--ui-warn-soft);
   border-radius: 999px;
 }
 .ca__chip {

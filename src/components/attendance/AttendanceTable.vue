@@ -1160,11 +1160,11 @@ onMounted(async () => {
   border-radius: 3px;
 
   &.is-confirmed {
-    background: #dbeafe;
+    background: var(--ui-link-soft);
     border: 1.5px solid #60a5fa;
   }
   &.is-suggested {
-    background: #f8fafc;
+    background: var(--ui-surface-2);
     border: 1.5px dashed #94a3b8;
   }
 }
@@ -1178,7 +1178,7 @@ onMounted(async () => {
   font-size: 10px;
   font-weight: 700;
   color: white;
-  background: #64748b;
+  background: var(--ui-muted);
   border-radius: 999px;
   box-sizing: border-box;
 }
@@ -1291,9 +1291,9 @@ onMounted(async () => {
   gap: 6px;
   padding: 6px 10px;
   font-size: 12px;
-  color: #92400e;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  color: var(--ui-warn-ink);
+  background: var(--ui-warn-soft);
+  border: 1px solid var(--ui-warn-line);
   border-radius: 6px;
 }
 .field-label {
@@ -1324,7 +1324,7 @@ onMounted(async () => {
   transition: all 0.15s ease;
 
   &:hover {
-    border-color: #cbd5e1;
+    border-color: var(--ui-line-strong);
   }
 }
 .form-row {
@@ -1412,8 +1412,8 @@ onMounted(async () => {
   border-top: 1px solid var(--ui-line-soft);
 }
 .at-avatar.is-terminal {
-  color: #92400e;
-  background: #fef3c7;
+  color: var(--ui-warn-ink);
+  background: var(--ui-warn-soft);
 }
 .at-noerp {
   flex-shrink: 0;
@@ -1421,8 +1421,8 @@ onMounted(async () => {
   padding: 1px 6px;
   font-size: 10px;
   font-weight: 600;
-  color: #92400e;
-  background: #fef3c7;
+  color: var(--ui-warn-ink);
+  background: var(--ui-warn-soft);
   border-radius: 999px;
   white-space: nowrap;
 }
@@ -1450,17 +1450,17 @@ onMounted(async () => {
     color: var(--ui-link);
   }
   &.is-stale {
-    color: #b91c1c;
-    border-color: #fca5a5;
-    background: #fef2f2;
+    color: var(--ui-bad);
+    border-color: var(--ui-bad-line);
+    background: var(--ui-bad-soft);
   }
 }
 .at-cam-sync__badge {
   padding: 1px 7px;
   font-size: 11px;
   font-weight: 600;
-  color: #92400e;
-  background: #fef3c7;
+  color: var(--ui-warn-ink);
+  background: var(--ui-warn-soft);
   border-radius: 999px;
 }
 .at-day__in {
@@ -1478,10 +1478,10 @@ onMounted(async () => {
   white-space: nowrap;
 
   &.is-inside {
-    color: #15803d;
+    color: var(--ui-good);
   }
   &.is-partial {
-    color: #b45309;
+    color: var(--ui-warn);
   }
   &.is-legend {
     padding: 1px 6px;
@@ -1529,11 +1529,11 @@ onMounted(async () => {
     &.is-missing {
       font-size: 13px;
       font-weight: 500;
-      color: #b45309;
+      color: var(--ui-warn);
     }
     &.is-inside {
       font-size: 15px;
-      color: #15803d;
+      color: var(--ui-good);
     }
   }
 }
@@ -1571,9 +1571,9 @@ onMounted(async () => {
   border-radius: 6px;
 }
 .cam-device.is-offline {
-  color: #b91c1c;
-  background: #fef2f2;
-  border-color: #fca5a5;
+  color: var(--ui-bad);
+  background: var(--ui-bad-soft);
+  border-color: var(--ui-bad-line);
 }
 .cam-hint {
   margin: -2px 0 10px;
@@ -1588,9 +1588,9 @@ onMounted(async () => {
   padding: 2px 8px;
   font-family: inherit;
   font-size: 12px;
-  color: #92400e;
-  background: #fffbeb;
-  border: 1px dashed #fcd34d;
+  color: var(--ui-warn-ink);
+  background: var(--ui-warn-soft);
+  border: 1px dashed var(--ui-warn-line);
   border-radius: 999px;
   cursor: pointer;
 }
