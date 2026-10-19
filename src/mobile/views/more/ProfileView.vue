@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { showFailToast, showSuccessToast } from 'vant'
 import { useUsersStore } from '@/stores/user'
@@ -8,6 +8,9 @@ import MSheet from '../../components/MSheet.vue'
 import { currentUserId, useSession } from '../../session'
 import { avatarColor, errorText, initials } from '../../utils'
 import { uploadToCloudinary } from '../sites/siteData'
+import { devicesApi } from '../../api'
+import { pushEnabled } from '../../push'
+import { currentVersion } from '../../updater'
 
 const { t, locale } = useI18n()
 const usersStore = useUsersStore()
@@ -80,6 +83,23 @@ async function savePass() {
   }
 }
 
+// ─── Bildirishnoma va versiya ───
+const testing = ref(false)
+const version = ref(null)
+onMounted(async () => (version.value = await currentVersion()))
+async function testPush() {
+  testing.value = true
+  try {
+    const res = await devicesApi.test()
+    if (res?.fcm && !res.fcm.configured) showFailToast(t('m.pushServerOff'))
+    else showSuccessToast(t('m.pushTestSent'))
+  } catch (e) {
+    showFailToast(errorText(e, t, locale.value))
+  } finally {
+    testing.value = false
+  }
+}
+
 // ─── Rasm ───
 async function onAvatar(e) {
   const file = e.target.files?.[0]
@@ -131,6 +151,18 @@ async function onAvatar(e) {
     <van-cell-group inset>
       <van-cell :title="$t('login')" :value="user?.username" is-link @click="openUsername" />
       <van-cell :title="$t('password')" value="••••••" is-link @click="openPass" />
+    </van-cell-group>
+
+    <div class="m-section"><span class="m-section__title">{{ $t('m.appSection') }}</span></div>
+    <van-cell-group inset>
+      <van-cell :title="$t('m.appVersion')" :value="version ? `${version.version} (${version.build})` : '—'" />
+      <van-cell
+        v-if="pushEnabled"
+        :title="$t('m.pushTest')"
+        is-link
+        :value="testing ? '…' : ''"
+        @click="!testing && testPush()"
+      />
     </van-cell-group>
 
     <MSheet v-model="infoOpen" :title="$t('m.personalInfo')">

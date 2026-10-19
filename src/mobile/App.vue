@@ -5,6 +5,9 @@ import { useTasksStore } from '@/stores/tasks'
 import { TABS } from './router'
 import { useSession } from './session'
 import { tapFeedback } from './native'
+import { useI18n } from 'vue-i18n'
+import { initPush } from './push'
+import { checkForUpdate } from './updater'
 
 const route = useRoute()
 const router = useRouter()
@@ -36,11 +39,17 @@ const taskBadge = computed(() => {
   return open || ''
 })
 
+const { t } = useI18n()
+
 // Kirgandan keyin vazifalarni jimgina yuklaymiz — belgi darhol ko'rinsin
 watch(
   () => user.value?.id,
   (id) => {
-    if (!id || !can('tasks')) return
+    if (!id) return
+    // Bildirishnomalar va yangi versiya tekshiruvi (har kirishda bir marta)
+    initPush(router)
+    checkForUpdate(t)
+    if (!can('tasks')) return
     const req = isAdmin.value ? tasksStore.getAllTasks() : tasksStore.getMyTasks(id)
     req.catch(() => {})
   },

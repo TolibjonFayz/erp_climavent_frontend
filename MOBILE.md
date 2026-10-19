@@ -15,7 +15,10 @@ telefon uchun ekranlar alohida — `src/mobile/`. Native qobiq — [Capacitor 8]
 | Dogovor | ro'yxat, shartnoma sahifasi (rekvizitlar, spetsifikatsiya + NDS), yaratish/tahrir, Excel import |
 | Loyiha | ro'yxat, loyiha sahifasi, arxiv/ishchi fayl (yuklash, ko'rish, nomlash, almashtirish), yaratish/tahrir |
 | Admin | umumiy ko'rsatkichlar, xodimlar (admin/blok/bo'lim ruxsatlari), barcha hamkorlar va obyektlar, audit |
-| Hali saytda | Excel eksport, shartnomani chop etish (PDF), Raqiblar (saytda ham "tez orada") |
+| Eksport / PDF | KP, Dogovor, Loyiha, Vazifalar hisoboti, Admin ro'yxatlari — Excel (telefonda "Ulashish" oynasi); shartnoma — Android chop etish oynasi ("PDF sifatida saqlash") |
+| Bildirishnoma | yangi vazifa, tasdiq so'rovi, tasdiqlandi/rad etildi, Boss e'loni (Android — FCM, iPhone — APNs) |
+| Yangilanish | Admin panel → "Ilova versiyalari" ga APK yuklanadi, xodimlar ilovasi o'zi taklif qiladi |
+| Hali saytda | Raqiblar (saytda ham "tez orada") |
 
 ## Ishlab chiqish
 
@@ -33,33 +36,52 @@ Talab: Android Studio (JDK 21 ichida bor), Android SDK 36.
 
 ```bash
 npm run cap:sync
-cd android && ./gradlew assembleDebug        # app/build/outputs/apk/debug/app-debug.apk
+cd android && ./gradlew assembleRelease      # app/build/outputs/apk/release/app-release.apk
 ```
 
-Yoki `npm run cap:android` — Android Studio'da ochadi (Run ▶ telefon/emulyatorda).
+**Imzo kaliti** — `D:\Tolibjon\Programming\Climavent\climavent-erp-keys\` (repodan tashqarida,
+`MUHIM-O'QING.txt` ga qarang). `android/keystore.properties` shu kalitga ishora qiladi va git'ga
+kirmaydi. Kalit yo'qolsa, o'rnatilgan ilovalarni yangilab bo'lmaydi — zaxira qiling.
 
-**Play Market uchun** (bir martalik): imzo kaliti yarating va uni xavfsiz joyda saqlang —
-yo'qolsa ilovani yangilab bo'lmaydi:
+### Yangi versiya chiqarish
 
-```bash
-keytool -genkey -v -keystore climavent-erp.jks -alias climavent -keyalg RSA -keysize 2048 -validity 10000
-```
+1. `android/app/build.gradle`: `versionCode` +1, `versionName` (masalan `1.0.1`);
+   `vite.mobile.config.js` → `MOBILE_VERSION` ham shu.
+2. `npm run cap:sync && cd android && ./gradlew assembleRelease`
+3. Ilovada: Menyu → Admin panel → **Ilova versiyalari** → APK, versiya, kod va "nima yangi".
+4. Xodimlar ilovani ochganda "Yangi versiya" oynasi chiqadi → yuklab o'rnatadi.
 
-So'ng Android Studio → Build → Generate Signed App Bundle (`.aab`) → Play Console'ga yuklash
-(Google Play Developer hisobi — bir martalik $25).
+Birinchi o'rnatishda telefon "noma'lum manbadan o'rnatish"ga ruxsat so'raydi (bir marta).
 
-Har yangi versiyada `android/app/build.gradle` dagi `versionCode` ni +1, `versionName` ni
-va `vite.mobile.config.js` dagi `MOBILE_VERSION` ni yangilang.
+## Push-bildirishnomalar
+
+Backend (`erp_climavent_backend/src/devices`) — yangi vazifa, tasdiq so'rovi, tasdiqlash/rad etish,
+Boss e'loni. Sozlanmagan bo'lsa hech narsa buzilmaydi, faqat yuborilmaydi.
+
+**Android (Firebase):**
+1. Firebase console → loyiha → *Add app → Android*, package `uz.climavent.erp`.
+2. `google-services.json` ni `android/app/` ga qo'ying (git'ga kiradi — maxfiy emas) va qayta build.
+   Shu fayl bo'lsagina ilova bildirishnomaga ruxsat so'raydi.
+3. Railway → ERP backend → `FIREBASE_SERVICE_ACCOUNT` = servis hisobi JSON
+   (Project settings → Service accounts → Generate new private key).
+
+**iPhone (APNs, Firebase kerak emas):** Apple Developer → Keys → "Apple Push Notifications service"
+kaliti (.p8). Railway'ga: `APNS_KEY` (fayl mazmuni), `APNS_KEY_ID`, `APNS_TEAM_ID`,
+`APNS_BUNDLE_ID=uz.climavent.erp`.
+
+Tekshirish: ilovada Profil → **Bildirishnomani sinash**; serverda `GET /api/devices/status`.
 
 ## iOS (iPhone)
 
-iOS ilovani faqat **macOS + Xcode** da yig'ish mumkin (Apple qoidasi). Loyiha tayyor: `ios/`.
+iOS ilovani faqat macOS'da yig'ish mumkin. Mac'siz — **Codemagic** (bulutda, `codemagic.yaml` tayyor):
 
-1. Mac'da: `npm ci && npm run cap:sync && npx cap open ios`
-2. Xcode → Signing & Capabilities → Team (Apple Developer hisobi, yiliga $99)
-3. Product → Archive → App Store Connect / TestFlight
+1. Apple Developer hisobi ($99/yil) va App Store Connect'da ilova (bundle `uz.climavent.erp`).
+2. codemagic.io → repo'ni ulash → Team settings → *App Store Connect API key* integratsiyasi
+   nomi `climavent_asc`; environment group `climavent_erp`: `VITE_MAPBOX_TOKEN`, `APP_STORE_APPLE_ID`.
+3. `git tag ios-v1.0.0 && git push --tags` → build TestFlight'ga tushadi.
+4. Xodimlar **TestFlight** ilovasi orqali o'rnatadi (yangilanishlar ham shu yerdan).
 
-Mac bo'lmasa — Codemagic yoki GitHub Actions (macOS runner) orqali bulutda yig'ish mumkin.
+Mac bo'lsa: `npm ci && npm run cap:sync && npx cap open ios` → Xcode → Signing → Archive.
 
 ## Ruxsatlar
 

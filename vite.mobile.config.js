@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
@@ -37,6 +38,10 @@ export default defineConfig({
   base: './',
   define: {
     __APP_VERSION__: JSON.stringify(MOBILE_VERSION),
+    // Push faqat Firebase sozlamasi bilan yig'ilganda (usiz Android'da register() yiqiladi)
+    __PUSH_ENABLED__: JSON.stringify(
+      existsSync(fileURLToPath(new URL('./android/app/google-services.json', import.meta.url))),
+    ),
   },
   plugins: [vue(), renameEntry, devEntry],
   resolve: {

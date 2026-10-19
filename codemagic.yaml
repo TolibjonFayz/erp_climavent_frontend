@@ -1,0 +1,53 @@
+# Codemagic — iPhone ilovasini bulutda (macOS) yig'ib TestFlight'ga yuborish.
+# Sozlash: MOBILE.md → "iOS (iPhone)" bo'limi.
+#
+# Codemagic'da kerak:
+#   - App Store Connect API kaliti integratsiyasi: nomi "climavent_asc"
+#   - Environment group "climavent_erp": VITE_MAPBOX_TOKEN
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: climavent_asc
+    environment:
+      groups:
+        - climavent_erp
+      node: 22
+      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: uz.climavent.erp
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'ios-v*'
+    scripts:
+      - name: Paketlar
+        script: npm ci
+      - name: Mapbox tokeni (git'da yo'q)
+        script: echo "VITE_MAPBOX_TOKEN = \"$VITE_MAPBOX_TOKEN\"" > .env.mobile.local
+      - name: Veb qismini yig'ish va iOS'ga ko'chirish
+        script: |
+          npm run build:mobile
+          npx cap sync ios
+      - name: Imzolash profillari
+        script: xcode-project use-profiles
+      - name: Build raqami (har yig'ishda +1)
+        script: |
+          cd ios/App
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || echo 0)
+          agvtool new-version -all $((LATEST + 1))
+      - name: IPA
+        script: |
+          xcode-project build-ipa \
+            --project ios/App/App.xcodeproj \
+            --scheme App
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

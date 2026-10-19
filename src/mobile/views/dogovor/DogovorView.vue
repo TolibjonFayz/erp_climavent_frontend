@@ -8,6 +8,8 @@ import { formatDate, telHref } from '@/utils/format'
 import MPage from '../../components/MPage.vue'
 import MStats from '../../components/MStats.vue'
 import MEmpty from '../../components/MEmpty.vue'
+import { showActionSheet } from '../../actionSheet'
+import { exportExcel } from '../../exporter'
 import { useSession } from '../../session'
 import { DOGOVOR_STATUSES, canModifyDoc, statusOf } from '../../docRules'
 import { errorText, includesText, money, moneyShort } from '../../utils'
@@ -81,6 +83,51 @@ const stats = computed(() => [
   }),
 ])
 
+
+const dgRow = (row, i) => ({
+  '№': i + 1,
+  [t('dogovorNumberLabel')]: row.dogovor_number ?? '—',
+  [t('dogovorDateLabel')]: formatDate(row.dogovor_date),
+  [t('dogovorClientLabel')]: row.client_name || '—',
+  [t('dogovorSumLabel')]: Number(row.dogovor_sum) || 0,
+  [t('dogovorStatusLabel')]: statusOf(DOGOVOR_STATUSES, row.dogovor_status) ? t(statusOf(DOGOVOR_STATUSES, row.dogovor_status).labelKey) : row.dogovor_status || '—',
+  [t('dogovorInnLabel')]: row.client_inn || '—',
+  [t('dogovorPaymentDateLabel')]: formatDate(row.payment_date),
+  [t('dogovorInitialPaymentLabel')]: Number(row.initial_payment) || 0,
+  [t('dogovorPrepaymentLabel')]: row.prepayment_percent ?? 0,
+  [t('dogovorPhoneLabel')]: row.client_phone || '—',
+  [t('dogovorManagerLabel')]: row.manager_name || '—',
+  [t('dogovorAddressLabel')]: row.client_address || '—',
+  [t('dogovorContactPositionLabel')]: row.contact_position || '—',
+  [t('dogovorContactNameLabel')]: row.contact_name || '—',
+  [t('dogovorCommentLabel')]: row.comment || '—',
+})
+
+// ─── Excel: import va eksport menyusi ───
+const exporting = ref(false)
+function openMenu() {
+  showActionSheet({
+    actions: [
+      { name: t('m.exportExcel'), subname: t('m.exportCount', { n: filtered.value.length }), key: 'export' },
+      { name: t('m.importExcel'), key: 'import' },
+    ],
+    cancelText: t('cancel'),
+  })
+    .then((a) => (a.key === 'import' ? fileInput.value?.click() : doExport()))
+    .catch(() => {})
+}
+async function doExport() {
+  if (!filtered.value.length) return showToast(t('m.nothingToExport'))
+  exporting.value = true
+  try {
+    await exportExcel('Dogovorlar', [{ name: 'Dogovorlar', rows: filtered.value.map(dgRow) }])
+  } catch (e) {
+    showFailToast(errorText(e, t, locale.value))
+  } finally {
+    exporting.value = false
+  }
+}
+
 // ─── Excel import ───
 const fileInput = ref(null)
 const importing = ref(false)
@@ -112,9 +159,9 @@ async function onImport(e) {
 <template>
   <MPage :title="$t('dogovortext')" :back="{ name: 'more' }" :on-refresh="load">
     <template #right>
-      <button type="button" class="m-head__btn" :disabled="importing" @click="fileInput?.click()">
-        <van-loading v-if="importing" size="18" />
-        <van-icon v-else name="upgrade" />
+      <button type="button" class="m-head__btn" :disabled="importing || exporting" @click="openMenu">
+        <van-loading v-if="importing || exporting" size="18" />
+        <van-icon v-else name="ellipsis" />
       </button>
       <button type="button" class="m-head__btn" @click="router.push({ name: 'dogovor-new' })">
         <van-icon name="plus" />

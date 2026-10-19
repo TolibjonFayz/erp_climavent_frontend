@@ -3,6 +3,7 @@ import { computed, onActivated, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { showConfirmDialog, showFailToast, showSuccessToast } from 'vant'
 import { showActionSheet } from '../../actionSheet'
+import { exportExcel } from '../../exporter'
 import { useTasksStore } from '@/stores/tasks'
 import { useUsersStore } from '@/stores/user'
 import { fmtNum, formatDate } from '@/utils/format'
@@ -261,6 +262,51 @@ function onMenu(task) {
 
 // ─── Hisobot ───
 const reportOpen = ref(false)
+const exporting = ref(false)
+async function exportTasks() {
+  const all = source.value
+  if (!all.length) return showFailToast(t('taskNoDataToExport'))
+  exporting.value = true
+  try {
+    const rows = all.map((task, i) => ({
+      '№': i + 1,
+      [t('taskTitle')]: task.title,
+      [t('taskDescription')]: task.description || '—',
+      [t('assigneeLabel')]: personName(task.assignee) || t('unknown'),
+      [t('kpTableStatus')]: t(statusLabelKey(task.status)),
+      [t('taskPriority')]: t(priorityLabelKey(task.priority)),
+      [t('taskDeadline')]: task.deadline ? formatDate(task.deadline) : '—',
+      [t('overdue')]: isOverdue(task) ? t('yeah') : '—',
+      [t('taskPendingCount')]: task.pending_status ? t(statusLabelKey(task.pending_status)) : '—',
+      [t('taskApprovalNote')]: task.approval_note || '—',
+      [t('taskRejectReason')]: task.approval_reject_reason || '—',
+      [t('statusDone')]: task.completed_at ? formatDate(task.completed_at) : '—',
+    }))
+    const r = report.value
+    const summary = [
+      { [t('colEmployee')]: t('total'), [t('total')]: r.total },
+      { [t('colEmployee')]: t('statusDone'), [t('total')]: r.done },
+      { [t('colEmployee')]: t('taskCompletionRate'), [t('total')]: `${r.rate}%` },
+      { [t('colEmployee')]: t('taskAvgCompletionDays'), [t('total')]: r.avgDays ?? '—' },
+      {},
+      ...r.byEmployee.map((row) => ({
+        [t('colEmployee')]: row.name,
+        [t('total')]: row.total,
+        [t('statusDone')]: row.done,
+        [t('overdue')]: row.overdue,
+        [t('taskCompletionRate')]: `${row.rate}%`,
+      })),
+    ]
+    await exportExcel('Vazifalar', [
+      { name: t('tasks'), rows },
+      { name: t('taskReport'), rows: summary },
+    ])
+  } catch (e) {
+    showFailToast(errorText(e, t, locale.value))
+  } finally {
+    exporting.value = false
+  }
+}
 const report = computed(() => {
   const all = source.value
   const done = all.filter((x) => x.status === 'done')
@@ -583,6 +629,9 @@ const report = computed(() => {
 
     <!-- Hisobot -->
     <MSheet v-model="reportOpen" :title="$t('taskReportTitle')">
+      <template #footer>
+        <van-button type="primary" icon="share-o" :loading="exporting" @click="exportTasks">{{ $t('m.exportExcel') }}</van-button>
+      </template>
       <div class="tv-report">
         <div class="tv-report__kpis">
           <div><b class="m-num">{{ fmtNum(report.total) }}</b><span>{{ $t('total') }}</span></div>

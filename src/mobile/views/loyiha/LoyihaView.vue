@@ -2,9 +2,10 @@
 import { computed, onActivated, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { showFailToast } from 'vant'
+import { showFailToast, showToast } from 'vant'
 import { useLoyihaStore } from '@/stores/loyiha'
-import { formatLoyihaId, formatNumber } from '@/utils/loyihaFormat'
+import { formatDate, formatLoyihaId, formatNumber } from '@/utils/loyihaFormat'
+import { exportExcel } from '../../exporter'
 import MPage from '../../components/MPage.vue'
 import MStats from '../../components/MStats.vue'
 import MEmpty from '../../components/MEmpty.vue'
@@ -83,11 +84,53 @@ const stats = computed(() => {
 })
 
 const hasFile = (r, section) => (r.files || []).some((f) => f.section === section)
+const fileCount = (r, section) => (r.files || []).filter((f) => f.section === section).length
+
+// Excel — saytdagi Loyiha.vue eksporti bilan bir xil ustunlar
+const exporting = ref(false)
+async function doExport() {
+  if (!filtered.value.length) return showToast(t('m.nothingToExport'))
+  exporting.value = true
+  try {
+    const rows = filtered.value.map((row, i) => ({
+      '№': i + 1,
+      [t('loyihaTableNumber')]: formatLoyihaId(row.order_number),
+      [t('loyihaTableStatus')]: row.status === 'done' ? t('loyihaStatusDone') : t('loyihaStatusInProgress'),
+      [t('loyihaTableManager')]: row.manager_name || '—',
+      [t('loyihaTableOther')]: row.other_source || '—',
+      [t('loyihaTableSystem')]: row.system_info || '—',
+      [t('loyihaTableArea')]: row.area ?? '—',
+      [t('loyihaTableDifficulty')]: row.difficulty ?? '—',
+      [t('loyihaGivenDateLabel')]: row.given_date ? formatDate(row.given_date) : '—',
+      [t('loyihaFinishedDateLabel')]: row.finished_date ? formatDate(row.finished_date) : '—',
+      [t('loyihaKpNumberLabel')]: row.kp_number || '—',
+      [t('loyihaKpSumLabel')]: row.kp_sum ?? '—',
+      [t('loyihaKpDateLabel')]: row.kp_date ? formatDate(row.kp_date) : '—',
+      [t('loyihaDogovorNumberLabel')]: row.dogovor_number || '—',
+      [t('loyihaDogovorSumLabel')]: row.dogovor_sum ?? '—',
+      [t('loyihaDogovorDateLabel')]: row.dogovor_date ? formatDate(row.dogovor_date) : '—',
+      [t('loyihaPhoneLabel')]: row.contact_phone || '—',
+      [t('loyihaAddressLabel')]: row.contact_address || '—',
+      [t('loyihaTableComment')]: row.comment || '—',
+      [t('loyihaArchiveSection')]: fileCount(row, 'archive'),
+      [t('loyihaWorkingSection')]: fileCount(row, 'working'),
+    }))
+    await exportExcel('Loyihalar', [{ name: 'Loyihalar', rows }])
+  } catch (e) {
+    showFailToast(errorText(e, t, locale.value))
+  } finally {
+    exporting.value = false
+  }
+}
 </script>
 
 <template>
   <MPage :title="$t('loyihatext')" :back="{ name: 'more' }" :on-refresh="load">
     <template #right>
+      <button type="button" class="m-head__btn" :disabled="exporting" @click="doExport">
+        <van-loading v-if="exporting" size="18" />
+        <van-icon v-else name="share-o" />
+      </button>
       <button type="button" class="m-head__btn" @click="router.push({ name: 'loyiha-new' })">
         <van-icon name="plus" />
       </button>

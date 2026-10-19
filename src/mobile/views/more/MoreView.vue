@@ -7,6 +7,8 @@ import { useUsersStore } from '@/stores/user'
 import MPage from '../../components/MPage.vue'
 import { clearSession, useSession } from '../../session'
 import { setLanguage } from '../../i18n'
+import { stopPush } from '../../push'
+import { availableUpdate, promptUpdate } from '../../updater'
 import { avatarColor, initials } from '../../utils'
 
 const { t, locale } = useI18n()
@@ -43,6 +45,7 @@ async function logout() {
   } catch {
     return
   }
+  await stopPush()
   clearSession()
   usersStore.currentUser = null
   router.replace({ name: 'login' })
@@ -61,6 +64,15 @@ async function logout() {
         <small>@{{ user?.username }}<template v-if="isAdmin"> · {{ $t('m.admin') }}</template></small>
       </span>
       <van-icon name="arrow" class="mv-arrow" />
+    </button>
+
+    <button v-if="availableUpdate" type="button" class="mv-update" @click="promptUpdate(t)">
+      <van-icon name="upgrade" />
+      <span>
+        <b>{{ $t('m.updateTitle', { v: availableUpdate.version_name }) }}</b>
+        <small>{{ $t('m.updateTap') }}</small>
+      </span>
+      <van-icon name="arrow" />
     </button>
 
     <template v-if="work.length">
@@ -115,6 +127,34 @@ async function logout() {
 </template>
 
 <style scoped>
+.mv-update {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 24px);
+  margin: 12px 12px 0;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: var(--m-radius);
+  background: var(--m-primary);
+  color: #fff;
+  text-align: left;
+  font-size: 22px;
+}
+
+.mv-update span {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.mv-update small {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
 .mv-profile {
   display: flex;
   align-items: center;

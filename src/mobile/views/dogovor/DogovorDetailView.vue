@@ -11,6 +11,7 @@ import MEmpty from '../../components/MEmpty.vue'
 import { useSession } from '../../session'
 import { DOGOVOR_STATUSES, canModifyDoc, editHoursLeft, statusOf } from '../../docRules'
 import { errorText, money } from '../../utils'
+import { printDogovor } from '../../printer'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -70,6 +71,18 @@ const fields = computed(() => {
   }
 })
 
+const printing = ref(false)
+async function print() {
+  printing.value = true
+  try {
+    await printDogovor(row.value)
+  } catch {
+    showFailToast(t('dogovorPrintError'))
+  } finally {
+    printing.value = false
+  }
+}
+
 async function remove() {
   try {
     await showConfirmDialog({
@@ -114,9 +127,14 @@ async function remove() {
         <span class="m-tag" :class="status?.tone">{{ status ? $t(status.labelKey) : row.dogovor_status }}</span>
         <h2>{{ row.client_name }}</h2>
         <p class="dd-sum m-num">{{ money(row.dogovor_sum, t) }}</p>
-        <a v-if="telHref(row.client_phone)" :href="telHref(row.client_phone)" class="dd-call">
-          <van-icon name="phone" /> {{ row.client_phone }}
-        </a>
+        <div class="dd-hero__actions">
+          <a v-if="telHref(row.client_phone)" :href="telHref(row.client_phone)" class="dd-call">
+            <van-icon name="phone" /> {{ row.client_phone }}
+          </a>
+          <van-button size="small" icon="description-o" :loading="printing" class="dd-print" @click="print">
+            {{ $t('m.printDoc') }}
+          </van-button>
+        </div>
       </section>
 
       <div v-if="canModify && !isAdmin" class="dd-notice">
@@ -204,11 +222,23 @@ async function remove() {
   color: var(--m-primary);
 }
 
+.dd-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dd-print {
+  height: 36px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
 .dd-call {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 4px;
   padding: 8px 14px;
   border-radius: 10px;
   background: var(--m-good);

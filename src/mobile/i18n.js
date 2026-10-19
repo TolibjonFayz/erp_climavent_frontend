@@ -1,4 +1,5 @@
 import { setCookie } from '@/utils/cookies'
+import { refreshPushLang } from './push'
 
 // Mobil ilovaning o'z matnlari `m.*` nomlar fazosida. Umumiy kalitlar
 // (holatlar, maydon nomlari, amoCRM yorliqlari) saytning locales/*.json dan olinadi.
@@ -300,6 +301,40 @@ const uz = {
   audit_view: "Ko'rildi",
   audit_export: 'Eksport',
   audit_login: 'Kirish',
+
+  // Eksport, chop etish, yangilanish, bildirishnoma
+  exportExcel: 'Excel eksport',
+  exportCount: '{n} ta yozuv',
+  importExcel: 'Excel import',
+  nothingToExport: "Eksport uchun ma'lumot yo'q",
+  printDoc: 'Hujjat (PDF)',
+  updateTitle: 'Yangi versiya: {v}',
+  updateHint: "Yuklab olingach, faylni ochib o'rnating. Ma'lumotlaringiz saqlanib qoladi.",
+  updateNow: 'Yangilash',
+  updateTap: "Yuklab olish uchun bosing",
+  later: 'Keyinroq',
+  appSection: 'Ilova',
+  appVersion: 'Versiya',
+  pushTest: 'Bildirishnomani sinash',
+  pushTestSent: "Sinov xabari yuborildi — bir necha soniyada kelishi kerak",
+  pushServerOff: "Serverda bildirishnoma hali sozlanmagan",
+  admReleases: 'Ilova versiyalari',
+  relInfo: "Yangi APK yuklang — xodimlarning ilovasi keyingi ochilishda yangilashni taklif qiladi.",
+  relThisDevice: 'Bu qurilmada: {v} (code {c})',
+  relUpload: 'Yangi versiya yuklash',
+  relUploadBtn: 'Yuklash',
+  relLatest: 'Eng yangi',
+  relEmpty: "Hali versiya yuklanmagan",
+  relFile: 'APK fayl',
+  relChooseFile: 'APK faylni tanlang',
+  relVersionName: 'Versiya (masalan 1.0.1)',
+  relVersionCode: 'Versiya kodi (butun son, har safar +1)',
+  relNotes: 'Nima yangi',
+  relNotesPlaceholder: "Masalan: KP sahifasi tezlashdi, xatolar tuzatildi",
+  relBadName: "Versiya nomi noto'g'ri (masalan 1.0.1)",
+  relBadCode: "Versiya kodi butun son bo'lishi kerak",
+  relUploaded: 'Versiya yuklandi',
+  relDeleteConfirm: '{v} versiyasi o‘chirilsinmi?',
 }
 
 const ru = {
@@ -585,6 +620,39 @@ const ru = {
   audit_view: 'Просмотр',
   audit_export: 'Экспорт',
   audit_login: 'Вход',
+
+  exportExcel: 'Экспорт в Excel',
+  exportCount: 'Записей: {n}',
+  importExcel: 'Импорт из Excel',
+  nothingToExport: 'Нет данных для экспорта',
+  printDoc: 'Документ (PDF)',
+  updateTitle: 'Новая версия: {v}',
+  updateHint: 'После загрузки откройте файл и установите. Ваши данные сохранятся.',
+  updateNow: 'Обновить',
+  updateTap: 'Нажмите, чтобы скачать',
+  later: 'Позже',
+  appSection: 'Приложение',
+  appVersion: 'Версия',
+  pushTest: 'Проверить уведомления',
+  pushTestSent: 'Тестовое уведомление отправлено — придёт через несколько секунд',
+  pushServerOff: 'Уведомления на сервере ещё не настроены',
+  admReleases: 'Версии приложения',
+  relInfo: 'Загрузите новый APK — приложение сотрудников предложит обновиться при следующем запуске.',
+  relThisDevice: 'На этом устройстве: {v} (code {c})',
+  relUpload: 'Загрузить новую версию',
+  relUploadBtn: 'Загрузить',
+  relLatest: 'Последняя',
+  relEmpty: 'Версий пока нет',
+  relFile: 'APK файл',
+  relChooseFile: 'Выберите APK файл',
+  relVersionName: 'Версия (например 1.0.1)',
+  relVersionCode: 'Код версии (целое число, каждый раз +1)',
+  relNotes: 'Что нового',
+  relNotesPlaceholder: 'Например: ускорена страница КП, исправлены ошибки',
+  relBadName: 'Неверная версия (например 1.0.1)',
+  relBadCode: 'Код версии должен быть целым числом',
+  relUploaded: 'Версия загружена',
+  relDeleteConfirm: 'Удалить версию {v}?',
 }
 
 // Vant komponentlari uchun o'zbekcha matnlar
@@ -646,4 +714,5 @@ export function setLanguage(lang) {
   i18nRef.global.locale = lang
   localStorage.setItem('lang', lang)
   setCookie('lang', lang, 365)
+  refreshPushLang()
 }

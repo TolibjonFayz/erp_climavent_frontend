@@ -17,6 +17,8 @@ import { PARTNER_GROUPS } from '../customers/groups'
 import { BOSS_USER_ID, currentUserId } from '../../session'
 import { avatarColor, errorText, includesText, initials, smartDate } from '../../utils'
 import { whereTone } from '../sites/siteData'
+import { exportExcel } from '../../exporter'
+import AppReleases from './AppReleases.vue'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -32,6 +34,7 @@ const TABS = computed(() => [
   { key: 'partners', label: t('m.admPartners') },
   { key: 'objects', label: t('m.admObjects') },
   { key: 'audit', label: t('m.admAudit') },
+  { key: 'releases', label: t('m.admReleases') },
 ])
 
 const loading = ref(true)
@@ -269,6 +272,87 @@ const filteredLogs = computed(() =>
 )
 const toneOf = (type) => ({ success: 'is-good', danger: 'is-bad', warning: 'is-warn' })[type] || 'is-blue'
 
+// ─── Excel (saytdagi AdminPanel eksportlari bilan bir xil ustunlar) ───
+const exporting = ref(false)
+const canExport = computed(() => ['users', 'partners', 'objects', 'audit'].includes(tab.value))
+async function exportTab() {
+  const sheets = {
+    users: () => ({
+      name: 'Xodimlar',
+      rows: filteredUsers.value.map((u, i) => ({
+        '№': i + 1,
+        ID: u.id,
+        Ism: u.firstname || '—',
+        Familiya: u.lastname || '—',
+        Login: u.username,
+        Telefon: u.phone_number || '—',
+        Email: u.email || '—',
+        Rol: u.is_admin ? 'Admin' : 'Foydalanuvchi',
+        Holat: u.is_blocked ? 'Bloklangan' : 'Faol',
+      })),
+    }),
+    partners: () => ({
+      name: 'Hamkorlar',
+      rows: filteredPartners.value.map((p, i) => ({
+        '№': i + 1,
+        ID: p.id,
+        Turi: partnerTypeLabel(p.partner_type),
+        "Kim qo'shgan (Ism)": p.user?.firstname ?? '—',
+        "Kim qo'shgan (Username)": p.user?.username ?? '—',
+        "To'liq nomi": p.fullname ?? '—',
+        Telefon: p.phone_number ?? '—',
+        "Qo'shimcha telefon": p.additional_phone_number ?? '—',
+        Respublika: p.republic ?? '—',
+        Viloyat: p.viloyat ?? '—',
+        'Shahar/Tuman': p.shahar_tuman ?? '—',
+        'Yuridik/Jismoniy': p.mijozturi ?? '—',
+        INN: p.inn ?? '—',
+      })),
+    }),
+    objects: () => ({
+      name: 'Obyektlar',
+      rows: filteredObjects.value.map((o, i) => ({
+        '№': i + 1,
+        ID: o.id,
+        Qayerga: o.whereto ?? '—',
+        "Kim qo'shgan": o.come_and_go_father?.user?.username ?? '—',
+        'Ketilgan vaqt': formatDateTime(o.when_gone),
+        'Qaytilgan vaqt': formatDateTime(o.when_came),
+        'Dogovor / KP': o.dogovor_or_kp ?? '—',
+        Manzil: o.locationname ?? '—',
+        'Firma nomi': o.company_name ?? '—',
+        'Kiritilgan vaqt': formatDateTime(o.createdAt),
+      })),
+    }),
+    audit: () => ({
+      name: 'Audit',
+      rows: filteredLogs.value.map((l, i) => ({
+        '№': i + 1,
+        Vaqt: formatDateTime(l.createdAt || l.created_at),
+        Amal: actionLabel(l.action),
+        Xabar: l.message,
+        Bajardi: logActor(l),
+      })),
+    }),
+  }[tab.value]
+  if (!sheets) return
+  const sheet = sheets()
+  if (!sheet.rows.length) return showFailToast(t('m.nothingToExport'))
+  exporting.value = true
+  try {
+    await exportExcel(sheet.name, [sheet])
+    addAuditLog({
+      action: 'export',
+      message: `${sheet.name} ma'lumotlari export qilindi (${sheet.rows.length} ta yozuv, mobil ilova)`,
+      type: 'info',
+    })
+  } catch (e) {
+    showFailToast(errorText(e, t, locale.value))
+  } finally {
+    exporting.value = false
+  }
+}
+
 // Ro'yxatlar bo'laklab chiziladi
 const PAGE = 40
 const shown = ref(PAGE)
@@ -287,6 +371,12 @@ function onLoadMore() {
 
 <template>
   <MPage :title="$t('m.webAdmin')" :back="{ name: 'more' }" :on-refresh="load">
+    <template #right>
+      <button v-if="canExport" type="button" class="m-head__btn" :disabled="exporting" @click="exportTab">
+        <van-loading v-if="exporting" size="18" />
+        <van-icon v-else name="share-o" />
+      </button>
+    </template>
     <template #header>
       <div class="m-chips">
         <button
@@ -433,6 +523,9 @@ function onLoadMore() {
       </van-list>
       <MEmpty v-if="!filteredLogs.length" icon="records-o" :title="$t('m.nothingFound')" />
     </template>
+
+    <!-- Ilova versiyalari (APK) -->
+    <AppReleases v-else-if="tab === 'releases'" />
 
     <!-- Xodim oynasi -->
     <MSheet v-model="userOpen" :title="selected ? nameOf(selected) : ''" max-height="90%">
