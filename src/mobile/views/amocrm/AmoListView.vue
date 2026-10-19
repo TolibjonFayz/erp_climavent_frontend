@@ -324,7 +324,7 @@ a.al-phone {
 .al-act.is-call {
   background: var(--m-good);
   border-color: var(--m-good);
-  color: #fff;
+  color: var(--m-on-solid);
 }
 
 .al-lead {

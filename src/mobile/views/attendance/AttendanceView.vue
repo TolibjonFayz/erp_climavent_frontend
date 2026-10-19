@@ -704,7 +704,7 @@ const tripTime = (iso) => {
   padding: 0 3px;
   border-radius: 7px;
   background: var(--m-ink);
-  color: #fff;
+  color: var(--m-on-solid);
   font-size: 8px;
   font-weight: 700;
   line-height: 13px;

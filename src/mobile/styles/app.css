@@ -20,6 +20,9 @@
   --m-bad-soft: #fef2f2;
   --m-warn: #b45309;
   --m-warn-soft: #fffbeb;
+  --m-on-solid: #ffffff;
+  --m-on-solid-2: rgba(255, 255, 255, 0.7);
+  --m-bad-line: #fecaca;
   --m-warn-line: #fde68a;
   --m-good-line: #bbf7d0;
   --m-good-press: #d1fadf;
@@ -96,6 +99,9 @@ html.dark {
   --m-warn: #fbbf24;
   --m-warn-soft: rgba(251, 191, 36, 0.12);
   --m-warn-line: rgba(251, 191, 36, 0.35);
+  --m-bad-line: rgba(248, 113, 113, 0.35);
+  --m-on-solid: #0b1120;
+  --m-on-solid-2: rgba(11, 17, 32, 0.65);
   --m-neutral: #cbd5e1;
   --m-neutral-soft: #223049;
   --m-neutral-line: #64748b;
@@ -245,35 +251,35 @@ select {
 .m-chip.is-active {
   background: var(--m-ink);
   border-color: var(--m-ink);
-  color: #fff;
+  color: var(--m-on-solid);
 }
 
 .m-chip.is-active .m-chip__count {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--m-on-solid-2);
 }
 
 .m-chip.is-bad {
   color: var(--m-bad);
-  border-color: #fecaca;
+  border-color: var(--m-bad-line);
   background: var(--m-bad-soft);
 }
 
 .m-chip.is-bad.is-active {
   background: var(--m-bad);
   border-color: var(--m-bad);
-  color: #fff;
+  color: var(--m-on-solid);
 }
 
 .m-chip.is-warn {
   color: var(--m-warn);
-  border-color: #fde68a;
+  border-color: var(--m-warn-line);
   background: var(--m-warn-soft);
 }
 
 .m-chip.is-warn.is-active {
   background: var(--m-warn);
   border-color: var(--m-warn);
-  color: #fff;
+  color: var(--m-on-solid);
 }
 
 /* ─── Teglar ─── */

@@ -355,11 +355,11 @@ async function saveNote() {
 
 .cd-action.is-call {
   background: var(--m-good);
-  color: #fff;
+  color: var(--m-on-solid);
 }
 
 .cd-action.is-call .van-icon {
-  color: #fff;
+  color: var(--m-on-solid);
 }
 
 .cd-action.is-disabled,

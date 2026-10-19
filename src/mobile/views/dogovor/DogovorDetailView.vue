@@ -242,7 +242,7 @@ async function remove() {
   padding: 8px 14px;
   border-radius: 10px;
   background: var(--m-good);
-  color: #fff;
+  color: var(--m-on-solid);
   font-weight: 600;
   font-size: 14px;
 }
