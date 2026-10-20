@@ -1110,7 +1110,7 @@ onMounted(async () => {
   border-radius: 50%;
 }
 .at-emp.is-active .at-avatar {
-  color: white;
+  color: var(--ui-on-accent);
   background: var(--ui-link);
 }
 .at-panel-sub {
@@ -1177,7 +1177,7 @@ onMounted(async () => {
   justify-content: center;
   font-size: 10px;
   font-weight: 700;
-  color: white;
+  color: var(--ui-on-accent);
   background: var(--ui-muted);
   border-radius: 999px;
   box-sizing: border-box;

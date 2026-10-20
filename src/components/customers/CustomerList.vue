@@ -437,7 +437,7 @@ onMounted(reload)
   border-radius: 999px;
 }
 .cl-group.is-active .cl-group__count {
-  color: white;
+  color: var(--ui-on-accent);
   background: var(--ui-link);
 }
 .cl-select {

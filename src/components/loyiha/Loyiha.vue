@@ -552,7 +552,7 @@ onMounted(async () => {
   padding: 0 5px;
   font-size: 11px;
   line-height: 18px;
-  color: white;
+  color: var(--ui-on-accent);
   background: var(--ui-link);
   border-radius: 999px;
 }

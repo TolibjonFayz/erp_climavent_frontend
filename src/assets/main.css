@@ -50,6 +50,9 @@
   --ui-violet-ink: #6d28d9;
   --ui-violet-soft: #f5f3ff;
   --ui-teal-soft: #f0fdfa;
+  --ui-row-hover: #f1f5f9;
+  --ui-on-accent: #ffffff;
+  --ui-glass: rgba(255, 255, 255, 0.96);
   color-scheme: light;
 }
 
@@ -97,6 +100,9 @@ html.dark {
   --ui-violet-ink: #c4b5fd;
   --ui-violet-soft: rgba(167, 139, 250, 0.14);
   --ui-teal-soft: rgba(45, 212, 191, 0.12);
+  --ui-row-hover: #1f2b40;
+  --ui-on-accent: #0b1120;
+  --ui-glass: rgba(21, 29, 46, 0.96);
   color-scheme: dark;
 }
 
@@ -187,7 +193,7 @@ body {
   box-shadow: var(--shadow-sm);
   --el-table-border-color: var(--border-light) !important;
   --el-table-header-bg-color: var(--ui-surface-2) !important;
-  --el-table-row-hover-bg-color: #f1f5f9 !important;
+  --el-table-row-hover-bg-color: var(--ui-row-hover) !important;
 }
 .el-table th.el-table__cell {
   background-color: var(--el-table-header-bg-color) !important;
