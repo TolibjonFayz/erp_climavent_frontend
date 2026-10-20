@@ -963,7 +963,7 @@ watch(
   gap: 12px;
   flex-wrap: wrap;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--ui-glass);
   border: 1px solid var(--ui-line);
   border-radius: var(--ui-radius);
   box-shadow: 0 -4px 16px rgba(17, 24, 39, 0.06);

@@ -742,7 +742,7 @@ $accent-dark: #2f7fe0;
     width: 10px;
     height: 10px;
     background: #10b981;
-    border: 2px solid white;
+    border: 2px solid var(--ui-surface);
     border-radius: 50%;
   }
 }
