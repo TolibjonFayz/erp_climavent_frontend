@@ -1542,6 +1542,7 @@ const permissionPages = [
   { key: 'kp', title: 'KP' },
   { key: 'dogovor', title: 'Dogovor' },
   { key: 'loyiha', title: 'Loyiha' },
+  { key: 'sklad', title: 'Ombor' },
   { key: 'attendance', title: 'Davomat' },
   { key: 'tasks', title: 'Vazifalar' },
   { key: 'boss', title: 'Boss' },

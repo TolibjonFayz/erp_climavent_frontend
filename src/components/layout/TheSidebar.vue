@@ -211,6 +211,14 @@ const menus = computed(() => {
       show: hasAccess('loyiha'),
     },
     {
+      key: 'sklad',
+      href: '/sklad',
+      icon: 'sklad-icon',
+      title: 'skladtext',
+      text: 'skladtext',
+      show: hasAccess('sklad'),
+    },
+    {
       key: 'attendance',
       href: '/attendance',
       icon: 'project-icon',
@@ -677,6 +685,9 @@ $accent-dark: #2f7fe0;
   }
   &.loyiha-icon::before {
     content: '📐';
+  }
+  &.sklad-icon::before {
+    content: '📦';
   }
   &.oppenents-icon::before {
     content: '⚔️';

@@ -71,6 +71,12 @@ const router = createRouter({
       meta: { requiresAuth: true, permissionKey: 'loyiha' },
     },
     {
+      path: '/sklad',
+      name: 'sklad',
+      component: () => import('@/views/SkladView.vue'),
+      meta: { requiresAuth: true, permissionKey: 'sklad' },
+    },
+    {
       path: '/competitors',
       name: 'competitors',
       component: CompetitorsView,
@@ -127,7 +133,7 @@ router.beforeEach(async (to, from, next) => {
 
       if (!hasAccess) {
         // Ruxsati yo'q pagega kirdi, ruxsati bor birinchi pagega redirect qilamiz
-        const allowedPages = ['customers', 'sites', 'competitors', 'kp', 'dogovor', 'loyiha', 'attendance', 'tasks'].filter(k => perms[k] !== false)
+        const allowedPages = ['customers', 'sites', 'competitors', 'kp', 'dogovor', 'loyiha', 'sklad', 'attendance', 'tasks'].filter(k => perms[k] !== false)
         if (perms.boss || Number(user.id) === BOSS_USER_ID) allowedPages.push('boss')
         
         if (allowedPages.length > 0) {
