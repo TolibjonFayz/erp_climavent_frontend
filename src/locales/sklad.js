@@ -251,6 +251,26 @@ export const uz = {
     "ERP yana Google Sheets'ni aks ettiradi. ERP'da kiritilgan harakatlar saqlanib qoladi va jadval bilan ikki marta sanalishi mumkin. Davom etamizmi?",
   skConfirm: 'Ha, davom etish',
 
+  // SAP
+  skSapName: 'SAP nomi',
+  skSheetName: 'jadvalda: {name}',
+  skXlsSheetName: 'Jadvaldagi nomi',
+  skOpenCard: 'Ochish',
+  skAdmSap: "SAP mahsulotlar ro'yxati",
+  skAdmSapHint: "Xodimlar mahsulotni SAP kodi va nomi bilan taniydi — ERP'da ham shular ko'rsatiladi",
+  skAdmSapText:
+    "SAP'dan mahsulotlar ro'yxatini Excel qilib chiqaring (kerakli ustunlar: \"Номер позиции\" va \"Описание позиции\") va shu yerga yuklang. Har bir ombor mahsulotiga nomi bo'yicha SAP kodi va nomi biriktiriladi. Keyingi yuklashlarda allaqachon biriktirilgan kod bo'yicha nom yangilanadi. Mos kelmaganlarini mahsulot kartasida qo'lda kiritish mumkin.",
+  skAdmSapUpload: 'SAP Excel faylini yuklash',
+  skAdmSapLinked: '{n} / {total} ta mahsulotda SAP kodi bor',
+  skAdmSapResult: "SAP faylida {rows} ta qator, {matched} ta ombor mahsulotiga biriktirildi ({changed} tasi o'zgardi)",
+  skAdmSapUnmatched: '{n} ta mahsulot SAP\'da topilmadi',
+  skAdmSapUnmatchedText:
+    "Bu nomlar SAP faylidagi hech bir nomga mos kelmadi (katta-kichik harf, х/x, vergul va bo'shliq farqlari hisobga olinmaydi). Mahsulot kartasini ochib, SAP kodi va nomini qo'lda kiriting.",
+  skAdmSapMore: 'va yana {n} ta',
+  skErr_SK_SAP_NO_COLUMNS: "Faylda SAP kodi va nomi ustunlari topilmadi (masalan \"Номер позиции\" va \"Описание позиции\")",
+  skErr_SK_SAP_EMPTY: 'Faylda SAP mahsulotlari topilmadi',
+  skErr_SK_FILE_REQUIRED: 'Fayl tanlanmadi',
+
   // Fayl nomlari (Excel)
   skFileStock: 'ombor-qoldiq',
   skFileMoves: 'ombor-harakatlar',
@@ -528,6 +548,25 @@ export const ru = {
   skAdmToMirror:
     'ERP снова будет отражать Google Sheets. Движения, внесённые в ERP, останутся и могут задвоиться с таблицей. Продолжить?',
   skConfirm: 'Да, продолжить',
+
+  skSapName: 'Наименование SAP',
+  skSheetName: 'в таблице: {name}',
+  skXlsSheetName: 'Название в таблице',
+  skOpenCard: 'Открыть',
+  skAdmSap: 'Справочник товаров SAP',
+  skAdmSapHint: 'Сотрудники знают товары по коду и наименованию SAP — в ERP показываются они же',
+  skAdmSapText:
+    'Выгрузите из SAP список товаров в Excel (нужны столбцы «Номер позиции» и «Описание позиции») и загрузите сюда. Каждому товару склада по названию привяжутся код и наименование SAP. При следующих загрузках наименование обновится по уже привязанному коду. Не найденные можно ввести вручную в карточке товара.',
+  skAdmSapUpload: 'Загрузить Excel из SAP',
+  skAdmSapLinked: 'SAP-код есть у {n} из {total} товаров',
+  skAdmSapResult: 'В файле SAP {rows} строк, привязано {matched} товаров склада (изменено {changed})',
+  skAdmSapUnmatched: '{n} товаров не найдено в SAP',
+  skAdmSapUnmatchedText:
+    'Эти названия не совпали ни с одним наименованием в файле SAP (регистр, х/x, запятые и пробелы не учитываются). Откройте карточку товара и введите код и наименование SAP вручную.',
+  skAdmSapMore: 'и ещё {n}',
+  skErr_SK_SAP_NO_COLUMNS: 'В файле не найдены столбцы с кодом и наименованием SAP (например «Номер позиции» и «Описание позиции»)',
+  skErr_SK_SAP_EMPTY: 'В файле не найдено товаров SAP',
+  skErr_SK_FILE_REQUIRED: 'Файл не выбран',
 
   skFileStock: 'sklad-ostatki',
   skFileMoves: 'sklad-dvizheniya',

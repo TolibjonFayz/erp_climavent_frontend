@@ -55,8 +55,10 @@
       </el-table-column>
       <el-table-column :label="$t('skColName')" min-width="240">
         <template #default="{ row }">
-          <div class="sk-name">{{ row.item?.name }}</div>
-          <div class="sk-group">{{ row.item?.code }} · {{ row.item?.group_name || '—' }}</div>
+          <div class="sk-name">{{ itemName(row.item) }}</div>
+          <div class="sk-group">
+            <template v-if="row.item?.sap_code">{{ row.item.sap_code }} · </template>{{ row.item?.group_name || '—' }}
+          </div>
         </template>
       </el-table-column>
       <el-table-column :label="$t('skColQty')" width="96" align="right">
@@ -123,7 +125,7 @@ import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
-import { apiError, fmtQty, moveComment, moveTypeLabel, shortDate, signedQty } from '@/utils/skladFormat'
+import { apiError, fmtQty, itemName, moveComment, moveTypeLabel, shortDate, signedQty } from '@/utils/skladFormat'
 
 const props = defineProps({
   isAdmin: { type: Boolean, default: false },
@@ -175,7 +177,7 @@ const filtered = computed(() => {
     if (day.value && m.move_date !== day.value) return false
     if (source.value && m.source !== source.value) return false
     if (q) {
-      const hay = norm(`${m.item?.name} ${m.item?.code} ${m.dogovor_number} ${m.counterparty} ${m.doc_number} ${moveComment(m.comment)}`)
+      const hay = norm(`${m.item?.name} ${m.item?.sap_name || ''} ${m.item?.sap_code || ''} ${m.dogovor_number} ${m.counterparty} ${m.doc_number} ${moveComment(m.comment)}`)
       if (!hay.includes(q)) return false
     }
     return true
@@ -212,8 +214,8 @@ function exportExcel() {
   const rows = filtered.value.map((m) => ({
     [t('skColDate')]: m.move_date,
     [t('skMoveType')]: moveTypeLabel(m.type),
-    [t('skColCode')]: m.item?.code,
-    [t('skColName')]: m.item?.name,
+    [t('skSapCode')]: m.item?.sap_code || '',
+    [t('skColName')]: itemName(m.item),
     [t('skColGroup')]: m.item?.group_name || '',
     [t('skColQty')]: m.qty,
     [t('skColDogovor')]: m.dogovor_number || '',

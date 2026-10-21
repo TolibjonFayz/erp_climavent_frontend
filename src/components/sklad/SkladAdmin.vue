@@ -100,6 +100,42 @@
     </div>
   </UiPanel>
 
+  <!-- SAP mahsulotlar ro'yxati: ombor mahsulotlariga SAP kodi va nomini biriktirish -->
+  <UiPanel :title="$t('skAdmSap')" :hint="$t('skAdmSapHint')">
+    <template #actions>
+      <span class="sk-muted">{{ $t('skAdmSapLinked', { n: fmtNum(sapLinked), total: fmtNum(store.items.length) }) }}</span>
+    </template>
+    <p class="sk-sap-text">{{ $t('skAdmSapText') }}</p>
+    <div class="sk-sap-actions">
+      <el-upload :show-file-list="false" :before-upload="uploadSap" accept=".xlsx,.xls,.csv">
+        <el-button type="primary" :icon="Upload" :loading="sapLoading">{{ $t('skAdmSapUpload') }}</el-button>
+      </el-upload>
+      <template v-if="sapResult">
+        <span class="sk-sap-result">
+          ✓ {{ $t('skAdmSapResult', { rows: fmtNum(sapResult.sap_rows), matched: fmtNum(sapResult.matched), changed: fmtNum(sapResult.changed) }) }}
+        </span>
+        <el-button v-if="sapResult.unmatched_total" link type="warning" @click="sapUnmatchedOpen = true">
+          {{ $t('skAdmSapUnmatched', { n: fmtNum(sapResult.unmatched_total) }) }}
+        </el-button>
+      </template>
+    </div>
+  </UiPanel>
+
+  <el-dialog
+    v-model="sapUnmatchedOpen"
+    :title="$t('skAdmSapUnmatched', { n: fmtNum(sapResult?.unmatched_total || 0) })"
+    width="min(640px, 94vw)"
+    append-to-body
+  >
+    <p class="sk-muted">{{ $t('skAdmSapUnmatchedText') }}</p>
+    <ul class="sk-warn">
+      <li v-for="(n, i) in sapResult?.unmatched || []" :key="i">{{ n }}</li>
+    </ul>
+    <p v-if="(sapResult?.unmatched_total || 0) > (sapResult?.unmatched?.length || 0)" class="sk-muted">
+      {{ $t('skAdmSapMore', { n: fmtNum(sapResult.unmatched_total - sapResult.unmatched.length) }) }}
+    </p>
+  </el-dialog>
+
   <el-dialog
     :model-value="!!warnings"
     :title="warnings?.title || ''"
@@ -115,13 +151,13 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete, Plus, Refresh } from '@element-plus/icons-vue'
+import { Delete, Plus, Refresh, Upload } from '@element-plus/icons-vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { useSkladStore } from '@/stores/sklad'
-import { formatDateTime } from '@/utils/format'
+import { fmtNum, formatDateTime } from '@/utils/format'
 import { apiError, codeMessage, periodLabel, syncWarning } from '@/utils/skladFormat'
 
 const { t } = useI18n()
@@ -133,6 +169,25 @@ const newKind = ref('month')
 const newTitle = ref('')
 
 onMounted(() => store.loadSources().catch(() => {}))
+
+// ─── SAP ro'yxati ───
+const sapLoading = ref(false)
+const sapResult = ref(null)
+const sapUnmatchedOpen = ref(false)
+const sapLinked = computed(() => store.items.filter((i) => i.sap_code).length)
+
+async function uploadSap(file) {
+  sapLoading.value = true
+  try {
+    sapResult.value = await store.sapImport(file)
+    ElMessage.success(t('skSaved'))
+  } catch (e) {
+    ElMessage.error(apiError(e))
+  } finally {
+    sapLoading.value = false
+  }
+  return false // el-upload o'zi yubormasin
+}
 
 async function sync(id) {
   syncing.value = id || 'all'
@@ -242,6 +297,22 @@ async function addSource() {
 }
 .sk-add__title {
   width: 170px;
+}
+.sk-sap-text {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ui-ink-2);
+}
+.sk-sap-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.sk-sap-result {
+  font-size: 13px;
+  color: var(--ui-good);
 }
 .sk-warn {
   max-height: 50vh;

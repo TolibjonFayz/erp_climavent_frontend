@@ -64,13 +64,16 @@
         @row-click="(row) => $emit('open', row.id)"
         @sort-change="onSort"
       >
-        <el-table-column prop="code" :label="$t('skColCode')" width="96" sortable="custom">
-          <template #default="{ row }"><span class="sk-code">{{ row.code }}</span></template>
+        <el-table-column v-if="hasSap" prop="sap_code" :label="$t('skSapCode')" width="120" sortable="custom">
+          <template #default="{ row }"><span class="sk-code">{{ row.sap_code || '—' }}</span></template>
         </el-table-column>
         <el-table-column prop="name" :label="$t('skColName')" min-width="260" sortable="custom">
           <template #default="{ row }">
-            <div class="sk-name">{{ row.name }}</div>
-            <div class="sk-group">{{ row.group_name || '—' }}</div>
+            <div class="sk-name">{{ itemName(row) }}</div>
+            <div class="sk-group">
+              {{ row.group_name || '—' }}
+              <template v-if="sheetNameIfDiff(row)"> · {{ $t('skSheetName', { name: row.name }) }}</template>
+            </div>
           </template>
         </el-table-column>
         <el-table-column prop="opening" :label="$t('skColOpening')" width="104" align="right" sortable="custom">
@@ -134,7 +137,7 @@ import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { stockStatus } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
-import { fmtQty, periodLabel, shortDate, unitLabel } from '@/utils/skladFormat'
+import { fmtQty, itemName, periodLabel, sheetNameIfDiff, shortDate, unitLabel } from '@/utils/skladFormat'
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -180,7 +183,7 @@ const filtered = computed(() => {
       if (status.value === 'reserved' ? !(it.reserve - it.release) : status.value === 'empty' ? st !== 'empty' && st !== 'negative' : st !== status.value) return false
     }
     if (terms.length) {
-      const hay = norm(`${it.code} ${it.name} ${it.group_name} ${it.sap_code || ''}`)
+      const hay = norm(`${it.sap_code || ''} ${it.sap_name || ''} ${it.name} ${it.group_name}`)
       if (!terms.every((term) => hay.includes(term))) return false
     }
     return true
@@ -196,6 +199,9 @@ const filtered = computed(() => {
   }
   return list
 })
+
+// SAP kodi hech biriga biriktirilmagan bo'lsa, ustun ko'rsatilmaydi
+const hasSap = computed(() => props.items.some((it) => it.sap_code))
 
 const paged = computed(() => filtered.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value))
 
@@ -233,8 +239,9 @@ defineExpose({ setStatus })
 
 function exportExcel() {
   const rows = filtered.value.map((it) => ({
-    [t('skColCode')]: it.code,
-    [t('skColName')]: it.name,
+    [t('skSapCode')]: it.sap_code || '',
+    [t('skSapName')]: it.sap_name || '',
+    [t('skXlsSheetName')]: it.name,
     [t('skColGroup')]: it.group_name || '',
     [t('skColUnit')]: unitLabel(it.unit),
     [t('skColOpening')]: it.opening,
@@ -244,10 +251,9 @@ function exportExcel() {
     [t('skColAdjust')]: it.adjust,
     [t('skColClosing')]: it.closing,
     [t('skColLast')]: it.last_move_date || '',
-    SAP: it.sap_code || '',
   }))
   const ws = XLSX.utils.json_to_sheet(rows)
-  ws['!cols'] = [{ wch: 10 }, { wch: 48 }, { wch: 18 }, { wch: 8 }, ...Array(7).fill({ wch: 12 })]
+  ws['!cols'] = [{ wch: 14 }, { wch: 48 }, { wch: 48 }, { wch: 18 }, { wch: 8 }, ...Array(7).fill({ wch: 12 })]
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, (periodLabel(props.period) || t('skStockTitle')).slice(0, 31))
   XLSX.writeFile(wb, `${t('skFileStock')}-${props.period}.xlsx`)

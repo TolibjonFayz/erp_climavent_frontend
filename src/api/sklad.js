@@ -15,4 +15,5 @@ export default {
   addSource: (payload) => apiClient.post('sklad/sources', payload),
   removeSource: (id) => apiClient.delete(`sklad/sources/${id}`),
   sync: (payload = {}) => apiClient.post('sklad/sync', payload),
+  sapImport: (formData) => apiClient.post('sklad/sap-import', formData),
 }

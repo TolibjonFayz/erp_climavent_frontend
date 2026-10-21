@@ -39,7 +39,7 @@
         <template #default="{ row }">
           <span class="sk-name">{{ row.item_name }}</span>
           <el-button v-if="row.item_id" link type="primary" size="small" @click="$emit('open', row.item_id)">
-            {{ row.item?.code }}
+            {{ row.item?.sap_code || $t('skOpenCard') }}
           </el-button>
         </template>
       </el-table-column>

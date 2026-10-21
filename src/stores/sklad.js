@@ -119,6 +119,15 @@ export const useSkladStore = defineStore('sklad', {
       return this.loadSources()
     },
 
+    async sapImport(file) {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await runRequest(this, () => skladApi.sapImport(formData), 'SAP import failed')
+      this.movementsPeriod = ''
+      await this.loadReport()
+      return res
+    },
+
     async sync(sourceId) {
       const res = await runRequest(
         this,

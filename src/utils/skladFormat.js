@@ -89,3 +89,20 @@ export function syncWarning(w) {
   for (const k of ['daily', 'total', 'fact', 'computed']) if (p[k] != null) p[k] = fmtQty(p[k])
   return t(`skWarn_${w.kind}`, p)
 }
+
+// ─── SAP: xodimlar mahsulotni SAP kodi va nomi bilan taniydi ───────────
+
+const nameKey = (s) =>
+  String(s || '')
+    .toLowerCase()
+    .replace(/ё/g, 'е')
+    .replace(/[хx*×]/g, 'x')
+    .replace(/,/g, '.')
+    .replace(/\s+/g, '')
+
+/** Ko'rsatiladigan nom: SAP nomi bo'lsa — u, bo'lmasa jadvaldagi nom */
+export const itemName = (it) => it?.sap_name || it?.name || ''
+
+/** Jadvaldagi nom SAP nomidan farq qilsa — shu nom (izoh sifatida ko'rsatish uchun) */
+export const sheetNameIfDiff = (it) =>
+  it?.sap_name && nameKey(it.sap_name) !== nameKey(it.name) ? it.name : ''

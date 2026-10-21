@@ -10,8 +10,11 @@
       <template v-if="item">
         <header class="sk-d__head">
           <div>
-            <div class="sk-d__code">{{ item.code }} · {{ item.group_name || '—' }}</div>
-            <h3>{{ item.name }}</h3>
+            <div class="sk-d__code">
+              <template v-if="item.sap_code">SAP {{ item.sap_code }} · </template>{{ item.group_name || '—' }}
+            </div>
+            <h3>{{ itemName(item) }}</h3>
+            <div v-if="sheetNameIfDiff(item)" class="sk-d__sheet">{{ $t('skSheetName', { name: item.name }) }}</div>
           </div>
           <el-button text :icon="Close" :aria-label="$t('onbClose')" @click="$emit('update:modelValue', null)" />
         </header>
@@ -65,13 +68,16 @@
           </div>
         </div>
 
-        <!-- Admin: minimal miqdor va SAP kodi -->
+        <!-- Admin: minimal miqdor, SAP kodi va nomi -->
         <div v-if="isAdmin" class="sk-d__edit">
           <UiField :label="$t('skMinQty')" :hint="$t('skMinQtyHint')">
             <el-input-number v-model="edit.min_qty" :min="0" controls-position="right" size="small" />
           </UiField>
           <UiField :label="$t('skSapCode')">
             <el-input v-model="edit.sap_code" size="small" class="sk-d__sap" />
+          </UiField>
+          <UiField :label="$t('skSapName')" grow>
+            <el-input v-model="edit.sap_name" size="small" :placeholder="item.name" />
           </UiField>
           <UiField :label="$t('skColUnit')">
             <el-select v-model="edit.unit" filterable allow-create default-first-option size="small" class="sk-d__unit">
@@ -80,9 +86,8 @@
           </UiField>
           <el-button size="small" type="primary" plain :loading="saving" @click="save">{{ $t('skSave') }}</el-button>
         </div>
-        <div v-else-if="item.min_qty != null || item.sap_code" class="sk-d__meta">
-          <span v-if="item.min_qty != null">{{ $t('skMinQty') }}: <b>{{ fmtQty(item.min_qty) }}</b></span>
-          <span v-if="item.sap_code">SAP: <b>{{ item.sap_code }}</b></span>
+        <div v-else-if="item.min_qty != null" class="sk-d__meta">
+          <span>{{ $t('skMinQty') }}: <b>{{ fmtQty(item.min_qty) }}</b></span>
         </div>
 
         <div v-if="contracts.length" class="sk-d__section">
@@ -120,9 +125,11 @@ import {
   UNIT_CODES,
   apiError,
   fmtQty,
+  itemName,
   moveComment,
   moveTypeLabel,
   shortDate,
+  sheetNameIfDiff,
   signedQty,
   unitLabel,
 } from '@/utils/skladFormat'
@@ -142,7 +149,7 @@ const item = ref(null)
 const balance = ref(0)
 const moves = ref([])
 const contracts = ref([])
-const edit = reactive({ min_qty: null, sap_code: '', unit: '' })
+const edit = reactive({ min_qty: null, sap_code: '', sap_name: '', unit: '' })
 const drawerSize = computed(() => (window.innerWidth < 640 ? '100%' : '520px'))
 
 async function load(id) {
@@ -156,6 +163,7 @@ async function load(id) {
     contracts.value = res.contracts || []
     edit.min_qty = res.item.min_qty
     edit.sap_code = res.item.sap_code || ''
+    edit.sap_name = res.item.sap_name || ''
     edit.unit = res.item.unit
   } catch (e) {
     ElMessage.error(apiError(e))
@@ -176,6 +184,7 @@ async function save() {
     await store.updateItem(item.value.id, {
       min_qty: edit.min_qty ?? null,
       sap_code: edit.sap_code.trim(),
+      sap_name: edit.sap_name.trim(),
       unit: String(edit.unit || '').trim() || 'dona',
     })
     ElMessage.success(t('skSaved'))
@@ -227,6 +236,11 @@ function hy(v, pts = history.value.points) {
     color: var(--ui-ink);
     line-height: 1.3;
   }
+}
+.sk-d__sheet {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ui-muted);
 }
 .sk-d__code {
   font-size: 12px;

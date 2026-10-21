@@ -26,8 +26,15 @@
           class="sk-move__item"
           @visible-change="(v) => v && (itemQuery = '')"
         >
-          <el-option v-for="it in itemOptions" :key="it.id" :value="it.id" :label="`${it.code} · ${it.name}`">
-            <span class="sk-move__opt">{{ it.name }}</span>
+          <el-option
+            v-for="it in itemOptions"
+            :key="it.id"
+            :value="it.id"
+            :label="it.sap_code ? `${it.sap_code} · ${itemName(it)}` : itemName(it)"
+          >
+            <span class="sk-move__opt">
+              <small v-if="it.sap_code" class="sk-move__code">{{ it.sap_code }}</small>{{ itemName(it) }}
+            </span>
             <span class="sk-move__optq">{{ fmtQty(it.closing) }} {{ unitLabel(it.unit) }}</span>
           </el-option>
         </el-select>
@@ -77,7 +84,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { useSkladStore } from '@/stores/sklad'
-import { apiError, fmtQty, unitLabel } from '@/utils/skladFormat'
+import { apiError, fmtQty, itemName, unitLabel } from '@/utils/skladFormat'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -133,7 +140,7 @@ watch(
 const itemOptions = computed(() => {
   const q = itemQuery.value.toLowerCase().trim()
   const list = q
-    ? store.items.filter((it) => `${it.code} ${it.name}`.toLowerCase().includes(q))
+    ? store.items.filter((it) => `${it.sap_code || ''} ${it.sap_name || ''} ${it.name}`.toLowerCase().includes(q))
     : store.items
   const out = list.slice(0, 60)
   if (form.item_id && !out.some((i) => i.id === form.item_id)) {
@@ -208,6 +215,11 @@ async function submit() {
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: middle;
+}
+.sk-move__code {
+  margin-right: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--ui-muted);
 }
 .sk-move__optq {
   float: right;

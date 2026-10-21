@@ -25,9 +25,14 @@
           <el-input-number v-model="form.min_qty" :min="0" controls-position="right" />
         </el-form-item>
       </div>
-      <el-form-item :label="$t('skSapCode')">
-        <el-input v-model="form.sap_code" />
-      </el-form-item>
+      <div class="sk-row">
+        <el-form-item :label="$t('skSapCode')">
+          <el-input v-model="form.sap_code" />
+        </el-form-item>
+        <el-form-item :label="$t('skSapName')">
+          <el-input v-model="form.sap_name" />
+        </el-form-item>
+      </div>
     </el-form>
     <template #footer>
       <el-button @click="$emit('update:modelValue', false)">{{ $t('skCancel') }}</el-button>
@@ -52,12 +57,13 @@ const { t } = useI18n()
 const store = useSkladStore()
 const formRef = ref(null)
 const saving = ref(false)
-const form = reactive({ name: '', group_name: '', unit: 'dona', min_qty: undefined, sap_code: '' })
+const form = reactive({ name: '', group_name: '', unit: 'dona', min_qty: undefined, sap_code: '', sap_name: '' })
 const rules = { name: [{ required: true, message: () => t('skNameRequired'), trigger: 'blur' }] }
 
 watch(
   () => props.modelValue,
-  (open) => open && Object.assign(form, { name: '', group_name: '', unit: 'dona', min_qty: undefined, sap_code: '' }),
+  (open) =>
+    open && Object.assign(form, { name: '', group_name: '', unit: 'dona', min_qty: undefined, sap_code: '', sap_name: '' }),
 )
 
 async function submit() {
@@ -70,6 +76,7 @@ async function submit() {
       unit: form.unit || undefined,
       min_qty: form.min_qty ?? undefined,
       sap_code: form.sap_code || undefined,
+      sap_name: form.sap_name || undefined,
     })
     ElMessage.success(t('skSaved'))
     emit('update:modelValue', false)

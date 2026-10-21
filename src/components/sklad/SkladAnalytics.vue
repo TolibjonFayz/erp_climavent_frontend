@@ -86,7 +86,7 @@
           class="sk-rank"
           @click="$emit('open', it.id)"
         >
-          <span class="lbl">{{ it.name }}</span>
+          <span class="lbl">{{ itemName(it) }}</span>
           <span class="track"><span class="fill fill-out" :style="{ width: pct(it.out, topOut[0].out) }" /></span>
           <span class="num">{{ fmtQty(it.out) }}</span>
         </button>
@@ -98,7 +98,7 @@
       <UiPanel :title="$t('skAnDead')" :hint="$t('skAnDeadHint')">
         <template #actions>{{ $t('skAnDeadSum', { n: fmtNum(dead.length), q: fmtQty(deadQty) }) }}</template>
         <button v-for="it in dead.slice(0, 12)" :key="it.id" type="button" class="sk-line" @click="$emit('open', it.id)">
-          <span class="lbl">{{ it.name }}</span>
+          <span class="lbl">{{ itemName(it) }}</span>
           <span class="sk-muted">{{ it.group_name }}</span>
           <b class="num">{{ fmtQty(it.closing) }}</b>
         </button>
@@ -122,7 +122,7 @@
           </li>
         </ul>
         <button v-for="it in negative" :key="it.id" type="button" class="sk-line" @click="$emit('open', it.id)">
-          <span class="lbl">{{ it.name }}</span>
+          <span class="lbl">{{ itemName(it) }}</span>
           <b class="num st-neg">{{ fmtQty(it.closing) }}</b>
         </button>
       </UiPanel>
@@ -135,7 +135,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
-import { fmtQty, lastDayOfPeriod } from '@/utils/skladFormat'
+import { fmtQty, itemName, lastDayOfPeriod } from '@/utils/skladFormat'
 
 const props = defineProps({
   items: { type: Array, required: true },
