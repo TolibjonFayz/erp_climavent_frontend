@@ -114,3 +114,22 @@ export function dayMonth(d) {
   const mon = t(`skMonth${m}`).slice(0, 3).toLowerCase()
   return y === new Date().getFullYear() ? `${day} ${mon}` : `${day} ${mon} ${y}`
 }
+
+/**
+ * SAP/katalog Excel faylini brauzerda ixchamlaydi: rasmlar va formatlash tashlab yuboriladi,
+ * faqat birinchi varaqning matnlari qoladi. 100 MB+ (rasmli) fayl ham bir necha yuz KB bo'ladi —
+ * serverga tez yuboriladi, o'qish mantig'i esa serverda bitta joyda qoladi.
+ */
+export async function compactSheetFile(file) {
+  const XLSX = await import('xlsx')
+  const data = await file.arrayBuffer()
+  const wb = XLSX.read(data, { type: 'array', cellStyles: false, cellHTML: false, cellFormula: false })
+  const ws = wb.Sheets[wb.SheetNames[0]]
+  const rows = ws ? XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false }) : []
+  const out = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(out, XLSX.utils.aoa_to_sheet(rows), 'Sheet1')
+  const bytes = XLSX.write(out, { type: 'array', bookType: 'xlsx' })
+  return new File([bytes], 'sap.xlsx', {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+}

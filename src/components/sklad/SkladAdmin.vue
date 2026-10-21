@@ -108,7 +108,9 @@
     <p class="sk-sap-text">{{ $t('skAdmSapText') }}</p>
     <div class="sk-sap-actions">
       <el-upload :show-file-list="false" :before-upload="uploadSap" accept=".xlsx,.xls,.csv">
-        <el-button type="primary" :icon="Upload" :loading="sapLoading">{{ $t('skAdmSapUpload') }}</el-button>
+        <el-button type="primary" :icon="Upload" :loading="!!sapStage">
+          {{ sapStage ? $t(sapStage) : $t('skAdmSapUpload') }}
+        </el-button>
       </el-upload>
       <template v-if="sapResult">
         <span class="sk-sap-result">
@@ -119,6 +121,11 @@
         </el-button>
       </template>
     </div>
+    <p v-if="sapResult && sapResult.with_code === false" class="sk-sap-note">ℹ️ {{ $t('skAdmSapNoCode') }}</p>
+    <p v-if="sapResult?.ambiguous_total" class="sk-sap-note">
+      ⚠️ {{ $t('skAdmSapAmbiguous', { n: fmtNum(sapResult.ambiguous_total) }) }}
+      <b>{{ sapResult.ambiguous.join(', ') }}</b>
+    </p>
   </UiPanel>
 
   <el-dialog
@@ -158,7 +165,7 @@ import { Delete, Plus, Refresh, Upload } from '@element-plus/icons-vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { fmtNum, formatDateTime } from '@/utils/format'
-import { apiError, codeMessage, periodLabel, syncWarning } from '@/utils/skladFormat'
+import { apiError, codeMessage, compactSheetFile, periodLabel, syncWarning } from '@/utils/skladFormat'
 
 const { t } = useI18n()
 const store = useSkladStore()
@@ -171,20 +178,29 @@ const newTitle = ref('')
 onMounted(() => store.loadSources().catch(() => {}))
 
 // ─── SAP ro'yxati ───
-const sapLoading = ref(false)
+const sapStage = ref('') // '' | 'skAdmSapReading' | 'skAdmSapSending'
 const sapResult = ref(null)
 const sapUnmatchedOpen = ref(false)
-const sapLinked = computed(() => store.items.filter((i) => i.sap_code).length)
+const sapLinked = computed(() => store.items.filter((i) => i.sap_code || i.sap_name).length)
 
 async function uploadSap(file) {
-  sapLoading.value = true
   try {
-    sapResult.value = await store.sapImport(file)
+    // Katta (rasmli) faylni avval brauzerning o'zida ixchamlaymiz
+    sapStage.value = 'skAdmSapReading'
+    let compact
+    try {
+      compact = await compactSheetFile(file)
+    } catch {
+      ElMessage.error(t('skAdmSapBadFile'))
+      return false
+    }
+    sapStage.value = 'skAdmSapSending'
+    sapResult.value = await store.sapImport(compact)
     ElMessage.success(t('skSaved'))
   } catch (e) {
     ElMessage.error(apiError(e))
   } finally {
-    sapLoading.value = false
+    sapStage.value = ''
   }
   return false // el-upload o'zi yubormasin
 }
@@ -309,6 +325,12 @@ async function addSource() {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
+}
+.sk-sap-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ui-ink-2);
 }
 .sk-sap-result {
   font-size: 13px;

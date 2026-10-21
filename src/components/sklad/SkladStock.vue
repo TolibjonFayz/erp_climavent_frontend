@@ -84,7 +84,7 @@
         @row-click="(row) => $emit('open', row.id)"
         @sort-change="onSort"
       >
-        <el-table-column prop="sap_code" width="125" sortable="custom">
+        <el-table-column v-if="hasCode" prop="sap_code" width="125" sortable="custom">
           <template #header><UiHint :label="$t('skSapCode')" :hint="$t('skHintSap')" /></template>
           <template #default="{ row }">
             <span v-if="row.sap_code" class="sk-code">{{ row.sap_code }}</span>
@@ -94,7 +94,9 @@
         <el-table-column prop="name" min-width="180" sortable="custom">
           <template #header>{{ $t('skColName') }}</template>
           <template #default="{ row }">
-            <div class="sk-name">{{ itemName(row) }}</div>
+            <div class="sk-name">
+              <span v-if="row.sap_name" class="sk-saptag" :title="$t('skSapTagHint')">SAP</span>{{ itemName(row) }}
+            </div>
             <div class="sk-sub">
               {{ row.group_name || '—' }}
               <template v-if="sheetNameIfDiff(row)"> · {{ $t('skSheetName', { name: row.name }) }}</template>
@@ -278,7 +280,10 @@ const filtered = computed(() => {
   return list
 })
 
-const hasSap = computed(() => props.items.some((it) => it.sap_code))
+// SAP ma'lumoti (kod yoki nom) birorta mahsulotda bo'lsa — eslatma ko'rsatilmaydi;
+// SAP kodi ustuni faqat kodlar mavjud bo'lsa (sayt katalogidan faqat nomlar keladi)
+const hasSap = computed(() => props.items.some((it) => it.sap_code || it.sap_name))
+const hasCode = computed(() => props.items.some((it) => it.sap_code))
 
 const paged = computed(() => filtered.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value))
 
@@ -583,6 +588,19 @@ function exportExcel() {
   font-size: 15px;
   font-weight: 600;
   color: var(--ui-ink);
+}
+.sk-saptag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  vertical-align: 1px;
+  background: var(--ui-link-soft);
+  color: var(--ui-link);
+  border: 1px solid var(--ui-link-line);
 }
 .sk-sub {
   margin-top: 2px;
