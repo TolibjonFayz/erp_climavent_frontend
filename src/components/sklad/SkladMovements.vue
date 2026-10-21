@@ -19,7 +19,7 @@
     </UiField>
     <UiField :label="$t('skDay')">
       <el-select v-model="day" clearable :placeholder="$t('skAllDays')" class="sk-day">
-        <el-option v-for="d in days" :key="d" :label="shortDate(d)" :value="d" />
+        <el-option v-for="d in days" :key="d" :label="dayMonth(d)" :value="d" />
       </el-select>
     </UiField>
     <UiField :label="$t('skSource')">
@@ -44,16 +44,16 @@
         <b class="is-out">−{{ fmtQty(sum.out) }}</b>
       </span>
     </template>
-    <el-table v-loading="loading" :data="paged" size="small" class="sk-table" row-class-name="sk-row" @row-click="(r) => $emit('open', r.item_id)">
-      <el-table-column :label="$t('skColDate')" width="76">
-        <template #default="{ row }">{{ shortDate(row.move_date) }}</template>
+    <el-table v-loading="loading" :data="paged" class="sk-table" row-class-name="sk-row" @row-click="(r) => $emit('open', r.item_id)">
+      <el-table-column :label="$t('skColDate')" width="90">
+        <template #default="{ row }">{{ dayMonth(row.move_date) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skMoveType')" width="120">
+      <el-table-column :label="$t('skMoveType')" width="140">
         <template #default="{ row }">
           <span class="sk-tag" :class="`t-${row.type}`">{{ moveTypeLabel(row.type) }}</span>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skColName')" min-width="240">
+      <el-table-column :label="$t('skColName')" min-width="220">
         <template #default="{ row }">
           <div class="sk-name">{{ itemName(row.item) }}</div>
           <div class="sk-group">
@@ -61,27 +61,25 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skColQty')" width="96" align="right">
+      <el-table-column :label="$t('skColQty')" width="100" align="right">
         <template #default="{ row }">
           <b :class="`q-${row.type}`">{{ signedQty(row.type, row.qty) }}</b>
         </template>
       </el-table-column>
       <el-table-column :label="$t('skColDogovor')" width="110">
-        <template #default="{ row }">{{ row.dogovor_number || '—' }}</template>
-      </el-table-column>
-      <el-table-column :label="$t('skColCounterparty')" min-width="150">
         <template #default="{ row }">
-          <div>{{ row.counterparty || '—' }}</div>
-          <div v-if="row.doc_number" class="sk-group">№ {{ row.doc_number }}</div>
+          <span v-if="row.dogovor_number">{{ row.dogovor_number }}</span><span v-else class="sk-none">—</span>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skColComment')" min-width="150">
-        <template #default="{ row }"><span class="sk-muted">{{ moveComment(row.comment) }}</span></template>
-      </el-table-column>
-      <el-table-column :label="$t('skSource')" width="130">
+      <!-- Kimdan/kimga, hujjat, izoh va kim kiritgani — bitta ustunda (jadval ekranga sig'sin) -->
+      <el-table-column :label="$t('skColDetails')" min-width="200">
         <template #default="{ row }">
-          <span v-if="row.source === 'sheet'" class="sk-src">📄 {{ $t('skSourceSheet') }}</span>
-          <span v-else class="sk-src">👤 {{ creatorName(row) }}</span>
+          <div v-if="row.counterparty">{{ row.counterparty }}</div>
+          <div v-if="row.doc_number" class="sk-group">№ {{ row.doc_number }}</div>
+          <div v-if="moveComment(row.comment)" class="sk-muted">{{ moveComment(row.comment) }}</div>
+          <div class="sk-src">
+            {{ row.source === 'sheet' ? $t('skFromSheet') : $t('skEnteredBy', { name: creatorName(row) }) }}
+          </div>
         </template>
       </el-table-column>
       <el-table-column width="52" align="center">
@@ -125,7 +123,7 @@ import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
-import { apiError, fmtQty, itemName, moveComment, moveTypeLabel, shortDate, signedQty } from '@/utils/skladFormat'
+import { apiError, dayMonth, fmtQty, itemName, moveComment, moveTypeLabel, signedQty } from '@/utils/skladFormat'
 
 const props = defineProps({
   isAdmin: { type: Boolean, default: false },
@@ -279,12 +277,27 @@ function exportExcel() {
   }
   :deep(th.el-table__cell) {
     background: var(--ui-surface-2);
-    color: var(--ui-muted);
+    color: var(--ui-ink-2);
     font-weight: 600;
-    font-size: 12px;
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  /* Element Plus so'zni istalgan harfdan bo'ladi — sarlavhada bo'lmasin */
+  :deep(th .cell) {
+    word-break: normal;
+    white-space: nowrap;
   }
   :deep(.cell) {
     font-variant-numeric: tabular-nums;
+    word-break: normal;
+  }
+  :deep(td .cell) {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  :deep(td.el-table__cell) {
+    padding: 10px 0;
   }
 }
 .sk-tag {
@@ -334,6 +347,9 @@ function exportExcel() {
 .sk-src {
   font-size: 12px;
   color: var(--ui-muted);
+}
+.sk-none {
+  color: var(--ui-faint);
 }
 .sk-empty {
   padding: 24px;

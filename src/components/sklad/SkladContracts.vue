@@ -24,7 +24,6 @@
     <el-table
       v-loading="loading"
       :data="filtered"
-      size="small"
       class="sk-table"
       :span-method="spanMethod"
       max-height="640"
@@ -35,7 +34,7 @@
           <div class="sk-muted">{{ $t('skCtrPositions', { n: groupSize(row) }) }}</div>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skColName')" min-width="280">
+      <el-table-column :label="$t('skColName')" min-width="220">
         <template #default="{ row }">
           <span class="sk-name">{{ row.item_name }}</span>
           <el-button v-if="row.item_id" link type="primary" size="small" @click="$emit('open', row.item_id)">
@@ -43,19 +42,19 @@
           </el-button>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skCtrQty')" width="100" align="right">
+      <el-table-column :label="$t('skCtrQty')" width="120" align="right">
         <template #default="{ row }">{{ row.qty_contract == null ? '—' : fmtQty(row.qty_contract) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skColIn')" width="90" align="right">
+      <el-table-column :label="$t('skColIn')" width="100" align="right">
         <template #default="{ row }">{{ fmtQty(row.qty_in) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skColOut')" width="90" align="right">
+      <el-table-column :label="$t('skColOut')" width="100" align="right">
         <template #default="{ row }">{{ fmtQty(row.qty_out) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skCtrLeft')" width="100" align="right">
+      <el-table-column :label="$t('skCtrLeft')" width="110" align="right">
         <template #default="{ row }"><b>{{ fmtQty(left(row)) }}</b></template>
       </el-table-column>
-      <el-table-column :label="$t('skStatus')" width="150">
+      <el-table-column :label="$t('skStatus')" width="170">
         <template #default="{ row }">
           <span class="sk-tag" :class="`c-${lineStatus(row)}`">{{ $t(`skCtr_${lineStatus(row)}`) }}</span>
         </template>
@@ -164,12 +163,27 @@ const stats = computed(() => {
 .sk-table {
   :deep(th.el-table__cell) {
     background: var(--ui-surface-2);
-    color: var(--ui-muted);
+    color: var(--ui-ink-2);
     font-weight: 600;
-    font-size: 12px;
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  /* Element Plus so'zni istalgan harfdan bo'ladi — sarlavhada bo'lmasin */
+  :deep(th .cell) {
+    word-break: normal;
+    white-space: nowrap;
   }
   :deep(.cell) {
     font-variant-numeric: tabular-nums;
+    word-break: normal;
+  }
+  :deep(td .cell) {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  :deep(td.el-table__cell) {
+    padding: 10px 0;
   }
 }
 .sk-name {

@@ -106,3 +106,11 @@ export const itemName = (it) => it?.sap_name || it?.name || ''
 /** Jadvaldagi nom SAP nomidan farq qilsa — shu nom (izoh sifatida ko'rsatish uchun) */
 export const sheetNameIfDiff = (it) =>
   it?.sap_name && nameKey(it.sap_name) !== nameKey(it.name) ? it.name : ''
+
+/** "2026-10-19" → "19 окт" / "19 okt" (boshqa yil bo'lsa yil ham) */
+export function dayMonth(d) {
+  if (!d) return ''
+  const [y, m, day] = String(d).slice(0, 10).split('-').map(Number)
+  const mon = t(`skMonth${m}`).slice(0, 3).toLowerCase()
+  return y === new Date().getFullYear() ? `${day} ${mon}` : `${day} ${mon} ${y}`
+}

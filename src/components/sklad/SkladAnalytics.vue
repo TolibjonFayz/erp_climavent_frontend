@@ -70,8 +70,8 @@
           <div v-for="g in groups" :key="g.name" class="sk-bars__row" :title="`${g.name}: ${fmtQty(g.closing)}`">
             <span class="lbl">{{ g.name }} <small>{{ g.count }}</small></span>
             <span class="track"><span class="fill fill-stock" :style="{ width: pct(g.closing, groupMax) }" /><em>{{ fmtQty(g.closing) }}</em></span>
-            <span class="num is-in">{{ g.in ? '+' + fmtQty(g.in) : '·' }}</span>
-            <span class="num is-out">{{ g.out ? '−' + fmtQty(g.out) : '·' }}</span>
+            <span class="num is-in">{{ g.in ? '+' + fmtQty(g.in) : '—' }}</span>
+            <span class="num is-out">{{ g.out ? '−' + fmtQty(g.out) : '—' }}</span>
           </div>
         </div>
       </UiPanel>
@@ -357,17 +357,15 @@ const noSap = computed(() => props.items.filter((i) => !i.sap_code).length)
   align-items: center;
 }
 .sk-bars__head {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--ui-muted);
+  color: var(--ui-ink-2);
   padding-bottom: 6px;
 }
 .sk-bars__row {
-  padding: 6px 0;
+  padding: 8px 0;
   border-top: 1px solid var(--ui-line-soft);
-  font-size: 13px;
+  font-size: 14px;
 }
 .lbl {
   min-width: 0;
@@ -480,5 +478,16 @@ const noSap = computed(() => props.items.filter((i) => !i.sap_code).length)
   padding: 24px;
   text-align: center;
   color: var(--ui-muted);
+}
+/* Telefonda guruhlar va reyting ro'yxati ekranga sig'sin (asosiy qoidalardan keyin turishi shart) */
+@media (max-width: 600px) {
+  .sk-bars__head,
+  .sk-bars__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 56px 56px;
+    gap: 6px;
+  }
+  .sk-rank {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 48px;
+  }
 }
 </style>

@@ -1,151 +1,192 @@
 <template>
-  <UiToolbar>
-    <UiField :label="$t('skSearch')" grow>
-      <el-input
-        v-model="search"
-        data-tour="sk-search"
-        :prefix-icon="Search"
-        clearable
-        :placeholder="$t('skSearchPh')"
-      />
-    </UiField>
-    <UiField :label="$t('skStatus')">
-      <el-select v-model="status" clearable :placeholder="$t('skAll')" class="sk-select">
-        <el-option v-for="s in statusOptions" :key="s.value" :label="s.label" :value="s.value" />
-      </el-select>
-    </UiField>
-    <UiField :label="$t('skOnlyMoved')">
-      <el-switch v-model="onlyMoved" />
-    </UiField>
-    <template #actions>
-      <el-button v-if="mode === 'live'" :icon="Plus" @click="$emit('new-item')">{{ $t('skNewItem') }}</el-button>
-      <el-button :icon="Download" @click="exportExcel">{{ $t('skExport') }}</el-button>
-    </template>
-  </UiToolbar>
+  <div ref="rootEl" class="sk-stock" :style="{ '--sk-sticky-h': stickyH + 'px' }">
+    <!-- Filtrlar paneli: sahifa pastga aylantirilganda ham tepada turadi -->
+    <div ref="stickyEl" class="sk-sticky">
+      <div class="sk-filters">
+        <label class="sk-search" data-tour="sk-search">
+          <span class="sk-label">{{ $t('skSearch') }}</span>
+          <el-input v-model="search" :prefix-icon="Search" clearable size="large" :placeholder="$t('skSearchPh')" />
+        </label>
+        <div class="sk-filters__right">
+          <el-checkbox v-model="onlyMoved" size="large" border>{{ $t('skOnlyMovedLong') }}</el-checkbox>
+          <el-button v-if="mode === 'live'" size="large" :icon="Plus" @click="$emit('new-item')">
+            {{ $t('skNewItem') }}
+          </el-button>
+          <el-button size="large" :icon="Download" @click="exportExcel">{{ $t('skExportLong') }}</el-button>
+        </div>
+      </div>
 
-  <!-- Guruh "chip"lari: bosilsa shu guruh -->
-  <div class="sk-groups" data-tour="sk-groups">
-    <button type="button" class="sk-chip" :class="{ on: !group }" @click="pickGroup('')">
-      {{ $t('skAllGroups') }} <b>{{ fmtNum(items.length) }}</b>
-    </button>
-    <button
-      v-for="g in groups"
-      :key="g.name"
-      type="button"
-      class="sk-chip"
-      :class="{ on: group === g.name }"
-      @click="pickGroup(g.name)"
-    >
-      {{ g.name }} <b>{{ fmtNum(g.count) }}</b>
-    </button>
-  </div>
+      <!-- Guruhlar -->
+      <div class="sk-row-chips" data-tour="sk-groups">
+        <span class="sk-label">{{ $t('skColGroup') }}</span>
+        <button type="button" class="sk-chip" :class="{ on: !group }" :aria-pressed="!group" @click="group = ''">
+          {{ $t('skAllGroups') }} <b>{{ fmtNum(items.length) }}</b>
+        </button>
+        <button
+          v-for="g in groups"
+          :key="g.name"
+          type="button"
+          class="sk-chip"
+          :class="{ on: group === g.name }"
+          :aria-pressed="group === g.name"
+          @click="group = g.name"
+        >
+          {{ g.name }} <b>{{ fmtNum(g.count) }}</b>
+        </button>
+      </div>
 
-  <UiPanel flush>
-    <template #title>
-      {{ $t('skStockTitle') }}
-      <span class="sk-count">{{ fmtNum(filtered.length) }}</span>
-    </template>
-    <template #actions>
-      <span class="sk-sum">
-        {{ $t('skStatIn') }}: <b class="is-in">+{{ fmtQty(sum.in) }}</b> · {{ $t('skStatOut') }}:
-        <b class="is-out">−{{ fmtQty(sum.out) }}</b> · {{ $t('skStatClosing') }}: <b>{{ fmtQty(sum.closing) }}</b>
-      </span>
-      <el-button v-if="hasFilters" link type="primary" @click="resetFilters">{{ $t('skReset') }}</el-button>
-    </template>
+      <!-- Holat: yashirin ro'yxat emas, hammasi ko'rinib turadi -->
+      <div class="sk-row-chips">
+        <span class="sk-label">{{ $t('skStatus') }}</span>
+        <button
+          v-for="s in statusOptions"
+          :key="s.value"
+          type="button"
+          class="sk-chip"
+          :class="[`st-${s.value || 'all'}`, { on: status === s.value }]"
+          :aria-pressed="status === s.value"
+          @click="status = s.value"
+        >
+          <i v-if="s.value" class="sk-dot" />{{ s.label }} <b>{{ fmtNum(s.count) }}</b>
+        </button>
+      </div>
 
-    <div data-tour="sk-table">
+      <!-- Natija: nechta ko'rsatilmoqda va jamilar -->
+      <div class="sk-summary">
+        <span class="sk-summary__count">{{ $t('skShown', { n: fmtNum(filtered.length) }) }}</span>
+        <span class="sk-summary__nums">
+          <span>{{ $t('skSumIn') }}: <b class="is-in">+{{ fmtQty(sum.in) }}</b></span>
+          <span>{{ $t('skSumOut') }}: <b class="is-out">−{{ fmtQty(sum.out) }}</b></span>
+          <span>{{ $t('skSumClosing') }}: <b>{{ fmtQty(sum.closing) }}</b></span>
+        </span>
+        <el-button v-if="hasFilters" :icon="RefreshLeft" @click="resetFilters">{{ $t('skResetAll') }}</el-button>
+      </div>
+    </div>
+
+    <!-- SAP kodlari hali biriktirilmagan -->
+    <div v-if="items.length && !hasSap" class="sk-notice">
+      <el-icon class="sk-notice__icon"><InfoFilled /></el-icon>
+      <div class="sk-notice__text">
+        <b>{{ $t('skNoSapTitle') }}</b>
+        <span>{{ isAdmin ? $t('skNoSapTextAdmin') : $t('skNoSapText') }}</span>
+      </div>
+      <el-button v-if="isAdmin" type="primary" plain @click="$emit('go-settings')">{{ $t('skNoSapBtn') }}</el-button>
+    </div>
+
+    <div class="sk-tablewrap" data-tour="sk-table">
+      <p class="sk-hint">👆 {{ $t('skRowHint') }}</p>
       <el-table
         v-loading="loading"
         :data="paged"
-        size="small"
         class="sk-table"
         row-class-name="sk-row"
         :default-sort="{ prop: 'sort_order', order: 'ascending' }"
         @row-click="(row) => $emit('open', row.id)"
         @sort-change="onSort"
       >
-        <el-table-column v-if="hasSap" prop="sap_code" :label="$t('skSapCode')" width="120" sortable="custom">
-          <template #default="{ row }"><span class="sk-code">{{ row.sap_code || '—' }}</span></template>
+        <el-table-column prop="sap_code" width="125" sortable="custom">
+          <template #header><UiHint :label="$t('skSapCode')" :hint="$t('skHintSap')" /></template>
+          <template #default="{ row }">
+            <span v-if="row.sap_code" class="sk-code">{{ row.sap_code }}</span>
+            <span v-else class="sk-none">—</span>
+          </template>
         </el-table-column>
-        <el-table-column prop="name" :label="$t('skColName')" min-width="260" sortable="custom">
+        <el-table-column prop="name" min-width="180" sortable="custom">
+          <template #header>{{ $t('skColName') }}</template>
           <template #default="{ row }">
             <div class="sk-name">{{ itemName(row) }}</div>
-            <div class="sk-group">
+            <div class="sk-sub">
               {{ row.group_name || '—' }}
               <template v-if="sheetNameIfDiff(row)"> · {{ $t('skSheetName', { name: row.name }) }}</template>
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="opening" :label="$t('skColOpening')" width="104" align="right" sortable="custom">
+        <el-table-column prop="opening" width="100" align="right">
+          <template #header><UiHint :label="$t('skColOpeningFull')" :hint="$t('skHintOpening')" /></template>
           <template #default="{ row }">{{ fmtQty(row.opening) }}</template>
         </el-table-column>
-        <el-table-column prop="in" :label="$t('skColIn')" width="96" align="right" sortable="custom">
+        <el-table-column prop="in" width="100" align="right">
+          <template #header><UiHint :label="$t('skColIn')" :hint="$t('skHintIn')" /></template>
           <template #default="{ row }">
-            <span :class="{ 'is-in': row.in }">{{ row.in ? '+' + fmtQty(row.in) : '·' }}</span>
+            <b v-if="row.in" class="is-in">+{{ fmtQty(row.in) }}</b><span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="out" :label="$t('skColOut')" width="96" align="right" sortable="custom">
+        <el-table-column prop="out" width="100" align="right">
+          <template #header><UiHint :label="$t('skColOut')" :hint="$t('skHintOut')" /></template>
           <template #default="{ row }">
-            <span :class="{ 'is-out': row.out }">{{ row.out ? '−' + fmtQty(row.out) : '·' }}</span>
+            <b v-if="row.out" class="is-out">−{{ fmtQty(row.out) }}</b><span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="reserve" :label="$t('skColReserve')" width="96" align="right" sortable="custom">
+        <el-table-column prop="reserve" width="108" align="right">
+          <template #header><UiHint :label="$t('skColReserve')" :hint="$t('skHintReserve')" /></template>
           <template #default="{ row }">
-            <span :class="{ 'is-reserve': row.reserve - row.release }">{{
-              row.reserve - row.release ? fmtQty(row.reserve - row.release) : '·'
-            }}</span>
+            <b v-if="row.reserve - row.release" class="is-reserve">{{ fmtQty(row.reserve - row.release) }}</b>
+            <span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="closing" :label="$t('skColClosing')" width="130" align="right" sortable="custom">
+        <el-table-column prop="closing" width="165" align="right" sortable="custom">
+          <template #header><UiHint :label="$t('skColClosing')" :hint="$t('skHintClosing')" /></template>
           <template #default="{ row }">
+            <span v-if="stockStatus(row) !== 'ok'" class="sk-badge" :class="`st-${stockStatus(row)}`">
+              {{ $t(`skBadge_${stockStatus(row)}`) }}
+            </span>
             <span class="sk-qty" :class="`st-${stockStatus(row)}`">{{ fmtQty(row.closing) }}</span>
             <span class="sk-unit">{{ unitLabel(row.unit) }}</span>
+            <!-- Oxirgi harakat sanasi — alohida ustun emas (jadval ekranga sig'sin) -->
+            <div v-if="row.last_move_date" class="sk-sub">{{ $t('skLastMove', { d: dayMonth(row.last_move_date) }) }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="last_move_date" :label="$t('skColLast')" width="96" align="right" sortable="custom">
-          <template #default="{ row }">
-            <span class="sk-muted">{{ shortDate(row.last_move_date) }}</span>
+        <el-table-column width="48" align="center">
+          <template #default>
+            <el-icon class="sk-more" :aria-label="$t('skDetails')"><ArrowRight /></el-icon>
           </template>
         </el-table-column>
+
         <template #empty>
-          <div class="sk-empty">{{ items.length ? $t('skNothingFound') : $t('skNoItems') }}</div>
+          <div class="sk-empty">
+            <template v-if="!items.length">{{ $t('skNoItems') }}</template>
+            <template v-else>
+              <b>{{ search ? $t('skNothingFoundQ', { q: search }) : $t('skNothingFound') }}</b>
+              <span>{{ $t('skNothingHelp') }}</span>
+              <el-button type="primary" plain :icon="RefreshLeft" @click="resetFilters">{{ $t('skResetAll') }}</el-button>
+            </template>
+          </div>
         </template>
       </el-table>
-    </div>
 
-    <div v-if="filtered.length > pageSize" class="sk-pager">
-      <el-pagination
-        v-model:current-page="page"
-        v-model:page-size="pageSize"
-        :page-sizes="[50, 100, 200]"
-        :total="filtered.length"
-        layout="total, sizes, prev, pager, next"
-        background
-        small
-      />
+      <div v-if="filtered.length > pageSizes[0]" class="sk-pager">
+        <el-pagination
+          v-model:current-page="page"
+          v-model:page-size="pageSize"
+          :page-sizes="pageSizes"
+          :total="filtered.length"
+          :layout="narrow ? 'prev, pager, next' : 'total, prev, pager, next, sizes'"
+          :pager-count="narrow ? 5 : 7"
+          background
+        />
+      </div>
     </div>
-  </UiPanel>
+  </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as XLSX from 'xlsx'
-import { Download, Plus, Search } from '@element-plus/icons-vue'
-import UiToolbar from '@/components/ui/UiToolbar.vue'
-import UiField from '@/components/ui/UiField.vue'
-import UiPanel from '@/components/ui/UiPanel.vue'
+import { ArrowRight, Download, InfoFilled, Plus, RefreshLeft, Search } from '@element-plus/icons-vue'
+import UiHint from '@/components/ui/UiHint.vue'
 import { stockStatus } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
-import { fmtQty, itemName, periodLabel, sheetNameIfDiff, shortDate, unitLabel } from '@/utils/skladFormat'
+import { dayMonth, fmtQty, itemName, periodLabel, sheetNameIfDiff, unitLabel } from '@/utils/skladFormat'
 
 const props = defineProps({
   items: { type: Array, required: true },
   loading: { type: Boolean, default: false },
   mode: { type: String, default: 'mirror' },
   period: { type: String, default: '' },
+  isAdmin: { type: Boolean, default: false },
 })
-defineEmits(['open', 'new-item'])
+defineEmits(['open', 'new-item', 'go-settings'])
 const { t } = useI18n()
 
 const search = ref('')
@@ -153,16 +194,50 @@ const group = ref('')
 const status = ref('')
 const onlyMoved = ref(false)
 const page = ref(1)
+const pageSizes = [50, 100, 200]
 const pageSize = ref(50)
 const sort = ref({ prop: 'sort_order', order: 'ascending' })
 
-const statusOptions = computed(() => [
-  { value: 'ok', label: t('skSt_ok') },
-  { value: 'low', label: t('skSt_low') },
-  { value: 'empty', label: t('skSt_empty') },
-  { value: 'negative', label: t('skSt_negative') },
-  { value: 'reserved', label: t('skSt_reserved') },
-])
+// ─── Tepada qotib turadigan panel balandligi (jadval sarlavhasi uning ostiga yopishadi) ───
+const rootEl = ref(null)
+const stickyEl = ref(null)
+const stickyH = ref(0)
+// Telefonda sahifalash ixcham bo'lsin (aks holda ekrandan chiqib ketadi)
+const narrow = ref(false)
+let ro = null
+const onResize = () => (narrow.value = window.innerWidth < 640)
+onMounted(() => {
+  ro = new ResizeObserver(() => (stickyH.value = stickyEl.value?.offsetHeight || 0))
+  if (stickyEl.value) ro.observe(stickyEl.value)
+  onResize()
+  window.addEventListener('resize', onResize)
+})
+onBeforeUnmount(() => {
+  ro?.disconnect()
+  window.removeEventListener('resize', onResize)
+})
+
+// Holat bo'yicha filtr (rezerv — alohida belgi, holat emas)
+const matchesStatus = (it, s) => {
+  if (!s) return true
+  if (s === 'reserved') return !!(it.reserve - it.release)
+  const st = stockStatus(it)
+  return s === 'empty' ? st === 'empty' || st === 'negative' : st === s
+}
+
+const statusOptions = computed(() => {
+  const base = filterExcept('status')
+  return [
+    { value: '', label: t('skAll') },
+    { value: 'ok', label: t('skSt_ok') },
+    { value: 'low', label: t('skSt_low') },
+    { value: 'empty', label: t('skSt_empty') },
+    { value: 'negative', label: t('skSt_negative') },
+    { value: 'reserved', label: t('skSt_reserved') },
+  ]
+    .map((o) => ({ ...o, count: base.filter((it) => matchesStatus(it, o.value)).length }))
+    .filter((o) => !o.value || o.count || status.value === o.value)
+})
 
 const groups = computed(() => {
   const map = new Map()
@@ -172,35 +247,37 @@ const groups = computed(() => {
 
 const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ')
 
-const filtered = computed(() => {
+// Barcha filtrlar (bittasidan tashqari — tugmalardagi sonlarni hisoblash uchun)
+function filterExcept(skip) {
   const q = norm(search.value).trim()
   const terms = q ? q.split(' ') : []
-  const list = props.items.filter((it) => {
-    if (group.value && (it.group_name || '—') !== group.value) return false
+  return props.items.filter((it) => {
+    if (skip !== 'group' && group.value && (it.group_name || '—') !== group.value) return false
     if (onlyMoved.value && !(it.in || it.out || it.reserve || it.adjust)) return false
-    if (status.value) {
-      const st = stockStatus(it)
-      if (status.value === 'reserved' ? !(it.reserve - it.release) : status.value === 'empty' ? st !== 'empty' && st !== 'negative' : st !== status.value) return false
-    }
+    if (skip !== 'status' && !matchesStatus(it, status.value)) return false
     if (terms.length) {
       const hay = norm(`${it.sap_code || ''} ${it.sap_name || ''} ${it.name} ${it.group_name}`)
       if (!terms.every((term) => hay.includes(term))) return false
     }
     return true
   })
+}
+
+const filtered = computed(() => {
+  const list = filterExcept(null)
   const { prop, order } = sort.value
   if (prop && order) {
     const dir = order === 'ascending' ? 1 : -1
+    const val = (it) => (prop === 'name' ? itemName(it) : prop === 'reserve' ? it.reserve - it.release : it[prop])
     list.sort((a, b) => {
-      const av = a[prop] ?? ''
-      const bv = b[prop] ?? ''
+      const av = val(a) ?? ''
+      const bv = val(b) ?? ''
       return (typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv), 'ru')) * dir
     })
   }
   return list
 })
 
-// SAP kodi hech biriga biriktirilmagan bo'lsa, ustun ko'rsatilmaydi
 const hasSap = computed(() => props.items.some((it) => it.sap_code))
 
 const paged = computed(() => filtered.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value))
@@ -214,11 +291,14 @@ const sum = computed(() =>
 
 const hasFilters = computed(() => !!(search.value || group.value || status.value || onlyMoved.value))
 
-watch([search, group, status, onlyMoved], () => (page.value = 1))
-
-function pickGroup(name) {
-  group.value = name
-}
+// Filtr o'zgarsa — 1-sahifaga va jadval boshiga
+watch([search, group, status, onlyMoved], () => {
+  page.value = 1
+})
+watch(page, () => {
+  const top = rootEl.value?.getBoundingClientRect().top
+  if (top != null && top < 0) rootEl.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+})
 
 function onSort({ prop, order }) {
   sort.value = { prop: order ? prop : 'sort_order', order: order || 'ascending' }
@@ -244,16 +324,16 @@ function exportExcel() {
     [t('skXlsSheetName')]: it.name,
     [t('skColGroup')]: it.group_name || '',
     [t('skColUnit')]: unitLabel(it.unit),
-    [t('skColOpening')]: it.opening,
+    [t('skColOpeningFull')]: it.opening,
     [t('skColIn')]: it.in,
     [t('skColOut')]: it.out,
     [t('skColReserve')]: it.reserve - it.release,
     [t('skColAdjust')]: it.adjust,
     [t('skColClosing')]: it.closing,
-    [t('skColLast')]: it.last_move_date || '',
+    [t('skColLastFull')]: it.last_move_date || '',
   }))
   const ws = XLSX.utils.json_to_sheet(rows)
-  ws['!cols'] = [{ wch: 14 }, { wch: 48 }, { wch: 48 }, { wch: 18 }, { wch: 8 }, ...Array(7).fill({ wch: 12 })]
+  ws['!cols'] = [{ wch: 14 }, { wch: 48 }, { wch: 48 }, { wch: 18 }, { wch: 8 }, ...Array(7).fill({ wch: 14 })]
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, (periodLabel(props.period) || t('skStockTitle')).slice(0, 31))
   XLSX.writeFile(wb, `${t('skFileStock')}-${props.period}.xlsx`)
@@ -261,25 +341,84 @@ function exportExcel() {
 </script>
 
 <style scoped lang="scss">
-.sk-select {
-  width: 170px;
+/* Yoshi kattaroq foydalanuvchilar uchun: yirik shrift, katta bosiladigan joylar,
+   KATTA HARFSIZ sarlavhalar, holat — rang bilan birga so'z bilan ham */
+.sk-stock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 15px;
 }
-.sk-groups {
+
+/* ─── Qotib turadigan filtr paneli ─── */
+.sk-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  margin: 0 -2px;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
+  box-shadow: 0 6px 16px -10px rgba(15, 23, 42, 0.35);
+}
+.sk-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-ink-2);
+}
+.sk-filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+}
+.sk-search {
+  flex: 1 1 360px;
+  min-width: 0;
+  :deep(.el-input__inner) {
+    font-size: 16px;
+  }
+}
+.sk-filters__right {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+  :deep(.el-checkbox__label) {
+    font-size: 15px;
+  }
+}
+.sk-row-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+  .sk-label {
+    margin: 0 4px 0 0;
+    min-width: 64px;
+  }
 }
 .sk-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid var(--ui-line);
+  min-height: 38px;
+  padding: 6px 14px;
+  border: 1px solid var(--ui-line-strong);
   border-radius: 99px;
   background: var(--ui-surface);
-  color: var(--ui-ink-2);
+  color: var(--ui-ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 15px;
   cursor: pointer;
   transition:
     border-color 0.15s,
@@ -290,7 +429,7 @@ function exportExcel() {
     font-variant-numeric: tabular-nums;
   }
   &:hover {
-    border-color: var(--ui-link-line);
+    border-color: var(--ui-link);
   }
   &.on {
     background: var(--ui-link);
@@ -298,70 +437,172 @@ function exportExcel() {
     color: var(--ui-on-accent);
     b {
       color: var(--ui-on-accent);
-      opacity: 0.85;
     }
   }
   &:focus-visible {
-    outline: 2px solid var(--ui-link);
+    outline: 3px solid var(--ui-link-line);
     outline-offset: 2px;
   }
 }
-.sk-count {
-  margin-left: 6px;
-  padding: 1px 8px;
-  border-radius: 99px;
-  font-size: 12px;
-  background: var(--ui-surface-3);
-  color: var(--ui-muted);
+.sk-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ui-line-strong);
 }
-.sk-sum {
-  font-size: 12px;
+.st-ok .sk-dot {
+  background: var(--ui-good);
+}
+.st-low .sk-dot {
+  background: var(--ui-warn);
+}
+.st-negative .sk-dot {
+  background: var(--ui-bad);
+}
+.st-reserved .sk-dot {
+  background: var(--ui-violet-ink);
+}
+.sk-chip.on .sk-dot {
+  box-shadow: 0 0 0 2px var(--ui-on-accent);
+}
+.sk-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ui-line-soft);
+}
+.sk-summary__count {
+  font-weight: 700;
+  color: var(--ui-ink);
+}
+.sk-summary__nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  color: var(--ui-ink-2);
   b {
     font-variant-numeric: tabular-nums;
     color: var(--ui-ink);
   }
 }
+.sk-summary .el-button {
+  margin-left: auto;
+}
+
+/* ─── SAP haqida eslatma ─── */
+.sk-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--ui-link-line);
+  border-radius: var(--ui-radius);
+  background: var(--ui-link-soft);
+  color: var(--ui-ink-2);
+}
+.sk-notice__icon {
+  font-size: 22px;
+  color: var(--ui-link);
+  flex-shrink: 0;
+}
+.sk-notice__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  b {
+    color: var(--ui-ink);
+  }
+}
+
+/* ─── Jadval ─── */
+.sk-tablewrap {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius);
+}
+.sk-hint {
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--ui-muted);
+  border-bottom: 1px solid var(--ui-line-soft);
+}
 .sk-table {
-  :deep(.sk-row) {
-    cursor: pointer;
+  /* Sarlavha qatori filtr paneli ostida qotib turishi uchun */
+  overflow: visible;
+  border-radius: 0 0 var(--ui-radius) var(--ui-radius);
+  :deep(.el-table__inner-wrapper) {
+    overflow: visible;
+  }
+  :deep(.el-table__header-wrapper) {
+    position: sticky;
+    top: calc(var(--sk-sticky-h, 0px) - 1px);
+    z-index: 5;
   }
   :deep(th.el-table__cell) {
     background: var(--ui-surface-2);
-    color: var(--ui-muted);
+    color: var(--ui-ink-2);
     font-weight: 600;
-    font-size: 12px;
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: 0;
   }
-  :deep(.cell) {
+  /* Element Plus so'zni istalgan harfdan bo'ladi ("ПОСЛЕДНЕ / Е") — sarlavhada bo'lmasin */
+  :deep(th .cell) {
+    word-break: normal;
+    overflow-wrap: normal;
+    white-space: normal;
+    line-height: 1.3;
+  }
+  :deep(td .cell) {
+    word-break: normal;
+    font-size: 15px;
+    line-height: 1.4;
     font-variant-numeric: tabular-nums;
+  }
+  :deep(td.el-table__cell) {
+    padding: 12px 0;
+  }
+  :deep(.sk-row) {
+    cursor: pointer;
+  }
+  :deep(.sk-row:hover .sk-more) {
+    color: var(--ui-link);
   }
 }
 .sk-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  color: var(--ui-muted);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ui-ink);
 }
 .sk-name {
+  font-size: 15px;
+  font-weight: 600;
   color: var(--ui-ink);
-  font-weight: 500;
-  line-height: 1.35;
 }
-.sk-group {
-  font-size: 11px;
+.sk-sub {
+  margin-top: 2px;
+  font-size: 13px;
   color: var(--ui-muted);
+}
+.sk-none {
+  color: var(--ui-faint);
 }
 .is-in {
   color: var(--ui-good);
-  font-weight: 600;
 }
 .is-out {
   color: var(--ui-orange-ink);
-  font-weight: 600;
 }
 .is-reserve {
   color: var(--ui-violet-ink);
-  font-weight: 600;
 }
 .sk-qty {
+  font-size: 17px;
   font-weight: 700;
   color: var(--ui-ink);
   &.st-empty {
@@ -376,20 +617,72 @@ function exportExcel() {
 }
 .sk-unit {
   margin-left: 4px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--ui-muted);
 }
-.sk-muted {
-  color: var(--ui-muted);
+.sk-badge {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: 2px;
+  &.st-empty {
+    background: var(--ui-surface-3);
+    color: var(--ui-ink-2);
+  }
+  &.st-negative {
+    background: var(--ui-bad-soft);
+    color: var(--ui-bad);
+  }
+  &.st-low {
+    background: var(--ui-warn-soft);
+    color: var(--ui-warn-ink);
+  }
+}
+.sk-more {
+  font-size: 18px;
+  color: var(--ui-faint);
 }
 .sk-empty {
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  font-size: 15px;
+  line-height: 1.5;
   color: var(--ui-muted);
+  b {
+    color: var(--ui-ink);
+  }
 }
 .sk-pager {
   display: flex;
-  justify-content: flex-end;
-  padding: 10px 12px;
+  justify-content: center;
+  padding: 14px 12px;
   border-top: 1px solid var(--ui-line-soft);
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 8px;
+  }
+}
+
+@media (max-width: 900px) {
+  /* Telefonda filtrlar ko'p joy oladi — qotirmaymiz, faqat jadval sarlavhasi */
+  .sk-sticky {
+    position: static;
+  }
+  .sk-table :deep(.el-table__header-wrapper) {
+    top: 0;
+  }
+  .sk-summary .el-button {
+    margin-left: 0;
+  }
+  .sk-row-chips .sk-label {
+    width: 100%;
+  }
 }
 </style>

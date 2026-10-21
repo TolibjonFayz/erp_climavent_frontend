@@ -84,8 +84,10 @@
           :loading="loading"
           :mode="store.mode"
           :period="store.period"
+          :is-admin="isAdmin"
           @open="openItem"
           @new-item="newItemOpen = true"
+          @go-settings="showTab('admin')"
         />
       </el-tab-pane>
       <el-tab-pane name="movements" :label="$t('skTabMovements')">
@@ -338,13 +340,18 @@ onMounted(async () => {
   }
 }
 .sk-tabs {
+  /* Filtr paneli tab ichida "sticky" bo'lishi uchun (Element Plus bu yerda overflow:hidden qo'yadi) */
+  :deep(.el-tabs__content) {
+    overflow: visible;
+  }
   :deep(.el-tabs__header) {
     margin-bottom: 16px;
   }
   :deep(.el-tabs__item) {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
-    height: 44px;
+    height: 48px;
+    padding: 0 18px;
   }
   :deep(.el-tab-pane) {
     display: flex;
