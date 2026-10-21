@@ -74,7 +74,7 @@
         </template>
       </el-table-column>
       <el-table-column :label="$t('skColComment')" min-width="150">
-        <template #default="{ row }"><span class="sk-muted">{{ row.comment || '' }}</span></template>
+        <template #default="{ row }"><span class="sk-muted">{{ moveComment(row.comment) }}</span></template>
       </el-table-column>
       <el-table-column :label="$t('skSource')" width="130">
         <template #default="{ row }">
@@ -123,7 +123,7 @@ import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
-import { fmtQty, moveTypeLabel, shortDate, signedQty } from '@/utils/skladFormat'
+import { apiError, fmtQty, moveComment, moveTypeLabel, shortDate, signedQty } from '@/utils/skladFormat'
 
 const props = defineProps({
   isAdmin: { type: Boolean, default: false },
@@ -175,7 +175,7 @@ const filtered = computed(() => {
     if (day.value && m.move_date !== day.value) return false
     if (source.value && m.source !== source.value) return false
     if (q) {
-      const hay = norm(`${m.item?.name} ${m.item?.code} ${m.dogovor_number} ${m.counterparty} ${m.doc_number} ${m.comment}`)
+      const hay = norm(`${m.item?.name} ${m.item?.code} ${m.dogovor_number} ${m.counterparty} ${m.doc_number} ${moveComment(m.comment)}`)
       if (!hay.includes(q)) return false
     }
     return true
@@ -204,7 +204,7 @@ async function remove(m) {
     await store.removeMovement(m.id)
     ElMessage.success(t('skDeleted'))
   } catch (e) {
-    ElMessage.error(e?.response?.data?.message || t('skError'))
+    ElMessage.error(apiError(e))
   }
 }
 
@@ -219,13 +219,13 @@ function exportExcel() {
     [t('skColDogovor')]: m.dogovor_number || '',
     [t('skColCounterparty')]: m.counterparty || '',
     [t('skColDoc')]: m.doc_number || '',
-    [t('skColComment')]: m.comment || '',
+    [t('skColComment')]: moveComment(m.comment),
     [t('skSource')]: m.source === 'sheet' ? t('skSourceSheet') : creatorName(m),
   }))
   const ws = XLSX.utils.json_to_sheet(rows)
   const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Harakatlar')
-  XLSX.writeFile(wb, `ombor-harakatlar-${store.period}.xlsx`)
+  XLSX.utils.book_append_sheet(wb, ws, t('skMovesTitle').slice(0, 31))
+  XLSX.writeFile(wb, `${t('skFileMoves')}-${store.period}.xlsx`)
 }
 </script>
 

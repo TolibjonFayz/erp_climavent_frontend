@@ -17,7 +17,9 @@
       </el-form-item>
       <div class="sk-row">
         <el-form-item :label="$t('skColUnit')">
-          <el-input v-model="form.unit" />
+          <el-select v-model="form.unit" filterable allow-create default-first-option class="sk-full">
+            <el-option v-for="u in UNIT_CODES" :key="u" :value="u" :label="unitLabel(u)" />
+          </el-select>
         </el-form-item>
         <el-form-item :label="$t('skMinQty')">
           <el-input-number v-model="form.min_qty" :min="0" controls-position="right" />
@@ -39,6 +41,7 @@ import { reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { useSkladStore } from '@/stores/sklad'
+import { UNIT_CODES, apiError, unitLabel } from '@/utils/skladFormat'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -71,7 +74,7 @@ async function submit() {
     ElMessage.success(t('skSaved'))
     emit('update:modelValue', false)
   } catch (e) {
-    ElMessage.error(e?.response?.data?.message || t('skError'))
+    ElMessage.error(apiError(e))
   } finally {
     saving.value = false
   }

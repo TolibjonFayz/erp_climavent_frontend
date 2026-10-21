@@ -28,7 +28,7 @@
         >
           <el-option v-for="it in itemOptions" :key="it.id" :value="it.id" :label="`${it.code} · ${it.name}`">
             <span class="sk-move__opt">{{ it.name }}</span>
-            <span class="sk-move__optq">{{ fmtQty(it.closing) }} {{ it.unit }}</span>
+            <span class="sk-move__optq">{{ fmtQty(it.closing) }} {{ unitLabel(it.unit) }}</span>
           </el-option>
         </el-select>
       </el-form-item>
@@ -43,7 +43,7 @@
       </div>
 
       <div v-if="selected" class="sk-move__preview" :class="{ bad: after < 0 }">
-        {{ $t('skBalance') }}: <b>{{ fmtQty(selected.closing) }}</b> → <b>{{ fmtQty(after) }}</b> {{ selected.unit }}
+        {{ $t('skBalance') }}: <b>{{ fmtQty(selected.closing) }}</b> → <b>{{ fmtQty(after) }}</b> {{ unitLabel(selected.unit) }}
         <span v-if="after < 0"> · {{ $t('skNotEnough') }}</span>
       </div>
 
@@ -77,7 +77,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { useSkladStore } from '@/stores/sklad'
-import { fmtQty } from '@/utils/skladFormat'
+import { apiError, fmtQty, unitLabel } from '@/utils/skladFormat'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -178,7 +178,7 @@ async function submit() {
     ElMessage.success(t('skSaved'))
     emit('update:modelValue', false)
   } catch (e) {
-    ElMessage.error(e?.response?.data?.message || t('skError'))
+    ElMessage.error(apiError(e))
   } finally {
     saving.value = false
   }

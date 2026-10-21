@@ -20,7 +20,7 @@
           <div>
             <div class="sk-d__label">{{ $t('skNowBalance') }}</div>
             <div class="sk-d__big" :class="{ neg: balance < 0 }">
-              {{ fmtQty(balance) }} <small>{{ item.unit }}</small>
+              {{ fmtQty(balance) }} <small>{{ unitLabel(item.unit) }}</small>
             </div>
           </div>
           <div class="sk-d__btns">
@@ -74,7 +74,9 @@
             <el-input v-model="edit.sap_code" size="small" class="sk-d__sap" />
           </UiField>
           <UiField :label="$t('skColUnit')">
-            <el-input v-model="edit.unit" size="small" class="sk-d__unit" />
+            <el-select v-model="edit.unit" filterable allow-create default-first-option size="small" class="sk-d__unit">
+            <el-option v-for="u in UNIT_CODES" :key="u" :value="u" :label="unitLabel(u)" />
+          </el-select>
           </UiField>
           <el-button size="small" type="primary" plain :loading="saving" @click="save">{{ $t('skSave') }}</el-button>
         </div>
@@ -98,7 +100,7 @@
             <span class="tp">{{ moveTypeLabel(m.type) }}</span>
             <b class="q">{{ signedQty(m.type, m.qty) }}</b>
             <span class="info">
-              {{ [m.dogovor_number && `№${m.dogovor_number}`, m.counterparty, m.comment].filter(Boolean).join(' · ') }}
+              {{ [m.dogovor_number && `№${m.dogovor_number}`, m.counterparty, moveComment(m.comment)].filter(Boolean).join(' · ') }}
             </span>
           </div>
         </div>
@@ -114,7 +116,16 @@ import { ElMessage } from 'element-plus'
 import { Close, Plus } from '@element-plus/icons-vue'
 import UiField from '@/components/ui/UiField.vue'
 import { useSkladStore } from '@/stores/sklad'
-import { fmtQty, moveTypeLabel, shortDate, signedQty } from '@/utils/skladFormat'
+import {
+  UNIT_CODES,
+  apiError,
+  fmtQty,
+  moveComment,
+  moveTypeLabel,
+  shortDate,
+  signedQty,
+  unitLabel,
+} from '@/utils/skladFormat'
 
 const props = defineProps({
   modelValue: { type: Number, default: null },
@@ -147,7 +158,7 @@ async function load(id) {
     edit.sap_code = res.item.sap_code || ''
     edit.unit = res.item.unit
   } catch (e) {
-    ElMessage.error(e?.response?.data?.message || t('skError'))
+    ElMessage.error(apiError(e))
   } finally {
     loading.value = false
   }
@@ -165,12 +176,12 @@ async function save() {
     await store.updateItem(item.value.id, {
       min_qty: edit.min_qty ?? null,
       sap_code: edit.sap_code.trim(),
-      unit: edit.unit.trim() || 'dona',
+      unit: String(edit.unit || '').trim() || 'dona',
     })
     ElMessage.success(t('skSaved'))
     load(item.value.id)
   } catch (e) {
-    ElMessage.error(e?.response?.data?.message || t('skError'))
+    ElMessage.error(apiError(e))
   } finally {
     saving.value = false
   }
@@ -340,7 +351,7 @@ function hy(v, pts = history.value.points) {
   width: 130px;
 }
 .sk-d__unit {
-  width: 80px;
+  width: 110px;
 }
 .sk-d__meta {
   display: flex;

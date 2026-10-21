@@ -96,7 +96,7 @@
         <el-table-column prop="closing" :label="$t('skColClosing')" width="130" align="right" sortable="custom">
           <template #default="{ row }">
             <span class="sk-qty" :class="`st-${stockStatus(row)}`">{{ fmtQty(row.closing) }}</span>
-            <span class="sk-unit">{{ row.unit }}</span>
+            <span class="sk-unit">{{ unitLabel(row.unit) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="last_move_date" :label="$t('skColLast')" width="96" align="right" sortable="custom">
@@ -134,7 +134,7 @@ import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { stockStatus } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
-import { fmtQty, periodLabel, shortDate } from '@/utils/skladFormat'
+import { fmtQty, periodLabel, shortDate, unitLabel } from '@/utils/skladFormat'
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -236,7 +236,7 @@ function exportExcel() {
     [t('skColCode')]: it.code,
     [t('skColName')]: it.name,
     [t('skColGroup')]: it.group_name || '',
-    [t('skColUnit')]: it.unit,
+    [t('skColUnit')]: unitLabel(it.unit),
     [t('skColOpening')]: it.opening,
     [t('skColIn')]: it.in,
     [t('skColOut')]: it.out,
@@ -249,8 +249,8 @@ function exportExcel() {
   const ws = XLSX.utils.json_to_sheet(rows)
   ws['!cols'] = [{ wch: 10 }, { wch: 48 }, { wch: 18 }, { wch: 8 }, ...Array(7).fill({ wch: 12 })]
   const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, periodLabel(props.period).slice(0, 31) || 'Sklad')
-  XLSX.writeFile(wb, `ombor-qoldiq-${props.period || 'hozir'}.xlsx`)
+  XLSX.utils.book_append_sheet(wb, ws, (periodLabel(props.period) || t('skStockTitle')).slice(0, 31))
+  XLSX.writeFile(wb, `${t('skFileStock')}-${props.period}.xlsx`)
 }
 </script>
 

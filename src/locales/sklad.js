@@ -250,6 +250,55 @@ export const uz = {
   skAdmToMirror:
     "ERP yana Google Sheets'ni aks ettiradi. ERP'da kiritilgan harakatlar saqlanib qoladi va jadval bilan ikki marta sanalishi mumkin. Davom etamizmi?",
   skConfirm: 'Ha, davom etish',
+
+  // Fayl nomlari (Excel)
+  skFileStock: 'ombor-qoldiq',
+  skFileMoves: 'ombor-harakatlar',
+
+  // O'lchov birliklari (bazada kod saqlanadi)
+  skUnit_dona: 'dona',
+  skUnit_m: 'm',
+  skUnit_m2: 'm²',
+  skUnit_kg: 'kg',
+  skUnit_komplekt: 'komplekt',
+
+  // Tizim izohlari (bazada "sys:..." kodi)
+  skSys_opening: 'Oy boshi (jadvaldan)',
+  skSys_missing: "Bu oy varag'ida yo'q",
+  skSys_no_date: "Jadvalda sana ko'rsatilmagan",
+  skSys_total_diff: 'Jadval jami bilan farq',
+  skSys_reserve: 'Jadvaldagi rezerv',
+
+  // Sinxron ogohlantirishlari (jadvalning o'zidagi nomuvofiqlik)
+  skWarn_in_over: '{item}: kunlik kirim ({daily}) jami ustundan ({total}) ko\'p',
+  skWarn_out_over: '{item}: kunlik chiqim ({daily}) jami ustundan ({total}) ko\'p',
+  skWarn_fact: '{item}: jadvaldagi "факт" {fact}, hisoblangani {computed}',
+
+  // Backend xatolari (kod bo'yicha)
+  skErr_SK_ADMIN_ONLY: 'Bu amal faqat admin uchun',
+  skErr_SK_ITEM_NOT_FOUND: 'Mahsulot topilmadi',
+  skErr_SK_MIRROR_MODE:
+    "Ombor hozir Google Sheets rejimida — harakatlar jadvaldan olinadi. Admin \"ERP asosiy\" rejimini yoqgach kiritish ochiladi.",
+  skErr_SK_QTY_ZERO: "Miqdor 0 bo'lmasligi kerak",
+  skErr_SK_QTY_NEGATIVE: "Miqdor musbat bo'lishi kerak",
+  skErr_SK_ADJUST_REASON: 'Tuzatish uchun sabab (izoh) yozing',
+  skErr_SK_NOT_ENOUGH: "Omborda faqat {balance} {unit} bor — {qty} chiqarib bo'lmaydi",
+  skErr_SK_MOVE_NOT_FOUND: 'Yozuv topilmadi',
+  skErr_SK_SHEET_MOVE_LOCKED: "Jadvaldan kelgan yozuvni o'chirib bo'lmaydi — Google Sheets'da tuzating",
+  skErr_SK_NOT_OWNER: "Faqat kiritgan xodim yoki admin o'chira oladi",
+  skErr_SK_EDIT_WINDOW: "2 kundan oshgan yozuvni faqat admin o'chira oladi",
+  skErr_SK_ITEM_EXISTS: 'Bunday nomli mahsulot allaqachon bor',
+  skErr_SK_LINK_NO_GID: 'Havolada varaq raqami (gid=...) topilmadi',
+  skErr_SK_SOURCE_NOT_FOUND: 'Manba topilmadi',
+  skErr_SK_SHEET_UNREADABLE:
+    "Google Sheets varag'ini o'qib bo'lmadi (HTTP {status}). Jadval \"havolasi borlar ko'ra oladi\" qilib ochilganini tekshiring.",
+  skErr_SK_LIVE_MODE: "ERP asosiy rejimda — Google Sheets sinxroni o'chirilgan (harakatlar ikki marta sanalmasin).",
+  skErr_SK_SHEET_NO_HEADER: "Varaqda \"Наименования\" sarlavhasi topilmadi — bu oylik qoldiq varag'i emas",
+  skErr_SK_SHEET_NO_PERIOD: "Varaq sarlavhasidan oy aniqlanmadi (masalan \"ОКТЯБРЬ 2026\")",
+  skErr_SK_SHEET_NO_COLUMN: 'Varaqda kerakli ustun topilmadi: {col}',
+  skErr_SK_CONTRACTS_NO_HEADER: "Varaqda \"договор\" sarlavhasi topilmadi",
+  skErr_SK_CONTRACTS_NO_NAME: 'Varaqda nomlar ustuni topilmadi',
+  skErr_SK_SYNC_FAILED: "Sinxronlab bo'lmadi — internet aloqasini tekshirib, qayta urinib ko'ring",
 }
 
 export const ru = {
@@ -479,4 +528,48 @@ export const ru = {
   skAdmToMirror:
     'ERP снова будет отражать Google Sheets. Движения, внесённые в ERP, останутся и могут задвоиться с таблицей. Продолжить?',
   skConfirm: 'Да, продолжить',
+
+  skFileStock: 'sklad-ostatki',
+  skFileMoves: 'sklad-dvizheniya',
+
+  skUnit_dona: 'шт.',
+  skUnit_m: 'м',
+  skUnit_m2: 'м²',
+  skUnit_kg: 'кг',
+  skUnit_komplekt: 'компл.',
+
+  skSys_opening: 'Начало месяца (из таблицы)',
+  skSys_missing: 'Нет в листе этого месяца',
+  skSys_no_date: 'В таблице не указана дата',
+  skSys_total_diff: 'Разница с итогом таблицы',
+  skSys_reserve: 'Резерв из таблицы',
+
+  skWarn_in_over: '{item}: приход по дням ({daily}) больше итога ({total})',
+  skWarn_out_over: '{item}: расход по дням ({daily}) больше итога ({total})',
+  skWarn_fact: '{item}: «факт» в таблице {fact}, по расчёту {computed}',
+
+  skErr_SK_ADMIN_ONLY: 'Это действие доступно только админу',
+  skErr_SK_ITEM_NOT_FOUND: 'Товар не найден',
+  skErr_SK_MIRROR_MODE:
+    'Склад сейчас в режиме Google Sheets — движения берутся из таблицы. Ввод откроется после включения админом режима «ERP — основной».',
+  skErr_SK_QTY_ZERO: 'Количество не должно быть 0',
+  skErr_SK_QTY_NEGATIVE: 'Количество должно быть положительным',
+  skErr_SK_ADJUST_REASON: 'Укажите причину корректировки',
+  skErr_SK_NOT_ENOUGH: 'На складе только {balance} {unit} — нельзя списать {qty}',
+  skErr_SK_MOVE_NOT_FOUND: 'Запись не найдена',
+  skErr_SK_SHEET_MOVE_LOCKED: 'Запись из таблицы нельзя удалить — исправьте её в Google Sheets',
+  skErr_SK_NOT_OWNER: 'Удалить может только автор записи или админ',
+  skErr_SK_EDIT_WINDOW: 'Записи старше 2 дней может удалить только админ',
+  skErr_SK_ITEM_EXISTS: 'Товар с таким названием уже есть',
+  skErr_SK_LINK_NO_GID: 'В ссылке не найден номер листа (gid=...)',
+  skErr_SK_SOURCE_NOT_FOUND: 'Источник не найден',
+  skErr_SK_SHEET_UNREADABLE:
+    'Не удалось прочитать лист Google Sheets (HTTP {status}). Проверьте, что доступ к таблице открыт «всем, у кого есть ссылка».',
+  skErr_SK_LIVE_MODE: 'Режим «ERP — основной»: синхронизация с Google Sheets отключена (чтобы не задвоить движения).',
+  skErr_SK_SHEET_NO_HEADER: 'В листе нет заголовка «Наименования» — это не лист остатков за месяц',
+  skErr_SK_SHEET_NO_PERIOD: 'Не удалось определить месяц по заголовку листа (например «ОКТЯБРЬ 2026»)',
+  skErr_SK_SHEET_NO_COLUMN: 'В листе не найден нужный столбец: {col}',
+  skErr_SK_CONTRACTS_NO_HEADER: 'В листе нет заголовка «договор»',
+  skErr_SK_CONTRACTS_NO_NAME: 'В листе нет столбца с наименованиями',
+  skErr_SK_SYNC_FAILED: 'Не удалось синхронизировать — проверьте интернет и попробуйте снова',
 }

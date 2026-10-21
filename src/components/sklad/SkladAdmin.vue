@@ -46,7 +46,7 @@
       <el-table-column :label="$t('skAdmResult')" min-width="260">
         <template #default="{ row }">
           <template v-if="row.last_result">
-            <span v-if="!row.last_result.ok" class="sk-bad">⚠️ {{ row.last_result.error }}</span>
+            <span v-if="!row.last_result.ok" class="sk-bad">⚠️ {{ codeMessage(row.last_result.code, row.last_result.params, row.last_result.error) || $t('skError') }}</span>
             <span v-else-if="row.kind === 'month'">
               ✓ {{ $t('skAdmResMonth', {
                 items: row.last_result.items,
@@ -109,7 +109,7 @@
   >
     <p class="sk-muted">{{ $t('skAdmWarningsText') }}</p>
     <ul class="sk-warn">
-      <li v-for="(w, i) in warnings?.last_result?.warnings || []" :key="i">{{ w }}</li>
+      <li v-for="(w, i) in warnings?.last_result?.warnings || []" :key="i">{{ syncWarning(w) }}</li>
     </ul>
   </el-dialog>
 </template>
@@ -122,7 +122,7 @@ import { Delete, Plus, Refresh } from '@element-plus/icons-vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { formatDateTime } from '@/utils/format'
-import { periodLabel } from '@/utils/skladFormat'
+import { apiError, codeMessage, periodLabel, syncWarning } from '@/utils/skladFormat'
 
 const { t } = useI18n()
 const store = useSkladStore()
@@ -142,7 +142,7 @@ async function sync(id) {
     if (failed.length) ElMessage.warning(t('skAdmSyncPartial', { n: failed.length }))
     else ElMessage.success(t('skAdmSyncDone'))
   } catch (e) {
-    ElMessage.error(e?.response?.data?.message || t('skError'))
+    ElMessage.error(apiError(e))
   } finally {
     syncing.value = null
   }
@@ -163,7 +163,7 @@ async function changeMode(mode) {
     await store.setMode(mode)
     ElMessage.success(t('skSaved'))
   } catch (e) {
-    ElMessage.error(e?.response?.data?.message || t('skError'))
+    ElMessage.error(apiError(e))
   }
 }
 
@@ -174,7 +174,7 @@ async function addSource() {
     newTitle.value = ''
     ElMessage.success(t('skSaved'))
   } catch (e) {
-    ElMessage.error(e?.response?.data?.message || t('skError'))
+    ElMessage.error(apiError(e))
   }
 }
 </script>

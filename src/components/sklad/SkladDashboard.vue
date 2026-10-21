@@ -126,7 +126,7 @@ import { useOnboarding } from '@/composables/useOnboarding'
 import { useSkladStore, stockStatus } from '@/stores/sklad'
 import { useUsersStore } from '@/stores/user'
 import { fmtNum, formatDateTime } from '@/utils/format'
-import { periodLabel } from '@/utils/skladFormat'
+import { apiError, periodLabel } from '@/utils/skladFormat'
 import SkladStock from './SkladStock.vue'
 import SkladMovements from './SkladMovements.vue'
 import SkladContracts from './SkladContracts.vue'
@@ -182,7 +182,7 @@ async function load(p) {
     await store.loadReport(p)
     period.value = store.period
   } catch (e) {
-    loadError.value = e?.response?.data?.message || t('skLoadError')
+    loadError.value = apiError(e, 'skLoadError')
   } finally {
     loading.value = false
   }
