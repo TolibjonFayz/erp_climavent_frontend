@@ -14,19 +14,10 @@ export const uz = {
 
   // Yo'riqnoma
   onbClose: 'Yopish',
-  onbMission: 'Vazifa',
-  onbSkip: "O'tkazib yuborish",
-  onbFinish: 'Yakunlash',
   onbNext: 'Keyingisi',
-  onbStartWorking: 'Ishni boshlash',
-  onbLearn: "O'rganish",
-  onbMissionsTitle: 'Vazifalar',
-  onbReplay: "Qaytadan ko'rish",
-  onbContinue: 'Davom etish',
-  onbRestart: 'Boshidan',
-  onbLevelNew: 'Yangi xodim',
-  onbLevelApprentice: 'Shogird',
-  onbLevelPro: 'Usta',
+  onbBack: 'Orqaga',
+  onbDone: 'Tushunarli',
+  onbGuide: "Yo'riqnoma",
 
   // Sahifa
   skTitle: 'Ombor',
@@ -62,44 +53,41 @@ export const uz = {
   skTabAdmin: 'Sozlamalar',
 
   // Yo'riqnoma qadamlari
-  skTourBadgeTitle: 'Tabriklaymiz — siz Ombor ustasisiz!',
-  skTourBadgeText:
-    "Qoldiqni topish, mahsulot tarixini ko'rish, kirim/chiqim kiritish va tahlilni o'qishni o'rgandingiz. Yo'riqnomani istalgan payt \"O'rganish\" tugmasidan qayta ochishingiz mumkin.",
-  skTour1T: "Omborga xush kelibsiz!",
+  skTour1T: "Ombor bo'limi",
   skTour1B:
-    "Bu bo'lim Google Sheets'dagi \"Остатки на складе\" jadvalining o'rnini bosadi: har bir mahsulotning oy boshidagi qoldig'i, kirimi, chiqimi va hozirgi qoldig'i shu yerda. 2 daqiqada asosiylarini birga o'rganamiz — har qadam uchun XP olasiz.",
-  skTour2T: "Bir qarashda butun ombor",
+    "Bu bo'lim Google Sheets'dagi \"Остатки на складе\" jadvalining o'rnini bosadi: har bir mahsulotning oy boshidagi qoldig'i, kirimi, chiqimi va hozirgi qoldig'i shu yerda. Qisqacha ko'rsatib o'taman — \"Keyingisi\" yoki → tugmasi bilan o'ting.",
+  skTour2T: 'Umumiy raqamlar',
   skTour2B:
-    "Kartalar tanlangan oy bo'yicha jami raqamlarni ko'rsatadi. \"Tugagan\" yoki \"Kam qolgan\" kartasini bossangiz, jadval faqat o'sha mahsulotlarni ko'rsatadi.",
-  skTour3T: 'Mahsulotni qidirish',
-  skTour3B: "Nomi, kodi yoki uning bir qismini yozing — masalan \"ВКП 60\". Bir nechta so'z yozsangiz, hammasi bor qatorlar qoladi.",
-  skTour3Task: "Qidiruvga kamida 2 ta harf yozing",
+    "Tanlangan oy bo'yicha jami: mahsulotlar soni, oy boshidagi qoldiq, kirim, chiqim, rezerv va hozirgi qoldiq. \"Tugagan\" yoki \"Kam qolgan\" kartasini bossangiz, jadval faqat o'sha mahsulotlarni ko'rsatadi.",
+  skTour3T: 'Qidiruv',
+  skTour3B:
+    "Mahsulot nomi, kodi yoki uning bir qismini yozing — masalan \"ВКП 60\". Bir nechta so'z yozsangiz, hammasi bor qatorlar qoladi.",
   skTour4T: 'Guruhlar',
-  skTour4B: "Ventilyatorlar, klapanlar, reshetkalar... Guruhni bossangiz, faqat o'sha guruh qoladi. Yonidagi raqam — mahsulotlar soni.",
-  skTour4Task: 'Istalgan guruhni bosing',
-  skTour5T: 'Mahsulot kartasi',
+  skTour4B: "Ventilyatorlar, klapanlar, reshetkalar va boshqalar. Guruhni bossangiz, faqat o'sha guruh qoladi. Yonidagi raqam — mahsulotlar soni.",
+  skTour5T: 'Qoldiqlar jadvali',
   skTour5B:
-    "Qatorni bossangiz, o'ngda karta ochiladi: hozirgi qoldiq, oy bo'yicha hisob, qoldiq grafigi va har bir kirim/chiqim tarixi.",
-  skTour5Task: 'Jadvaldagi istalgan mahsulotni bosing',
-  skTour5bT: 'Mahsulotning butun tarixi',
-  skTour5bB:
-    "Tepada hozirgi qoldiq, ostida shu oy hisobi (boshi → kirim → chiqim → qoldiq), qoldiq grafigi va har bir harakat. Kirim/chiqimni shu kartadan ham kiritsa bo'ladi. \"Keyingisi\" ni bossangiz karta yopiladi.",
-  skTour6T: 'Harakatlar jurnali',
+    "Har qatorda: oy boshi, kirim, chiqim, rezerv va hozirgi qoldiq. Ustun nomini bossangiz saralanadi. Qatorni bossangiz, mahsulot kartasi ochiladi.",
+  skTour6T: 'Mahsulot kartasi',
   skTour6B:
-    "Har bir kirim va chiqim alohida yozuv: qaysi kuni, qancha, qaysi shartnoma bo'yicha, kimga. Jadvaldagi kunlik ustunlarning o'rniga shu.",
-  skTour6Task: '"Harakatlar" tabini oching',
-  skTour7T: 'Mashq: otgruzka kiritish',
+    "Tepada hozirgi qoldiq, ostida shu oy hisobi (boshi → kirim → chiqim → qoldiq), qoldiq grafigi va har bir kirim/chiqim tarixi — sanasi, shartnomasi, kimga.",
+  skTour7T: 'Kirim va chiqim',
   skTour7B:
-    "Endi o'zingiz sinab ko'ring. Bu mashq — hech narsa saqlanmaydi. Mahsulotni tanlang, miqdorni yozing, xohlasangiz shartnoma raqamini kiriting va saqlang.",
-  skTour7Task: '"Chiqim (otgruzka)" tugmasini bosib, mashq chiqimini saqlang',
-  skTour8T: 'Tahlil',
+    "Omborga tovar kelsa — \"Kirim\", mijozga jo'natilsa — \"Chiqim (otgruzka)\". Hozir ombor Google Sheets rejimida, shuning uchun bu tugmalar faqat sinab ko'rish uchun: hech narsa saqlanmaydi.",
+  skTour7BLive:
+    "Omborga tovar kelsa — \"Kirim\", mijozga jo'natilsa — \"Chiqim (otgruzka)\". Shartnoma raqamini yozsangiz, harakat shartnomaga bog'lanadi. Qoldiq avtomatik qayta hisoblanadi.",
+  skTour8T: 'Harakatlar',
   skTour8B:
-    "Kunlik kirim/chiqim grafigi, guruhlar bo'yicha qoldiq, eng ko'p jo'natilgan mahsulotlar va harakatsiz yotgan tovarlar — rahbariyat va tahlilchilar uchun.",
-  skTour8Task: '"Tahlil" tabini oching',
-  skTour9T: 'Oyni tanlash',
-  skTour9B: "O'tgan oylarning hisobotini ko'rish uchun shu yerdan oyni tanlang. Oy boshi qoldig'i avtomatik hisoblanadi.",
-  skTour10T: "Yo'riqnoma doim shu yerda",
-  skTour10B: "Vazifalar ro'yxati, XP va darajangiz shu tugmada. Unutib qo'ysangiz, qaytadan ochib ko'ring.",
+    "Har bir kirim va chiqim alohida yozuv: qaysi kuni, qancha, qaysi shartnoma bo'yicha, kimga. Jadvaldagi kunlik ustunlarning o'rniga shu. Tur, kun va manba bo'yicha filtrlash mumkin.",
+  skTour9T: "Shartnoma bo'yicha",
+  skTour9B:
+    "\"договора на складе\" varag'i: qaysi shartnoma bo'yicha qancha tovar keldi, qanchasi jo'natildi va omborda qancha turibdi.",
+  skTour10T: 'Tahlil',
+  skTour10B:
+    "Kunlik kirim/chiqim grafigi, guruhlar bo'yicha qoldiq, eng ko'p jo'natilgan mahsulotlar va harakatsiz yotgan tovarlar.",
+  skTour11T: 'Oy tanlash',
+  skTour11B: "O'tgan oylarning hisobotini ko'rish uchun shu yerdan oyni tanlang. Oy boshidagi qoldiq avtomatik hisoblanadi.",
+  skTour12T: "Yo'riqnoma",
+  skTour12B: "Bu izohlarni istalgan payt shu tugma orqali qaytadan ochishingiz mumkin.",
 
   // Qoldiqlar jadvali
   skSearch: 'Qidiruv',
@@ -227,7 +215,7 @@ export const uz = {
   skPracticeSave: 'Mashqni saqlash',
   skQtyRequired: "Miqdor 0 bo'lmasin",
   skAdjustReason: 'Tuzatish sababini yozing',
-  skPracticeDone: "Zo'r! Haqiqiy rejimda aynan shu tarzda saqlanadi. (Mashq — hech narsa yozilmadi)",
+  skPracticeDone: "Hammasi to'g'ri. Hozir Google Sheets rejimi — hech narsa saqlanmadi.",
   skNameRequired: 'Nomini yozing',
 
   // Sozlamalar (admin)
@@ -269,19 +257,10 @@ export const ru = {
   ...monthKeys('ru'),
 
   onbClose: 'Закрыть',
-  onbMission: 'Задание',
-  onbSkip: 'Пропустить',
-  onbFinish: 'Завершить',
   onbNext: 'Далее',
-  onbStartWorking: 'Начать работу',
-  onbLearn: 'Обучение',
-  onbMissionsTitle: 'Задания',
-  onbReplay: 'Пройти заново',
-  onbContinue: 'Продолжить',
-  onbRestart: 'С начала',
-  onbLevelNew: 'Новичок',
-  onbLevelApprentice: 'Ученик',
-  onbLevelPro: 'Мастер',
+  onbBack: 'Назад',
+  onbDone: 'Понятно',
+  onbGuide: 'Инструкция',
 
   skTitle: 'Склад',
   skModeLive: 'ERP — основной',
@@ -315,39 +294,36 @@ export const ru = {
   skTabAnalytics: 'Аналитика',
   skTabAdmin: 'Настройки',
 
-  skTourBadgeTitle: 'Поздравляем — вы мастер склада!',
-  skTourBadgeText:
-    'Вы научились находить остатки, смотреть историю товара, вносить приход/расход и читать аналитику. Обучение можно открыть снова кнопкой «Обучение».',
-  skTour1T: 'Добро пожаловать на склад!',
+  skTour1T: 'Раздел «Склад»',
   skTour1B:
-    'Этот раздел заменяет таблицу «Остатки на складе» в Google Sheets: остаток на начало месяца, приход, расход и текущий остаток каждого товара. За 2 минуты разберём главное — за каждый шаг вы получаете XP.',
-  skTour2T: 'Весь склад одним взглядом',
-  skTour2B: 'Карточки показывают итоги за выбранный месяц. Нажмите «Закончились» или «Мало осталось» — таблица отфильтруется.',
-  skTour3T: 'Поиск товара',
+    'Этот раздел заменяет таблицу «Остатки на складе» в Google Sheets: остаток на начало месяца, приход, расход и текущий остаток каждого товара. Коротко покажу, что где — переходите кнопкой «Далее» или →.',
+  skTour2T: 'Общие цифры',
+  skTour2B:
+    'Итоги за выбранный месяц: количество товаров, остаток на начало, приход, расход, резерв и текущий остаток. Нажмите «Закончились» или «Мало осталось» — таблица отфильтруется.',
+  skTour3T: 'Поиск',
   skTour3B: 'Введите название, код или его часть — например «ВКП 60». Несколько слов — останутся строки, где есть все.',
-  skTour3Task: 'Введите в поиск хотя бы 2 символа',
   skTour4T: 'Группы',
-  skTour4B: 'Вентиляторы, клапаны, решётки... Нажмите группу — останутся только её товары. Число рядом — количество товаров.',
-  skTour4Task: 'Нажмите любую группу',
-  skTour5T: 'Карточка товара',
-  skTour5B: 'Нажмите строку — справа откроется карточка: текущий остаток, расчёт за месяц, график остатка и история движений.',
-  skTour5Task: 'Нажмите любой товар в таблице',
-  skTour5bT: 'Вся история товара',
-  skTour5bB:
-    'Сверху текущий остаток, ниже расчёт за месяц (начало → приход → расход → остаток), график и каждое движение. Приход/расход можно внести прямо из карточки. «Далее» закроет карточку.',
-  skTour6T: 'Журнал движений',
-  skTour6B: 'Каждый приход и расход — отдельная запись: когда, сколько, по какому договору, кому. Вместо дневных столбцов таблицы.',
-  skTour6Task: 'Откройте вкладку «Движения»',
-  skTour7T: 'Тренировка: отгрузка',
-  skTour7B: 'Попробуйте сами. Это тренировка — ничего не сохраняется. Выберите товар, введите количество, при желании номер договора и сохраните.',
-  skTour7Task: 'Нажмите «Расход (отгрузка)» и сохраните тренировочный расход',
-  skTour8T: 'Аналитика',
-  skTour8B: 'График прихода/расхода по дням, остатки по группам, самые отгружаемые товары и неликвид — для руководства и аналитиков.',
-  skTour8Task: 'Откройте вкладку «Аналитика»',
-  skTour9T: 'Выбор месяца',
-  skTour9B: 'Здесь выбирается месяц для отчёта. Остаток на начало считается автоматически.',
-  skTour10T: 'Обучение всегда здесь',
-  skTour10B: 'Список заданий, XP и ваш уровень — на этой кнопке.',
+  skTour4B: 'Вентиляторы, клапаны, решётки и другие. Нажмите группу — останутся только её товары. Число рядом — количество товаров.',
+  skTour5T: 'Таблица остатков',
+  skTour5B: 'В каждой строке: начало месяца, приход, расход, резерв и текущий остаток. Нажмите заголовок столбца — сортировка. Нажмите строку — откроется карточка товара.',
+  skTour6T: 'Карточка товара',
+  skTour6B: 'Сверху текущий остаток, ниже расчёт за месяц (начало → приход → расход → остаток), график остатка и история каждого движения — дата, договор, кому.',
+  skTour7T: 'Приход и расход',
+  skTour7B:
+    'Товар пришёл на склад — «Приход», отгружен клиенту — «Расход (отгрузка)». Сейчас склад в режиме Google Sheets, поэтому кнопки только для пробы: ничего не сохраняется.',
+  skTour7BLive:
+    'Товар пришёл на склад — «Приход», отгружен клиенту — «Расход (отгрузка)». Укажите номер договора — движение привяжется к договору. Остаток пересчитается автоматически.',
+  skTour8T: 'Движения',
+  skTour8B:
+    'Каждый приход и расход — отдельная запись: когда, сколько, по какому договору, кому. Вместо дневных столбцов таблицы. Можно фильтровать по типу, дню и источнику.',
+  skTour9T: 'По договорам',
+  skTour9B: 'Лист «договора на складе»: сколько товара пришло по каждому договору, сколько отгружено и сколько лежит на складе.',
+  skTour10T: 'Аналитика',
+  skTour10B: 'График прихода/расхода по дням, остатки по группам, самые отгружаемые товары и неликвид.',
+  skTour11T: 'Выбор месяца',
+  skTour11B: 'Здесь выбирается месяц для отчёта. Остаток на начало считается автоматически.',
+  skTour12T: 'Инструкция',
+  skTour12B: 'Эти подсказки можно открыть снова в любой момент этой кнопкой.',
 
   skSearch: 'Поиск',
   skSearchPh: 'Название, код или SAP-код',
@@ -469,7 +445,7 @@ export const ru = {
   skPracticeSave: 'Сохранить тренировку',
   skQtyRequired: 'Количество не должно быть 0',
   skAdjustReason: 'Укажите причину корректировки',
-  skPracticeDone: 'Отлично! В рабочем режиме сохранится именно так. (Тренировка — ничего не записано)',
+  skPracticeDone: 'Всё верно. Сейчас режим Google Sheets — ничего не сохранено.',
   skNameRequired: 'Введите название',
 
   skAdmMode: 'Режим работы',

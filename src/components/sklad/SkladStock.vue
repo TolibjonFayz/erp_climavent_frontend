@@ -142,7 +142,7 @@ const props = defineProps({
   mode: { type: String, default: 'mirror' },
   period: { type: String, default: '' },
 })
-const emit = defineEmits(['open', 'signal', 'new-item'])
+defineEmits(['open', 'new-item'])
 const { t } = useI18n()
 
 const search = ref('')
@@ -209,13 +209,9 @@ const sum = computed(() =>
 const hasFilters = computed(() => !!(search.value || group.value || status.value || onlyMoved.value))
 
 watch([search, group, status, onlyMoved], () => (page.value = 1))
-watch(search, (v) => {
-  if (String(v || '').trim().length >= 2) emit('signal', 'sk:search')
-})
 
 function pickGroup(name) {
   group.value = name
-  if (name) emit('signal', 'sk:group')
 }
 
 function onSort({ prop, order }) {

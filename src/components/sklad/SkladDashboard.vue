@@ -20,10 +20,10 @@
       >
         <el-option v-for="p in store.periods" :key="p" :label="periodLabel(p)" :value="p" />
       </el-select>
-      <el-button :icon="Plus" data-tour="sk-in" @click="openMove('in')">{{ $t('skBtnIn') }}</el-button>
-      <el-button type="primary" :icon="Van" data-tour="sk-out" @click="openMove('out')">
-        {{ $t('skBtnOut') }}
-      </el-button>
+      <span class="sk-move-btns" data-tour="sk-move-btns">
+        <el-button :icon="Plus" @click="openMove('in')">{{ $t('skBtnIn') }}</el-button>
+        <el-button type="primary" :icon="Van" @click="openMove('out')">{{ $t('skBtnOut') }}</el-button>
+      </span>
     </template>
 
     <el-alert
@@ -85,7 +85,6 @@
           :mode="store.mode"
           :period="store.period"
           @open="openItem"
-          @signal="tour.signal"
           @new-item="newItemOpen = true"
         />
       </el-tab-pane>
@@ -108,11 +107,10 @@
       v-model="moveOpen"
       :type="moveType"
       :item-id="moveItemId"
-      :practice="practice"
-      @practiced="tour.signal('sk:practice')"
+      :practice="store.mode !== 'live'"
     />
     <SkladItemDialog v-model="newItemOpen" :groups="store.groups.map((g) => g.name)" />
-    <OnboardingTour :tour="tour" :badge="badge" />
+    <OnboardingTour :tour="tour" />
   </UiPage>
 </template>
 
@@ -197,7 +195,11 @@ function onPeriodChange(p) {
 
 function onTabChange(name) {
   visited[name] = true
-  tour.signal(`sk:tab-${name}`)
+}
+
+function showTab(name) {
+  visited[name] = true
+  tab.value = name
 }
 
 function showStock(status) {
@@ -207,13 +209,7 @@ function showStock(status) {
 
 function openItem(id) {
   itemId.value = id
-  tour.signal('sk:open-item')
 }
-
-// Google Sheets rejimida (yoki yo'riqnoma mashqi paytida) dialog saqlamaydi
-const practice = computed(
-  () => store.mode !== 'live' || tour.current.value?.waitFor === 'sk:practice',
-)
 
 function openMove(type) {
   moveType.value = type
@@ -227,101 +223,58 @@ function openMoveForItem({ type, itemId: id }) {
   moveOpen.value = true
 }
 
-// ─── Gamifikatsiyalangan yo'riqnoma ──────────────────────────────────
+// ─── Yo'riqnoma ──────────────────────────────────────────────────────
+// Har qadam kerakli tab/kartani o'zi ochadi — "Orqaga" bosilganda ham holat to'g'ri bo'ladi
 const tour = useOnboarding('sklad')
-const badge = computed(() => ({
-  icon: '🏅',
-  title: t('skTourBadgeTitle'),
-  text: t('skTourBadgeText'),
-}))
+
+function onStock() {
+  itemId.value = null
+  showTab('stock')
+}
 
 function buildSteps() {
+  const step = (id, target, n, onEnter = onStock) => ({
+    id,
+    target,
+    title: t(`skTour${n}T`),
+    body: t(`skTour${n}B`),
+    onEnter,
+  })
   return [
-    { id: 'welcome', icon: '👋', title: t('skTour1T'), body: t('skTour1B'), xp: 10 },
-    { id: 'stats', target: '[data-tour="sk-stats"]', icon: '📊', title: t('skTour2T'), body: t('skTour2B'), xp: 10 },
+    step('welcome', null, 1),
+    step('stats', '[data-tour="sk-stats"]', 2),
+    step('search', '[data-tour="sk-search"]', 3),
+    step('groups', '[data-tour="sk-groups"]', 4),
+    step('table', '[data-tour="sk-table"]', 5),
+    step('item-card', '[data-tour="sk-item-card"]', 6, () => {
+      showTab('stock')
+      // Harakati bor birinchi mahsulot kartasini namunaga ochamiz
+      const sample = store.items.find((i) => i.in || i.out) || store.items[0]
+      itemId.value = sample?.id ?? null
+    }),
     {
-      id: 'search',
-      target: '[data-tour="sk-search"]',
-      icon: '🔎',
-      title: t('skTour3T'),
-      body: t('skTour3B'),
-      task: t('skTour3Task'),
-      waitFor: 'sk:search',
-      xp: 20,
-      onEnter: () => (tab.value = 'stock'),
+      ...step('move', '[data-tour="sk-move-btns"]', 7),
+      // Matn rejimga bog'liq: Google Sheets rejimida tugmalar hech narsa saqlamaydi
+      get body() {
+        return t(store.mode === 'live' ? 'skTour7BLive' : 'skTour7B')
+      },
     },
-    {
-      id: 'group',
-      target: '[data-tour="sk-groups"]',
-      icon: '🗂️',
-      title: t('skTour4T'),
-      body: t('skTour4B'),
-      task: t('skTour4Task'),
-      waitFor: 'sk:group',
-      xp: 20,
-      onEnter: () => (tab.value = 'stock'),
-    },
-    {
-      id: 'open-item',
-      target: '[data-tour="sk-table"]',
-      icon: '📦',
-      title: t('skTour5T'),
-      body: t('skTour5B'),
-      task: t('skTour5Task'),
-      waitFor: 'sk:open-item',
-      xp: 30,
-      onEnter: () => (tab.value = 'stock'),
-    },
-    {
-      id: 'item-card',
-      target: '[data-tour="sk-item-card"]',
-      icon: '🗂️',
-      title: t('skTour5bT'),
-      body: t('skTour5bB'),
-      xp: 10,
-    },
-    {
-      id: 'movements',
-      target: '#tab-movements',
-      icon: '🧾',
-      title: t('skTour6T'),
-      body: t('skTour6B'),
-      task: t('skTour6Task'),
-      waitFor: 'sk:tab-movements',
-      xp: 20,
-      onEnter: () => (itemId.value = null),
-    },
-    {
-      id: 'practice',
-      target: '[data-tour="sk-out"]',
-      icon: '🚚',
-      title: t('skTour7T'),
-      body: t('skTour7B'),
-      task: t('skTour7Task'),
-      waitFor: 'sk:practice',
-      xp: 50,
-    },
-    {
-      id: 'analytics',
-      target: '#tab-analytics',
-      icon: '📈',
-      title: t('skTour8T'),
-      body: t('skTour8B'),
-      task: t('skTour8Task'),
-      waitFor: 'sk:tab-analytics',
-      xp: 20,
-      onEnter: () => (moveOpen.value = false),
-    },
-    { id: 'period', target: '[data-tour="sk-period"]', icon: '🗓️', title: t('skTour9T'), body: t('skTour9B'), xp: 10 },
-    { id: 'learn', target: '[data-tour="onb-launch"]', icon: '🎓', title: t('skTour10T'), body: t('skTour10B'), xp: 10 },
+    step('movements', '#tab-movements', 8, () => {
+      itemId.value = null
+      showTab('movements')
+    }),
+    step('contracts', '#tab-contracts', 9, () => showTab('contracts')),
+    step('analytics', '#tab-analytics', 10, () => showTab('analytics')),
+    step('period', '[data-tour="sk-period"]', 11, () => {}),
+    step('guide', '[data-tour="onb-launch"]', 12, () => {}),
   ]
 }
 
 onMounted(async () => {
-  tour.setSteps(buildSteps())
+  tour.setSteps(buildSteps(), () => (itemId.value = null))
   await load()
-  // Birinchi kirishda yo'riqnoma o'zi boshlanadi
-  if (tour.isFirstVisit.value) setTimeout(() => tour.start(true), 600)
+  // Birinchi kirishda yo'riqnoma o'zi ochiladi; keyin — "Yo'riqnoma" tugmasi orqali
+  if (!tour.state.seen) setTimeout(() => tour.start(), 600)
 })
 </script>
 
@@ -360,6 +313,14 @@ onMounted(async () => {
 }
 .sk-period {
   width: 150px;
+}
+.sk-move-btns {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 .sk-stats {
   display: grid;

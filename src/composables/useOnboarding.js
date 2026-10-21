@@ -1,166 +1,83 @@
 import { computed, reactive } from 'vue'
 
-// Gamifikatsiyalangan yo'riqnoma (tour) holati.
-// Har bo'lim o'z tour'ini e'lon qiladi: qadamlar ro'yxati (ma'lumot qadami yoki
-// "vazifa" qadami — foydalanuvchi haqiqiy amalni bajarishi kerak). Komponentlar
-// `signal(name)` chaqiradi; vazifa qaysi tartibda bajarilsa ham hisoblanadi.
-// Progress foydalanuvchi bo'yicha localStorage'da saqlanadi.
+// Bo'lim yo'riqnomasi (tour): ekranning kerakli joyini yoritib, qisqa izoh beradi.
+// Har bo'lim o'z qadamlarini beradi; qadamning `onEnter` i kerakli tab yoki kartani
+// ochib qo'yadi (orqaga qaytilganda ham to'g'ri holat bo'lishi uchun har qadam o'z
+// holatini o'zi o'rnatadi). Birinchi kirishda o'zi ochiladi, keyin — tugma orqali.
 
-const STORAGE_PREFIX = 'erp-onboarding:v1'
-
-// XP darajalari (umumiy — barcha bo'limlar uchun bir xil)
-export const LEVELS = [
-  { min: 0, key: 'onbLevelNew', icon: '🌱' },
-  { min: 50, key: 'onbLevelApprentice', icon: '🧭' },
-  { min: 150, key: 'onbLevelPro', icon: '🏅' },
-]
-
+const STORAGE_PREFIX = 'erp-onboarding:v2'
 const tours = new Map()
 
 const storageKey = (tourId) => `${STORAGE_PREFIX}:${localStorage.getItem('userid') || 'anon'}:${tourId}`
 
-function load(tourId) {
+function wasSeen(tourId) {
   try {
-    const raw = localStorage.getItem(storageKey(tourId))
-    const parsed = raw ? JSON.parse(raw) : null
-    return {
-      done: Array.isArray(parsed?.done) ? parsed.done : [],
-      finishedAt: parsed?.finishedAt || null,
-      dismissedAt: parsed?.dismissedAt || null,
-    }
+    return localStorage.getItem(storageKey(tourId)) === 'seen'
   } catch {
-    return { done: [], finishedAt: null, dismissedAt: null }
+    return false
   }
 }
 
 function createTour(tourId) {
-  const saved = load(tourId)
   const state = reactive({
-    id: tourId,
     steps: [],
     active: false,
     index: 0,
-    done: saved.done,
-    finishedAt: saved.finishedAt,
-    dismissedAt: saved.dismissedAt,
-    celebrate: false,
-    lastGain: null, // { xp, at } — "+20 XP" animatsiyasi uchun
+    seen: wasSeen(tourId),
   })
 
-  const persist = () => {
+  const markSeen = () => {
+    state.seen = true
     try {
-      localStorage.setItem(
-        storageKey(tourId),
-        JSON.stringify({ done: state.done, finishedAt: state.finishedAt, dismissedAt: state.dismissedAt }),
-      )
+      localStorage.setItem(storageKey(tourId), 'seen')
     } catch {
-      /* private rejim — progress saqlanmaydi, yo'riqnoma baribir ishlaydi */
+      /* private rejim — keyingi safar yana o'zi ochiladi, xolos */
     }
   }
 
-  const totalXp = computed(() => state.steps.reduce((s, st) => s + (st.xp || 0), 0))
-  const xp = computed(() =>
-    state.steps.filter((st) => state.done.includes(st.id)).reduce((s, st) => s + (st.xp || 0), 0),
-  )
-  const level = computed(() => [...LEVELS].reverse().find((l) => xp.value >= l.min) || LEVELS[0])
   const current = computed(() => (state.active ? state.steps[state.index] : null))
-  const missions = computed(() => state.steps.filter((st) => st.waitFor))
-  const progress = computed(() => (totalXp.value ? Math.round((xp.value / totalXp.value) * 100) : 0))
+  const isFirst = computed(() => state.index === 0)
+  const isLast = computed(() => state.index === state.steps.length - 1)
 
-  function markDone(step) {
-    if (!step || state.done.includes(step.id)) return
-    state.done.push(step.id)
-    if (step.xp) state.lastGain = { xp: step.xp, at: Date.now() }
-    persist()
-  }
+  let onClose = null
 
   function goTo(i) {
-    // Allaqachon bajarilgan vazifa qadamlarini o'tkazib yuboramiz
-    let next = i
-    while (next < state.steps.length && state.steps[next].waitFor && state.done.includes(state.steps[next].id)) {
-      next++
-    }
-    if (next >= state.steps.length) return finish()
-    state.index = next
-    state.steps[next].onEnter?.()
+    state.index = Math.min(Math.max(0, i), state.steps.length - 1)
+    state.steps[state.index].onEnter?.()
   }
 
-  function start(fromBeginning = false) {
+  function start() {
     if (!state.steps.length) return
     state.active = true
-    state.celebrate = false
-    goTo(fromBeginning ? 0 : Math.max(0, state.steps.findIndex((st) => !state.done.includes(st.id))))
+    goTo(0)
   }
 
   function next() {
-    const step = current.value
-    if (step && !step.waitFor) markDone(step)
+    if (isLast.value) return stop()
     goTo(state.index + 1)
   }
 
-  function skip() {
-    goTo(state.index + 1)
+  function back() {
+    if (!isFirst.value) goTo(state.index - 1)
   }
 
   function stop() {
     state.active = false
-    if (!state.finishedAt) {
-      state.dismissedAt = new Date().toISOString()
-      persist()
-    }
+    markSeen()
+    onClose?.()
   }
 
-  function finish() {
-    state.active = false
-    state.finishedAt = state.finishedAt || new Date().toISOString()
-    state.celebrate = true
-    persist()
-  }
-
-  function reset() {
-    state.done = []
-    state.finishedAt = null
-    state.dismissedAt = null
-    persist()
-    start(true)
-  }
-
-  // Komponentlardan keladigan hodisa: "sk:search", "sk:open-item" ...
-  function signal(name) {
-    const step = state.steps.find((st) => st.waitFor === name)
-    if (!step || state.done.includes(step.id)) return
-    markDone(step)
-    if (state.active && current.value?.id === step.id) goTo(state.index + 1)
-  }
-
-  function setSteps(steps) {
+  // steps — qadamlar; close — yo'riqnoma yopilganda (masalan, ochilgan kartani yopish)
+  function setSteps(steps, close) {
     state.steps = steps
+    onClose = close || null
   }
 
-  // Birinchi kirish: hech qachon yopmagan/tugatmagan bo'lsa avtomatik boshlanadi
-  const isFirstVisit = computed(() => !state.finishedAt && !state.dismissedAt && !state.done.length)
-
-  return {
-    state,
-    xp,
-    totalXp,
-    level,
-    current,
-    missions,
-    progress,
-    isFirstVisit,
-    start,
-    next,
-    skip,
-    stop,
-    reset,
-    signal,
-    setSteps,
-  }
+  return { state, current, isFirst, isLast, start, next, back, stop, setSteps }
 }
 
 export function useOnboarding(tourId) {
-  // Boshqa xodim shu tab'da kirsa, uning progressi alohida bo'lsin
+  // Boshqa xodim shu tab'da kirsa, "ko'rgan" belgisi alohida bo'lsin
   const key = `${localStorage.getItem('userid') || 'anon'}:${tourId}`
   if (!tours.has(key)) tours.set(key, createTour(tourId))
   return tours.get(key)

@@ -83,10 +83,10 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   type: { type: String, default: 'out' },
   itemId: { type: Number, default: null },
-  // true — hech narsa saqlanmaydi (Google Sheets rejimi yoki yo'riqnoma mashqi)
+  // true — hech narsa saqlanmaydi (Google Sheets rejimi: jadval asosiy manba)
   practice: { type: Boolean, default: false },
 })
-const emit = defineEmits(['update:modelValue', 'practiced'])
+const emit = defineEmits(['update:modelValue'])
 const { t } = useI18n()
 const store = useSkladStore()
 
@@ -162,7 +162,6 @@ async function submit() {
   if (!ok) return
   if (props.practice) {
     ElMessage.success({ message: t('skPracticeDone'), duration: 4000 })
-    emit('practiced')
     emit('update:modelValue', false)
     return
   }
