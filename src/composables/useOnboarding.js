@@ -40,6 +40,8 @@ function createTour(tourId) {
   const isLast = computed(() => state.index === state.steps.length - 1)
 
   let onClose = null
+  let onDone = null
+  let startedAt = 0
 
   function goTo(i) {
     state.index = Math.min(Math.max(0, i), state.steps.length - 1)
@@ -49,11 +51,18 @@ function createTour(tourId) {
   function start() {
     if (!state.steps.length) return
     state.active = true
+    startedAt = Date.now()
     goTo(0)
   }
 
   function next() {
-    if (isLast.value) return stop()
+    if (isLast.value) {
+      // Oxirigacha ko'rildi (yopib qo'yilgandan farqli) — o'qish dalili sifatida xabar beriladi
+      const info = { steps: state.steps.length, durationSec: Math.round((Date.now() - startedAt) / 1000) }
+      stop()
+      onDone?.(info)
+      return
+    }
     goTo(state.index + 1)
   }
 
@@ -67,10 +76,12 @@ function createTour(tourId) {
     onClose?.()
   }
 
-  // steps — qadamlar; close — yo'riqnoma yopilganda (masalan, ochilgan kartani yopish)
-  function setSteps(steps, close) {
+  // steps — qadamlar; close — yo'riqnoma yopilganda (masalan, ochilgan kartani yopish);
+  // done — oxirgi qadamda "Tushunarli" bosilganda ({ steps, durationSec })
+  function setSteps(steps, close, done) {
     state.steps = steps
     onClose = close || null
+    onDone = done || null
   }
 
   return { state, current, isFirst, isLast, start, next, back, stop, setSteps }

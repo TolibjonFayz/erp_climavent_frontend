@@ -1,4 +1,7 @@
 <template>
+  <!-- Xodimlarni o'qitish: yo'riqnoma va test natijalari -->
+  <TrainingReport module="sklad" />
+
   <!-- Ish rejimi -->
   <UiPanel :title="$t('skAdmMode')">
     <div class="sk-modes">
@@ -163,6 +166,7 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Plus, Refresh, Upload } from '@element-plus/icons-vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
+import TrainingReport from '@/components/onboarding/TrainingReport.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { fmtNum, formatDateTime } from '@/utils/format'
 import { apiError, codeMessage, compactSheetFile, periodLabel, syncWarning } from '@/utils/skladFormat'

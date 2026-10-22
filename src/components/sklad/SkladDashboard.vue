@@ -4,6 +4,7 @@
       <span class="sk-mode" :class="`is-${store.mode}`">
         {{ store.mode === 'live' ? $t('skModeLive') : $t('skModeMirror') }}
       </span>
+      <span v-if="training?.passed" class="sk-passed">✓ {{ $t('trPassedChip') }}</span>
       <span v-if="store.mode === 'mirror' && store.lastSyncedAt" class="sk-sub">
         {{ $t('skLastSync') }}: {{ formatDateTime(store.lastSyncedAt) }}
       </span>
@@ -34,6 +35,23 @@
       :title="$t('skMirrorBanner')"
     />
     <el-alert v-if="loadError" type="error" show-icon :closable="false" :title="loadError" />
+
+    <!-- O'qitish: yo'riqnoma + test (o'tish 80%). O'tmaguncha eslatma doim turadi -->
+    <div v-if="training && !training.passed && !isAdmin" class="sk-train">
+      <span class="sk-train__icon">🎓</span>
+      <div class="sk-train__text">
+        <b>{{ training.tutorial_done_at ? $t('trBannerQuizTitle') : $t('trBannerTutorialTitle') }}</b>
+        <span v-if="!training.tutorial_done_at">{{ $t('trBannerTutorialText') }}</span>
+        <span v-else-if="training.attempts">
+          {{ $t('trBannerRetryText', { n: training.attempts, best: training.best_score, p: training.pass_percent }) }}
+        </span>
+        <span v-else>{{ $t('trBannerQuizText', { p: training.pass_percent }) }}</span>
+      </div>
+      <el-button v-if="!training.tutorial_done_at" type="primary" size="large" @click="tour.start()">
+        {{ $t('trStartTutorial') }}
+      </el-button>
+      <el-button v-else type="primary" size="large" @click="quizOpen = true">{{ $t('trStart') }}</el-button>
+    </div>
 
     <!-- Ko'rsatkichlar -->
     <div class="sk-stats" data-tour="sk-stats">
@@ -113,6 +131,16 @@
     />
     <SkladItemDialog v-model="newItemOpen" :groups="store.groups.map((g) => g.name)" />
     <OnboardingTour :tour="tour" />
+    <TrainingQuiz
+      v-model="quizOpen"
+      module="sklad"
+      :tutorial-done="!!training?.tutorial_done_at"
+      :pass-percent="training?.pass_percent || 80"
+      :per-attempt="training?.questions_per_attempt || 10"
+      :topic-title="topicTitle"
+      @finished="loadTraining"
+      @reread="tour.start()"
+    />
   </UiPage>
 </template>
 
@@ -124,6 +152,8 @@ import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import OnboardingTour from '@/components/onboarding/OnboardingTour.vue'
 import OnboardingLauncher from '@/components/onboarding/OnboardingLauncher.vue'
+import TrainingQuiz from '@/components/onboarding/TrainingQuiz.vue'
+import trainingApi from '@/api/training'
 import { useOnboarding } from '@/composables/useOnboarding'
 import { useSkladStore, stockStatus } from '@/stores/sklad'
 import { useUsersStore } from '@/stores/user'
@@ -225,6 +255,31 @@ function openMoveForItem({ type, itemId: id }) {
   moveOpen.value = true
 }
 
+// ─── O'qitish: yo'riqnoma oxirigacha ko'rilgach — test ───────────────
+const training = ref(null)
+const quizOpen = ref(false)
+
+async function loadTraining() {
+  try {
+    training.value = await trainingApi.status('sklad')
+  } catch {
+    training.value = null // o'qitish moduli ishlamasa, ombor baribir ishlaydi
+  }
+}
+
+async function onTutorialDone({ steps, durationSec }) {
+  try {
+    training.value = await trainingApi.tutorialDone('sklad', { steps, duration_sec: durationSec })
+  } catch {
+    return
+  }
+  // Hali o'tmagan bo'lsa — darhol testni taklif qilamiz
+  if (!training.value?.passed) quizOpen.value = true
+}
+
+// Yiqilganda "qayta o'qing" ro'yxati — yo'riqnoma qadamlari nomlari bilan
+const topicTitle = (topic) => tour.state.steps.find((s) => s.id === topic)?.title || topic
+
 // ─── Yo'riqnoma ──────────────────────────────────────────────────────
 // Har qadam kerakli tab/kartani o'zi ochadi — "Orqaga" bosilganda ham holat to'g'ri bo'ladi
 const tour = useOnboarding('sklad')
@@ -273,7 +328,8 @@ function buildSteps() {
 }
 
 onMounted(async () => {
-  tour.setSteps(buildSteps(), () => (itemId.value = null))
+  tour.setSteps(buildSteps(), () => (itemId.value = null), onTutorialDone)
+  loadTraining()
   await load()
   // Birinchi kirishda yo'riqnoma o'zi ochiladi; keyin — "Yo'riqnoma" tugmasi orqali
   if (!tour.state.seen) setTimeout(() => tour.start(), 600)
@@ -312,6 +368,41 @@ onMounted(async () => {
 }
 .sk-sub {
   margin-left: 10px;
+}
+.sk-passed {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--ui-good-soft);
+  color: var(--ui-good);
+}
+.sk-train {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 14px 18px;
+  border: 1px solid var(--ui-warn-line);
+  border-radius: var(--ui-radius);
+  background: var(--ui-warn-soft);
+}
+.sk-train__icon {
+  font-size: 28px;
+}
+.sk-train__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 320px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ui-ink-2);
+  b {
+    font-size: 16px;
+    color: var(--ui-ink);
+  }
 }
 .sk-period {
   width: 150px;
