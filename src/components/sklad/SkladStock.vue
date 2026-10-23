@@ -91,35 +91,40 @@
             <span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="name" min-width="180" sortable="custom">
-          <template #header>{{ $t('skColName') }}</template>
+        <!-- SAP nomi va ombor jadvalidagi nom — alohida ustunlar (birlashtirilmaydi) -->
+        <el-table-column prop="sap_name" min-width="170" sortable="custom">
+          <template #header><UiHint :label="$t('skSapName')" :hint="$t('skHintSapName')" /></template>
           <template #default="{ row }">
-            <div class="sk-name">
-              <span v-if="row.sap_name" class="sk-saptag" :title="$t('skSapTagHint')">SAP</span>{{ itemName(row) }}
+            <div v-if="row.sap_name" class="sk-name">
+              <span v-if="row.sap_approx" class="sk-approx" :title="$t('skSapApproxHint')">≈</span>{{ row.sap_name }}
             </div>
-            <div class="sk-sub">
-              {{ row.group_name || '—' }}
-              <template v-if="sheetNameIfDiff(row)"> · {{ $t('skSheetName', { name: row.name }) }}</template>
-            </div>
+            <span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="opening" width="100" align="right">
+        <el-table-column prop="name" min-width="170" sortable="custom">
+          <template #header>{{ $t('skColName') }}</template>
+          <template #default="{ row }">
+            <div class="sk-name">{{ row.name }}</div>
+            <div class="sk-sub">{{ row.group_name || '—' }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="opening" width="88" align="right">
           <template #header><UiHint :label="$t('skColOpeningFull')" :hint="$t('skHintOpening')" /></template>
           <template #default="{ row }">{{ fmtQty(row.opening) }}</template>
         </el-table-column>
-        <el-table-column prop="in" width="100" align="right">
+        <el-table-column prop="in" width="88" align="right">
           <template #header><UiHint :label="$t('skColIn')" :hint="$t('skHintIn')" /></template>
           <template #default="{ row }">
             <b v-if="row.in" class="is-in">+{{ fmtQty(row.in) }}</b><span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="out" width="100" align="right">
+        <el-table-column prop="out" width="88" align="right">
           <template #header><UiHint :label="$t('skColOut')" :hint="$t('skHintOut')" /></template>
           <template #default="{ row }">
             <b v-if="row.out" class="is-out">−{{ fmtQty(row.out) }}</b><span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="reserve" width="108" align="right">
+        <el-table-column prop="reserve" width="92" align="right">
           <template #header><UiHint :label="$t('skColReserve')" :hint="$t('skHintReserve')" /></template>
           <template #default="{ row }">
             <b v-if="row.reserve - row.release" class="is-reserve">{{ fmtQty(row.reserve - row.release) }}</b>
@@ -179,7 +184,7 @@ import { ArrowRight, Download, InfoFilled, Plus, RefreshLeft, Search } from '@el
 import UiHint from '@/components/ui/UiHint.vue'
 import { stockStatus } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
-import { dayMonth, fmtQty, itemName, periodLabel, sheetNameIfDiff, unitLabel } from '@/utils/skladFormat'
+import { dayMonth, fmtQty, periodLabel, unitLabel } from '@/utils/skladFormat'
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -270,7 +275,7 @@ const filtered = computed(() => {
   const { prop, order } = sort.value
   if (prop && order) {
     const dir = order === 'ascending' ? 1 : -1
-    const val = (it) => (prop === 'name' ? itemName(it) : prop === 'reserve' ? it.reserve - it.release : it[prop])
+    const val = (it) => (prop === 'reserve' ? it.reserve - it.release : it[prop])
     list.sort((a, b) => {
       const av = val(a) ?? ''
       const bv = val(b) ?? ''
@@ -588,6 +593,18 @@ function exportExcel() {
   font-size: 15px;
   font-weight: 600;
   color: var(--ui-ink);
+}
+.sk-approx {
+  display: inline-block;
+  margin-right: 5px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn);
+  cursor: help;
 }
 .sk-saptag {
   display: inline-block;

@@ -349,7 +349,7 @@ export const uz = {
   skAdmSap: "SAP mahsulotlar ro'yxati",
   skAdmSapHint: "Xodimlar mahsulotni SAP kodi va nomi bilan taniydi — ERP'da ham shular ko'rsatiladi",
   skAdmSapText:
-    "SAP'dan mahsulotlar ro'yxatini (\"Номер позиции\" va \"Описание позиции\") yoki sayt katalogi eksportini (\"SAP nomi\" ustuni bilan) Excel qilib yuklang — rasmli katta fayl ham bo'laveradi. Har bir ombor mahsulotiga nomi bo'yicha SAP nomi (va kodi bo'lsa — kodi) biriktiriladi; katta-kichik harf, kirill/lotin, х/x, defis, vergul va bo'shliq farqlari hisobga olinmaydi. Mos kelmaganlarini mahsulot kartasida qo'lda kiritish mumkin.",
+    "SAP'dan mahsulotlar ro'yxatini (\"Номер позиции\" va \"Описание позиции\") yoki sayt katalogi eksportini (\"SAP nomi\" ustuni bilan) Excel qilib yuklang — rasmli katta fayl ham bo'laveradi. Har bir ombor mahsulotiga nomi bo'yicha SAP nomi (va kodi bo'lsa — kodi) biriktiriladi; katta-kichik harf, kirill/lotin, х/x, defis, vergul va bo'shliq farqlari hisobga olinmaydi. Nom biroz farq qilsa ham (Ц/О harfi, izoh, \"-1-\"), mahsulot turi va o'lcham, quvvat raqamlari bir xil bo'lsa — taxminan (≈) biriktiriladi. Mos kelmaganlarini mahsulot kartasida qo'lda kiritish mumkin.",
   skAdmSapUpload: 'SAP Excel faylini yuklash',
   skAdmSapReading: "Fayl o'qilmoqda…",
   skAdmSapSending: 'Biriktirilmoqda…',
@@ -357,6 +357,11 @@ export const uz = {
   skAdmSapNoCode: "Bu faylda SAP kodi ustuni yo'q — mahsulotlarga faqat SAP nomi biriktirildi. SAP'ning o'zidan (\"Номер позиции\" bilan) eksport yuklasangiz, kodlar ham qo'shiladi.",
   skAdmSapAmbiguous: "{n} ta mahsulot bir nechta SAP nomiga mos keldi, shuning uchun biriktirilmadi — kartasidan qo'lda tanlang:",
   skSapTagHint: "SAP'dagi nomi biriktirilgan",
+  skHintSapName: "Mahsulotning SAP'dagi nomi. ≈ belgisi — nom taxminan topilgan, tekshirib ko'ring",
+  skSapApproxHint: "Taxminiy moslik: nomlar biroz farq qiladi (masalan Ц/О harfi yoki izoh), o'lcham va quvvat bir xil. Noto'g'ri bo'lsa — kartasida SAP nomini tuzating",
+  skAdmSapApprox: '{n} tasi taxminan topildi',
+  skAdmSapApproxText:
+    "Bu mahsulotlarning nomi SAP nomidan biroz farq qiladi (harf, izoh, \"-1-\", 2,0/2), lekin mahsulot turi va barcha o'lcham, quvvat raqamlari bir xil. Jadvalda ≈ belgisi bilan ko'rinadi. Noto'g'ri bo'lsa — mahsulot kartasida SAP nomini qo'lda tuzating (keyin u o'zgarmaydi).",
   skAdmSapLinked: '{n} / {total} ta mahsulot SAP bilan bog\'langan',
   skAdmSapResult: "SAP faylida {rows} ta qator, {matched} ta ombor mahsulotiga biriktirildi ({changed} tasi o'zgardi)",
   skAdmSapUnmatched: '{n} ta mahsulot SAP\'da topilmadi',
@@ -740,7 +745,7 @@ export const ru = {
   skAdmSap: 'Справочник товаров SAP',
   skAdmSapHint: 'Сотрудники знают товары по коду и наименованию SAP — в ERP показываются они же',
   skAdmSapText:
-    'Загрузите выгрузку товаров из SAP («Номер позиции» и «Описание позиции») или выгрузку каталога сайта (со столбцом «SAP nomi») — подойдёт и большой файл с картинками. Каждому товару склада по названию привяжется наименование SAP (и код, если он есть); регистр, кириллица/латиница, х/x, дефисы, запятые и пробелы не учитываются. Не найденные можно ввести вручную в карточке товара.',
+    'Загрузите выгрузку товаров из SAP («Номер позиции» и «Описание позиции») или выгрузку каталога сайта (со столбцом «SAP nomi») — подойдёт и большой файл с картинками. Каждому товару склада по названию привяжется наименование SAP (и код, если он есть); регистр, кириллица/латиница, х/x, дефисы, запятые и пробелы не учитываются. Если название немного отличается (буква Ц/О, примечание, «-1-»), но тип товара, размеры и мощность совпадают — привяжется приблизительно (≈). Не найденные можно ввести вручную в карточке товара.',
   skAdmSapUpload: 'Загрузить Excel из SAP',
   skAdmSapReading: 'Читаю файл…',
   skAdmSapSending: 'Привязываю…',
@@ -748,6 +753,11 @@ export const ru = {
   skAdmSapNoCode: 'В этом файле нет столбца с SAP-кодом — товарам привязаны только наименования SAP. Если загрузить выгрузку из самого SAP (с «Номер позиции»), добавятся и коды.',
   skAdmSapAmbiguous: '{n} товар(ов) совпали сразу с несколькими наименованиями SAP, поэтому не привязаны — выберите вручную в карточке:',
   skSapTagHint: 'Привязано наименование из SAP',
+  skHintSapName: 'Наименование товара в SAP. Знак ≈ — найдено приблизительно, проверьте',
+  skSapApproxHint: 'Приблизительное совпадение: названия немного различаются (например буква Ц/О или примечание), размеры и мощность совпадают. Если неверно — исправьте наименование SAP в карточке',
+  skAdmSapApprox: '{n} найдено приблизительно',
+  skAdmSapApproxText:
+    'Названия этих товаров немного отличаются от SAP (буква, примечание, «-1-», 2,0/2), но тип товара и все размеры и мощность совпадают. В таблице отмечены знаком ≈. Если неверно — исправьте наименование SAP в карточке товара вручную (после этого оно не меняется).',
   skAdmSapLinked: 'Связано с SAP: {n} из {total} товаров',
   skAdmSapResult: 'В файле SAP {rows} строк, привязано {matched} товаров склада (изменено {changed})',
   skAdmSapUnmatched: '{n} товаров не найдено в SAP',

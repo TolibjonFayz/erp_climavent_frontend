@@ -119,6 +119,9 @@
         <span class="sk-sap-result">
           ✓ {{ $t('skAdmSapResult', { rows: fmtNum(sapResult.sap_rows), matched: fmtNum(sapResult.matched), changed: fmtNum(sapResult.changed) }) }}
         </span>
+        <el-button v-if="sapResult.approx_total" link type="primary" @click="sapApproxOpen = true">
+          {{ $t('skAdmSapApprox', { n: fmtNum(sapResult.approx_total) }) }}
+        </el-button>
         <el-button v-if="sapResult.unmatched_total" link type="warning" @click="sapUnmatchedOpen = true">
           {{ $t('skAdmSapUnmatched', { n: fmtNum(sapResult.unmatched_total) }) }}
         </el-button>
@@ -143,6 +146,23 @@
     </ul>
     <p v-if="(sapResult?.unmatched_total || 0) > (sapResult?.unmatched?.length || 0)" class="sk-muted">
       {{ $t('skAdmSapMore', { n: fmtNum(sapResult.unmatched_total - sapResult.unmatched.length) }) }}
+    </p>
+  </el-dialog>
+
+  <!-- Taxminiy moslik: nomlar biroz farq qiladi — admin ko'zdan kechiradi -->
+  <el-dialog
+    v-model="sapApproxOpen"
+    :title="$t('skAdmSapApprox', { n: fmtNum(sapResult?.approx_total || 0) })"
+    width="min(860px, 94vw)"
+    append-to-body
+  >
+    <p class="sk-muted">{{ $t('skAdmSapApproxText') }}</p>
+    <el-table :data="sapResult?.approx || []" max-height="60vh" size="small">
+      <el-table-column :label="$t('skXlsSheetName')" prop="name" min-width="260" />
+      <el-table-column :label="$t('skSapName')" prop="sap_name" min-width="260" />
+    </el-table>
+    <p v-if="(sapResult?.approx_total || 0) > (sapResult?.approx?.length || 0)" class="sk-muted">
+      {{ $t('skAdmSapMore', { n: fmtNum(sapResult.approx_total - sapResult.approx.length) }) }}
     </p>
   </el-dialog>
 
@@ -184,6 +204,7 @@ onMounted(() => store.loadSources().catch(() => {}))
 // ─── SAP ro'yxati ───
 const sapStage = ref('') // '' | 'skAdmSapReading' | 'skAdmSapSending'
 const sapResult = ref(null)
+const sapApproxOpen = ref(false)
 const sapUnmatchedOpen = ref(false)
 const sapLinked = computed(() => store.items.filter((i) => i.sap_code || i.sap_name).length)
 
