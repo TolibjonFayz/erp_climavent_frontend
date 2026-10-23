@@ -71,6 +71,7 @@
           {{ $t('skSumIn') }}: <b class="is-in">+{{ fmtQty(sum.in) }}</b> · {{ $t('skSumOut') }}:
           <b class="is-out">−{{ fmtQty(sum.out) }}</b> · {{ $t('skSumClosing') }}: <b>{{ fmtQty(sum.closing) }}</b>
         </span>
+        <el-button v-if="cols.changed.value" size="small" text :title="$t('skResizeHint')" @click="cols.reset()">{{ $t('skResetWidths') }}</el-button>
         <el-button v-if="hasFilters" size="small" :icon="RefreshLeft" @click="resetFilters">{{ $t('skResetAll') }}</el-button>
         <el-button v-if="mode === 'live'" size="small" type="primary" plain :icon="Plus" @click="$emit('new-item')">
           {{ $t('skNewItem') }}
@@ -79,13 +80,16 @@
       <el-table
         v-loading="loading"
         :data="paged"
-        class="sk-table"
+        :key="cols.version.value"
+        class="sk-table ui-resizable"
         row-class-name="sk-row"
         :default-sort="{ prop: 'sort_order', order: 'ascending' }"
+        border
         @row-click="(row) => $emit('open', row.id)"
+        @header-dragend="cols.onDragEnd"
         @sort-change="onSort"
       >
-        <el-table-column v-if="hasCode" prop="sap_code" width="125" sortable="custom">
+        <el-table-column v-if="hasCode" prop="sap_code" v-bind="cols.col('sap_code', { width: 125 })" column-key="sap_code" sortable="custom">
           <template #header><UiHint :label="$t('skSapCode')" :hint="$t('skHintSap')" /></template>
           <template #default="{ row }">
             <span v-if="row.sap_code" class="sk-code">{{ row.sap_code }}</span>
@@ -93,7 +97,7 @@
           </template>
         </el-table-column>
         <!-- SAP nomi va ombor jadvalidagi nom — alohida ustunlar (birlashtirilmaydi) -->
-        <el-table-column prop="sap_name" min-width="170" sortable="custom">
+        <el-table-column prop="sap_name" v-bind="cols.col('sap_name', { minWidth: 170 })" column-key="sap_name" sortable="custom">
           <template #header><UiHint :label="$t('skSapName')" :hint="$t('skHintSapName')" /></template>
           <template #default="{ row }">
             <div v-if="row.sap_name" class="sk-name">
@@ -102,37 +106,37 @@
             <span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="name" min-width="170" sortable="custom">
+        <el-table-column prop="name" v-bind="cols.col('name', { minWidth: 170 })" column-key="name" sortable="custom">
           <template #header>{{ $t('skColName') }}</template>
           <template #default="{ row }">
             <div class="sk-name">{{ row.name }}</div>
             <div class="sk-sub">{{ row.group_name || '—' }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="opening" width="88" align="right">
+        <el-table-column prop="opening" v-bind="cols.col('opening', { width: 88 })" column-key="opening" align="right">
           <template #header><UiHint :label="$t('skColOpeningFull')" :hint="$t('skHintOpening')" /></template>
           <template #default="{ row }">{{ fmtQty(row.opening) }}</template>
         </el-table-column>
-        <el-table-column prop="in" width="88" align="right">
+        <el-table-column prop="in" v-bind="cols.col('in', { width: 88 })" column-key="in" align="right">
           <template #header><UiHint :label="$t('skColIn')" :hint="$t('skHintIn')" /></template>
           <template #default="{ row }">
             <b v-if="row.in" class="is-in">+{{ fmtQty(row.in) }}</b><span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="out" width="88" align="right">
+        <el-table-column prop="out" v-bind="cols.col('out', { width: 88 })" column-key="out" align="right">
           <template #header><UiHint :label="$t('skColOut')" :hint="$t('skHintOut')" /></template>
           <template #default="{ row }">
             <b v-if="row.out" class="is-out">−{{ fmtQty(row.out) }}</b><span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="reserve" width="92" align="right">
+        <el-table-column prop="reserve" v-bind="cols.col('reserve', { width: 92 })" column-key="reserve" align="right">
           <template #header><UiHint :label="$t('skColReserve')" :hint="$t('skHintReserve')" /></template>
           <template #default="{ row }">
             <b v-if="row.reserve - row.release" class="is-reserve">{{ fmtQty(row.reserve - row.release) }}</b>
             <span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="closing" width="165" align="right" sortable="custom">
+        <el-table-column prop="closing" v-bind="cols.col('closing', { width: 165 })" column-key="closing" align="right" sortable="custom">
           <template #header><UiHint :label="$t('skColClosing')" :hint="$t('skHintClosing')" /></template>
           <template #default="{ row }">
             <span v-if="stockStatus(row) !== 'ok'" class="sk-badge" :class="`st-${stockStatus(row)}`">
@@ -144,7 +148,7 @@
             <div v-if="row.last_move_date" class="sk-sub">{{ $t('skLastMove', { d: dayMonth(row.last_move_date) }) }}</div>
           </template>
         </el-table-column>
-        <el-table-column width="48" align="center">
+        <el-table-column width="48" align="center" :resizable="false">
           <template #default>
             <el-icon class="sk-more" :aria-label="$t('skDetails')"><ArrowRight /></el-icon>
           </template>
@@ -189,6 +193,10 @@ import UiToolbar from '@/components/ui/UiToolbar.vue'
 import { stockStatus } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
 import { dayMonth, fmtQty, periodLabel, unitLabel } from '@/utils/skladFormat'
+import { useColumnWidths } from '@/composables/useColumnWidths'
+
+// Ustun chegarasini sudrab kenglikni o'zgartirish (brauzerda eslab qolinadi)
+const cols = useColumnWidths('sklad-stock')
 
 const props = defineProps({
   items: { type: Array, required: true },

@@ -39,21 +39,22 @@
       <span class="sk-count">{{ fmtNum(filtered.length) }}</span>
     </template>
     <template #actions>
+      <el-button v-if="cols.changed.value" size="small" text :title="$t('skResizeHint')" @click="cols.reset()">{{ $t('skResetWidths') }}</el-button>
       <span class="sk-sum">
         {{ $t('skStatIn') }}: <b class="is-in">+{{ fmtQty(sum.in) }}</b> · {{ $t('skStatOut') }}:
         <b class="is-out">−{{ fmtQty(sum.out) }}</b>
       </span>
     </template>
-    <el-table v-loading="loading" :data="paged" class="sk-table" row-class-name="sk-row" @row-click="(r) => $emit('open', r.item_id)">
-      <el-table-column :label="$t('skColDate')" width="90">
+    <el-table v-loading="loading" :data="paged" :key="cols.version.value" class="sk-table ui-resizable" row-class-name="sk-row" border @header-dragend="cols.onDragEnd" @row-click="(r) => $emit('open', r.item_id)">
+      <el-table-column :label="$t('skColDate')" v-bind="cols.col('skColDate', { width: 90 })" column-key="skColDate">
         <template #default="{ row }">{{ dayMonth(row.move_date) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skMoveType')" width="140">
+      <el-table-column :label="$t('skMoveType')" v-bind="cols.col('skMoveType', { width: 140 })" column-key="skMoveType">
         <template #default="{ row }">
           <span class="sk-tag" :class="`t-${row.type}`">{{ moveTypeLabel(row.type) }}</span>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skColName')" min-width="220">
+      <el-table-column :label="$t('skColName')" v-bind="cols.col('skColName', { minWidth: 220 })" column-key="skColName">
         <template #default="{ row }">
           <div class="sk-name">{{ itemName(row.item) }}</div>
           <div class="sk-group">
@@ -61,18 +62,18 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skColQty')" width="100" align="right">
+      <el-table-column :label="$t('skColQty')" v-bind="cols.col('skColQty', { width: 100 })" column-key="skColQty" align="right">
         <template #default="{ row }">
           <b :class="`q-${row.type}`">{{ signedQty(row.type, row.qty) }}</b>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skColDogovor')" width="110">
+      <el-table-column :label="$t('skColDogovor')" v-bind="cols.col('skColDogovor', { width: 110 })" column-key="skColDogovor">
         <template #default="{ row }">
           <span v-if="row.dogovor_number">{{ row.dogovor_number }}</span><span v-else class="sk-none">—</span>
         </template>
       </el-table-column>
       <!-- Kimdan/kimga, hujjat, izoh va kim kiritgani — bitta ustunda (jadval ekranga sig'sin) -->
-      <el-table-column :label="$t('skColDetails')" min-width="200">
+      <el-table-column :label="$t('skColDetails')" v-bind="cols.col('skColDetails', { minWidth: 200 })" column-key="skColDetails">
         <template #default="{ row }">
           <div v-if="row.counterparty">{{ row.counterparty }}</div>
           <div v-if="row.doc_number" class="sk-group">№ {{ row.doc_number }}</div>
@@ -82,7 +83,7 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column width="52" align="center">
+      <el-table-column width="52" align="center" :resizable="false">
         <template #default="{ row }">
           <el-popconfirm
             v-if="canDelete(row)"
@@ -124,6 +125,10 @@ import UiPanel from '@/components/ui/UiPanel.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
 import { apiError, dayMonth, fmtQty, itemName, moveComment, moveTypeLabel, signedQty } from '@/utils/skladFormat'
+import { useColumnWidths } from '@/composables/useColumnWidths'
+
+// Ustun chegarasini sudrab kenglikni o'zgartirish (brauzerda eslab qolinadi)
+const cols = useColumnWidths('sklad-moves')
 
 const props = defineProps({
   isAdmin: { type: Boolean, default: false },

@@ -80,8 +80,18 @@
         </li>
       </ul>
 
+    </nav>
+
+    <!-- Tizim guruhi: har doim pastda, ish bo'limlaridan ajralgan — Sozlamalar va tungi rejim -->
+    <div class="sidebar-system">
+      <div class="nav-item" :class="{ active: props.activePath === 'settings' }">
+        <a href="/settings" class="nav-link" :title="$t('settings')" @click="closeMobile">
+          <el-icon class="icon el-nav-icon"><Setting /></el-icon>
+          <span class="nav-text">{{ $t('settings') }}</span>
+        </a>
+      </div>
       <!-- Tungi/kunduzgi rejim (composables/useTheme.js) -->
-      <div class="nav-item theme-item">
+      <div class="nav-item">
         <button
           type="button"
           class="nav-link theme-toggle"
@@ -92,10 +102,10 @@
           <span class="nav-text">{{ $t(isDark ? 'themeLight' : 'themeToggle') }}</span>
         </button>
       </div>
-    </nav>
+    </div>
 
     <!-- User profile -->
-    <div class="user-profile" v-loading="loading">
+    <a href="/settings" class="user-profile" :title="$t('settings')" v-loading="loading" @click="closeMobile">
       <div class="user-avatar">
         <img :src="avatarUrl" alt="User profile" />
         <div class="status-dot"></div>
@@ -104,7 +114,7 @@
         <h4>{{ currentUser?.firstname }} {{ currentUser?.lastname }}</h4>
         <p>{{ currentUser?.username }}</p>
       </div>
-    </div>
+    </a>
   </aside>
 </template>
 
@@ -233,14 +243,6 @@ const menus = computed(() => {
       title: 'tasks',
       text: 'tasks',
       show: hasAccess('tasks'),
-    },
-    {
-      key: 'settings',
-      href: '/settings',
-      icon: 'calendar-icon',
-      title: 'settings',
-      text: 'settings',
-      show: true,
     },
     {
       key: 'admin',
@@ -588,10 +590,16 @@ $accent-dark: #2f7fe0;
   box-shadow: 0 6px 16px rgba(64, 158, 255, 0.35);
 }
 
-.theme-item {
-  margin-top: 8px;
-  padding-top: 8px;
+.sidebar-system {
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  padding-top: 10px;
   border-top: 1px solid var(--ui-line);
+}
+
+.el-nav-icon {
+  font-size: 18px;
+  width: 20px;
 }
 
 .theme-toggle {
@@ -713,6 +721,8 @@ $accent-dark: #2f7fe0;
 
 /* User profile */
 .user-profile {
+  text-decoration: none;
+  color: inherit;
   padding: 12px 14px;
   margin: 0 12px 16px;
   border-radius: 16px;

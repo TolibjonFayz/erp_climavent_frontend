@@ -6,8 +6,8 @@
       <el-button size="small" :icon="Download" :disabled="!rows.length" @click="exportExcel">Excel</el-button>
       <el-button size="small" :icon="Refresh" :loading="loading" @click="load" />
     </template>
-    <el-table v-loading="loading" :data="rows" class="tr-table" row-key="user_id">
-      <el-table-column type="expand" width="40">
+    <el-table v-loading="loading" :data="rows" class="tr-table ui-resizable" row-key="user_id" border @header-dragend="cols.onDragEnd">
+      <el-table-column type="expand" width="40" :resizable="false">
         <template #default="{ row }">
           <div class="tr-attempts">
             <div v-if="!row.attempts.length" class="tr-muted">{{ $t('trNoAttempts') }}</div>
@@ -20,25 +20,25 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('trColUser')" min-width="180">
+      <el-table-column :label="$t('trColUser')" v-bind="cols.col('trColUser', { minWidth: 180 })" column-key="trColUser">
         <template #default="{ row }">
           <b>{{ row.name }}</b>
           <span v-if="row.is_admin" class="tr-muted"> · admin</span>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('trColTutorial')" width="170">
+      <el-table-column :label="$t('trColTutorial')" v-bind="cols.col('trColTutorial', { width: 170 })" column-key="trColTutorial">
         <template #default="{ row }">
           <span v-if="row.tutorial_done_at">{{ formatDateTime(row.tutorial_done_at) }}</span>
           <span v-else class="tr-muted">{{ $t('trNotSeen') }}</span>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('trColAttempts')" width="110" align="center">
+      <el-table-column :label="$t('trColAttempts')" v-bind="cols.col('trColAttempts', { width: 110 })" column-key="trColAttempts" align="center">
         <template #default="{ row }">{{ row.attempts.length }}</template>
       </el-table-column>
-      <el-table-column :label="$t('trColBest')" width="120" align="center">
+      <el-table-column :label="$t('trColBest')" v-bind="cols.col('trColBest', { width: 120 })" column-key="trColBest" align="center">
         <template #default="{ row }">{{ row.best_score == null ? '—' : row.best_score + '%' }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skStatus')" width="200">
+      <el-table-column :label="$t('skStatus')" v-bind="cols.col('skStatus', { width: 200 })" column-key="skStatus">
         <template #default="{ row }">
           <span class="tr-tag" :class="statusOf(row)">{{ statusLabel(row) }}</span>
         </template>
@@ -69,6 +69,10 @@ import UiPanel from '@/components/ui/UiPanel.vue'
 import trainingApi from '@/api/training'
 import { formatDate, formatDateTime } from '@/utils/format'
 import { apiError } from '@/utils/skladFormat'
+import { useColumnWidths } from '@/composables/useColumnWidths'
+
+// Ustun chegarasini sudrab kenglikni o'zgartirish (brauzerda eslab qolinadi)
+const cols = useColumnWidths('training-report')
 
 const props = defineProps({
   module: { type: String, required: true },

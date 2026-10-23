@@ -260,3 +260,34 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ─── Ustun kengligini sudrab o'zgartiriladigan jadval (composables/useColumnWidths.js) ───
+   Element Plus ustunni faqat `border` rejimida sudratadi — lekin to'liq panjara og'ir ko'rinadi.
+   Shuning uchun: tashqi ramka yo'q (jadval panel ichida), tana kataklarida vertikal chiziq yo'q,
+   sarlavhada esa ingichka ajratgich — uni sudrab ustun kengayadi/torayadi. */
+.el-table.ui-resizable {
+  --el-table-border: 1px solid var(--ui-line-soft);
+}
+.el-table.ui-resizable.el-table--border::before,
+.el-table.ui-resizable.el-table--border::after,
+.el-table.ui-resizable .el-table__inner-wrapper::before,
+.el-table.ui-resizable .el-table__inner-wrapper::after,
+.el-table.ui-resizable .el-table__border-left-patch {
+  display: none;
+}
+.el-table.ui-resizable.el-table--border .el-table__inner-wrapper {
+  border: 0;
+}
+.el-table.ui-resizable.el-table--border td.el-table__cell {
+  border-right-color: transparent;
+}
+.el-table.ui-resizable.el-table--border th.el-table__cell {
+  border-right: 1px solid var(--ui-line);
+}
+.el-table.ui-resizable.el-table--border th.el-table__cell:last-child {
+  border-right-color: transparent;
+}
+/* Sudrash joyi: sichqoncha chegaraga kelganda chiziq ko'k bo'lib ko'rinadi */
+.el-table.ui-resizable th.el-table__cell:hover {
+  border-right-color: var(--ui-link-line);
+}
