@@ -1,65 +1,53 @@
 <template>
   <div ref="rootEl" class="sk-stock" :style="{ '--sk-sticky-h': stickyH + 'px' }">
-    <!-- Filtrlar paneli: sahifa pastga aylantirilganda ham tepada turadi -->
+    <!-- Filtrlar paneli (boshqa sahifalardagi kabi) — pastga aylantirilganda ham tepada turadi -->
     <div ref="stickyEl" class="sk-sticky">
-      <div class="sk-filters">
-        <label class="sk-search" data-tour="sk-search">
-          <span class="sk-label">{{ $t('skSearch') }}</span>
-          <el-input v-model="search" :prefix-icon="Search" clearable size="large" :placeholder="$t('skSearchPh')" />
-        </label>
-        <div class="sk-filters__right">
-          <el-checkbox v-model="onlyMoved" size="large" border>{{ $t('skOnlyMovedLong') }}</el-checkbox>
-          <el-button v-if="mode === 'live'" size="large" :icon="Plus" @click="$emit('new-item')">
-            {{ $t('skNewItem') }}
-          </el-button>
-          <el-button size="large" :icon="Download" @click="exportExcel">{{ $t('skExportLong') }}</el-button>
+      <UiToolbar>
+        <UiField :label="$t('skSearch')" grow data-tour="sk-search">
+          <el-input v-model="search" :prefix-icon="Search" clearable :placeholder="$t('skSearchPh')" />
+        </UiField>
+        <template #actions>
+          <el-checkbox v-model="onlyMoved" border>{{ $t('skOnlyMovedLong') }}</el-checkbox>
+          <el-button :icon="Download" @click="exportExcel">{{ $t('skExportLong') }}</el-button>
+        </template>
+      </UiToolbar>
+      <div class="sk-chiprows">
+        <!-- Guruhlar va holat: yashirin ro'yxat emas, hammasi ko'rinib turadi -->
+        <div class="sk-chiprow" data-tour="sk-groups">
+          <span class="sk-chiprow__label">{{ $t('skColGroup') }}</span>
+          <div class="sk-chips">
+            <button type="button" class="sk-chip" :class="{ on: !group }" :aria-pressed="!group" @click="group = ''">
+              {{ $t('skAllGroups') }} <b>{{ fmtNum(items.length) }}</b>
+            </button>
+            <button
+              v-for="g in groups"
+              :key="g.name"
+              type="button"
+              class="sk-chip"
+              :class="{ on: group === g.name }"
+              :aria-pressed="group === g.name"
+              @click="group = g.name"
+            >
+              {{ g.name }} <b>{{ fmtNum(g.count) }}</b>
+            </button>
+          </div>
         </div>
-      </div>
-
-      <!-- Guruhlar -->
-      <div class="sk-row-chips" data-tour="sk-groups">
-        <span class="sk-label">{{ $t('skColGroup') }}</span>
-        <button type="button" class="sk-chip" :class="{ on: !group }" :aria-pressed="!group" @click="group = ''">
-          {{ $t('skAllGroups') }} <b>{{ fmtNum(items.length) }}</b>
-        </button>
-        <button
-          v-for="g in groups"
-          :key="g.name"
-          type="button"
-          class="sk-chip"
-          :class="{ on: group === g.name }"
-          :aria-pressed="group === g.name"
-          @click="group = g.name"
-        >
-          {{ g.name }} <b>{{ fmtNum(g.count) }}</b>
-        </button>
-      </div>
-
-      <!-- Holat: yashirin ro'yxat emas, hammasi ko'rinib turadi -->
-      <div class="sk-row-chips">
-        <span class="sk-label">{{ $t('skStatus') }}</span>
-        <button
-          v-for="s in statusOptions"
-          :key="s.value"
-          type="button"
-          class="sk-chip"
-          :class="[`st-${s.value || 'all'}`, { on: status === s.value }]"
-          :aria-pressed="status === s.value"
-          @click="status = s.value"
-        >
-          <i v-if="s.value" class="sk-dot" />{{ s.label }} <b>{{ fmtNum(s.count) }}</b>
-        </button>
-      </div>
-
-      <!-- Natija: nechta ko'rsatilmoqda va jamilar -->
-      <div class="sk-summary">
-        <span class="sk-summary__count">{{ $t('skShown', { n: fmtNum(filtered.length) }) }}</span>
-        <span class="sk-summary__nums">
-          <span>{{ $t('skSumIn') }}: <b class="is-in">+{{ fmtQty(sum.in) }}</b></span>
-          <span>{{ $t('skSumOut') }}: <b class="is-out">−{{ fmtQty(sum.out) }}</b></span>
-          <span>{{ $t('skSumClosing') }}: <b>{{ fmtQty(sum.closing) }}</b></span>
-        </span>
-        <el-button v-if="hasFilters" :icon="RefreshLeft" @click="resetFilters">{{ $t('skResetAll') }}</el-button>
+        <div class="sk-chiprow">
+          <span class="sk-chiprow__label">{{ $t('skStatus') }}</span>
+          <div class="sk-chips">
+            <button
+              v-for="s in statusOptions"
+              :key="s.value"
+              type="button"
+              class="sk-chip"
+              :class="[`st-${s.value || 'all'}`, { on: status === s.value }]"
+              :aria-pressed="status === s.value"
+              @click="status = s.value"
+            >
+              <i v-if="s.value" class="sk-dot" />{{ s.label }} <b>{{ fmtNum(s.count) }}</b>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -73,8 +61,21 @@
       <el-button v-if="isAdmin" type="primary" plain @click="$emit('go-settings')">{{ $t('skNoSapBtn') }}</el-button>
     </div>
 
-    <div class="sk-tablewrap" data-tour="sk-table">
-      <p class="sk-hint">👆 {{ $t('skRowHint') }}</p>
+    <UiPanel flush data-tour="sk-table">
+      <template #title>
+        <UiHint :label="$t('skStockTitle')" :hint="$t('skRowHint')" />
+        <span class="sk-count">{{ fmtNum(filtered.length) }}</span>
+      </template>
+      <template #actions>
+        <span class="sk-sum">
+          {{ $t('skSumIn') }}: <b class="is-in">+{{ fmtQty(sum.in) }}</b> · {{ $t('skSumOut') }}:
+          <b class="is-out">−{{ fmtQty(sum.out) }}</b> · {{ $t('skSumClosing') }}: <b>{{ fmtQty(sum.closing) }}</b>
+        </span>
+        <el-button v-if="hasFilters" size="small" :icon="RefreshLeft" @click="resetFilters">{{ $t('skResetAll') }}</el-button>
+        <el-button v-if="mode === 'live'" size="small" type="primary" plain :icon="Plus" @click="$emit('new-item')">
+          {{ $t('skNewItem') }}
+        </el-button>
+      </template>
       <el-table
         v-loading="loading"
         :data="paged"
@@ -172,7 +173,7 @@
           background
         />
       </div>
-    </div>
+    </UiPanel>
   </div>
 </template>
 
@@ -181,7 +182,10 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as XLSX from 'xlsx'
 import { ArrowRight, Download, InfoFilled, Plus, RefreshLeft, Search } from '@element-plus/icons-vue'
+import UiField from '@/components/ui/UiField.vue'
 import UiHint from '@/components/ui/UiHint.vue'
+import UiPanel from '@/components/ui/UiPanel.vue'
+import UiToolbar from '@/components/ui/UiToolbar.vue'
 import { stockStatus } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
 import { dayMonth, fmtQty, periodLabel, unitLabel } from '@/utils/skladFormat'
@@ -360,93 +364,87 @@ function exportExcel() {
   font-size: 15px;
 }
 
-/* ─── Qotib turadigan filtr paneli ─── */
+/* ─── Qotib turadigan filtr paneli (UiToolbar + tugmali filtrlar bitta panelda) ─── */
 .sk-sticky {
   position: sticky;
   top: 0;
   z-index: 6;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px 12px;
-  margin: 0 -2px;
-  background: var(--ui-surface);
+  background: var(--ui-surface-2);
   border: 1px solid var(--ui-line);
   border-radius: var(--ui-radius);
-  box-shadow: 0 6px 16px -10px rgba(15, 23, 42, 0.35);
+  box-shadow: 0 8px 16px -14px rgba(15, 23, 42, 0.45);
+  :deep(.ui-toolbar) {
+    border: 0;
+    border-radius: var(--ui-radius) var(--ui-radius) 0 0;
+    background: transparent;
+  }
+  :deep(.ui-toolbar .el-input__inner) {
+    font-size: 15px;
+  }
+  :deep(.el-checkbox__label) {
+    font-size: 14px;
+  }
 }
-.sk-label {
-  display: block;
-  margin-bottom: 6px;
+.sk-chiprows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--ui-line-soft);
+}
+.sk-chiprow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.sk-chiprow__label {
+  flex: 0 0 64px;
+  padding-top: 6px;
   font-size: 13px;
   font-weight: 600;
   color: var(--ui-ink-2);
 }
-.sk-filters {
+.sk-chips {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px 16px;
-}
-.sk-search {
-  flex: 1 1 360px;
+  gap: 6px;
   min-width: 0;
-  :deep(.el-input__inner) {
-    font-size: 16px;
-  }
-}
-.sk-filters__right {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  .el-button + .el-button {
-    margin-left: 0;
-  }
-  :deep(.el-checkbox__label) {
-    font-size: 15px;
-  }
-}
-.sk-row-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  .sk-label {
-    margin: 0 4px 0 0;
-    min-width: 64px;
-  }
 }
 .sk-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 38px;
-  padding: 6px 14px;
-  border: 1px solid var(--ui-line-strong);
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--ui-line);
   border-radius: 99px;
   background: var(--ui-surface);
-  color: var(--ui-ink);
+  color: var(--ui-ink-2);
   font: inherit;
-  font-size: 15px;
+  font-size: 14px;
   cursor: pointer;
   transition:
     border-color 0.15s,
-    background 0.15s;
+    background 0.15s,
+    color 0.15s;
   b {
     font-weight: 600;
     color: var(--ui-muted);
     font-variant-numeric: tabular-nums;
   }
   &:hover {
-    border-color: var(--ui-link);
+    border-color: var(--ui-link-line);
+    color: var(--ui-ink);
   }
   &.on {
-    background: var(--ui-link);
-    border-color: var(--ui-link);
-    color: var(--ui-on-accent);
+    background: var(--ui-ink);
+    border-color: var(--ui-ink);
+    color: var(--ui-surface);
     b {
-      color: var(--ui-on-accent);
+      color: var(--ui-surface);
+      opacity: 0.75;
     }
   }
   &:focus-visible {
@@ -455,9 +453,9 @@ function exportExcel() {
   }
 }
 .sk-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
   background: var(--ui-line-strong);
 }
 .st-ok .sk-dot {
@@ -473,32 +471,30 @@ function exportExcel() {
   background: var(--ui-violet-ink);
 }
 .sk-chip.on .sk-dot {
-  box-shadow: 0 0 0 2px var(--ui-on-accent);
+  box-shadow: 0 0 0 2px var(--ui-surface);
 }
-.sk-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 20px;
-  padding-top: 10px;
-  border-top: 1px solid var(--ui-line-soft);
-}
-.sk-summary__count {
-  font-weight: 700;
-  color: var(--ui-ink);
-}
-.sk-summary__nums {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 18px;
+.sk-count {
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--ui-surface-3);
   color: var(--ui-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.sk-sum {
+  font-size: 13px;
+  color: var(--ui-muted);
   b {
     font-variant-numeric: tabular-nums;
     color: var(--ui-ink);
   }
-}
-.sk-summary .el-button {
-  margin-left: auto;
+  b.is-in {
+    color: var(--ui-good);
+  }
+  b.is-out {
+    color: var(--ui-orange-ink);
+  }
 }
 
 /* ─── SAP haqida eslatma ─── */
@@ -528,18 +524,6 @@ function exportExcel() {
 }
 
 /* ─── Jadval ─── */
-.sk-tablewrap {
-  background: var(--ui-surface);
-  border: 1px solid var(--ui-line);
-  border-radius: var(--ui-radius);
-}
-.sk-hint {
-  margin: 0;
-  padding: 10px 16px;
-  font-size: 14px;
-  color: var(--ui-muted);
-  border-bottom: 1px solid var(--ui-line-soft);
-}
 .sk-table {
   /* Sarlavha qatori filtr paneli ostida qotib turishi uchun */
   overflow: visible;
@@ -713,11 +697,13 @@ function exportExcel() {
   .sk-table :deep(.el-table__header-wrapper) {
     top: 0;
   }
-  .sk-summary .el-button {
-    margin-left: 0;
+  .sk-chiprow {
+    flex-direction: column;
+    gap: 6px;
   }
-  .sk-row-chips .sk-label {
-    width: 100%;
+  .sk-chiprow__label {
+    flex: none;
+    padding-top: 0;
   }
 }
 </style>

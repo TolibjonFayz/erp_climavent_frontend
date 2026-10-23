@@ -1,10 +1,9 @@
 <template>
-  <UiPage :title="$t('skTitle')" wide>
+  <UiPage :title="$t('skTitle')" wide class="sk-page">
     <template #subtitle>
       <span class="sk-mode" :class="`is-${store.mode}`">
         {{ store.mode === 'live' ? $t('skModeLive') : $t('skModeMirror') }}
       </span>
-      <span v-if="training?.passed" class="sk-passed">✓ {{ $t('trPassedChip') }}</span>
       <span v-if="store.mode === 'mirror' && store.lastSyncedAt" class="sk-sub">
         {{ $t('skLastSync') }}: {{ formatDateTime(store.lastSyncedAt) }}
       </span>
@@ -12,6 +11,17 @@
 
     <template #actions>
       <OnboardingLauncher :tour="tour" />
+      <!-- Test hammaga ko'rinadi (admin ham topshira oladi, unga majburiy emas) -->
+      <el-button
+        v-if="training"
+        :type="training.passed ? 'success' : 'default'"
+        :plain="training.passed"
+        :icon="training.passed ? CircleCheck : EditPen"
+        data-tour="sk-test"
+        @click="quizOpen = true"
+      >
+        {{ training.passed ? $t('trPassedChip') : $t('trTestBtn') }}
+      </el-button>
       <el-select
         v-model="period"
         class="sk-period"
@@ -27,13 +37,10 @@
       </span>
     </template>
 
-    <el-alert
-      v-if="store.mode === 'mirror'"
-      type="info"
-      show-icon
-      :closable="false"
-      :title="$t('skMirrorBanner')"
-    />
+    <div v-if="store.mode === 'mirror'" class="sk-note">
+      <el-icon class="sk-note__icon"><InfoFilled /></el-icon>
+      <span>{{ $t('skMirrorBanner') }}</span>
+    </div>
     <el-alert v-if="loadError" type="error" show-icon :closable="false" :title="loadError" />
 
     <!-- O'qitish: yo'riqnoma + test (o'tish 80%). O'tmaguncha eslatma doim turadi -->
@@ -147,7 +154,7 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus, Van } from '@element-plus/icons-vue'
+import { CircleCheck, EditPen, InfoFilled, Plus, Van } from '@element-plus/icons-vue'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import OnboardingTour from '@/components/onboarding/OnboardingTour.vue'
@@ -369,27 +376,51 @@ onMounted(async () => {
 .sk-sub {
   margin-left: 10px;
 }
-.sk-passed {
-  margin-left: 8px;
-  padding: 2px 8px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 600;
-  background: var(--ui-good-soft);
-  color: var(--ui-good);
+/* Sarlavha qatori: tugmalar ko'p — avval izoh qatori torayadi, keyingina tugmalar pastga tushadi */
+.sk-page :deep(.ui-page__title) {
+  flex: 1 1 240px;
+}
+.sk-page :deep(.ui-page__actions) {
+  margin-left: auto;
+}
+/* Ombordan yoshi katta xodimlar foydalanadi: filtr nomlari KATTA HARFSIZ va yiriroq */
+.sk-page :deep(.ui-field__label) {
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ui-ink-2);
+}
+.sk-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--ui-line);
+  border-left: 3px solid var(--ui-link);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ui-ink-2);
+}
+.sk-note__icon {
+  margin-top: 2px;
+  font-size: 16px;
+  color: var(--ui-link);
+  flex-shrink: 0;
 }
 .sk-train {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px 16px;
-  padding: 14px 18px;
+  padding: 12px 16px;
   border: 1px solid var(--ui-warn-line);
   border-radius: var(--ui-radius);
   background: var(--ui-warn-soft);
 }
 .sk-train__icon {
-  font-size: 28px;
+  font-size: 24px;
 }
 .sk-train__text {
   display: flex;
@@ -405,7 +436,7 @@ onMounted(async () => {
   }
 }
 .sk-period {
-  width: 150px;
+  width: 140px;
 }
 .sk-move-btns {
   display: inline-flex;
@@ -416,11 +447,12 @@ onMounted(async () => {
   }
 }
 .sk-stats {
+  /* Keng ekranda boshqa sahifalardagi kabi bitta qator, o'rtachada 4 tadan ikki qator (7+1 bo'lib qolmasin) */
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
-@media (min-width: 1500px) {
+@media (min-width: 1400px) {
   .sk-stats {
     grid-template-columns: repeat(8, minmax(0, 1fr));
   }
@@ -438,11 +470,19 @@ onMounted(async () => {
   :deep(.el-tabs__header) {
     margin-bottom: 16px;
   }
+  :deep(.el-tabs__nav-wrap::after) {
+    height: 1px;
+    background: var(--ui-line);
+  }
   :deep(.el-tabs__item) {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
-    height: 48px;
-    padding: 0 18px;
+    height: 44px;
+    padding: 0 16px;
+    color: var(--ui-muted);
+  }
+  :deep(.el-tabs__item.is-active) {
+    color: var(--ui-link);
   }
   :deep(.el-tab-pane) {
     display: flex;
