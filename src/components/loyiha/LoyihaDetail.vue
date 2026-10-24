@@ -130,6 +130,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -267,7 +268,7 @@ const reload = async () => {
     if (error?.response?.status === 404 || error?.response?.status === 403) {
       loyiha.value = null
     } else {
-      ElMessage.error(t('loyihaMessageLoadError'))
+      ElMessage.error(errorText(error, t('loyihaMessageLoadError')))
     }
   }
 }
@@ -284,7 +285,7 @@ const handleDelete = async () => {
     ElMessage.success(t('loyihaMessageDeleted'))
     router.push('/loyiha')
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('loyihaMessageDeleteError'))
+    ElMessage.error(errorText(error, t('loyihaMessageDeleteError')))
   }
 }
 
@@ -297,7 +298,7 @@ const handleUpload = async ({ file, onProgress, onDone, onError }, section) => {
     await reload()
   } catch (error) {
     onError()
-    ElMessage.error(error?.response?.data?.message || t('loyihaFileUploadError'))
+    ElMessage.error(errorText(error, t('loyihaFileUploadError')))
   }
 }
 
@@ -316,7 +317,7 @@ const handleRename = async ({ file, name }) => {
     ElMessage.success(t('loyihaFileUpdated'))
     await reload()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('loyihaFileUpdateError'))
+    ElMessage.error(errorText(error, t('loyihaFileUpdateError')))
   }
 }
 
@@ -326,7 +327,7 @@ const handleFileDelete = async (file) => {
     ElMessage.success(t('loyihaFileDeleted'))
     await reload()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('loyihaFileDeleteError'))
+    ElMessage.error(errorText(error, t('loyihaFileDeleteError')))
   }
 }
 

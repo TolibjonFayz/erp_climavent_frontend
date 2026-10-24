@@ -46,6 +46,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 // Tanlangan oy uchun kameraga bog'langan barcha xodimlarning tasdiqlanmagan kunlarini
 // avtomatik taklif bo'yicha bir yo'la saqlaydi. Tasdiqlangan kunlarga tegilmaydi.
 import { ref, computed } from 'vue'
@@ -156,8 +157,8 @@ const load = async () => {
         selected: camDays > 0 && records.length > 0,
       }
     })
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   } finally {
     loading.value = false
   }
@@ -170,8 +171,8 @@ const save = async () => {
     ElMessage.success(t('attConfirmAllDone', { created, skipped }))
     emit('update:modelValue', false)
     emit('done')
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   } finally {
     saving.value = false
   }

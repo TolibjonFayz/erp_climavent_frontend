@@ -225,6 +225,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { computed, defineComponent, h, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElButton, ElIcon, ElMessage, ElTooltip } from 'element-plus'
@@ -331,7 +332,7 @@ async function load() {
   } catch (err) {
     items.value = []
     total.value = 0
-    ElMessage.error(err?.response?.data?.message || err?.message)
+    ElMessage.error(errorText(err))
   } finally {
     loading.value = false
   }
@@ -377,7 +378,7 @@ async function restore(row) {
     ElMessage.success(t('amoRestoreDone'))
     onChanged()
   } catch (err) {
-    ElMessage.error(err?.response?.data?.message || err?.message)
+    ElMessage.error(errorText(err))
   }
 }
 
@@ -453,7 +454,7 @@ async function exportExcel() {
     const name = String(props.request?.title || 'amocrm').replace(/[\\/:*?"<>|]/g, '')
     XLSX.writeFile(wb, `${name}.xlsx`)
   } catch (err) {
-    ElMessage.error(err?.response?.data?.message || err?.message)
+    ElMessage.error(errorText(err))
   } finally {
     exporting.value = false
   }

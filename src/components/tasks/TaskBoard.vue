@@ -522,6 +522,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { ref, reactive, computed, onMounted } from 'vue'
 import * as XLSX from 'xlsx'
 import { useTasksStore } from '@/stores/tasks'
@@ -736,7 +737,7 @@ const moveTask = async (id, status) => {
     await tasksStore.updateStatus(id, status)
     await refresh()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('xatolikYuzBerdi'))
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -775,7 +776,7 @@ const sendRequest = async () => {
     requestDialog.value = false
     await refresh()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('xatolikYuzBerdi'))
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -785,7 +786,7 @@ const cancelRequest = async (task) => {
     ElMessage.success(t('taskRequestCancelled'))
     await refresh()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('xatolikYuzBerdi'))
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -795,7 +796,7 @@ const approve = async (task) => {
     ElMessage.success(t('taskApproved'))
     await refresh()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('xatolikYuzBerdi'))
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -817,7 +818,7 @@ const confirmReject = async () => {
     rejectDialog.value = false
     await refresh()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('xatolikYuzBerdi'))
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -995,8 +996,8 @@ const handleSubmit = async () => {
     }
     dialogVisible.value = false
     await refresh()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -1005,8 +1006,8 @@ const handleDelete = async (id) => {
     await tasksStore.deleteTask(id)
     ElMessage.success(t('taskDeleted'))
     await refresh()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 

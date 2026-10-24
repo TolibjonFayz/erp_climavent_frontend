@@ -228,25 +228,57 @@ const parseRequisites = (pages, out) => {
   if (mfo) out.client_mfo = mfo
   const vat = pick(/код\s*НДС\s*:?\s*(\d{12})\b/i)
   if (vat) out.client_vat_code = vat
-  const bank = pick(/Банк\s*:?\s*(?!МФО)(.+?)\s*(?=МФО|ИНН|код\s*НДС|Тел|Директор|$)/i)
+  const bank = pick(/Банк\s*:?\s*(?!МФО)(.+?)\s*(?=МФО|ИНН|код\s*НДС|ОКЭД|Тел|Директор|$)/i)
   if (bank && /[A-Za-zА-Яа-яЎўҚқҒғҲҳ]{3}/.test(bank))
     out.client_bank = clean(bank).replace(/[,\s]+$/, '')
-  const phone = pick(/Тел[а-я]*\s*\.?\s*:?\s*(\+?[\d\s()-]{7,20}\d)/i)
+  // Bir nechta raqam bo'lishi mumkin: "94 681 86 86, +998 93 949 53 31"
+  const phone = pick(
+    /Тел[а-я]*\s*\.?\s*:?\s*(\+?[\d\s()-]{7,20}\d(?:\s*,\s*\+?[\d\s()-]{7,20}\d)*)/i,
+  )
   if (phone) out.client_phone = clean(phone)
+  // Manzil — Didox protokoli bo'lmasa shu yerdan
+  if (!out.client_address) {
+    const addr = pick(
+      /(?:Адрес|Манзил)\s*:?\s*(.+?)\s*(?=[ҲХH]\/Р|Н\/С|Р\/С|р\/с|Счет|Банк|ИНН|Тел|МФО|$)/i,
+    )
+    if (addr && /[A-Za-zА-Яа-яЎўҚқҒғҲҳ]{3}/.test(addr))
+      out.client_address = clean(addr).replace(/[,\s]+$/, '')
+  }
+  // Ustun boshidagi nom: “ BEST CLIMATE MCHJ ” МЧЖ — preambulada nom bo'lmasa zaxira
+  const nameLine = lines.find((l) => /[“"«].+[”"»]/.test(l.text))
+  if (nameLine)
+    out._signClient = clean(nameLine.text.replace(/^[“"«]\s*|\s*[”"»]\s*(МЧЖ|ООО)?$/g, ''))
   if (!out.client_inn) {
     const inn = pick(/ИНН\s*:?\s*((?:\d\s?){9})/)
     if (inn) out.client_inn = inn.replace(/\D/g, '')
   }
   const signLine = lines.find((l) => /директор/i.test(l.text) && /_{3,}/.test(l.text))
   const signName = signLine?.text.split(/_{3,}/).pop()
-  if (signName && clean(signName)) out._signName = clean(signName)
+  // "{U_fio}" — shablonda to'ldirilmay qolgan joy, ism emas
+  if (signName && clean(signName) && !/[{}]/.test(signName)) out._signName = clean(signName)
 }
 
+// Oy nomlari (rus va o'zbek kirill) — boshlanishi bo'yicha: "Июнь", "июня", "Июн"
+const MONTH_STEMS = [
+  'янв',
+  'фев',
+  'мар',
+  'апр',
+  'ма',
+  'июн',
+  'июл',
+  'авг',
+  'сен',
+  'окт',
+  'ноя',
+  'дек',
+]
+
 // ─── 4. Matndagi shartlar (summa, oldindan to'lov, muddat, direktor) ───
-const parseBody = (pages, out) => {
+const parseBody = (pages, out, hasProtocol) => {
   const text = clean(
     pages
-      .slice(1)
+      .slice(hasProtocol ? 1 : 0)
       .map((pg) =>
         toLines(pg.items)
           .map((l) => l.text)
@@ -258,6 +290,17 @@ const parseBody = (pages, out) => {
   if (!out.dogovor_number) {
     const m = text.match(/(?:шартномаси|ДОГОВОР(?:\s+ПОСТАВКИ)?)\s*№\s*(\d+)/i)
     if (m) out.dogovor_number = Number(m[1])
+  }
+
+  // Protokolsiz PDF: sana sarlavhada "17 Июнь 2026 г." ko'rinishida
+  if (!out.dogovor_date) {
+    const m = text.match(
+      new RegExp(String.raw`(\d{1,2})\s+(${MONTH_STEMS.join('|')})[а-яё]*\s+(\d{4})`, 'i'),
+    )
+    if (m) {
+      const month = MONTH_STEMS.findIndex((st) => m[2].toLowerCase().startsWith(st)) + 1
+      out.dogovor_date = `${m[3]}-${String(month).padStart(2, '0')}-${m[1].padStart(2, '0')}`
+    }
   }
 
   if (!out.dogovor_sum) {
@@ -281,6 +324,9 @@ const parseBody = (pages, out) => {
 
   // Preambula: "___MIJOZ____ ... ___Direktor____" — ikkinchi to'ldirilgan joy direktor
   const blanks = [...text.matchAll(/_{2,}([^_]{0,60}?)_{2,}/g)].map((m) => clean(m[1]))
+  if (!out.client_name && blanks[0] && /[A-Za-zА-Яа-яЁё]{2}/.test(blanks[0])) {
+    out.client_name = blanks[0]
+  }
   const director = blanks[1]
   if (director && /[A-Za-zА-Яа-яЁё]/.test(director)) out.contact_name = director
   if (/юритувчи|директора\s+_|директори/i.test(text)) out.contact_position = 'Директор'
@@ -300,14 +346,18 @@ const parseBody = (pages, out) => {
 // pages: [{ items: [{ str, x, y }] }] — pdf.js'dan mustaqil, shuning uchun sinash oson
 export const parseDogovorPages = (pages) => {
   const out = {}
-  if (pages[0]) parseProtocol(pages[0], out)
+  // Didox orqali yuborilganda 1-sahifa — imzolash protokoli; 1C'dan to'g'ridan chiqarilganda yo'q
+  const hasProtocol = !!pages[0]?.items.some((i) => /ПРОТОКОЛ ПОДПИСАНИЯ/i.test(i.str))
+  if (hasProtocol) parseProtocol(pages[0], out)
   parseItemsTable(pages, out)
   parseRequisites(pages, out)
-  parseBody(pages, out)
+  parseBody(pages, out, hasProtocol)
 
+  if (!out.client_name) out.client_name = out._signClient
   if (!out.contact_name) out.contact_name = out._signName || out._signer
   if (out.contact_name && !out.contact_position) out.contact_position = 'Директор'
   delete out._signName
+  delete out._signClient
   delete out._signer
 
   for (const key of Object.keys(out)) {

@@ -307,6 +307,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUsersStore } from '@/stores/user'
 import { usePartnersStore } from '@/stores/partners'
@@ -585,8 +586,8 @@ const saveTarget = async () => {
     ElMessage.success(t('targetSaved'))
     targetDialog.value = false
     await bossStore.getTargets(month.value)
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -608,8 +609,8 @@ const saveAnnouncement = async () => {
     ElMessage.success(t('announcementCreated'))
     announcementDialog.value = false
     await bossStore.getAnnouncements()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 const removeAnnouncement = async (id) => {
@@ -617,8 +618,8 @@ const removeAnnouncement = async (id) => {
     await bossStore.deleteAnnouncement(id)
     ElMessage.success(t('announcementDeleted'))
     await bossStore.getAnnouncements()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -628,8 +629,8 @@ const toggleAdmin = async (row) => {
     await bossStore.setAdmin(row.id, !row.is_admin)
     ElMessage.success(t('adminChanged'))
     await usersStore.getAllUsers()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 

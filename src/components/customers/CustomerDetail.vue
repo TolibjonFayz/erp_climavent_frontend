@@ -156,6 +156,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Document, Edit, Location, Phone, User } from '@element-plus/icons-vue'
@@ -299,8 +300,8 @@ async function handleSaveEdit() {
     ElMessage.success(t('hamkor_yangilandi'))
     editDialogVisible.value = false
     await partnersStore.getOnePartner(route.params.id)
-  } catch {
-    ElMessage.error(t('yangilash_error'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('yangilash_error')))
   } finally {
     editLoading.value = false
   }
@@ -321,8 +322,8 @@ async function handleSaveMoreInfo() {
     ElMessage.success(t('yangilash_success'))
     moreInfoDialogVisible.value = false
     await partnersStore.getOnePartner(route.params.id)
-  } catch {
-    ElMessage.error(t('yangilash_error'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('yangilash_error')))
   } finally {
     moreInfoLoading.value = false
   }
@@ -332,8 +333,8 @@ onMounted(async () => {
   loading.value = true
   try {
     await partnersStore.getOnePartner(route.params.id)
-  } catch {
-    ElMessage.error(t('yangilash_error'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('yangilash_error')))
   } finally {
     loading.value = false
   }

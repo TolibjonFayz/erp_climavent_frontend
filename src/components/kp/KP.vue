@@ -468,6 +468,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useKPsStore } from '@/stores/kp'
@@ -669,7 +670,7 @@ const handleBeforeUpload = async (file) => {
       uploadError.value = `${t('kpImportPartialErrors')}: ${result.errors.slice(0, 5).join('; ')}`
     }
   } catch (error) {
-    uploadError.value = error?.response?.data?.message || error?.message || t('kpUploadError')
+    uploadError.value = errorText(error, t('kpUploadError'))
   } finally {
     uploadLoading.value = false
   }
@@ -774,10 +775,10 @@ const handleSubmit = async () => {
     dialogVisible.value = false
     await kpStore.getAllKPs()
   } catch (error) {
-    const message =
-      error?.response?.data?.message ||
-      error?.message ||
-      (editingKP.value ? t('kpMessageUpdateError') : t('kpMessageSaveError'))
+    const message = errorText(
+      error,
+      editingKP.value ? t('kpMessageUpdateError') : t('kpMessageSaveError'),
+    )
     ElMessage.error(message)
   }
 }
@@ -790,7 +791,7 @@ const handleDelete = async (id) => {
     ElMessage.success(t('kpMessageDeleted'))
     await kpStore.getAllKPs()
   } catch (error) {
-    const message = error?.response?.data?.message || error?.message || t('kpMessageDeleteError')
+    const message = errorText(error, t('kpMessageDeleteError'))
     ElMessage.error(message)
   }
 }
@@ -801,8 +802,8 @@ onMounted(async () => {
       await usersStore.getUserInfo(currentUserId)
     }
     await kpStore.getAllKPs()
-  } catch {
-    ElMessage.error(t('kpMessageLoadError'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('kpMessageLoadError')))
   }
 })
 </script>

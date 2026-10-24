@@ -114,6 +114,7 @@
 </template>
 
 <script>
+import { errorText } from '@/utils/errorText'
 // Bir vaqtda faqat bitta yozuv o'ynasin
 let activeAudio = null
 </script>
@@ -178,7 +179,7 @@ async function ensureLoaded() {
     audioEl.value.playbackRate = rate.value
     return true
   } catch (err) {
-    ElMessage.error(err?.response?.data?.message || err?.message)
+    ElMessage.error(errorText(err))
     return false
   } finally {
     loading.value = false
@@ -263,7 +264,7 @@ async function download() {
     a.click()
     a.remove()
   } catch (err) {
-    ElMessage.error(err?.response?.data?.message || err?.message)
+    ElMessage.error(errorText(err))
   } finally {
     downloading.value = false
   }

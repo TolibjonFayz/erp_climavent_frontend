@@ -642,6 +642,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as XLSX from 'xlsx'
@@ -868,7 +869,7 @@ const handleBeforeUpload = async (file) => {
       uploadError.value = `${t('dogovorImportPartialErrors')}: ${result.errors.slice(0, 5).join('; ')}`
     }
   } catch (error) {
-    uploadError.value = error?.response?.data?.message || error?.message || t('dogovorUploadError')
+    uploadError.value = errorText(error, t('dogovorUploadError'))
   } finally {
     uploadLoading.value = false
   }
@@ -1116,7 +1117,7 @@ const handleSubmit = async () => {
     dialogVisible.value = false
     await dogovorStore.getAllDogovors()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('dogovorMessageSaveError'))
+    ElMessage.error(errorText(error, t('dogovorMessageSaveError')))
   }
 }
 
@@ -1126,7 +1127,7 @@ const handleDelete = async (id) => {
     ElMessage.success(t('dogovorMessageDeleted'))
     await dogovorStore.getAllDogovors()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('dogovorMessageDeleteError'))
+    ElMessage.error(errorText(error, t('dogovorMessageDeleteError')))
   }
 }
 
@@ -1134,8 +1135,8 @@ onMounted(async () => {
   try {
     if (!usersStore.currentUser) await usersStore.getUserInfo(currentUserId)
     await dogovorStore.getAllDogovors()
-  } catch {
-    ElMessage.error(t('dogovorMessageLoadError'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('dogovorMessageLoadError')))
   }
 })
 </script>

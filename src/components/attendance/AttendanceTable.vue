@@ -450,6 +450,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useAttendanceStore } from '@/stores/attendance'
 import { useUsersStore } from '@/stores/user'
@@ -806,8 +807,8 @@ const saveDay = async () => {
     ElMessage.success(t('attendanceSaved'))
     dayDialog.value = false
     await reloadAttendance()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -819,8 +820,8 @@ const resetDay = async () => {
     }
     dayDialog.value = false
     await reloadAttendance()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -870,8 +871,8 @@ const confirmMonth = async () => {
       ),
     )
     ElMessage.success(t('attConfirmMonthDone', { n: created }))
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   } finally {
     confirmingMonth.value = false
     await reloadAttendance()
@@ -976,8 +977,8 @@ const linkEmployee = async (row, userId) => {
     // Ko'rilayotgan "ERP'da yo'q" xodim bog'lansa — endi uning ERP kalendarini ochamiz
     if (userId && row.employee_no === selectedTerminalNo.value) selectEmployee(userId)
     else await loadCamera()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 

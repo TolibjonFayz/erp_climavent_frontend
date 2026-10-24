@@ -345,6 +345,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { computed, reactive, ref, watch } from 'vue'
 import { InfoFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -493,7 +494,7 @@ const handleSubmit = async () => {
     emit('update:modelValue', false)
     emit('saved')
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('loyihaMessageSaveError'))
+    ElMessage.error(errorText(error, t('loyihaMessageSaveError')))
   }
 }
 </script>

@@ -638,6 +638,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
@@ -739,7 +740,7 @@ async function load() {
       scope: scope.value,
     })
   } catch (err) {
-    loadError.value = err?.response?.data?.message || err?.message || t('amoLoadError')
+    loadError.value = errorText(err, t('amoLoadError'))
   }
 }
 
@@ -787,7 +788,7 @@ async function startSync() {
     syncing.value = true
     pollSync()
   } catch (err) {
-    ElMessage.error(err?.response?.data?.message || err?.message)
+    ElMessage.error(errorText(err))
   }
 }
 

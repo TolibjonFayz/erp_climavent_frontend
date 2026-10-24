@@ -1038,6 +1038,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { usePartnersStore } from '@/stores/partners'
 import { useKPsStore } from '@/stores/kp'
@@ -1432,7 +1433,7 @@ async function toggleAdminRole(user, closeDrawer = false) {
     )
   } catch (err) {
     if (err !== 'cancel') {
-      const msg = err?.response?.data?.message || err.message || "Xatolik yuz berdi";
+      const msg = errorText(err, "Xatolik yuz berdi");
       ElMessage.error(msg)
       console.error(err)
     }
@@ -1466,7 +1467,7 @@ async function toggleBlockUser(user, closeDrawer = false) {
     ElMessage.success(`✅ ${newBlock ? 'Bloklash' : 'Blokdan chiqarish'} muvaffaqiyatli!`)
   } catch (err) {
     if (err !== 'cancel') {
-      const msg = err?.response?.data?.message || err.message || "Xatolik yuz berdi";
+      const msg = errorText(err, "Xatolik yuz berdi");
       ElMessage.error(msg)
       console.error(err)
     }
@@ -1568,7 +1569,7 @@ const handleTogglePermission = async (user, pageKey, val) => {
     ElMessage.success("Ruxsat saqlandi")
     user.permissions = newPerms 
   } catch (err) {
-    ElMessage.error("Xatolik yuz berdi")
+    ElMessage.error(errorText(err, "Xatolik yuz berdi"))
     // ui revert handled by user not being updated in store if it threw, 
     // but better to explicitly revert
   } finally {
@@ -1667,7 +1668,7 @@ async function handleKpSubmit() {
     ElMessage.success('✅ KP muvaffaqiyatli yangilandi!')
     kpDialogVisible.value = false
   } catch (e) {
-    ElMessage.error(e?.response?.data?.message || e?.message || 'KP yangilashda xatolik')
+    ElMessage.error(errorText(e, 'KP yangilashda xatolik'))
   } finally {
     kpLoading.value = false
   }
@@ -1692,7 +1693,7 @@ async function handleKpDelete(row) {
     ElMessage.success("✅ KP muvaffaqiyatli o'chirildi!")
   } catch (e) {
     if (e === 'cancel' || e === 'close') return
-    ElMessage.error(e?.response?.data?.message || e?.message || "KP o'chirishda xatolik")
+    ElMessage.error(errorText(e, "KP o'chirishda xatolik"))
   } finally {
     kpLoading.value = false
   }
@@ -1867,7 +1868,7 @@ onMounted(async () => {
       return
     }
   } catch (e) {
-    ElMessage.error("Foydalanuvchi ma'lumotini yuklashda xatolik")
+    ElMessage.error(errorText(e, "Foydalanuvchi ma'lumotini yuklashda xatolik"))
     loading.value = false
     return
   }
