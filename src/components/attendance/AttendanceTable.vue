@@ -23,6 +23,9 @@
       <el-button v-if="isAdmin" :icon="Check" @click="confirmAllDialog = true">
         {{ $t('attConfirmAll') }}
       </el-button>
+      <el-button :icon="Download" :loading="exporting" @click="exportExcel">
+        {{ $t('attExcel') }}
+      </el-button>
       <el-button v-if="!isCurrentMonth" @click="goCurrentMonth">
         {{ $t('attThisMonth') }}
       </el-button>
@@ -461,6 +464,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Download,
   MagicStick,
   VideoCamera,
 } from '@element-plus/icons-vue'
@@ -470,6 +474,7 @@ import UiStat from '@/components/ui/UiStat.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { fmtNum } from '@/utils/format'
 import ConfirmAllDialog from './ConfirmAllDialog.vue'
+import { exportAttendanceXlsx, loadAllEmployees } from './exportAttendance'
 import {
   cameraHours,
   confirmRecord,
@@ -904,6 +909,51 @@ const loadData = async () => {
     loadCamera(),
     loadFieldTrips(selectedUserId.value),
   ])
+}
+
+// ─── Excel'ga yuklab olish ───
+// Admin: barcha xodimlar (oylik jadval); xodim: faqat o'zining oyi
+const exporting = ref(false)
+const exportExcel = async () => {
+  exporting.value = true
+  try {
+    let data
+    if (isAdmin.value) {
+      data = await loadAllEmployees({ month: monthKey.value, employees: employees.value })
+    } else {
+      const me = usersStore.currentUser
+      data = {
+        people: [
+          {
+            id: currentUserId,
+            name: `${me?.firstname || ''} ${me?.lastname || ''}`.trim(),
+            hasCamera: hasCamera.value,
+            hiredFrom: hiredAfterCamera.value,
+          },
+        ],
+        confirmed: attendanceStore.userRecords.map((r) => ({ ...r, user_id: currentUserId })),
+        camera: attendanceStore.cameraRecords.map((r) => ({ ...r, user_id: currentUserId })),
+        officeOpen: officeDaySet.value,
+        tripsByUser: { [currentUserId]: tripsByDate.value },
+      }
+    }
+    const n = await exportAttendanceXlsx({
+      month: monthKey.value,
+      monthLabel: monthLabel.value,
+      data,
+      statusList: STATUS_LIST,
+      t,
+      who: usersStore.currentUser
+        ? `${usersStore.currentUser.firstname || ''} ${usersStore.currentUser.lastname || ''}`.trim()
+        : '',
+    })
+    if (n) ElMessage.success(t('attExcelDone', { n }))
+    else ElMessage.warning(t('attExcelEmpty'))
+  } catch (e) {
+    ElMessage.error(errorText(e, t('attExcelFail')))
+  } finally {
+    exporting.value = false
+  }
 }
 
 // ─── Kamera sozlamalari (admin) ───
