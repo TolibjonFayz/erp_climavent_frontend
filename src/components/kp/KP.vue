@@ -178,13 +178,17 @@
         <span class="kp-count">{{ fmtNum(filteredKps.length) }}</span>
       </template>
       <template #actions>
+        <el-radio-group v-model="view" size="small" class="kp-view">
+          <el-radio-button value="table">{{ $t('kpViewTable') }}</el-radio-button>
+          <el-radio-button value="board">{{ $t('kpViewBoard') }}</el-radio-button>
+        </el-radio-group>
         <el-button v-if="hasFilters" link type="primary" @click="resetFilters">
           {{ $t('kpResetFilters') }}
         </el-button>
       </template>
 
       <el-skeleton v-if="showSkeleton" :rows="6" animated class="kp-skeleton" />
-      <el-table v-else :data="pagedKps" class="kp-table" :empty-text="$t('kpNoMatchDescription')">
+      <el-table v-else-if="view === 'table'" :data="pagedKps" class="kp-table" :empty-text="$t('kpNoMatchDescription')">
         <el-table-column type="index" :index="rowIndex" label="#" width="60" />
         <el-table-column :label="$t('kpTableNumber')" min-width="90">
           <template #default="{ row }">
@@ -268,7 +272,18 @@
         </el-table-column>
       </el-table>
 
-      <div v-if="filteredKps.length > pageSize" class="kp-pager">
+      <div v-else class="kp-board-wrap">
+        <KpBoard
+          :kps="filteredKps"
+          :can-modify="canModify"
+          :fmt-money="fmtMoney"
+          :format-date="formatDate"
+          @move="moveKp"
+          @edit="openEditDialog"
+        />
+      </div>
+
+      <div v-if="view === 'table' && filteredKps.length > pageSize" class="kp-pager">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
@@ -480,6 +495,7 @@ import UiStat from '@/components/ui/UiStat.vue'
 import UiToolbar from '@/components/ui/UiToolbar.vue'
 import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
+import KpBoard from './KpBoard.vue'
 import { fmtNum, formatDate } from '@/utils/format'
 import {
   KP_COMMENT_OPTIONS,
@@ -517,6 +533,24 @@ const uploadError = ref('')
 const uploadButtonText = computed(() => {
   const s = t('kpButtonUploadFile')
   return s === 'kpButtonUploadFile' ? 'Fayl yuklash' : s
+})
+
+// Ko'rinish: jadval yoki doska (tanlov brauzerda eslab qolinadi)
+const VIEW_KEY = 'kp-view'
+const readView = () => {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'board' ? 'board' : 'table'
+  } catch {
+    return 'table'
+  }
+}
+const view = ref(readView())
+watch(view, (v) => {
+  try {
+    localStorage.setItem(VIEW_KEY, v)
+  } catch {
+    /* ixtiyoriy */
+  }
 })
 
 const statusOptions = [
@@ -783,6 +817,27 @@ const handleSubmit = async () => {
   }
 }
 
+// Doskada kartani boshqa ustunga sudrash — faqat holat (Yopilganda yopilgan sana ham) o'zgaradi
+const moveKp = async (kp, status) => {
+  const id = kp.id || kp._id
+  if (!id) return
+  const payload = { kp_status: status }
+  if (status === 'Closed' && !kp.closed_date) {
+    const d = new Date()
+    payload.closed_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+  try {
+    await kpStore.updateKP(id, payload)
+    const label = statusOptions.find((o) => o.value === status)?.labelKey
+    ElMessage.success(
+      t('kpMoved', { n: kp.client_name || kp.kp_number || '', status: label ? t(label) : status }),
+    )
+    await kpStore.getAllKPs()
+  } catch (error) {
+    ElMessage.error(errorText(error, t('kpMessageUpdateError')))
+  }
+}
+
 const handleDelete = async (id) => {
   if (!id) return
 
@@ -869,6 +924,12 @@ onMounted(async () => {
 }
 .kp-lock {
   color: var(--ui-faint);
+}
+.kp-board-wrap {
+  padding: 14px;
+}
+.kp-view {
+  margin-right: 4px;
 }
 .kp-pager {
   display: flex;
