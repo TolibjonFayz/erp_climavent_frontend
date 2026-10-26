@@ -42,10 +42,11 @@ defineProps({
   flex-direction: column;
   gap: 4px;
   min-width: 0;
-  padding: 14px 16px;
+  padding: 18px 20px;
   background: var(--ui-surface);
   border: 1px solid var(--ui-line);
   border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow);
   text-align: left;
   font: inherit;
   color: inherit;
@@ -92,8 +93,9 @@ defineProps({
   background: var(--ui-warn);
 }
 .ui-stat__value {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.2;
   color: var(--ui-ink);
   font-variant-numeric: tabular-nums;

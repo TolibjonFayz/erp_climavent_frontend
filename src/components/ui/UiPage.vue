@@ -55,7 +55,6 @@ defineProps({
   flex-wrap: wrap;
   padding-bottom: 16px;
   margin-bottom: 20px;
-  border-bottom: 1px solid var(--ui-line);
 }
 .ui-page__title {
   display: flex;
@@ -65,8 +64,9 @@ defineProps({
 }
 .ui-page__title h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.25;
   color: var(--ui-ink);
   display: flex;

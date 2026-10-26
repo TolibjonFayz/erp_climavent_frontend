@@ -35,6 +35,7 @@ defineProps({
   background: var(--ui-surface);
   border: 1px solid var(--ui-line);
   border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow);
   min-width: 0;
 }
 .ui-panel__head {
@@ -44,13 +45,13 @@ defineProps({
   gap: 10px;
   flex-wrap: wrap;
   min-height: 48px;
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--ui-line-soft);
 }
 .ui-panel__head h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--ui-ink);
   display: flex;
   align-items: center;
@@ -68,7 +69,7 @@ defineProps({
   color: var(--ui-muted);
 }
 .ui-panel__body {
-  padding: 16px;
+  padding: 20px;
   min-width: 0;
 }
 .ui-panel--flush .ui-panel__body {
