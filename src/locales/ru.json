@@ -1093,6 +1093,8 @@
   "kptext": "КП",
   "kpStatusOpen": "Открыто",
   "kpViewTable": "Таблица",
+  "undoAction": "Отменить",
+  "taskMovedTo": "Задача → {status}",
   "kpViewBoard": "Доска",
   "kpBoardEmpty": "На этом этапе нет КП",
   "kpBoardMore": "Ещё {n} — используйте фильтр",

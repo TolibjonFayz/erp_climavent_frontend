@@ -188,7 +188,11 @@
       </template>
 
       <el-skeleton v-if="showSkeleton" :rows="6" animated class="kp-skeleton" />
-      <el-table v-else-if="view === 'table'" :data="pagedKps" class="kp-table" :empty-text="$t('kpNoMatchDescription')">
+      <el-table
+        v-else-if="view === 'table'"
+        :data="pagedKps"
+        class="kp-table is-clickable"
+        @row-click="onRowClick" :empty-text="$t('kpNoMatchDescription')">
         <el-table-column type="index" :index="rowIndex" label="#" width="60" />
         <el-table-column :label="$t('kpTableNumber')" min-width="90">
           <template #default="{ row }">
@@ -279,7 +283,7 @@
           :fmt-money="fmtMoney"
           :format-date="formatDate"
           @move="moveKp"
-          @edit="openEditDialog"
+          @edit="openDetail"
         />
       </div>
 
@@ -307,6 +311,55 @@
         </el-button>
       </el-empty>
     </UiPanel>
+
+    <!-- KP tafsilotlari: yon panel -->
+    <el-drawer v-model="detailOpen" size="440px" :with-header="false" append-to-body>
+      <div v-if="detailKp" class="kd">
+        <div class="kd__head">
+          <div>
+            <span class="kd__num">№ {{ detailKp.kp_number ?? '—' }}</span>
+            <el-tag :type="statusTag(detailStatus)" size="small" effect="light">
+              {{ statusLabel(detailStatus) }}
+            </el-tag>
+          </div>
+          <el-button circle :icon="Close" :aria-label="$t('cancel')" @click="detailOpen = false" />
+        </div>
+        <h2 class="kd__client">{{ detailKp.client_name || detailKp.client || '—' }}</h2>
+        <div class="kd__sum">{{ fmtMoney(detailKp.kp_sum || detailKp.sum) }}</div>
+
+        <dl class="kd__list">
+          <div>
+            <dt>{{ $t('kpTableManager') }}</dt>
+            <dd>{{ detailKp.manager_name || detailKp.manager || '—' }}</dd>
+          </div>
+          <div>
+            <dt>{{ $t('kpTableDate') }}</dt>
+            <dd>{{ formatDate(detailKp.kp_date || detailKp.kpDate) }}</dd>
+          </div>
+          <div>
+            <dt>{{ $t('kpTableClosedDate') }}</dt>
+            <dd>{{ formatDate(detailKp.closed_date) }}</dd>
+          </div>
+          <div>
+            <dt>{{ $t('kpTableComment') }}</dt>
+            <dd>{{ detailKp.comment || '—' }}</dd>
+          </div>
+          <div v-if="isAdmin">
+            <dt>{{ $t('kpTableAdminComment') }}</dt>
+            <dd>{{ detailKp.admin_comment || '—' }}</dd>
+          </div>
+        </dl>
+
+        <div class="kd__actions">
+          <el-button v-if="canModify(detailKp)" type="primary" :icon="Edit" @click="editFromDetail">
+            {{ $t('edit') }}
+          </el-button>
+          <el-tooltip v-else :content="$t('kpLockedHint')" placement="top">
+            <el-icon class="kp-lock"><Lock /></el-icon>
+          </el-tooltip>
+        </div>
+      </div>
+    </el-drawer>
 
     <el-dialog
       v-model="dialogVisible"
@@ -489,13 +542,14 @@ import { useI18n } from 'vue-i18n'
 import { useKPsStore } from '@/stores/kp'
 import { useUsersStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
-import { Delete, Edit, Lock, Plus, Search, Upload } from '@element-plus/icons-vue'
+import { Close, Delete, Edit, Lock, Plus, Search, Upload } from '@element-plus/icons-vue'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import UiToolbar from '@/components/ui/UiToolbar.vue'
 import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import KpBoard from './KpBoard.vue'
+import { undoToast } from '@/utils/undoToast'
 import { fmtNum, formatDate } from '@/utils/format'
 import {
   KP_COMMENT_OPTIONS,
@@ -826,16 +880,50 @@ const moveKp = async (kp, status) => {
     const d = new Date()
     payload.closed_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }
+  const prev = kp.kp_status || kp.status || 'Open'
   try {
     await kpStore.updateKP(id, payload)
-    const label = statusOptions.find((o) => o.value === status)?.labelKey
-    ElMessage.success(
-      t('kpMoved', { n: kp.client_name || kp.kp_number || '', status: label ? t(label) : status }),
-    )
     await kpStore.getAllKPs()
   } catch (error) {
     ElMessage.error(errorText(error, t('kpMessageUpdateError')))
+    return
   }
+  const label = statusOptions.find((o) => o.value === status)?.labelKey
+  undoToast({
+    message: t('kpMoved', { n: kp.client_name || kp.kp_number || '', status: label ? t(label) : status }),
+    undoLabel: t('undoAction'),
+    onUndo: async () => {
+      try {
+        await kpStore.updateKP(id, {
+          kp_status: prev,
+          ...(payload.closed_date ? { closed_date: null } : {}),
+        })
+        await kpStore.getAllKPs()
+      } catch (error) {
+        ElMessage.error(errorText(error, t('kpMessageUpdateError')))
+      }
+    },
+  })
+}
+
+// ─── Tafsilot paneli (yon tomondan ochiladi) ───
+const detailKp = ref(null)
+const detailOpen = ref(false)
+const openDetail = (kp) => {
+  detailKp.value = kp
+  detailOpen.value = true
+}
+const detailStatus = computed(() => detailKp.value?.kp_status || detailKp.value?.status || '')
+const editFromDetail = () => {
+  const kp = detailKp.value
+  detailOpen.value = false
+  if (kp) openEditDialog(kp)
+}
+
+// Jadval qatorini bosish — tafsilot paneli (amal tugmalari o'z ishini qiladi)
+const onRowClick = (row, _col, event) => {
+  if (event?.target?.closest?.('.kp-actions, .el-button, .kp-lock')) return
+  openDetail(row)
 }
 
 const handleDelete = async (id) => {
@@ -924,6 +1012,79 @@ onMounted(async () => {
 }
 .kp-lock {
   color: var(--ui-faint);
+}
+.kp-table.is-clickable :deep(.el-table__row) {
+  cursor: pointer;
+}
+.kd {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 6px;
+}
+.kd__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.kd__num {
+  margin-right: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-muted);
+}
+.kd__client {
+  margin: 12px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--ui-ink);
+}
+.kd__sum {
+  margin-bottom: 14px;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ui-acc-green);
+  font-variant-numeric: tabular-nums;
+}
+.kd__list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 6px 18px;
+  background: var(--ui-surface-2);
+  border: 1px solid var(--ui-line);
+  border-radius: 20px;
+}
+.kd__list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ui-line-soft);
+}
+.kd__list > div:last-child {
+  border-bottom: none;
+}
+.kd__list dt {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--ui-muted);
+}
+.kd__list dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  color: var(--ui-ink);
+  word-break: break-word;
+}
+.kd__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
 }
 .kp-board-wrap {
   padding: 14px;

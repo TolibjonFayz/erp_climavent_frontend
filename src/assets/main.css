@@ -308,3 +308,39 @@ body {
 .el-table.ui-resizable th.el-table__cell:hover {
   border-right-color: var(--ui-link-line);
 }
+
+/* ─── "Bekor qilish" toast'i (utils/undoToast.js) ─── */
+.el-message.undo-message {
+  padding: 8px 8px 8px 18px;
+  background: var(--ui-acc-ink) !important;
+  border: none !important;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(31, 27, 20, 0.28);
+}
+html.dark .el-message.undo-message {
+  background: #2a3550 !important;
+}
+.el-message.undo-message .el-message__icon {
+  display: none;
+}
+.undo-toast {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+.undo-toast__btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f1b14;
+  background: var(--ui-acc-yellow);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.undo-toast__btn:hover {
+  filter: brightness(1.06);
+}

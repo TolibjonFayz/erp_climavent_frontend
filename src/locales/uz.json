@@ -166,6 +166,8 @@
   "kp": "KP",
   "kpStatusOpen": "Ochilgan",
   "kpViewTable": "Jadval",
+  "undoAction": "Bekor qilish",
+  "taskMovedTo": "Vazifa → {status}",
   "kpViewBoard": "Doska",
   "kpBoardEmpty": "Bu bosqichda KP yo'q",
   "kpBoardMore": "Yana {n} ta — filtrdan foydalaning",

@@ -529,6 +529,7 @@ import { useTasksStore } from '@/stores/tasks'
 import { useUsersStore } from '@/stores/user'
 import { formatDateRelative } from '@/composables/useDateFormatter'
 import { ElMessage } from 'element-plus'
+import { undoToast } from '@/utils/undoToast'
 import {
   Plus,
   Search,
@@ -732,12 +733,21 @@ const onDrop = (status) => {
   else moveTask(id, status)
 }
 
-const moveTask = async (id, status) => {
+const moveTask = async (id, status, { undoable = true } = {}) => {
+  const prev = sourceTasks.value.find((x) => x.id === id)?.status
   try {
     await tasksStore.updateStatus(id, status)
     await refresh()
   } catch (error) {
     ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
+    return
+  }
+  if (undoable && prev && prev !== status) {
+    undoToast({
+      message: t('taskMovedTo', { status: t(statusLabelKey(status)) }),
+      undoLabel: t('undoAction'),
+      onUndo: () => moveTask(id, prev, { undoable: false }),
+    })
   }
 }
 
