@@ -118,7 +118,11 @@
           :key="k.key"
           :type="k.onClick ? 'button' : undefined"
           class="amo-stat"
-          :class="[k.tone && `is-${k.tone}`, { 'is-link': k.onClick }]"
+          :class="[
+            k.tone && `is-${k.tone}`,
+            ACCENTS[k.key] && `acc acc-${ACCENTS[k.key]}`,
+            { 'is-link': k.onClick },
+          ]"
           @click="k.onClick && k.onClick()"
         >
           <span class="amo-stat__label">
@@ -914,6 +918,8 @@ function drillUser(row, col) {
 }
 
 // ─── Asosiy ko'rsatkichlar (tepadagi qator) ───────────────
+// To'liq bo'yalgan urg'u kartalari: eng muhim uchta ko'rsatkich
+const ACCENTS = { total: 'ink', talked: 'green', won: 'yellow' }
 const overview = computed(() => {
   const c = calls.value
   const inc = c.incoming
@@ -1429,13 +1435,13 @@ $faint: var(--ui-faint);
 $line: var(--ui-line);
 $line-soft: var(--ui-surface-3);
 $surface-2: var(--ui-surface-2);
-$radius: 10px;
+$radius: 16px;
 
 .amo {
   background: var(--ui-surface);
-  border-radius: 14px;
-  padding: 20px 22px 22px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border-radius: var(--ui-radius);
+  padding: 24px 26px 26px;
+  box-shadow: var(--ui-shadow);
   min-width: 0;
   color: $ink-2;
 }
@@ -1452,13 +1458,13 @@ button {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  padding-bottom: 16px;
-  border-bottom: 1px solid $line;
+  padding-bottom: 8px;
 
   h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 700;
+    letter-spacing: -0.02em;
     color: $ink;
     display: flex;
     align-items: center;
@@ -1564,10 +1570,11 @@ button {
   flex-direction: column;
   gap: 4px;
   min-width: 0;
-  padding: 14px 16px;
+  padding: 18px 20px;
   background: var(--ui-surface);
   border: 1px solid $line;
   border-radius: $radius;
+  box-shadow: var(--ui-shadow);
   text-align: left;
   transition:
     border-color 0.15s,
@@ -1608,8 +1615,9 @@ button {
     background: $c-warn;
   }
   &__value {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
+    letter-spacing: -0.02em;
     color: $ink;
     line-height: 1.2;
     font-variant-numeric: tabular-nums;
@@ -1641,16 +1649,63 @@ button {
   }
 }
 
-/* ─── Tablar ─── */
+/* ─── To'liq bo'yalgan urg'u kartalari ─── */
+.amo-stat.acc {
+  border-color: transparent;
+  color: #fff;
+}
+.amo-stat.acc-ink {
+  background: var(--ui-acc-ink);
+}
+.amo-stat.acc-green {
+  background: var(--ui-acc-green);
+}
+.amo-stat.acc-yellow {
+  background: var(--ui-acc-yellow);
+  color: #1f1b14;
+}
+.amo-stat.acc .amo-stat__label,
+.amo-stat.acc .amo-stat__sub {
+  color: inherit;
+  opacity: 0.72;
+}
+.amo-stat.acc .amo-stat__value {
+  color: inherit;
+}
+.amo-stat.acc .amo-stat__label::before {
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* ─── Tablar (pill uslubi) ─── */
 .amo-tabs {
   margin-top: 8px;
   :deep(.el-tabs__header) {
     margin-bottom: 16px;
   }
+  :deep(.el-tabs__nav-wrap::after),
+  :deep(.el-tabs__active-bar) {
+    display: none;
+  }
   :deep(.el-tabs__item) {
     font-size: 14px;
     font-weight: 600;
-    height: 44px;
+    height: 38px;
+    line-height: 38px;
+    padding: 0 18px !important;
+    margin-right: 6px;
+    border-radius: 999px;
+    color: var(--ui-ink-2);
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+  }
+  :deep(.el-tabs__item:hover) {
+    background: var(--ui-surface-3);
+  }
+  :deep(.el-tabs__item.is-active) {
+    background: var(--ui-acc-ink);
+    color: #fff;
   }
   :deep(.el-tab-pane) {
     display: flex;
