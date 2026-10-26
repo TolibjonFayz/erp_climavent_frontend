@@ -93,7 +93,8 @@ defineProps({
 
 @media (max-width: 900px) {
   .ui-page {
-    padding: 16px;
+    /* tepada: mobil hamburger tugmasi (44px, top 16px) sarlavhani yopmasin */
+    padding: 68px 16px 16px;
   }
   .ui-page__title h1 {
     font-size: 19px;
