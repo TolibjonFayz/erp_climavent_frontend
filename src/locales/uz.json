@@ -1883,5 +1883,11 @@
   "crEmpty": "Topilmadi",
   "crByInn": "INN",
   "crByPhone": "Telefon",
-  "crByName": "Nom"
+  "crByName": "Nom",
+  "ccTab": "Qo'ng'iroqlar",
+  "ccNoPhone": "Mijozning telefon raqami kiritilmagan",
+  "ccTotal": "Jami {n} ta qo'ng'iroq",
+  "ccTalked": "{n} tasida gaplashilgan",
+  "ccLast": "oxirgisi {d}",
+  "ccTruncated": "har raqam bo'yicha oxirgi {n} tasi ko'rsatilgan"
 }

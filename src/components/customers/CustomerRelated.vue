@@ -114,17 +114,25 @@
             </el-table-column>
           </el-table>
         </el-tab-pane>
+
+        <!-- amoCRM qo'ng'iroqlari — faqat admin/Boss (backend AdminOrBossGuard) -->
+        <el-tab-pane v-if="canSeeCalls" :label="$t('ccTab')" name="calls" lazy>
+          <CustomerCalls :phones="phones" />
+        </el-tab-pane>
       </el-tabs>
     </UiPanel>
   </section>
 </template>
 
 <script setup>
-import { computed, h, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, h, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElTag } from 'element-plus'
 import partnersApi from '@/api/partners'
+import { useUsersStore } from '@/stores/user'
+// amoCRM kodi faqat admin/Boss tabni ochganda yuklanadi
+const CustomerCalls = defineAsyncComponent(() => import('./CustomerCalls.vue'))
 import UiPanel from '@/components/ui/UiPanel.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import { fmtNum, formatDate, formatDateTime } from '@/utils/format'
@@ -132,10 +140,23 @@ import { formatLoyihaId, LOYIHA_STATUS_OPTIONS } from '@/utils/loyihaFormat'
 
 // Mijoz kartasi 360°: bu mijozning KP, shartnoma, loyiha va obyekt tashriflari.
 // Backend INN > telefon > nom bo'yicha topadi (KP/shartnoma 1C'dan nom matni bilan keladi).
-const props = defineProps({ partnerId: { type: [String, Number], required: true } })
+const props = defineProps({
+  partnerId: { type: [String, Number], required: true },
+  // Mijoz telefonlari — amoCRM qo'ng'iroqlarini topish uchun
+  phones: { type: Array, default: () => [] },
+})
 
 const router = useRouter()
 const { t } = useI18n()
+const usersStore = useUsersStore()
+
+// amoCRM bo'limi admin va Boss uchun (sidebar'dagi Boss qoidasi bilan bir xil)
+const canSeeCalls = computed(() => {
+  const u = usersStore.currentUser
+  if (!u) return false
+  if (u.is_admin) return true
+  return u.permissions?.boss !== undefined ? !!u.permissions.boss : Number(u.id) === 16
+})
 
 const loading = ref(false)
 const tab = ref('dogovor')

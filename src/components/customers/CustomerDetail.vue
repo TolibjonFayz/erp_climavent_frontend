@@ -47,7 +47,11 @@
           <p v-else class="cd-note__empty">{{ $t('custNoNote') }}</p>
         </UiPanel>
 
-        <CustomerRelated ref="relatedRef" :partner-id="route.params.id" />
+        <CustomerRelated
+          ref="relatedRef"
+          :partner-id="route.params.id"
+          :phones="[partnerData.phone_number, partnerData.additional_phone_number]"
+        />
       </template>
 
       <el-empty v-else-if="!loading" :description="$t('Kiritilmagan')" />
