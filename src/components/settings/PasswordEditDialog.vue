@@ -2,6 +2,19 @@
   <el-dialog v-model="dialogVisible" :title="$t('changePasswordTitle')" width="500">
     <div class="demo-input-with-icon">
       <div class="input-group">
+        <span class="label">{{ $t('currentPassword') }}</span>
+        <div class="input-container">
+          <el-input
+            v-model="localForm.oldPassword"
+            type="password"
+            :placeholder="$t('currentPassword')"
+            show-password
+            autocomplete="current-password"
+          />
+        </div>
+      </div>
+
+      <div class="input-group">
         <span class="label">{{ $t('password') }}</span>
         <div class="input-container">
           <el-input
@@ -55,7 +68,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save', formData: { password: string }): void
+  (e: 'save', formData: { password: string; old_password: string }): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -64,10 +77,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const localForm = ref({
-  password: '',
-  confirmPassword: '',
-})
+const emptyForm = () => ({ oldPassword: '', password: '', confirmPassword: '' })
+const localForm = ref(emptyForm())
 
 const errorMessage = ref('')
 
@@ -86,16 +97,18 @@ watch(dialogVisible, (newVal) => {
 })
 
 const handleCancel = () => {
-  localForm.value = {
-    password: '',
-    confirmPassword: '',
-  }
+  localForm.value = emptyForm()
   errorMessage.value = ''
   dialogVisible.value = false
 }
 
 const handleSave = () => {
   // Validatsiya
+  if (!localForm.value.oldPassword) {
+    errorMessage.value = "Joriy maxfiy so'zni kiriting!"
+    return
+  }
+
   if (!localForm.value.password) {
     errorMessage.value = "Maxfiy so'z kiritilmagan!"
     return
@@ -110,15 +123,12 @@ const handleSave = () => {
   errorMessage.value = ''
 
   // Emit to the parent
+  // Forma tozalanmaydi: joriy parol noto'g'ri bo'lsa, qayta yozish oson bo'lsin.
+  // Muvaffaqiyatda sahifa qayta yuklanadi
   emit('save', {
     password: localForm.value.password,
+    old_password: localForm.value.oldPassword,
   })
-
-  // Reset the form
-  localForm.value = {
-    password: '',
-    confirmPassword: '',
-  }
 }
 </script>
 

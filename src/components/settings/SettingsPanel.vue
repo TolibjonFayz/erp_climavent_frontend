@@ -187,6 +187,7 @@ import { onMounted, ref, computed } from 'vue'
 import { getCookie } from '@/utils/cookies'
 import { useUsersStore } from '@/stores/user'
 import { logoutSession } from '@/api/client'
+import { errorText } from '@/utils/errorText'
 import i18n from '@/i18n'
 
 const changePasswordDialog = ref(false)
@@ -340,18 +341,23 @@ const handleSaveUsername = async (formData: any) => {
   }
 }
 
-const handleSavePassword = async (formData: { password: string }) => {
-  updatePasswordLoading.value = true
+const handleSavePassword = async (formData: { password: string; old_password: string }) => {
   const userId = localStorage.getItem('userid')
-  if (userId) {
+  if (!userId) return
+  updatePasswordLoading.value = true
+  try {
     await usersStore.updateUserPassword(userId, formData)
     ElNotification({
       title: "Maxfiy so'z muvaffaqiyatli yangilandi!",
       type: 'success',
     })
     changePasswordDialog.value = false
-    updatePasswordLoading.value = false
     setTimeout(() => location.reload(), 1500)
+  } catch (error) {
+    // Masalan, joriy parol noto'g'ri — dialog ochiq qoladi
+    ElMessage.error(errorText(error, "Maxfiy so'z yangilanmadi"))
+  } finally {
+    updatePasswordLoading.value = false
   }
 }
 
