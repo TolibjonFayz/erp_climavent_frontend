@@ -166,6 +166,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
@@ -205,7 +206,7 @@ async function loadSummary() {
   try {
     summary.value = await amoStore.getRecordingsSummary()
   } catch (err) {
-    ElMessage.error(err?.response?.data?.message || err?.message)
+    ElMessage.error(errorText(err))
   }
 }
 
@@ -262,7 +263,7 @@ async function startHistory() {
     historyBusy.value = true
     pollHistory()
   } catch (err) {
-    ElMessage.error(err?.response?.data?.message || err?.message)
+    ElMessage.error(errorText(err))
   }
 }
 
@@ -309,7 +310,7 @@ async function load() {
   } catch (err) {
     items.value = []
     total.value = 0
-    ElMessage.error(err?.response?.data?.message || err?.message)
+    ElMessage.error(errorText(err))
   } finally {
     loading.value = false
   }

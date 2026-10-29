@@ -54,7 +54,7 @@
           class="nav-item"
           :class="{ active: props.activePath === menu.key }"
         >
-          <a :href="menu.href" class="nav-link" :title="navTitle(menu)" @click="closeMobile">
+          <RouterLink :to="menu.href" class="nav-link" :title="navTitle(menu)" @click="closeMobile">
             <i class="icon" :class="menu.icon"></i>
             <span class="nav-text" :class="{ multiline: menu.key === 'customers' }">
               {{ $t(menu.text) }}
@@ -76,12 +76,50 @@
                 {{ badge.count }}
               </span>
             </span>
-          </a>
+          </RouterLink>
         </li>
       </ul>
 
+    </nav>
+
+    <!-- Tizim guruhi: har doim pastda, ish bo'limlaridan ajralgan — Sozlamalar va tungi rejim -->
+    <div class="sidebar-system">
+      <!-- Umumiy qidiruv (Ctrl+K) -->
+      <div class="nav-item">
+        <button
+          type="button"
+          class="nav-link theme-toggle"
+          :title="`${$t('gsTitle')} (Ctrl+K)`"
+          @click="openSearch"
+        >
+          <el-icon class="icon"><Search /></el-icon>
+          <span class="nav-text">{{ $t('gsTitle') }}</span>
+          <kbd v-if="!showCollapsed && !isMobile" class="nav-kbd">Ctrl K</kbd>
+        </button>
+      </div>
+      <!-- Bildirishnomalar: e'lonlar, yangi vazifalar, tasdiq so'rovlari -->
+      <div class="nav-item">
+        <button
+          type="button"
+          class="nav-link theme-toggle"
+          :title="$t('notifTitle')"
+          @click="openNotifications"
+        >
+          <el-icon class="icon"><Bell /></el-icon>
+          <span class="nav-text">{{ $t('notifTitle') }}</span>
+          <span v-if="unreadCount" class="task-badges" :class="{ stacked: showCollapsed }">
+            <span class="task-badge badge-notif">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+          </span>
+        </button>
+      </div>
+      <div class="nav-item" :class="{ active: props.activePath === 'settings' }">
+        <RouterLink to="/settings" class="nav-link" :title="$t('settings')" @click="closeMobile">
+          <el-icon class="icon el-nav-icon"><Setting /></el-icon>
+          <span class="nav-text">{{ $t('settings') }}</span>
+        </RouterLink>
+      </div>
       <!-- Tungi/kunduzgi rejim (composables/useTheme.js) -->
-      <div class="nav-item theme-item">
+      <div class="nav-item">
         <button
           type="button"
           class="nav-link theme-toggle"
@@ -92,10 +130,10 @@
           <span class="nav-text">{{ $t(isDark ? 'themeLight' : 'themeToggle') }}</span>
         </button>
       </div>
-    </nav>
+    </div>
 
     <!-- User profile -->
-    <div class="user-profile" v-loading="loading">
+    <RouterLink to="/settings" class="user-profile" :title="$t('settings')" v-loading="loading" @click="closeMobile">
       <div class="user-avatar">
         <img :src="avatarUrl" alt="User profile" />
         <div class="status-dot"></div>
@@ -104,17 +142,21 @@
         <h4>{{ currentUser?.firstname }} {{ currentUser?.lastname }}</h4>
         <p>{{ currentUser?.username }}</p>
       </div>
-    </div>
+    </RouterLink>
   </aside>
+
+  <NotificationsDrawer v-model="notificationsOpen" />
 </template>
 
 <script setup lang="ts">
 import { useUsersStore } from '@/stores/user'
 import { useTasksStore } from '@/stores/tasks'
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSidebar } from '@/composables/useSidebar'
 import { useTheme } from '@/composables/useTheme'
+import { useNotifications } from '@/composables/useNotifications'
+import NotificationsDrawer from './NotificationsDrawer.vue'
 
 type CurrentUser = {
   profile_image?: string | null
@@ -136,6 +178,17 @@ const usersStore = useUsersStore()
 const tasksStore = useTasksStore()
 const { t } = useI18n()
 const { isDark, toggleTheme } = useTheme()
+const { unreadCount, start: startNotifications } = useNotifications()
+const notificationsOpen = ref(false)
+const openGlobalSearch = inject('openGlobalSearch', () => {})
+const openSearch = () => {
+  closeMobile()
+  openGlobalSearch()
+}
+const openNotifications = () => {
+  closeMobile()
+  notificationsOpen.value = true
+}
 const loading = ref(false)
 
 const { isCollapsed, isMobile, isMobileOpen, toggleCollapsed, openMobile, closeMobile } =
@@ -211,6 +264,14 @@ const menus = computed(() => {
       show: hasAccess('loyiha'),
     },
     {
+      key: 'sklad',
+      href: '/sklad',
+      icon: 'sklad-icon',
+      title: 'skladtext',
+      text: 'skladtext',
+      show: hasAccess('sklad'),
+    },
+    {
       key: 'attendance',
       href: '/attendance',
       icon: 'project-icon',
@@ -225,14 +286,6 @@ const menus = computed(() => {
       title: 'tasks',
       text: 'tasks',
       show: hasAccess('tasks'),
-    },
-    {
-      key: 'settings',
-      href: '/settings',
-      icon: 'calendar-icon',
-      title: 'settings',
-      text: 'settings',
-      show: true,
     },
     {
       key: 'admin',
@@ -294,6 +347,7 @@ onMounted(async () => {
   } catch {
     // hisoblagich ikkinchi darajali — xatoni jimgina o'tkazamiz
   }
+  startNotifications()
 })
 </script>
 
@@ -580,10 +634,16 @@ $accent-dark: #2f7fe0;
   box-shadow: 0 6px 16px rgba(64, 158, 255, 0.35);
 }
 
-.theme-item {
-  margin-top: 8px;
-  padding-top: 8px;
+.sidebar-system {
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  padding-top: 10px;
   border-top: 1px solid var(--ui-line);
+}
+
+.el-nav-icon {
+  font-size: 18px;
+  width: 20px;
 }
 
 .theme-toggle {
@@ -600,6 +660,17 @@ $accent-dark: #2f7fe0;
 }
 
 /* ─── Vazifalar hisoblagichi ──────────────────────────────── */
+.nav-kbd {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 1px 6px;
+  font-family: inherit;
+  font-size: 10px;
+  color: var(--ui-muted);
+  border: 1px solid var(--ui-line);
+  border-radius: 4px;
+}
+
 .task-badges {
   display: flex;
   align-items: center;
@@ -635,6 +706,9 @@ $accent-dark: #2f7fe0;
   }
   &.badge-done {
     background: #67c23a;
+  }
+  &.badge-notif {
+    background: #ef4444;
   }
   /* Tasdiq kutayotganlar — e'tibor tortadi */
   &.badge-pending {
@@ -678,6 +752,9 @@ $accent-dark: #2f7fe0;
   &.loyiha-icon::before {
     content: '📐';
   }
+  &.sklad-icon::before {
+    content: '📦';
+  }
   &.oppenents-icon::before {
     content: '⚔️';
   }
@@ -702,6 +779,8 @@ $accent-dark: #2f7fe0;
 
 /* User profile */
 .user-profile {
+  text-decoration: none;
+  color: inherit;
   padding: 12px 14px;
   margin: 0 12px 16px;
   border-radius: 16px;

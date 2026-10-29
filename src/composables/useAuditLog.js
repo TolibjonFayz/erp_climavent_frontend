@@ -1,7 +1,8 @@
 import { ref } from 'vue'
-import axios from 'axios'
+import apiClient from '@/api/client'
 
-const BASE = `${import.meta.env.VITE_APP_BASE_URL}audit-logs`
+// Backend faqat adminga ochiq — apiClient token qo'shadi va javob tanasini qaytaradi
+const BASE = 'audit-logs'
 
 export function useAuditLog() {
   const auditLogs = ref([])
@@ -14,7 +15,7 @@ export function useAuditLog() {
   async function fetchLogs(params = {}) {
     try {
       loading.value = true
-      const { data } = await axios.get(`${BASE}/filter`, { params })
+      const data = await apiClient.get(`${BASE}/filter`, { params })
       auditLogs.value = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
       total.value = data?.total ?? auditLogs.value.length
     } catch (e) {
@@ -29,7 +30,7 @@ export function useAuditLog() {
   // Backend: GET /audit-logs/stats
   async function fetchStats() {
     try {
-      const { data } = await axios.get(`${BASE}/stats`)
+      const data = await apiClient.get(`${BASE}/stats`)
       stats.value = {
         total: data?.total ?? 0,
         today: data?.today ?? 0,
@@ -47,7 +48,7 @@ export function useAuditLog() {
   // Backend: GET /audit-logs/target/:username
   async function fetchByTarget(username) {
     try {
-      const { data } = await axios.get(`${BASE}/target/${username}`)
+      const data = await apiClient.get(`${BASE}/target/${username}`)
       return Array.isArray(data) ? data : (data?.data ?? [])
     } catch (e) {
       console.error('Target logs xatolik:', e)
@@ -60,7 +61,7 @@ export function useAuditLog() {
   async function addAuditLog({ action, message, meta = null, type = 'info', target_id = null }) {
     try {
       const admin_id = Number(localStorage.getItem('userid'))
-      const { data } = await axios.post(`${BASE}/create`, {
+      const data = await apiClient.post(`${BASE}/create`, {
         admin_id,
         action,
         message,
@@ -81,7 +82,7 @@ export function useAuditLog() {
   // Backend: DELETE /audit-logs/delete
   async function clearAllLogs() {
     try {
-      await axios.delete(`${BASE}/delete`)
+      await apiClient.delete(`${BASE}/delete`)
     } catch (e) {
       console.error('Loglarni tozalashda xatolik:', e)
     } finally {

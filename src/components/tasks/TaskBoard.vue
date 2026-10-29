@@ -143,7 +143,7 @@
             v-for="task in filteredTasks(column.status)"
             :key="task.id"
             class="tb-card"
-            :class="[`is-${task.priority}`, { 'is-pending': !!task.pending_status }]"
+            :class="[`is-${task.priority}`, `st-${task.status}`, { 'is-pending': !!task.pending_status }]"
             draggable="true"
             @dragstart="onDragStart(task.id)"
             @dragend="onDragEnd"
@@ -522,12 +522,14 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { ref, reactive, computed, onMounted } from 'vue'
 import * as XLSX from 'xlsx'
 import { useTasksStore } from '@/stores/tasks'
 import { useUsersStore } from '@/stores/user'
 import { formatDateRelative } from '@/composables/useDateFormatter'
 import { ElMessage } from 'element-plus'
+import { undoToast } from '@/utils/undoToast'
 import {
   Plus,
   Search,
@@ -731,12 +733,21 @@ const onDrop = (status) => {
   else moveTask(id, status)
 }
 
-const moveTask = async (id, status) => {
+const moveTask = async (id, status, { undoable = true } = {}) => {
+  const prev = sourceTasks.value.find((x) => x.id === id)?.status
   try {
     await tasksStore.updateStatus(id, status)
     await refresh()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('xatolikYuzBerdi'))
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
+    return
+  }
+  if (undoable && prev && prev !== status) {
+    undoToast({
+      message: t('taskMovedTo', { status: t(statusLabelKey(status)) }),
+      undoLabel: t('undoAction'),
+      onUndo: () => moveTask(id, prev, { undoable: false }),
+    })
   }
 }
 
@@ -775,7 +786,7 @@ const sendRequest = async () => {
     requestDialog.value = false
     await refresh()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('xatolikYuzBerdi'))
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -785,7 +796,7 @@ const cancelRequest = async (task) => {
     ElMessage.success(t('taskRequestCancelled'))
     await refresh()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('xatolikYuzBerdi'))
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -795,7 +806,7 @@ const approve = async (task) => {
     ElMessage.success(t('taskApproved'))
     await refresh()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('xatolikYuzBerdi'))
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -817,7 +828,7 @@ const confirmReject = async () => {
     rejectDialog.value = false
     await refresh()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('xatolikYuzBerdi'))
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -995,8 +1006,8 @@ const handleSubmit = async () => {
     }
     dialogVisible.value = false
     await refresh()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -1005,8 +1016,8 @@ const handleDelete = async (id) => {
     await tasksStore.deleteTask(id)
     ElMessage.success(t('taskDeleted'))
     await refresh()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -1056,9 +1067,10 @@ onMounted(async () => {
 }
 .tb-col {
   min-width: 0;
-  background: var(--ui-surface-2);
+  padding: 6px;
+  background: var(--ui-surface-3);
   border: 1px solid var(--ui-line);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-lg);
   transition:
     border-color 0.15s,
     background 0.15s;
@@ -1073,31 +1085,28 @@ onMounted(async () => {
   align-items: center;
   gap: 8px;
   min-height: 48px;
-  padding: 8px 16px;
-  background: var(--ui-surface);
-  border-bottom: 1px solid var(--ui-line);
-  border-radius: var(--ui-radius) var(--ui-radius) 0 0;
+  padding: 8px 12px;
 
   h3 {
     flex: 1;
     margin: 0;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     color: var(--ui-ink);
   }
 }
 .tb-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
   flex-shrink: 0;
-  background: var(--ui-line-strong);
+  background: var(--ui-acc-yellow);
 
   &.is-in_progress {
-    background: var(--ui-warn);
+    background: var(--ui-acc-green);
   }
   &.is-done {
-    background: var(--ui-good);
+    background: var(--ui-acc-ink);
   }
 }
 .tb-count {
@@ -1131,10 +1140,10 @@ onMounted(async () => {
 /* ─── Vazifa kartasi ─── */
 .tb-card {
   position: relative;
-  padding: 12px 14px 10px 16px;
+  padding: 14px 16px 12px 18px;
   background: var(--ui-surface);
   border: 1px solid var(--ui-line);
-  border-radius: 8px;
+  border-radius: 18px;
   cursor: grab;
   transition:
     border-color 0.15s,
@@ -1167,6 +1176,78 @@ onMounted(async () => {
   }
   &.is-pending {
     border-color: var(--ui-warn-line);
+  }
+
+  /* Bosqich rangi: Bajarish kerak — sariq, Jarayonda — yashil, Bajarildi — oddiy karta */
+  &.st-todo,
+  &.st-in_progress {
+    --tb-on: #1f1b14;
+    color: var(--tb-on);
+    border-color: transparent;
+  }
+  &.st-todo {
+    background: var(--ui-acc-yellow);
+  }
+  &.st-in_progress {
+    --tb-on: #fff;
+    background: var(--ui-acc-green);
+  }
+  &.st-todo::before,
+  &.st-in_progress::before {
+    display: none;
+  }
+  &.st-todo.is-pending,
+  &.st-in_progress.is-pending {
+    box-shadow: 0 0 0 2px var(--ui-warn-line);
+  }
+  &.st-todo .tb-card__title,
+  &.st-in_progress .tb-card__title,
+  &.st-todo .tb-assignee,
+  &.st-in_progress .tb-assignee {
+    color: var(--tb-on);
+  }
+  &.st-todo .tb-card__desc,
+  &.st-in_progress .tb-card__desc,
+  &.st-todo .tb-created,
+  &.st-in_progress .tb-created,
+  &.st-todo .tb-deadline,
+  &.st-in_progress .tb-deadline {
+    color: var(--tb-on);
+    opacity: 0.78;
+  }
+  &.st-todo .tb-deadline.deadline-overdue,
+  &.st-in_progress .tb-deadline.deadline-overdue {
+    font-weight: 700;
+    opacity: 1;
+  }
+  &.st-todo .tb-avatar,
+  &.st-in_progress .tb-avatar {
+    color: #1f1b14;
+    background: rgba(255, 255, 255, 0.85);
+  }
+  &.st-todo .tb-card__foot,
+  &.st-in_progress .tb-card__foot {
+    border-top-color: rgba(127, 127, 127, 0.28);
+  }
+  &.st-todo :deep(.el-tag),
+  &.st-in_progress :deep(.el-tag) {
+    color: #1f1b14;
+    background: rgba(255, 255, 255, 0.78);
+    border-color: transparent;
+  }
+  &.st-todo :deep(.el-button.is-text),
+  &.st-in_progress :deep(.el-button.is-text) {
+    color: var(--tb-on);
+  }
+  &.st-todo :deep(.el-button:not(.is-text)),
+  &.st-in_progress :deep(.el-button:not(.is-text)) {
+    color: #1f1b14;
+    background: rgba(255, 255, 255, 0.88);
+    border-color: transparent;
+  }
+  &.st-todo :deep(.el-button--danger:not(.is-text)),
+  &.st-in_progress :deep(.el-button--danger:not(.is-text)) {
+    color: var(--ui-bad);
   }
 }
 .tb-card__top {

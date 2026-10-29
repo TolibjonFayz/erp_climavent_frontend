@@ -22,6 +22,7 @@
         :key="k.key"
         :label="$t(k.label)"
         :tone="k.tone"
+        :accent="k.accent"
         :value="k.value"
         :sub="k.sub"
       />
@@ -307,6 +308,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUsersStore } from '@/stores/user'
 import { usePartnersStore } from '@/stores/partners'
@@ -350,14 +352,14 @@ const month = ref(`${now.getFullYear()}-${pad(now.getMonth() + 1)}`)
 const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
 
 const PALETTE = [
-  '#2a78d6',
-  '#15803d',
-  '#d97706',
-  '#b91c1c',
-  '#64748b',
-  '#7c3aed',
-  '#0d9488',
-  '#334155',
+  '#2b6b4f',
+  '#f2c230',
+  '#c8431f',
+  '#1f1b14',
+  '#8a8272',
+  '#4e9a7a',
+  '#e08a3c',
+  '#55cdf8',
 ]
 
 // ─── helpers ───
@@ -384,6 +386,7 @@ const kpis = computed(() => {
   return [
     {
       key: 'emp',
+      accent: 'ink',
       label: 'kpiEmployees',
       value: fmtNum(users.length),
       sub: t('bsAdminsSub', { n: admins }),
@@ -397,6 +400,7 @@ const kpis = computed(() => {
     { key: 'trips', label: 'kpiTripsMonth', value: fmtNum(tripsMonth), sub: monthCaption },
     {
       key: 'contracts',
+      accent: 'green',
       label: 'kpiContractsMonth',
       tone: 'good',
       value: fmtNum(contractsMonth),
@@ -404,6 +408,7 @@ const kpis = computed(() => {
     },
     {
       key: 'present',
+      accent: 'yellow',
       label: 'kpiPresentToday',
       tone: 'good',
       value: fmtNum(presentToday.value),
@@ -413,6 +418,7 @@ const kpis = computed(() => {
       key: 'taskrate',
       label: 'kpiTaskRate',
       tone: taskRate < 50 && tasks.length ? 'warn' : '',
+      accent: taskRate < 50 && tasks.length ? 'red' : '',
       value: taskRate + '%',
       sub: t('bsTasksSub', { done: doneTasks, total: tasks.length }),
     },
@@ -585,8 +591,8 @@ const saveTarget = async () => {
     ElMessage.success(t('targetSaved'))
     targetDialog.value = false
     await bossStore.getTargets(month.value)
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -608,8 +614,8 @@ const saveAnnouncement = async () => {
     ElMessage.success(t('announcementCreated'))
     announcementDialog.value = false
     await bossStore.getAnnouncements()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 const removeAnnouncement = async (id) => {
@@ -617,8 +623,8 @@ const removeAnnouncement = async (id) => {
     await bossStore.deleteAnnouncement(id)
     ElMessage.success(t('announcementDeleted'))
     await bossStore.getAnnouncements()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -628,8 +634,8 @@ const toggleAdmin = async (row) => {
     await bossStore.setAdmin(row.id, !row.is_admin)
     ElMessage.success(t('adminChanged'))
     await usersStore.getAllUsers()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -658,15 +664,16 @@ onMounted(async () => {
   align-items: center;
   gap: 10px;
   margin: 0;
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.25;
   color: var(--ui-ink);
 }
 .bs-kpis {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 /* ─── E'lonlar ─── */
@@ -764,7 +771,7 @@ onMounted(async () => {
     font-variant-numeric: tabular-nums;
   }
   .is-top1 {
-    color: #d97706;
+    color: #c58a00;
   }
   .is-top2 {
     color: var(--ui-muted);
@@ -789,23 +796,23 @@ onMounted(async () => {
   color: var(--ui-ink);
 }
 .bs-avatar {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   font-size: 12px;
   font-weight: 700;
-  color: var(--ui-link);
-  background: var(--ui-link-soft);
+  color: #1f1b14;
+  background: var(--ui-acc-yellow);
   border-radius: 50%;
 }
 .bs-target {
   min-width: 110px;
 }
 .bs-bar {
-  height: 6px;
+  height: 8px;
   margin-bottom: 4px;
   overflow: hidden;
   background: var(--ui-line-soft);
@@ -813,12 +820,12 @@ onMounted(async () => {
 }
 .bs-bar__fill {
   height: 100%;
-  background: var(--ui-link);
+  background: var(--ui-acc-ink);
   border-radius: 999px;
   transition: width 0.3s ease;
 
   &.is-done {
-    background: var(--ui-good);
+    background: var(--ui-acc-green);
   }
 }
 .bs-target__text {
@@ -891,7 +898,7 @@ onMounted(async () => {
 .bs-dot {
   width: 8px;
   height: 8px;
-  border-radius: 2px;
+  border-radius: 50%;
   flex-shrink: 0;
 }
 
@@ -919,9 +926,9 @@ onMounted(async () => {
   position: relative;
   width: 60%;
   min-height: 2px;
-  background: var(--ui-good);
-  border-radius: 3px 3px 0 0;
-  opacity: 0.85;
+  background: var(--ui-acc-green);
+  border-radius: 8px 8px 2px 2px;
+  opacity: 1;
   transition: height 0.3s ease;
 }
 .bs-trend__val {
@@ -988,8 +995,14 @@ onMounted(async () => {
   flex-direction: column;
   gap: 2px;
   padding: 10px 12px;
-  border: 1px solid var(--ui-line);
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+}
+.bs-today__cell.is-good {
+  background: var(--ui-good-soft);
+}
+.bs-today__cell.is-bad {
+  background: var(--ui-bad-soft);
 }
 .bs-today__num {
   font-size: 22px;
@@ -1035,7 +1048,7 @@ onMounted(async () => {
 }
 .bs-hbar__track {
   flex: 1;
-  height: 8px;
+  height: 10px;
   overflow: hidden;
   background: var(--ui-line-soft);
   border-radius: 999px;
@@ -1046,7 +1059,7 @@ onMounted(async () => {
   transition: width 0.3s ease;
 
   &.is-link {
-    background: var(--ui-link);
+    background: var(--ui-acc-ink);
   }
 }
 .bs-hbar__val {

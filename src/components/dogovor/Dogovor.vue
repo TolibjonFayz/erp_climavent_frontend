@@ -288,11 +288,46 @@
       class="dogovor-dialog"
       destroy-on-close
     >
+      <!-- PDF'dan avtomatik to'ldirish (faqat yangi shartnoma) -->
+      <div v-if="!editing" class="pdf-fill">
+        <el-upload
+          drag
+          :show-file-list="false"
+          accept=".pdf,application/pdf"
+          :before-upload="handlePdfFill"
+          :disabled="pdfLoading"
+        >
+          <div v-loading="pdfLoading" class="pdf-fill-zone">
+            <el-icon class="pdf-fill-icon"><Document /></el-icon>
+            <div class="pdf-fill-title">{{ $t('dogovorPdfDrop') }}</div>
+            <div class="pdf-fill-hint">{{ $t('dogovorPdfHint') }}</div>
+          </div>
+        </el-upload>
+        <el-alert
+          v-if="pdfResult"
+          :type="pdfResult.warnings.length ? 'warning' : 'success'"
+          :closable="false"
+          show-icon
+          class="pdf-fill-result"
+        >
+          <template #title>
+            {{ $t('dogovorPdfFilled', { count: pdfResult.count, file: pdfResult.file }) }}
+          </template>
+          <ul v-if="pdfResult.warnings.length" class="pdf-fill-warnings">
+            <li v-for="w in pdfResult.warnings" :key="w">{{ w }}</li>
+          </ul>
+        </el-alert>
+      </div>
+
       <el-form ref="formRef" :model="form" :rules="formRules" label-position="top">
         <el-divider content-position="left">{{ $t('dogovorSectionMain') }}</el-divider>
         <el-row :gutter="18">
           <el-col :span="8">
-            <el-form-item :label="$t('dogovorNumberLabel')" prop="dogovor_number">
+            <el-form-item
+              :label="$t('dogovorNumberLabel')"
+              prop="dogovor_number"
+              :class="pdfMark('dogovor_number')"
+            >
               <el-input-number
                 v-model="form.dogovor_number"
                 :min="1"
@@ -302,7 +337,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item :label="$t('dogovorDateLabel')" prop="dogovor_date">
+            <el-form-item
+              :label="$t('dogovorDateLabel')"
+              prop="dogovor_date"
+              :class="pdfMark('dogovor_date')"
+            >
               <el-date-picker
                 v-model="form.dogovor_date"
                 type="date"
@@ -326,17 +365,29 @@
           </el-col>
 
           <el-col :span="12">
-            <el-form-item :label="$t('dogovorClientLabel')" prop="client_name">
+            <el-form-item
+              :label="$t('dogovorClientLabel')"
+              prop="client_name"
+              :class="pdfMark('client_name')"
+            >
               <el-input v-model="form.client_name" maxlength="200" />
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item :label="$t('dogovorInnLabel')" prop="client_inn">
+            <el-form-item
+              :label="$t('dogovorInnLabel')"
+              prop="client_inn"
+              :class="pdfMark('client_inn')"
+            >
               <el-input v-model="form.client_inn" maxlength="20" />
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item :label="$t('dogovorPhoneLabel')" prop="client_phone">
+            <el-form-item
+              :label="$t('dogovorPhoneLabel')"
+              prop="client_phone"
+              :class="pdfMark('client_phone')"
+            >
               <el-input v-model="form.client_phone" maxlength="40" />
             </el-form-item>
           </el-col>
@@ -347,7 +398,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item :label="$t('dogovorSumLabel')" prop="dogovor_sum">
+            <el-form-item
+              :label="$t('dogovorSumLabel')"
+              prop="dogovor_sum"
+              :class="pdfMark('dogovor_sum')"
+            >
               <el-input-number
                 v-model="form.dogovor_sum"
                 :min="0"
@@ -379,7 +434,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item :label="$t('dogovorPrepaymentLabel')" prop="prepayment_percent">
+            <el-form-item
+              :label="$t('dogovorPrepaymentLabel')"
+              prop="prepayment_percent"
+              :class="pdfMark('prepayment_percent')"
+            >
               <el-input-number
                 v-model="form.prepayment_percent"
                 :min="0"
@@ -390,7 +449,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item :label="$t('dogovorProductionDaysLabel')" prop="production_days">
+            <el-form-item
+              :label="$t('dogovorProductionDaysLabel')"
+              prop="production_days"
+              :class="pdfMark('production_days')"
+            >
               <el-input-number
                 v-model="form.production_days"
                 :min="0"
@@ -404,44 +467,72 @@
         <el-divider content-position="left">{{ $t('dogovorSectionRequisites') }}</el-divider>
         <el-row :gutter="18">
           <el-col :span="12">
-            <el-form-item :label="$t('dogovorContactNameLabel')" prop="contact_name">
+            <el-form-item
+              :label="$t('dogovorContactNameLabel')"
+              prop="contact_name"
+              :class="pdfMark('contact_name')"
+            >
               <el-input v-model="form.contact_name" maxlength="120" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('dogovorContactPositionLabel')" prop="contact_position">
+            <el-form-item
+              :label="$t('dogovorContactPositionLabel')"
+              prop="contact_position"
+              :class="pdfMark('contact_position')"
+            >
               <el-input v-model="form.contact_position" maxlength="120" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item :label="$t('dogovorAddressLabel')" prop="client_address">
+            <el-form-item
+              :label="$t('dogovorAddressLabel')"
+              prop="client_address"
+              :class="pdfMark('client_address')"
+            >
               <el-input v-model="form.client_address" type="textarea" :rows="2" maxlength="400" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('dogovorBankLabel')" prop="client_bank">
+            <el-form-item
+              :label="$t('dogovorBankLabel')"
+              prop="client_bank"
+              :class="pdfMark('client_bank')"
+            >
               <el-input v-model="form.client_bank" maxlength="200" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('dogovorAccountLabel')" prop="client_account">
+            <el-form-item
+              :label="$t('dogovorAccountLabel')"
+              prop="client_account"
+              :class="pdfMark('client_account')"
+            >
               <el-input v-model="form.client_account" maxlength="40" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('dogovorMfoLabel')" prop="client_mfo">
+            <el-form-item
+              :label="$t('dogovorMfoLabel')"
+              prop="client_mfo"
+              :class="pdfMark('client_mfo')"
+            >
               <el-input v-model="form.client_mfo" maxlength="20" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('dogovorVatCodeLabel')" prop="client_vat_code">
+            <el-form-item
+              :label="$t('dogovorVatCodeLabel')"
+              prop="client_vat_code"
+              :class="pdfMark('client_vat_code')"
+            >
               <el-input v-model="form.client_vat_code" maxlength="30" />
             </el-form-item>
           </el-col>
         </el-row>
 
         <el-divider content-position="left">{{ $t('dogovorSectionItems') }}</el-divider>
-        <table class="items-editor">
+        <table class="items-editor" :class="{ 'pdf-filled-table': pdfFilled.has('items') }">
           <thead>
             <tr>
               <th style="width: 36px">№</th>
@@ -551,12 +642,15 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
+import { useQueryPrefill } from '@/composables/useQueryPrefill'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
 import {
   Delete,
+  Document,
   Download,
   Edit,
   Lock,
@@ -574,6 +668,7 @@ import { fmtNum, formatDate, telHref } from '@/utils/format'
 import { useDogovorStore } from '@/stores/dogovor'
 import { useUsersStore } from '@/stores/user'
 import { printDogovorDocument } from '@/utils/dogovorPdf'
+import { readDogovorPdf } from '@/utils/dogovorPdfImport'
 
 const { t } = useI18n()
 const dogovorStore = useDogovorStore()
@@ -627,6 +722,16 @@ const filters = reactive({
 const currentPage = ref(1)
 const pageSize = ref(20)
 const moreFilters = ref(false)
+// Umumiy qidiruvdan raqam bilan kelinganda (?n=...) filtrni ochib to'ldiramiz
+useQueryPrefill('n', (v) => {
+  filters.number = v
+  moreFilters.value = true
+})
+// Raqamlar har yili qaytadan boshlanadi — sana bilan aniq shartnoma topiladi (?d=dd.mm.yyyy)
+useQueryPrefill('d', (v) => {
+  filters.date = v
+  moreFilters.value = true
+})
 
 // "Ko'proq filtr" ortidagi maydonlar
 const extraFilters = [
@@ -775,7 +880,7 @@ const handleBeforeUpload = async (file) => {
       uploadError.value = `${t('dogovorImportPartialErrors')}: ${result.errors.slice(0, 5).join('; ')}`
     }
   } catch (error) {
-    uploadError.value = error?.response?.data?.message || error?.message || t('dogovorUploadError')
+    uploadError.value = errorText(error, t('dogovorUploadError'))
   } finally {
     uploadLoading.value = false
   }
@@ -873,14 +978,93 @@ const applyItemsTotal = () => {
   ElMessage.success(t('dogovorItemsTotalApplied'))
 }
 
+// ─── PDF'dan to'ldirish ───
+// PDF'dan kelgan maydonlar sariq belgilanadi — foydalanuvchi tekshirib saqlaydi
+const pdfLoading = ref(false)
+const pdfResult = ref(null)
+const pdfFilled = ref(new Set())
+const pdfMark = (key) => ({ 'pdf-filled': pdfFilled.value.has(key) })
+const PDF_FIELDS = [
+  'dogovor_number',
+  'dogovor_date',
+  'client_name',
+  'client_inn',
+  'client_phone',
+  'client_address',
+  'dogovor_sum',
+  'prepayment_percent',
+  'production_days',
+  'contact_name',
+  'contact_position',
+  'client_bank',
+  'client_account',
+  'client_mfo',
+  'client_vat_code',
+  'items',
+]
+
+const resetPdfState = () => {
+  pdfResult.value = null
+  pdfFilled.value = new Set()
+}
+
+const handlePdfFill = async (file) => {
+  pdfLoading.value = true
+  try {
+    const data = await readDogovorPdf(file)
+    const keys = Object.keys(data).filter((key) => key in form)
+    if (!keys.length) {
+      ElMessage.warning(t('dogovorPdfNothingFound'))
+      return false
+    }
+    // Oldingi PDF'dan qolgan qiymatlar aralashib ketmasin — PDF beradigan maydonlarni tozalaymiz
+    const blank = initialForm()
+    PDF_FIELDS.forEach((key) => {
+      form[key] = blank[key]
+    })
+    keys.forEach((key) => {
+      form[key] = key === 'items' ? data.items.map((i) => ({ ...i })) : data[key]
+    })
+    pdfFilled.value = new Set(keys)
+
+    const warnings = []
+    const missing = ['dogovor_number', 'client_name', 'dogovor_sum'].filter(
+      (k) => !keys.includes(k),
+    )
+    if (missing.length) warnings.push(t('dogovorPdfMissingMain'))
+    const duplicate = dogovors.value.some(
+      (d) =>
+        Number(d.dogovor_number) === Number(form.dogovor_number) &&
+        String(d.dogovor_date).slice(0, 10) === form.dogovor_date,
+    )
+    if (duplicate) warnings.push(t('dogovorPdfDuplicate'))
+    if (
+      form.items.length &&
+      form.dogovor_sum &&
+      Math.abs(itemsTotal.value - form.dogovor_sum) > 1
+    ) {
+      warnings.push(t('dogovorPdfSumMismatch', { items: formatMoney(itemsTotal.value) }))
+    }
+    pdfResult.value = { count: keys.length, file: file.name, warnings }
+    formRef.value?.clearValidate()
+  } catch (error) {
+    ElMessage.error(t(error?.message === 'NO_TEXT' ? 'dogovorPdfNoText' : 'dogovorPdfReadError'))
+  } finally {
+    pdfLoading.value = false
+  }
+  return false
+}
+
 const openCreateDialog = () => {
   editing.value = null
+  resetPdfState()
   Object.assign(form, initialForm())
   dialogVisible.value = true
 }
 
 const openEditDialog = (row) => {
   editing.value = row
+  resetPdfState()
   Object.assign(form, {
     ...initialForm(),
     ...row,
@@ -944,7 +1128,7 @@ const handleSubmit = async () => {
     dialogVisible.value = false
     await dogovorStore.getAllDogovors()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('dogovorMessageSaveError'))
+    ElMessage.error(errorText(error, t('dogovorMessageSaveError')))
   }
 }
 
@@ -954,7 +1138,7 @@ const handleDelete = async (id) => {
     ElMessage.success(t('dogovorMessageDeleted'))
     await dogovorStore.getAllDogovors()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('dogovorMessageDeleteError'))
+    ElMessage.error(errorText(error, t('dogovorMessageDeleteError')))
   }
 }
 
@@ -962,8 +1146,8 @@ onMounted(async () => {
   try {
     if (!usersStore.currentUser) await usersStore.getUserInfo(currentUserId)
     await dogovorStore.getAllDogovors()
-  } catch {
-    ElMessage.error(t('dogovorMessageLoadError'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('dogovorMessageLoadError')))
   }
 })
 </script>
@@ -1136,5 +1320,64 @@ onMounted(async () => {
 
 :deep(.dogovor-dialog .el-dialog) {
   border-radius: 16px;
+}
+
+/* ─── PDF'dan to'ldirish ─── */
+.pdf-fill {
+  margin-bottom: 8px;
+
+  :deep(.el-upload-dragger) {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--ui-surface-2);
+  }
+}
+
+.pdf-fill-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.pdf-fill-icon {
+  font-size: 26px;
+  color: var(--ui-link);
+  margin-bottom: 2px;
+}
+
+.pdf-fill-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ui-ink);
+}
+
+.pdf-fill-hint {
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+
+.pdf-fill-result {
+  margin-top: 10px;
+}
+
+.pdf-fill-warnings {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+/* PDF'dan kelgan qiymat — tekshirish kerakligini ko'rsatadi.
+   main.css inputlarga !important beradi, shuning uchun bu yerda ham kerak (fokusdan tashqari) */
+.pdf-filled {
+  :deep(.el-input__wrapper:not(.is-focus)),
+  :deep(.el-textarea__inner:not(:focus)),
+  :deep(.el-select__wrapper:not(.is-focused)) {
+    background-color: var(--ui-warn-soft) !important;
+    box-shadow: 0 0 0 1px var(--ui-warn-line) inset !important;
+  }
+}
+
+.pdf-filled-table td {
+  background: var(--ui-warn-soft);
 }
 </style>

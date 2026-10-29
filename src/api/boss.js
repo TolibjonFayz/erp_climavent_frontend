@@ -10,6 +10,8 @@ export default {
   createAnnouncement: (payload) => apiClient.post('boss/announcements', payload),
   getAnnouncements: () => apiClient.get('boss/announcements'),
   deleteAnnouncement: (id) => apiClient.delete(`boss/announcements/${id}`),
+  // Barcha xodimlar o'qiydigan e'lonlar lentasi (bildirishnoma qo'ng'irog'i)
+  getFeed: () => apiClient.get('announcements/feed'),
 
   // Promote / demote
   setAdmin: (userId, isAdmin) => apiClient.patch(`boss/promote/${userId}`, { is_admin: isAdmin }),

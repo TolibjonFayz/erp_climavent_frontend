@@ -23,6 +23,9 @@
       <el-button v-if="isAdmin" :icon="Check" @click="confirmAllDialog = true">
         {{ $t('attConfirmAll') }}
       </el-button>
+      <el-button :icon="Download" :loading="exporting" @click="exportExcel">
+        {{ $t('attExcel') }}
+      </el-button>
       <el-button v-if="!isCurrentMonth" @click="goCurrentMonth">
         {{ $t('attThisMonth') }}
       </el-button>
@@ -128,6 +131,16 @@
                 @click="confirmMonth"
               >
                 {{ $t('attConfirmMonth', { n: pendingDays.length }) }}
+              </el-button>
+            </template>
+            <template v-else-if="isAdmin && selectedTerminal" #actions>
+              <el-button
+                type="primary"
+                size="small"
+                :icon="Plus"
+                @click="openCreateAccount(selectedTerminal)"
+              >
+                {{ $t('camCreateAccount') }}
               </el-button>
             </template>
 
@@ -374,6 +387,15 @@
       </template>
     </el-dialog>
 
+    <!-- Terminal xodimiga ERP akkaunt ochish (admin) — ochilgach kameraga bog'lanadi -->
+    <CreateUserDialog
+      v-if="isAdmin"
+      v-model="createAccountDialog"
+      :prefill="createAccountPrefill"
+      :camera-no="createAccountFor?.employee_no || ''"
+      @created="onAccountCreated"
+    />
+
     <!-- Oyni hamma uchun tasdiqlash (admin) -->
     <ConfirmAllDialog
       v-if="isAdmin"
@@ -441,6 +463,15 @@
                 <el-icon><MagicStick /></el-icon>
                 {{ suggestUser(row).firstname }} {{ suggestUser(row).lastname }}
               </button>
+              <button
+                v-else-if="!row.user_id"
+                type="button"
+                class="cam-suggest"
+                @click="openCreateAccount(row)"
+              >
+                <el-icon><Plus /></el-icon>
+                {{ $t('camCreateAccount') }}
+              </button>
             </template>
           </el-table-column>
         </el-table>
@@ -450,6 +481,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useAttendanceStore } from '@/stores/attendance'
 import { useUsersStore } from '@/stores/user'
@@ -460,15 +492,19 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Download,
   MagicStick,
   VideoCamera,
+  Plus,
 } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import CreateUserDialog from '@/components/admin/CreateUserDialog.vue'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { fmtNum } from '@/utils/format'
 import ConfirmAllDialog from './ConfirmAllDialog.vue'
+import { exportAttendanceXlsx, loadAllEmployees } from './exportAttendance'
 import {
   cameraHours,
   confirmRecord,
@@ -806,8 +842,8 @@ const saveDay = async () => {
     ElMessage.success(t('attendanceSaved'))
     dayDialog.value = false
     await reloadAttendance()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -819,8 +855,8 @@ const resetDay = async () => {
     }
     dayDialog.value = false
     await reloadAttendance()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
 }
 
@@ -870,8 +906,8 @@ const confirmMonth = async () => {
       ),
     )
     ElMessage.success(t('attConfirmMonthDone', { n: created }))
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   } finally {
     confirmingMonth.value = false
     await reloadAttendance()
@@ -903,6 +939,51 @@ const loadData = async () => {
     loadCamera(),
     loadFieldTrips(selectedUserId.value),
   ])
+}
+
+// ─── Excel'ga yuklab olish ───
+// Admin: barcha xodimlar (oylik jadval); xodim: faqat o'zining oyi
+const exporting = ref(false)
+const exportExcel = async () => {
+  exporting.value = true
+  try {
+    let data
+    if (isAdmin.value) {
+      data = await loadAllEmployees({ month: monthKey.value, employees: employees.value })
+    } else {
+      const me = usersStore.currentUser
+      data = {
+        people: [
+          {
+            id: currentUserId,
+            name: `${me?.firstname || ''} ${me?.lastname || ''}`.trim(),
+            hasCamera: hasCamera.value,
+            hiredFrom: hiredAfterCamera.value,
+          },
+        ],
+        confirmed: attendanceStore.userRecords.map((r) => ({ ...r, user_id: currentUserId })),
+        camera: attendanceStore.cameraRecords.map((r) => ({ ...r, user_id: currentUserId })),
+        officeOpen: officeDaySet.value,
+        tripsByUser: { [currentUserId]: tripsByDate.value },
+      }
+    }
+    const n = await exportAttendanceXlsx({
+      month: monthKey.value,
+      monthLabel: monthLabel.value,
+      data,
+      statusList: STATUS_LIST,
+      t,
+      who: usersStore.currentUser
+        ? `${usersStore.currentUser.firstname || ''} ${usersStore.currentUser.lastname || ''}`.trim()
+        : '',
+    })
+    if (n) ElMessage.success(t('attExcelDone', { n }))
+    else ElMessage.warning(t('attExcelEmpty'))
+  } catch (e) {
+    ElMessage.error(errorText(e, t('attExcelFail')))
+  } finally {
+    exporting.value = false
+  }
 }
 
 // ─── Kamera sozlamalari (admin) ───
@@ -976,9 +1057,26 @@ const linkEmployee = async (row, userId) => {
     // Ko'rilayotgan "ERP'da yo'q" xodim bog'lansa — endi uning ERP kalendarini ochamiz
     if (userId && row.employee_no === selectedTerminalNo.value) selectEmployee(userId)
     else await loadCamera()
-  } catch {
-    ElMessage.error(t('xatolikYuzBerdi'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
+}
+
+// ─── Terminal xodimiga ERP akkaunt ochish ───
+const createAccountDialog = ref(false)
+const createAccountFor = ref(null)
+// Terminalda ism odatda "Familiya Ism" tartibida (Rasulov Jamshid); bitta so'z — faqat ism
+const createAccountPrefill = computed(() => {
+  const words = (createAccountFor.value?.name || '').trim().split(/\s+/).filter(Boolean)
+  if (words.length < 2) return { firstname: words[0] || '' }
+  return { lastname: words[0], firstname: words.slice(1).join(' ') }
+})
+const openCreateAccount = (row) => {
+  createAccountFor.value = row
+  createAccountDialog.value = true
+}
+const onAccountCreated = async (user) => {
+  if (user?.id && createAccountFor.value) await linkEmployee(createAccountFor.value, user.id)
 }
 
 const loadFieldTrips = async (userId) => {

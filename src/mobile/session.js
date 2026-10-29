@@ -7,12 +7,6 @@ export const BOSS_USER_ID = 16
 export const currentUserId = () => Number(localStorage.getItem('userid')) || null
 export const isLoggedIn = () => !!localStorage.getItem('refreshtoken')
 
-export function clearSession() {
-  localStorage.removeItem('accesstoken')
-  localStorage.removeItem('refreshtoken')
-  localStorage.removeItem('userid')
-}
-
 // Sahifaga ruxsat: saytdagidek — `permissions[key] === false` bo'lmasa ochiq
 export function hasAccess(user, key) {
   if (!user) return false

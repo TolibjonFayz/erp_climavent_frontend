@@ -6,6 +6,7 @@
     class="ui-stat"
     :class="[
       tone && `is-${tone}`,
+      accent && `is-acc is-acc-${accent}`,
       { 'is-link': clickable, 'is-sm': size === 'sm', 'is-money': money },
     ]"
   >
@@ -29,6 +30,8 @@ defineProps({
   sub: { type: String, default: '' },
   // good | bad | warn — nomdagi nuqta rangi (bad'da qiymat ham qizil)
   tone: { type: String, default: '' },
+  // ink | green | yellow | red — to'liq bo'yalgan karta
+  accent: { type: String, default: '' },
   clickable: { type: Boolean, default: false },
   size: { type: String, default: 'md' },
   // Katta summalar — shrift kichrayadi va pastga tushadi (kesilmaydi)
@@ -42,10 +45,11 @@ defineProps({
   flex-direction: column;
   gap: 4px;
   min-width: 0;
-  padding: 14px 16px;
+  padding: 18px 20px;
   background: var(--ui-surface);
   border: 1px solid var(--ui-line);
   border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow);
   text-align: left;
   font: inherit;
   color: inherit;
@@ -63,6 +67,36 @@ defineProps({
 .ui-stat.is-link:focus-visible {
   outline: 2px solid var(--ui-link);
   outline-offset: 2px;
+}
+.ui-stat.is-acc {
+  border-color: transparent;
+  color: #fff;
+}
+.ui-stat.is-acc-ink {
+  background: var(--ui-acc-ink);
+}
+.ui-stat.is-acc-green {
+  background: var(--ui-acc-green);
+}
+.ui-stat.is-acc-red {
+  background: var(--ui-acc-red);
+}
+.ui-stat.is-acc-yellow {
+  background: var(--ui-acc-yellow);
+  color: #1f1b14;
+}
+.ui-stat.is-acc .ui-stat__label,
+.ui-stat.is-acc .ui-stat__sub {
+  color: inherit;
+  opacity: 0.72;
+}
+.ui-stat.is-acc .ui-stat__value,
+.ui-stat.is-acc.is-bad .ui-stat__value {
+  color: inherit;
+}
+.ui-stat.is-acc .ui-stat__label::before {
+  background: currentColor;
+  opacity: 0.6;
 }
 .ui-stat__label {
   display: flex;
@@ -92,8 +126,9 @@ defineProps({
   background: var(--ui-warn);
 }
 .ui-stat__value {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.2;
   color: var(--ui-ink);
   font-variant-numeric: tabular-nums;

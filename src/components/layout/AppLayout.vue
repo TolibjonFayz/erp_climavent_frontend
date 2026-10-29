@@ -4,18 +4,33 @@
     <main class="app-layout__content">
       <slot />
     </main>
+    <GlobalSearch v-model="searchOpen" />
   </div>
 </template>
 
 <script setup>
+import { onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import { useSidebar } from '@/composables/useSidebar'
 import TheSidebar from './TheSidebar.vue'
+import GlobalSearch from './GlobalSearch.vue'
 
 defineProps({
   active: { type: String, required: true },
 })
 
 const { sidebarWidth } = useSidebar()
+
+// Umumiy qidiruv: Ctrl+K (Mac'da Cmd+K) yoki sidebar'dagi tugma
+const searchOpen = ref(false)
+provide('openGlobalSearch', () => (searchOpen.value = true))
+const onKeydown = (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault()
+    searchOpen.value = true
+  }
+}
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <style scoped>

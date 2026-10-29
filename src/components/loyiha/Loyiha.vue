@@ -310,6 +310,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -483,7 +484,7 @@ const handleDelete = async (id) => {
     ElMessage.success(t('loyihaMessageDeleted'))
     await refresh()
   } catch (error) {
-    ElMessage.error(error?.response?.data?.message || t('loyihaMessageDeleteError'))
+    ElMessage.error(errorText(error, t('loyihaMessageDeleteError')))
   }
 }
 
@@ -528,8 +529,8 @@ onMounted(async () => {
   try {
     if (!usersStore.currentUser) await usersStore.getUserInfo(currentUserId)
     await Promise.all([loyihaStore.getAllLoyihas(), loyihaStore.checkStorage()])
-  } catch {
-    ElMessage.error(t('loyihaMessageLoadError'))
+  } catch (error) {
+    ElMessage.error(errorText(error, t('loyihaMessageLoadError')))
   }
 })
 </script>

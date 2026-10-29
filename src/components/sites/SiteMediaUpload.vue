@@ -337,7 +337,7 @@ const saveMediaToDatabase = async (mediaData: any) => {
     }
   } catch (error) {
     console.error('Failed to save media info:', error)
-    ElMessage.error("Ma'lumotlar bazasida saqlashda xatolik!")
+    ElMessage.error(errorText(error, "Ma'lumotlar bazasida saqlashda xatolik!"))
   }
 }
 
@@ -349,7 +349,7 @@ const loadExistingMedia = async () => {
     existingMedia.value = response || []
   } catch (error) {
     console.error('Failed to load existing media:', error)
-    ElMessage.error('Mavjud media fayllarni yuklashda xatolik!')
+    ElMessage.error(errorText(error, 'Mavjud media fayllarni yuklashda xatolik!'))
   } finally {
     loading.value = false
   }
@@ -386,7 +386,7 @@ const deleteMedia = async (item: any) => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('Failed to delete media:', error)
-      ElMessage.error("Faylni o'chirishda xatolik!")
+      ElMessage.error(errorText(error, "Faylni o'chirishda xatolik!"))
     }
   } finally {
     deletingIds.value = deletingIds.value.filter((id) => id !== item.id)

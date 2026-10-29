@@ -125,6 +125,7 @@
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
@@ -163,7 +164,7 @@ async function loadAll() {
     suspicious.value = s || []
     excluded.value = e || []
   } catch (err) {
-    ElMessage.error(err?.response?.data?.message || err?.message)
+    ElMessage.error(errorText(err))
   } finally {
     loading.value = false
   }
@@ -185,7 +186,7 @@ async function restore(row) {
     ElMessage.success(t('amoRestoreDone'))
     onChanged()
   } catch (err) {
-    ElMessage.error(err?.response?.data?.message || err?.message)
+    ElMessage.error(errorText(err))
   }
 }
 

@@ -257,10 +257,14 @@
             <button class="adm-reset-btn" @click="handleResetUsers">
               <el-icon><RefreshLeft /></el-icon> Tozalash
             </button>
+            <el-button type="primary" :icon="Plus" class="adm-add-btn" @click="openCreateUser">
+              Foydalanuvchi qo'shish
+            </el-button>
           </div>
           <div class="tbl-wrap" v-loading="usersLoading">
             <el-table
               :data="filteredUsers"
+              :row-class-name="({ row }) => (row.is_blocked ? 'row--blocked' : '')"
               stripe
               border
               style="width: 100%"
@@ -879,6 +883,21 @@
 
         <el-divider />
 
+        <div class="user-drawer__actions">
+          <el-button style="width: 100%; margin-bottom: 10px" @click="openEditUser(selectedUser)">
+            <el-icon><Edit /></el-icon>
+            Ma'lumotlarini tahrirlash
+          </el-button>
+          <el-button
+            v-if="selectedUser.id !== usersStore.currentUser?.id"
+            style="width: 100%; margin: 0 0 10px"
+            @click="openResetPassword(selectedUser)"
+          >
+            <el-icon><Key /></el-icon>
+            Parolni tiklash
+          </el-button>
+        </div>
+
         <div class="user-drawer__actions" v-if="selectedUser.id !== usersStore.currentUser?.id">
           <el-button
             :type="selectedUser.is_admin ? 'warning' : 'success'"
@@ -1034,15 +1053,103 @@
         <el-button type="primary" :loading="kpLoading" @click="handleKpSubmit">Saqlash</el-button>
       </template>
     </el-dialog>
+
+    <!-- ═══════ YANGI FOYDALANUVCHI ═══════ -->
+    <CreateUserDialog v-model="createUserVisible" />
+
+    <!-- ═══════ FOYDALANUVCHINI TAHRIRLASH ═══════ -->
+    <el-dialog v-model="editUserVisible" title="Ma'lumotlarni tahrirlash" width="520px" destroy-on-close>
+      <el-form
+        ref="editUserFormRef"
+        :model="editUserForm"
+        :rules="editUserRules"
+        label-position="top"
+        @submit.prevent="handleEditUser"
+      >
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="Ism" prop="firstname">
+              <el-input v-model="editUserForm.firstname" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Familiya" prop="lastname">
+              <el-input v-model="editUserForm.lastname" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="Username (login)" prop="username">
+              <el-input v-model="editUserForm.username" autocomplete="off" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Telefon" prop="phone_number">
+              <el-input v-model="editUserForm.phone_number" placeholder="+998..." />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Email" prop="email">
+              <el-input v-model="editUserForm.email" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+      <template #footer>
+        <el-button @click="editUserVisible = false">Bekor qilish</el-button>
+        <el-button type="primary" :loading="editUserLoading" @click="handleEditUser">
+          Saqlash
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- ═══════ PAROLNI TIKLASH ═══════ -->
+    <el-dialog v-model="resetPasswordVisible" title="Parolni tiklash" width="420px" destroy-on-close>
+      <p class="reset-pw-hint">
+        <b>@{{ resetPasswordUser?.username }}</b> uchun yangi parol. Eski parol ishlamay qoladi —
+        yangisini xodimga o'zingiz yetkazing.
+      </p>
+      <el-form
+        ref="resetPasswordFormRef"
+        :model="resetPasswordForm"
+        :rules="resetPasswordRules"
+        label-position="top"
+        @submit.prevent="handleResetPassword"
+      >
+        <el-form-item label="Yangi parol" prop="password">
+          <el-input
+            v-model="resetPasswordForm.password"
+            type="password"
+            show-password
+            autocomplete="new-password"
+          />
+        </el-form-item>
+        <el-form-item label="Yangi parolni takrorlang" prop="confirm">
+          <el-input
+            v-model="resetPasswordForm.confirm"
+            type="password"
+            show-password
+            autocomplete="new-password"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="resetPasswordVisible = false">Bekor qilish</el-button>
+        <el-button type="primary" :loading="resetPasswordLoading" @click="handleResetPassword">
+          Saqlash
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { errorText } from '@/utils/errorText'
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { usePartnersStore } from '@/stores/partners'
 import { useKPsStore } from '@/stores/kp'
 import AmoCrmStats from '@/components/amocrm/AmoCrmStats.vue'
 import UiStat from '@/components/ui/UiStat.vue'
+import CreateUserDialog from '@/components/admin/CreateUserDialog.vue'
 import { fmtNum, formatDate as fmtDay, formatDateTime as fmtDateTime } from '@/utils/format'
 import {
   KP_COMMENT_OPTIONS,
@@ -1080,6 +1187,7 @@ import {
   Grid,
   ArrowDown,
   ArrowUp,
+  Plus,
 } from '@element-plus/icons-vue'
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useUsersStore } from '@/stores/user'
@@ -1388,7 +1496,7 @@ watch(
 // ─── Audit helpers ────────────────────────────────────────
 function getAuditIcon(action) {
   return (
-    { role: StarFilled, block: Lock, unblock: Unlock, view: View, export: Download, login: User }[
+    { role: StarFilled, block: Lock, unblock: Unlock, view: View, create: Plus, edit: Edit, password: Key, export: Download, login: User }[
       action
     ] || Document
   )
@@ -1400,6 +1508,9 @@ function getActionLabel(action) {
       block: 'Bloklandi',
       unblock: 'Blok ochildi',
       view: "Ko'rildi",
+      create: "Qo'shildi",
+      edit: 'Tahrirlandi',
+      password: 'Parol tiklandi',
       export: 'Export',
       login: 'Kirish',
     }[action] || action
@@ -1432,7 +1543,7 @@ async function toggleAdminRole(user, closeDrawer = false) {
     )
   } catch (err) {
     if (err !== 'cancel') {
-      const msg = err?.response?.data?.message || err.message || "Xatolik yuz berdi";
+      const msg = errorText(err, "Xatolik yuz berdi");
       ElMessage.error(msg)
       console.error(err)
     }
@@ -1466,7 +1577,7 @@ async function toggleBlockUser(user, closeDrawer = false) {
     ElMessage.success(`✅ ${newBlock ? 'Bloklash' : 'Blokdan chiqarish'} muvaffaqiyatli!`)
   } catch (err) {
     if (err !== 'cancel') {
-      const msg = err?.response?.data?.message || err.message || "Xatolik yuz berdi";
+      const msg = errorText(err, "Xatolik yuz berdi");
       ElMessage.error(msg)
       console.error(err)
     }
@@ -1508,6 +1619,123 @@ async function clearAuditLogs() {
   } catch {}
 }
 
+// ─── Yangi foydalanuvchi (forma — CreateUserDialog) ───────
+const createUserVisible = ref(false)
+function openCreateUser() {
+  createUserVisible.value = true
+}
+// Tahrirlash va parol tiklash formalari uchun umumiy qoidalar
+const requiredRule = (message) => ({ required: true, message, trigger: 'blur' })
+const createUserRules = {
+  firstname: [requiredRule('Ismni kiriting')],
+  lastname: [requiredRule('Familiyani kiriting')],
+  username: [
+    requiredRule('Username kiriting'),
+    { pattern: /^\S+$/, message: "Username'da bo'sh joy bo'lmasin", trigger: 'blur' },
+  ],
+  password: [
+    requiredRule('Parol kiriting'),
+    { min: 6, message: 'Parol kamida 6 belgi', trigger: 'blur' },
+  ],
+  email: [{ type: 'email', message: "Email noto'g'ri", trigger: 'blur' }],
+}
+
+// ─── Foydalanuvchini tahrirlash ───────────────────────────
+const editUserVisible = ref(false)
+const editUserLoading = ref(false)
+const editUserFormRef = ref(null)
+const editUserTarget = ref(null)
+const editUserForm = reactive({ firstname: '', lastname: '', username: '', phone_number: '', email: '' })
+const editUserRules = {
+  firstname: createUserRules.firstname,
+  lastname: createUserRules.lastname,
+  // Email tekshirilmaydi: bazada eski "." kabi qiymatlar bor — ular ismni tahrirlashni to'smasin
+  username: createUserRules.username,
+}
+
+function openEditUser(user) {
+  editUserTarget.value = user
+  Object.assign(editUserForm, {
+    firstname: user.firstname || '',
+    lastname: user.lastname || '',
+    username: user.username || '',
+    phone_number: user.phone_number || '',
+    email: user.email || '',
+  })
+  editUserVisible.value = true
+}
+
+async function handleEditUser() {
+  const valid = await editUserFormRef.value?.validate().catch(() => false)
+  if (!valid) return
+  const user = editUserTarget.value
+  editUserLoading.value = true
+  try {
+    const payload = { ...editUserForm, username: editUserForm.username.trim() }
+    await usersStore.updateUser(user.id, payload)
+    // Jadval, drawer va ro'yxatdagi yozuv bir xil obyekt — joyida yangilaymiz
+    Object.assign(user, payload)
+    addAuditLog({
+      action: 'edit',
+      message: `"${payload.firstname} ${payload.lastname}" (@${payload.username}) — ma'lumotlari tahrirlandi`,
+      type: 'info',
+      target_id: user.id,
+    })
+    ElMessage.success("✅ Ma'lumotlar saqlandi")
+    editUserVisible.value = false
+  } catch (err) {
+    ElMessage.error(errorText(err, 'Saqlanmadi'))
+  } finally {
+    editUserLoading.value = false
+  }
+}
+
+// ─── Parolni tiklash ──────────────────────────────────────
+const resetPasswordVisible = ref(false)
+const resetPasswordLoading = ref(false)
+const resetPasswordFormRef = ref(null)
+const resetPasswordUser = ref(null)
+const resetPasswordForm = reactive({ password: '', confirm: '' })
+const resetPasswordRules = {
+  password: createUserRules.password,
+  confirm: [
+    requiredRule('Parolni takrorlang'),
+    {
+      validator: (_rule, value, cb) =>
+        value === resetPasswordForm.password ? cb() : cb(new Error('Parollar mos emas')),
+      trigger: 'blur',
+    },
+  ],
+}
+
+function openResetPassword(user) {
+  resetPasswordUser.value = user
+  Object.assign(resetPasswordForm, { password: '', confirm: '' })
+  resetPasswordVisible.value = true
+}
+
+async function handleResetPassword() {
+  const valid = await resetPasswordFormRef.value?.validate().catch(() => false)
+  if (!valid) return
+  const user = resetPasswordUser.value
+  resetPasswordLoading.value = true
+  try {
+    await usersStore.updateUserPassword(user.id, { password: resetPasswordForm.password })
+    addAuditLog({
+      action: 'password',
+      message: `"${user.firstname} ${user.lastname}" (@${user.username}) — paroli admin tomonidan tiklandi`,
+      type: 'warning',
+      target_id: user.id,
+    })
+    ElMessage.success(`✅ @${user.username} paroli yangilandi`)
+    resetPasswordVisible.value = false
+  } catch (err) {
+    ElMessage.error(errorText(err, 'Parol yangilanmadi'))
+  } finally {
+    resetPasswordLoading.value = false
+  }
+}
+
 // ─── Reset handlers ───────────────────────────────────────
 const handleResetUsers = () => {
   usersSearch.value = ''
@@ -1542,6 +1770,7 @@ const permissionPages = [
   { key: 'kp', title: 'KP' },
   { key: 'dogovor', title: 'Dogovor' },
   { key: 'loyiha', title: 'Loyiha' },
+  { key: 'sklad', title: 'Ombor' },
   { key: 'attendance', title: 'Davomat' },
   { key: 'tasks', title: 'Vazifalar' },
   { key: 'boss', title: 'Boss' },
@@ -1567,7 +1796,7 @@ const handleTogglePermission = async (user, pageKey, val) => {
     ElMessage.success("Ruxsat saqlandi")
     user.permissions = newPerms 
   } catch (err) {
-    ElMessage.error("Xatolik yuz berdi")
+    ElMessage.error(errorText(err, "Xatolik yuz berdi"))
     // ui revert handled by user not being updated in store if it threw, 
     // but better to explicitly revert
   } finally {
@@ -1666,7 +1895,7 @@ async function handleKpSubmit() {
     ElMessage.success('✅ KP muvaffaqiyatli yangilandi!')
     kpDialogVisible.value = false
   } catch (e) {
-    ElMessage.error(e?.response?.data?.message || e?.message || 'KP yangilashda xatolik')
+    ElMessage.error(errorText(e, 'KP yangilashda xatolik'))
   } finally {
     kpLoading.value = false
   }
@@ -1691,7 +1920,7 @@ async function handleKpDelete(row) {
     ElMessage.success("✅ KP muvaffaqiyatli o'chirildi!")
   } catch (e) {
     if (e === 'cancel' || e === 'close') return
-    ElMessage.error(e?.response?.data?.message || e?.message || "KP o'chirishda xatolik")
+    ElMessage.error(errorText(e, "KP o'chirishda xatolik"))
   } finally {
     kpLoading.value = false
   }
@@ -1866,7 +2095,7 @@ onMounted(async () => {
       return
     }
   } catch (e) {
-    ElMessage.error("Foydalanuvchi ma'lumotini yuklashda xatolik")
+    ElMessage.error(errorText(e, "Foydalanuvchi ma'lumotini yuklashda xatolik"))
     loading.value = false
     return
   }
@@ -2459,6 +2688,19 @@ onMounted(async () => {
 }
 .adm-select {
   width: 180px;
+}
+.adm-add-btn {
+  margin-left: auto;
+}
+.reset-pw-hint {
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ui-muted);
+}
+// Bloklangan foydalanuvchi qatori xira — amallar ustuni (blokdan chiqarish) aniq qoladi
+:deep(.el-table__row.row--blocked > td:not(:last-child) .cell) {
+  opacity: 0.35;
 }
 .adm-reset-btn {
   display: inline-flex;

@@ -5,7 +5,8 @@ import { useI18n } from 'vue-i18n'
 import { showConfirmDialog } from 'vant'
 import { useUsersStore } from '@/stores/user'
 import MPage from '../../components/MPage.vue'
-import { clearSession, useSession } from '../../session'
+import { useSession } from '../../session'
+import { logoutSession } from '@/api/client'
 import { setLanguage } from '../../i18n'
 import { isDark, toggleTheme } from '../../theme'
 import { stopPush } from '../../push'
@@ -47,7 +48,8 @@ async function logout() {
     return
   }
   await stopPush()
-  clearSession()
+  // Sessiya serverda ham yopiladi (refresh token boshqa ishlamaydi)
+  await logoutSession()
   usersStore.currentUser = null
   router.replace({ name: 'login' })
 }
