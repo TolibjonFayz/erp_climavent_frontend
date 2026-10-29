@@ -184,7 +184,11 @@ const sources = computed(() => {
         sub: [d.dogovor_date && formatDate(d.dogovor_date), d.client_inn && `INN ${d.client_inn}`, d.manager_name]
           .filter(Boolean)
           .join(' · '),
-        to: { path: '/dogovor', query: { n: String(d.dogovor_number || '') } },
+        // Raqam har yili takrorlanadi — sana bilan aniq shartnoma ochiladi
+        to: {
+          path: '/dogovor',
+          query: { n: String(d.dogovor_number || ''), d: d.dogovor_date ? formatDate(d.dogovor_date) : undefined },
+        },
       }),
     })
   }

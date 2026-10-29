@@ -727,6 +727,11 @@ useQueryPrefill('n', (v) => {
   filters.number = v
   moreFilters.value = true
 })
+// Raqamlar har yili qaytadan boshlanadi — sana bilan aniq shartnoma topiladi (?d=dd.mm.yyyy)
+useQueryPrefill('d', (v) => {
+  filters.date = v
+  moreFilters.value = true
+})
 
 // "Ko'proq filtr" ortidagi maydonlar
 const extraFilters = [

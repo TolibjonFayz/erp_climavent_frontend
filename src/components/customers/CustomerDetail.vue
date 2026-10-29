@@ -46,6 +46,8 @@
           <p v-if="partnerData.more_info" class="cd-note__text">{{ partnerData.more_info }}</p>
           <p v-else class="cd-note__empty">{{ $t('custNoNote') }}</p>
         </UiPanel>
+
+        <CustomerRelated ref="relatedRef" :partner-id="route.params.id" />
       </template>
 
       <el-empty v-else-if="!loading" :description="$t('Kiritilmagan')" />
@@ -167,6 +169,7 @@ import router from '@/router'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import UiInfoList from '@/components/ui/UiInfoList.vue'
+import CustomerRelated from './CustomerRelated.vue'
 import { partnerTypeLabel } from '@/utils/partners'
 import { formatDate, telHref } from '@/utils/format'
 
@@ -175,6 +178,7 @@ const route = useRoute()
 const { t } = useI18n()
 
 const loading = ref(false)
+const relatedRef = ref(null)
 const editDialogVisible = ref(false)
 const editLoading = ref(false)
 const moreInfoDialogVisible = ref(false)
@@ -300,6 +304,8 @@ async function handleSaveEdit() {
     ElMessage.success(t('hamkor_yangilandi'))
     editDialogVisible.value = false
     await partnersStore.getOnePartner(route.params.id)
+    // Nom/INN/telefon o'zgargan bo'lishi mumkin — bog'liq hujjatlar qayta topiladi
+    relatedRef.value?.reload()
   } catch (error) {
     ElMessage.error(errorText(error, t('yangilash_error')))
   } finally {
