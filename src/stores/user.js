@@ -33,6 +33,14 @@ export const useUsersStore = defineStore('users', {
       return res
     },
 
+    // Admin yangi xodim qo'shadi — joriy sessiya (currentUser, tokenlar) o'zgarmaydi
+    async createUser(payload) {
+      const res = await runRequest(this, () => usersApi.register(payload), 'Create failed')
+      const user = res.user || res.data?.user
+      if (user) this.allUsers = [...this.allUsers, user]
+      return user
+    },
+
     async updateUser(id, payload) {
       const res = await runRequest(this, () => usersApi.updateProfile(id, payload), 'Update failed')
       // Only update currentUser if they updated their own profile

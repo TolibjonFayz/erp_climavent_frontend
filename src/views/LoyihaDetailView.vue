@@ -1,10 +1,7 @@
 <template>
-  <AppLayout active="loyiha">
-    <LoyihaDetail />
-  </AppLayout>
+  <LoyihaDetail />
 </template>
 
 <script setup>
-import AppLayout from '@/components/layout/AppLayout.vue'
 import LoyihaDetail from '@/components/loyiha/LoyihaDetail.vue'
 </script>

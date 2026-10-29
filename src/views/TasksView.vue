@@ -1,10 +1,7 @@
 <template>
-  <AppLayout active="tasks">
-    <TaskBoard />
-  </AppLayout>
+  <TaskBoard />
 </template>
 
 <script setup>
-import AppLayout from '@/components/layout/AppLayout.vue'
 import TaskBoard from '@/components/tasks/TaskBoard.vue'
 </script>

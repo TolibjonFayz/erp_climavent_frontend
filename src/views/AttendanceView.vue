@@ -1,10 +1,7 @@
 <template>
-  <AppLayout active="attendance">
-    <AttendanceTable />
-  </AppLayout>
+  <AttendanceTable />
 </template>
 
 <script setup>
-import AppLayout from '@/components/layout/AppLayout.vue'
 import AttendanceTable from '@/components/attendance/AttendanceTable.vue'
 </script>

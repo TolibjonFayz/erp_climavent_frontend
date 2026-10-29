@@ -1,10 +1,7 @@
 <template>
-  <AppLayout active="sites">
-    <SiteList />
-  </AppLayout>
+  <SiteList />
 </template>
 
 <script setup>
-import AppLayout from '@/components/layout/AppLayout.vue'
 import SiteList from '@/components/sites/SiteList.vue'
 </script>

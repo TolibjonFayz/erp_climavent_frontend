@@ -1,10 +1,7 @@
 <template>
-  <AppLayout active="customers">
-    <CustomerDetail />
-  </AppLayout>
+  <CustomerDetail />
 </template>
 
 <script setup>
-import AppLayout from '@/components/layout/AppLayout.vue'
 import CustomerDetail from '@/components/customers/CustomerDetail.vue'
 </script>

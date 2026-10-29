@@ -1,9 +1,18 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { computed } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
+import AppLayout from '@/components/layout/AppLayout.vue'
+
+const route = useRoute()
+// Layout (sidebar) bo'limlar orasida o'tganda qayta yaratilmaydi — faqat o'ng tomon almashadi
+const nav = computed(() => route.meta.nav)
 </script>
 
 <template>
-  <RouterView />
+  <AppLayout v-if="nav" :active="nav">
+    <RouterView />
+  </AppLayout>
+  <RouterView v-else />
 </template>
 
 <style>

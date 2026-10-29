@@ -257,6 +257,9 @@
             <button class="adm-reset-btn" @click="handleResetUsers">
               <el-icon><RefreshLeft /></el-icon> Tozalash
             </button>
+            <el-button type="primary" :icon="Plus" class="adm-add-btn" @click="openCreateUser">
+              Foydalanuvchi qo'shish
+            </el-button>
           </div>
           <div class="tbl-wrap" v-loading="usersLoading">
             <el-table
@@ -1034,6 +1037,70 @@
         <el-button type="primary" :loading="kpLoading" @click="handleKpSubmit">Saqlash</el-button>
       </template>
     </el-dialog>
+
+    <!-- ═══════ YANGI FOYDALANUVCHI ═══════ -->
+    <el-dialog
+      v-model="createUserVisible"
+      title="Yangi foydalanuvchi"
+      width="520px"
+      destroy-on-close
+      @closed="resetCreateUser"
+    >
+      <el-form
+        ref="createUserFormRef"
+        :model="createUserForm"
+        :rules="createUserRules"
+        label-position="top"
+        @submit.prevent="handleCreateUser"
+      >
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="Ism" prop="firstname">
+              <el-input v-model="createUserForm.firstname" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Familiya" prop="lastname">
+              <el-input v-model="createUserForm.lastname" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Username (login)" prop="username">
+              <el-input v-model="createUserForm.username" autocomplete="off" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Parol" prop="password">
+              <el-input
+                v-model="createUserForm.password"
+                type="password"
+                show-password
+                autocomplete="new-password"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Telefon" prop="phone_number">
+              <el-input v-model="createUserForm.phone_number" placeholder="+998..." />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Email" prop="email">
+              <el-input v-model="createUserForm.email" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-checkbox v-model="createUserForm.is_admin">Admin huquqini berish</el-checkbox>
+          </el-col>
+        </el-row>
+      </el-form>
+      <template #footer>
+        <el-button @click="createUserVisible = false">Bekor qilish</el-button>
+        <el-button type="primary" :loading="createUserLoading" @click="handleCreateUser">
+          Qo'shish
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -1081,6 +1148,7 @@ import {
   Grid,
   ArrowDown,
   ArrowUp,
+  Plus,
 } from '@element-plus/icons-vue'
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useUsersStore } from '@/stores/user'
@@ -1389,7 +1457,7 @@ watch(
 // ─── Audit helpers ────────────────────────────────────────
 function getAuditIcon(action) {
   return (
-    { role: StarFilled, block: Lock, unblock: Unlock, view: View, export: Download, login: User }[
+    { role: StarFilled, block: Lock, unblock: Unlock, view: View, create: Plus, export: Download, login: User }[
       action
     ] || Document
   )
@@ -1401,6 +1469,7 @@ function getActionLabel(action) {
       block: 'Bloklandi',
       unblock: 'Blok ochildi',
       view: "Ko'rildi",
+      create: "Qo'shildi",
       export: 'Export',
       login: 'Kirish',
     }[action] || action
@@ -1507,6 +1576,69 @@ async function clearAuditLogs() {
     await fetchStats()
     ElMessage.success('Loglar tozalandi')
   } catch {}
+}
+
+// ─── Yangi foydalanuvchi ──────────────────────────────────
+const createUserVisible = ref(false)
+const createUserLoading = ref(false)
+const createUserFormRef = ref(null)
+const emptyCreateUser = () => ({
+  firstname: '',
+  lastname: '',
+  username: '',
+  password: '',
+  phone_number: '',
+  email: '',
+  is_admin: false,
+})
+const createUserForm = reactive(emptyCreateUser())
+const requiredRule = (message) => ({ required: true, message, trigger: 'blur' })
+const createUserRules = {
+  firstname: [requiredRule('Ismni kiriting')],
+  lastname: [requiredRule('Familiyani kiriting')],
+  username: [
+    requiredRule('Username kiriting'),
+    { pattern: /^\S+$/, message: "Username'da bo'sh joy bo'lmasin", trigger: 'blur' },
+  ],
+  password: [
+    requiredRule('Parol kiriting'),
+    { min: 6, message: 'Parol kamida 6 belgi', trigger: 'blur' },
+  ],
+  email: [{ type: 'email', message: "Email noto'g'ri", trigger: 'blur' }],
+}
+
+function openCreateUser() {
+  createUserVisible.value = true
+}
+function resetCreateUser() {
+  Object.assign(createUserForm, emptyCreateUser())
+}
+
+async function handleCreateUser() {
+  const valid = await createUserFormRef.value?.validate().catch(() => false)
+  if (!valid) return
+  createUserLoading.value = true
+  try {
+    const { is_admin, ...payload } = createUserForm
+    payload.username = payload.username.trim()
+    const user = await usersStore.createUser(payload)
+    if (is_admin && user?.id) {
+      await usersStore.updateUser(user.id, { is_admin: true })
+      user.is_admin = true
+    }
+    addAuditLog({
+      action: 'create',
+      message: `"${payload.firstname} ${payload.lastname}" (@${payload.username}) — yangi foydalanuvchi qo'shildi${is_admin ? ' (admin)' : ''}`,
+      type: 'success',
+      target_id: user?.id,
+    })
+    ElMessage.success(`✅ @${payload.username} qo'shildi`)
+    createUserVisible.value = false
+  } catch (err) {
+    ElMessage.error(errorText(err, 'Foydalanuvchi qo\'shilmadi'))
+  } finally {
+    createUserLoading.value = false
+  }
 }
 
 // ─── Reset handlers ───────────────────────────────────────
@@ -2461,6 +2593,9 @@ onMounted(async () => {
 }
 .adm-select {
   width: 180px;
+}
+.adm-add-btn {
+  margin-left: auto;
 }
 .adm-reset-btn {
   display: inline-flex;

@@ -54,7 +54,7 @@
           class="nav-item"
           :class="{ active: props.activePath === menu.key }"
         >
-          <a :href="menu.href" class="nav-link" :title="navTitle(menu)" @click="closeMobile">
+          <RouterLink :to="menu.href" class="nav-link" :title="navTitle(menu)" @click="closeMobile">
             <i class="icon" :class="menu.icon"></i>
             <span class="nav-text" :class="{ multiline: menu.key === 'customers' }">
               {{ $t(menu.text) }}
@@ -76,7 +76,7 @@
                 {{ badge.count }}
               </span>
             </span>
-          </a>
+          </RouterLink>
         </li>
       </ul>
 
@@ -85,10 +85,10 @@
     <!-- Tizim guruhi: har doim pastda, ish bo'limlaridan ajralgan — Sozlamalar va tungi rejim -->
     <div class="sidebar-system">
       <div class="nav-item" :class="{ active: props.activePath === 'settings' }">
-        <a href="/settings" class="nav-link" :title="$t('settings')" @click="closeMobile">
+        <RouterLink to="/settings" class="nav-link" :title="$t('settings')" @click="closeMobile">
           <el-icon class="icon el-nav-icon"><Setting /></el-icon>
           <span class="nav-text">{{ $t('settings') }}</span>
-        </a>
+        </RouterLink>
       </div>
       <!-- Tungi/kunduzgi rejim (composables/useTheme.js) -->
       <div class="nav-item">
@@ -105,7 +105,7 @@
     </div>
 
     <!-- User profile -->
-    <a href="/settings" class="user-profile" :title="$t('settings')" v-loading="loading" @click="closeMobile">
+    <RouterLink to="/settings" class="user-profile" :title="$t('settings')" v-loading="loading" @click="closeMobile">
       <div class="user-avatar">
         <img :src="avatarUrl" alt="User profile" />
         <div class="status-dot"></div>
@@ -114,7 +114,7 @@
         <h4>{{ currentUser?.firstname }} {{ currentUser?.lastname }}</h4>
         <p>{{ currentUser?.username }}</p>
       </div>
-    </a>
+    </RouterLink>
   </aside>
 </template>
 
