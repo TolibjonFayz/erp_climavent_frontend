@@ -61,18 +61,24 @@ function saveUsername() {
 
 // ─── Parol ───
 const passOpen = ref(false)
-const pass = reactive({ password: '', confirm: '' })
+const pass = reactive({ current: '', password: '', confirm: '' })
 function openPass() {
+  pass.current = ''
   pass.password = ''
   pass.confirm = ''
   passOpen.value = true
 }
 async function savePass() {
+  if (!pass.current) return showFailToast(t('m.currentPasswordRequired'))
   if (pass.password.length < 4) return showFailToast(t('m.passwordShort'))
   if (pass.password !== pass.confirm) return showFailToast(t('m.passwordMismatch'))
   saving.value = true
   try {
-    await usersStore.updateUserPassword(currentUserId(), { password: pass.password })
+    // Backend o'z parolini almashtirishda joriy parolni talab qiladi
+    await usersStore.updateUserPassword(currentUserId(), {
+      password: pass.password,
+      old_password: pass.current,
+    })
     await reloadUser()
     showSuccessToast(t('m.passwordChanged'))
     passOpen.value = false
@@ -194,6 +200,7 @@ async function onAvatar(e) {
 
     <MSheet v-model="passOpen" :title="$t('m.changePassword')">
       <van-cell-group inset class="pf-form">
+        <van-field v-model="pass.current" type="password" :label="$t('m.currentPassword')" label-align="top" autocomplete="current-password" />
         <van-field v-model="pass.password" type="password" :label="$t('m.newPassword')" label-align="top" autocomplete="new-password" />
         <van-field v-model="pass.confirm" type="password" :label="$t('m.repeatPassword')" label-align="top" autocomplete="new-password" />
       </van-cell-group>
