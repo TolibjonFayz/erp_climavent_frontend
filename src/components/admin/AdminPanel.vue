@@ -264,6 +264,7 @@
           <div class="tbl-wrap" v-loading="usersLoading">
             <el-table
               :data="filteredUsers"
+              :row-class-name="({ row }) => (row.is_blocked ? 'row--blocked' : '')"
               stripe
               border
               style="width: 100%"
@@ -1621,6 +1622,8 @@ async function handleCreateUser() {
   try {
     const { is_admin, ...payload } = createUserForm
     payload.username = payload.username.trim()
+    // Bazada profile_image majburiy — sidebar 'profile.jpg'ni standart avatar deb biladi
+    payload.profile_image = 'profile.jpg'
     const user = await usersStore.createUser(payload)
     if (is_admin && user?.id) {
       await usersStore.updateUser(user.id, { is_admin: true })
@@ -2596,6 +2599,10 @@ onMounted(async () => {
 }
 .adm-add-btn {
   margin-left: auto;
+}
+// Bloklangan foydalanuvchi qatori xira — amallar ustuni (blokdan chiqarish) aniq qoladi
+:deep(.el-table__row.row--blocked > td:not(:last-child) .cell) {
+  opacity: 0.35;
 }
 .adm-reset-btn {
   display: inline-flex;
