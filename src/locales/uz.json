@@ -1889,5 +1889,6 @@
   "ccTotal": "Jami {n} ta qo'ng'iroq",
   "ccTalked": "{n} tasida gaplashilgan",
   "ccLast": "oxirgisi {d}",
-  "ccTruncated": "har raqam bo'yicha oxirgi {n} tasi ko'rsatilgan"
+  "ccTruncated": "har raqam bo'yicha oxirgi {n} tasi ko'rsatilgan",
+  "currentPassword": "Joriy maxfiy so'z"
 }
