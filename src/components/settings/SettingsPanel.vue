@@ -186,6 +186,7 @@ import type { UploadProps } from 'element-plus'
 import { onMounted, ref, computed } from 'vue'
 import { getCookie } from '@/utils/cookies'
 import { useUsersStore } from '@/stores/user'
+import { logoutSession } from '@/api/client'
 import i18n from '@/i18n'
 
 const changePasswordDialog = ref(false)
@@ -354,10 +355,8 @@ const handleSavePassword = async (formData: { password: string }) => {
   }
 }
 
-const logout = () => {
-  localStorage.removeItem('userid')
-  localStorage.removeItem('accesstoken')
-  localStorage.removeItem('refreshtoken')
+const logout = async () => {
+  await logoutSession()
   location.reload()
 }
 
