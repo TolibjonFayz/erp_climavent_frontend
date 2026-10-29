@@ -84,6 +84,34 @@
 
     <!-- Tizim guruhi: har doim pastda, ish bo'limlaridan ajralgan — Sozlamalar va tungi rejim -->
     <div class="sidebar-system">
+      <!-- Umumiy qidiruv (Ctrl+K) -->
+      <div class="nav-item">
+        <button
+          type="button"
+          class="nav-link theme-toggle"
+          :title="`${$t('gsTitle')} (Ctrl+K)`"
+          @click="openSearch"
+        >
+          <el-icon class="icon"><Search /></el-icon>
+          <span class="nav-text">{{ $t('gsTitle') }}</span>
+          <kbd v-if="!showCollapsed && !isMobile" class="nav-kbd">Ctrl K</kbd>
+        </button>
+      </div>
+      <!-- Bildirishnomalar: e'lonlar, yangi vazifalar, tasdiq so'rovlari -->
+      <div class="nav-item">
+        <button
+          type="button"
+          class="nav-link theme-toggle"
+          :title="$t('notifTitle')"
+          @click="openNotifications"
+        >
+          <el-icon class="icon"><Bell /></el-icon>
+          <span class="nav-text">{{ $t('notifTitle') }}</span>
+          <span v-if="unreadCount" class="task-badges" :class="{ stacked: showCollapsed }">
+            <span class="task-badge badge-notif">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+          </span>
+        </button>
+      </div>
       <div class="nav-item" :class="{ active: props.activePath === 'settings' }">
         <RouterLink to="/settings" class="nav-link" :title="$t('settings')" @click="closeMobile">
           <el-icon class="icon el-nav-icon"><Setting /></el-icon>
@@ -116,15 +144,19 @@
       </div>
     </RouterLink>
   </aside>
+
+  <NotificationsDrawer v-model="notificationsOpen" />
 </template>
 
 <script setup lang="ts">
 import { useUsersStore } from '@/stores/user'
 import { useTasksStore } from '@/stores/tasks'
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSidebar } from '@/composables/useSidebar'
 import { useTheme } from '@/composables/useTheme'
+import { useNotifications } from '@/composables/useNotifications'
+import NotificationsDrawer from './NotificationsDrawer.vue'
 
 type CurrentUser = {
   profile_image?: string | null
@@ -146,6 +178,17 @@ const usersStore = useUsersStore()
 const tasksStore = useTasksStore()
 const { t } = useI18n()
 const { isDark, toggleTheme } = useTheme()
+const { unreadCount, start: startNotifications } = useNotifications()
+const notificationsOpen = ref(false)
+const openGlobalSearch = inject('openGlobalSearch', () => {})
+const openSearch = () => {
+  closeMobile()
+  openGlobalSearch()
+}
+const openNotifications = () => {
+  closeMobile()
+  notificationsOpen.value = true
+}
 const loading = ref(false)
 
 const { isCollapsed, isMobile, isMobileOpen, toggleCollapsed, openMobile, closeMobile } =
@@ -304,6 +347,7 @@ onMounted(async () => {
   } catch {
     // hisoblagich ikkinchi darajali — xatoni jimgina o'tkazamiz
   }
+  startNotifications()
 })
 </script>
 
@@ -616,6 +660,17 @@ $accent-dark: #2f7fe0;
 }
 
 /* ─── Vazifalar hisoblagichi ──────────────────────────────── */
+.nav-kbd {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 1px 6px;
+  font-family: inherit;
+  font-size: 10px;
+  color: var(--ui-muted);
+  border: 1px solid var(--ui-line);
+  border-radius: 4px;
+}
+
 .task-badges {
   display: flex;
   align-items: center;
@@ -651,6 +706,9 @@ $accent-dark: #2f7fe0;
   }
   &.badge-done {
     background: #67c23a;
+  }
+  &.badge-notif {
+    background: #ef4444;
   }
   /* Tasdiq kutayotganlar — e'tibor tortadi */
   &.badge-pending {

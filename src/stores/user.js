@@ -56,7 +56,10 @@ export const useUsersStore = defineStore('users', {
         () => usersApi.updatePassword(id, payload),
         'Update failed',
       )
-      this.currentUser = res.data || res
+      // Admin boshqa xodim parolini tiklaganda o'z sessiyasi almashmasin
+      if (this.currentUser && Number(this.currentUser.id) === Number(id)) {
+        this.currentUser = res.data || res
+      }
       return res
     },
   },

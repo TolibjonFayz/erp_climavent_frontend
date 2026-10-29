@@ -537,6 +537,7 @@
 
 <script setup>
 import { errorText } from '@/utils/errorText'
+import { useQueryPrefill } from '@/composables/useQueryPrefill'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useKPsStore } from '@/stores/kp'
@@ -626,6 +627,11 @@ const filterAdminComment = ref('')
 const currentPage = ref(1)
 const pageSize = ref(20)
 const moreFilters = ref(false)
+// Umumiy qidiruvdan raqam bilan kelinganda (?n=...) filtrni ochib to'ldiramiz
+useQueryPrefill('n', (v) => {
+  filterKpNumber.value = v
+  moreFilters.value = true
+})
 
 // Yashirin (qo'shimcha) filtrlardan nechtasi to'ldirilgan — tugmada ko'rsatiladi
 const hiddenFilterCount = computed(

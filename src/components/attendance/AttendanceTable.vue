@@ -133,6 +133,16 @@
                 {{ $t('attConfirmMonth', { n: pendingDays.length }) }}
               </el-button>
             </template>
+            <template v-else-if="isAdmin && selectedTerminal" #actions>
+              <el-button
+                type="primary"
+                size="small"
+                :icon="Plus"
+                @click="openCreateAccount(selectedTerminal)"
+              >
+                {{ $t('camCreateAccount') }}
+              </el-button>
+            </template>
 
             <!-- Rang izohi -->
             <div class="at-legend">
@@ -377,6 +387,15 @@
       </template>
     </el-dialog>
 
+    <!-- Terminal xodimiga ERP akkaunt ochish (admin) — ochilgach kameraga bog'lanadi -->
+    <CreateUserDialog
+      v-if="isAdmin"
+      v-model="createAccountDialog"
+      :prefill="createAccountPrefill"
+      :camera-no="createAccountFor?.employee_no || ''"
+      @created="onAccountCreated"
+    />
+
     <!-- Oyni hamma uchun tasdiqlash (admin) -->
     <ConfirmAllDialog
       v-if="isAdmin"
@@ -444,6 +463,15 @@
                 <el-icon><MagicStick /></el-icon>
                 {{ suggestUser(row).firstname }} {{ suggestUser(row).lastname }}
               </button>
+              <button
+                v-else-if="!row.user_id"
+                type="button"
+                class="cam-suggest"
+                @click="openCreateAccount(row)"
+              >
+                <el-icon><Plus /></el-icon>
+                {{ $t('camCreateAccount') }}
+              </button>
             </template>
           </el-table-column>
         </el-table>
@@ -467,8 +495,10 @@ import {
   Download,
   MagicStick,
   VideoCamera,
+  Plus,
 } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import CreateUserDialog from '@/components/admin/CreateUserDialog.vue'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
@@ -1030,6 +1060,23 @@ const linkEmployee = async (row, userId) => {
   } catch (error) {
     ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
   }
+}
+
+// ─── Terminal xodimiga ERP akkaunt ochish ───
+const createAccountDialog = ref(false)
+const createAccountFor = ref(null)
+// Terminalda ism odatda "Familiya Ism" tartibida (Rasulov Jamshid); bitta so'z — faqat ism
+const createAccountPrefill = computed(() => {
+  const words = (createAccountFor.value?.name || '').trim().split(/\s+/).filter(Boolean)
+  if (words.length < 2) return { firstname: words[0] || '' }
+  return { lastname: words[0], firstname: words.slice(1).join(' ') }
+})
+const openCreateAccount = (row) => {
+  createAccountFor.value = row
+  createAccountDialog.value = true
+}
+const onAccountCreated = async (user) => {
+  if (user?.id && createAccountFor.value) await linkEmployee(createAccountFor.value, user.id)
 }
 
 const loadFieldTrips = async (userId) => {

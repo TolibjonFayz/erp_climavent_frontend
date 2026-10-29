@@ -883,6 +883,21 @@
 
         <el-divider />
 
+        <div class="user-drawer__actions">
+          <el-button style="width: 100%; margin-bottom: 10px" @click="openEditUser(selectedUser)">
+            <el-icon><Edit /></el-icon>
+            Ma'lumotlarini tahrirlash
+          </el-button>
+          <el-button
+            v-if="selectedUser.id !== usersStore.currentUser?.id"
+            style="width: 100%; margin: 0 0 10px"
+            @click="openResetPassword(selectedUser)"
+          >
+            <el-icon><Key /></el-icon>
+            Parolni tiklash
+          </el-button>
+        </div>
+
         <div class="user-drawer__actions" v-if="selectedUser.id !== usersStore.currentUser?.id">
           <el-button
             :type="selectedUser.is_admin ? 'warning' : 'success'"
@@ -1040,65 +1055,87 @@
     </el-dialog>
 
     <!-- ═══════ YANGI FOYDALANUVCHI ═══════ -->
-    <el-dialog
-      v-model="createUserVisible"
-      title="Yangi foydalanuvchi"
-      width="520px"
-      destroy-on-close
-      @closed="resetCreateUser"
-    >
+    <CreateUserDialog v-model="createUserVisible" />
+
+    <!-- ═══════ FOYDALANUVCHINI TAHRIRLASH ═══════ -->
+    <el-dialog v-model="editUserVisible" title="Ma'lumotlarni tahrirlash" width="520px" destroy-on-close>
       <el-form
-        ref="createUserFormRef"
-        :model="createUserForm"
-        :rules="createUserRules"
+        ref="editUserFormRef"
+        :model="editUserForm"
+        :rules="editUserRules"
         label-position="top"
-        @submit.prevent="handleCreateUser"
+        @submit.prevent="handleEditUser"
       >
         <el-row :gutter="12">
           <el-col :span="12">
             <el-form-item label="Ism" prop="firstname">
-              <el-input v-model="createUserForm.firstname" />
+              <el-input v-model="editUserForm.firstname" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="Familiya" prop="lastname">
-              <el-input v-model="createUserForm.lastname" />
+              <el-input v-model="editUserForm.lastname" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="24">
             <el-form-item label="Username (login)" prop="username">
-              <el-input v-model="createUserForm.username" autocomplete="off" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="Parol" prop="password">
-              <el-input
-                v-model="createUserForm.password"
-                type="password"
-                show-password
-                autocomplete="new-password"
-              />
+              <el-input v-model="editUserForm.username" autocomplete="off" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="Telefon" prop="phone_number">
-              <el-input v-model="createUserForm.phone_number" placeholder="+998..." />
+              <el-input v-model="editUserForm.phone_number" placeholder="+998..." />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="Email" prop="email">
-              <el-input v-model="createUserForm.email" />
+              <el-input v-model="editUserForm.email" />
             </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-checkbox v-model="createUserForm.is_admin">Admin huquqini berish</el-checkbox>
           </el-col>
         </el-row>
       </el-form>
       <template #footer>
-        <el-button @click="createUserVisible = false">Bekor qilish</el-button>
-        <el-button type="primary" :loading="createUserLoading" @click="handleCreateUser">
-          Qo'shish
+        <el-button @click="editUserVisible = false">Bekor qilish</el-button>
+        <el-button type="primary" :loading="editUserLoading" @click="handleEditUser">
+          Saqlash
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- ═══════ PAROLNI TIKLASH ═══════ -->
+    <el-dialog v-model="resetPasswordVisible" title="Parolni tiklash" width="420px" destroy-on-close>
+      <p class="reset-pw-hint">
+        <b>@{{ resetPasswordUser?.username }}</b> uchun yangi parol. Eski parol ishlamay qoladi —
+        yangisini xodimga o'zingiz yetkazing.
+      </p>
+      <el-form
+        ref="resetPasswordFormRef"
+        :model="resetPasswordForm"
+        :rules="resetPasswordRules"
+        label-position="top"
+        @submit.prevent="handleResetPassword"
+      >
+        <el-form-item label="Yangi parol" prop="password">
+          <el-input
+            v-model="resetPasswordForm.password"
+            type="password"
+            show-password
+            autocomplete="new-password"
+          />
+        </el-form-item>
+        <el-form-item label="Yangi parolni takrorlang" prop="confirm">
+          <el-input
+            v-model="resetPasswordForm.confirm"
+            type="password"
+            show-password
+            autocomplete="new-password"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="resetPasswordVisible = false">Bekor qilish</el-button>
+        <el-button type="primary" :loading="resetPasswordLoading" @click="handleResetPassword">
+          Saqlash
         </el-button>
       </template>
     </el-dialog>
@@ -1112,6 +1149,7 @@ import { usePartnersStore } from '@/stores/partners'
 import { useKPsStore } from '@/stores/kp'
 import AmoCrmStats from '@/components/amocrm/AmoCrmStats.vue'
 import UiStat from '@/components/ui/UiStat.vue'
+import CreateUserDialog from '@/components/admin/CreateUserDialog.vue'
 import { fmtNum, formatDate as fmtDay, formatDateTime as fmtDateTime } from '@/utils/format'
 import {
   KP_COMMENT_OPTIONS,
@@ -1458,7 +1496,7 @@ watch(
 // ─── Audit helpers ────────────────────────────────────────
 function getAuditIcon(action) {
   return (
-    { role: StarFilled, block: Lock, unblock: Unlock, view: View, create: Plus, export: Download, login: User }[
+    { role: StarFilled, block: Lock, unblock: Unlock, view: View, create: Plus, edit: Edit, password: Key, export: Download, login: User }[
       action
     ] || Document
   )
@@ -1471,6 +1509,8 @@ function getActionLabel(action) {
       unblock: 'Blok ochildi',
       view: "Ko'rildi",
       create: "Qo'shildi",
+      edit: 'Tahrirlandi',
+      password: 'Parol tiklandi',
       export: 'Export',
       login: 'Kirish',
     }[action] || action
@@ -1579,20 +1619,12 @@ async function clearAuditLogs() {
   } catch {}
 }
 
-// ─── Yangi foydalanuvchi ──────────────────────────────────
+// ─── Yangi foydalanuvchi (forma — CreateUserDialog) ───────
 const createUserVisible = ref(false)
-const createUserLoading = ref(false)
-const createUserFormRef = ref(null)
-const emptyCreateUser = () => ({
-  firstname: '',
-  lastname: '',
-  username: '',
-  password: '',
-  phone_number: '',
-  email: '',
-  is_admin: false,
-})
-const createUserForm = reactive(emptyCreateUser())
+function openCreateUser() {
+  createUserVisible.value = true
+}
+// Tahrirlash va parol tiklash formalari uchun umumiy qoidalar
 const requiredRule = (message) => ({ required: true, message, trigger: 'blur' })
 const createUserRules = {
   firstname: [requiredRule('Ismni kiriting')],
@@ -1608,39 +1640,99 @@ const createUserRules = {
   email: [{ type: 'email', message: "Email noto'g'ri", trigger: 'blur' }],
 }
 
-function openCreateUser() {
-  createUserVisible.value = true
-}
-function resetCreateUser() {
-  Object.assign(createUserForm, emptyCreateUser())
+// ─── Foydalanuvchini tahrirlash ───────────────────────────
+const editUserVisible = ref(false)
+const editUserLoading = ref(false)
+const editUserFormRef = ref(null)
+const editUserTarget = ref(null)
+const editUserForm = reactive({ firstname: '', lastname: '', username: '', phone_number: '', email: '' })
+const editUserRules = {
+  firstname: createUserRules.firstname,
+  lastname: createUserRules.lastname,
+  // Email tekshirilmaydi: bazada eski "." kabi qiymatlar bor — ular ismni tahrirlashni to'smasin
+  username: createUserRules.username,
 }
 
-async function handleCreateUser() {
-  const valid = await createUserFormRef.value?.validate().catch(() => false)
+function openEditUser(user) {
+  editUserTarget.value = user
+  Object.assign(editUserForm, {
+    firstname: user.firstname || '',
+    lastname: user.lastname || '',
+    username: user.username || '',
+    phone_number: user.phone_number || '',
+    email: user.email || '',
+  })
+  editUserVisible.value = true
+}
+
+async function handleEditUser() {
+  const valid = await editUserFormRef.value?.validate().catch(() => false)
   if (!valid) return
-  createUserLoading.value = true
+  const user = editUserTarget.value
+  editUserLoading.value = true
   try {
-    const { is_admin, ...payload } = createUserForm
-    payload.username = payload.username.trim()
-    // Bazada profile_image majburiy — sidebar 'profile.jpg'ni standart avatar deb biladi
-    payload.profile_image = 'profile.jpg'
-    const user = await usersStore.createUser(payload)
-    if (is_admin && user?.id) {
-      await usersStore.updateUser(user.id, { is_admin: true })
-      user.is_admin = true
-    }
+    const payload = { ...editUserForm, username: editUserForm.username.trim() }
+    await usersStore.updateUser(user.id, payload)
+    // Jadval, drawer va ro'yxatdagi yozuv bir xil obyekt — joyida yangilaymiz
+    Object.assign(user, payload)
     addAuditLog({
-      action: 'create',
-      message: `"${payload.firstname} ${payload.lastname}" (@${payload.username}) — yangi foydalanuvchi qo'shildi${is_admin ? ' (admin)' : ''}`,
-      type: 'success',
-      target_id: user?.id,
+      action: 'edit',
+      message: `"${payload.firstname} ${payload.lastname}" (@${payload.username}) — ma'lumotlari tahrirlandi`,
+      type: 'info',
+      target_id: user.id,
     })
-    ElMessage.success(`✅ @${payload.username} qo'shildi`)
-    createUserVisible.value = false
+    ElMessage.success("✅ Ma'lumotlar saqlandi")
+    editUserVisible.value = false
   } catch (err) {
-    ElMessage.error(errorText(err, 'Foydalanuvchi qo\'shilmadi'))
+    ElMessage.error(errorText(err, 'Saqlanmadi'))
   } finally {
-    createUserLoading.value = false
+    editUserLoading.value = false
+  }
+}
+
+// ─── Parolni tiklash ──────────────────────────────────────
+const resetPasswordVisible = ref(false)
+const resetPasswordLoading = ref(false)
+const resetPasswordFormRef = ref(null)
+const resetPasswordUser = ref(null)
+const resetPasswordForm = reactive({ password: '', confirm: '' })
+const resetPasswordRules = {
+  password: createUserRules.password,
+  confirm: [
+    requiredRule('Parolni takrorlang'),
+    {
+      validator: (_rule, value, cb) =>
+        value === resetPasswordForm.password ? cb() : cb(new Error('Parollar mos emas')),
+      trigger: 'blur',
+    },
+  ],
+}
+
+function openResetPassword(user) {
+  resetPasswordUser.value = user
+  Object.assign(resetPasswordForm, { password: '', confirm: '' })
+  resetPasswordVisible.value = true
+}
+
+async function handleResetPassword() {
+  const valid = await resetPasswordFormRef.value?.validate().catch(() => false)
+  if (!valid) return
+  const user = resetPasswordUser.value
+  resetPasswordLoading.value = true
+  try {
+    await usersStore.updateUserPassword(user.id, { password: resetPasswordForm.password })
+    addAuditLog({
+      action: 'password',
+      message: `"${user.firstname} ${user.lastname}" (@${user.username}) — paroli admin tomonidan tiklandi`,
+      type: 'warning',
+      target_id: user.id,
+    })
+    ElMessage.success(`✅ @${user.username} paroli yangilandi`)
+    resetPasswordVisible.value = false
+  } catch (err) {
+    ElMessage.error(errorText(err, 'Parol yangilanmadi'))
+  } finally {
+    resetPasswordLoading.value = false
   }
 }
 
@@ -2599,6 +2691,12 @@ onMounted(async () => {
 }
 .adm-add-btn {
   margin-left: auto;
+}
+.reset-pw-hint {
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ui-muted);
 }
 // Bloklangan foydalanuvchi qatori xira — amallar ustuni (blokdan chiqarish) aniq qoladi
 :deep(.el-table__row.row--blocked > td:not(:last-child) .cell) {
