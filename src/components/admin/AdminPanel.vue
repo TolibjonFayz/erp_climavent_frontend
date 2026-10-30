@@ -285,6 +285,22 @@
                   </div>
                 </template>
               </el-table-column>
+              <el-table-column
+                label="Oxirgi faollik"
+                min-width="160"
+                sortable
+                :sort-method="(a, b) => new Date(a.last_seen_at || 0) - new Date(b.last_seen_at || 0)"
+              >
+                <template #default="{ row }">
+                  <span
+                    class="seen"
+                    :class="{ 'is-online': isOnline(row.last_seen_at), 'is-never': !row.last_seen_at }"
+                    :title="row.last_seen_at ? fmtDateTime(row.last_seen_at) : ''"
+                  >
+                    <span class="seen__dot"></span>{{ lastSeenText(row.last_seen_at) }}
+                  </span>
+                </template>
+              </el-table-column>
               <el-table-column prop="phone_number" label="Telefon" min-width="130" />
               <el-table-column prop="email" label="Email" min-width="150" />
               <el-table-column label="Rol" width="150" align="center">
@@ -738,8 +754,18 @@
         <div v-if="activeTab === 'audit'" class="adm-page">
           <div class="page-head">
             <span class="page-accent"></span>
-            <h2 class="page-title">Audit Log</h2>
+            <h2 class="page-title">Faoliyat jurnali</h2>
+            <el-segmented
+              v-model="auditMode"
+              :options="[
+                { label: 'Barcha faoliyat', value: 'activity' },
+                { label: 'Admin amallari (eski)', value: 'legacy' },
+              ]"
+              size="small"
+              class="audit-mode"
+            />
             <el-button
+              v-if="auditMode === 'legacy'"
               size="small"
               type="danger"
               plain
@@ -749,6 +775,10 @@
               <el-icon><Delete /></el-icon> Loglarni tozalash
             </el-button>
           </div>
+          <div v-if="auditMode === 'activity'" class="activity-card">
+            <ActivityFeed :users="usersStore.allUsers" />
+          </div>
+          <template v-else>
           <div class="adm-toolbar">
             <el-input
               v-model="auditSearch"
@@ -827,6 +857,7 @@
               </div>
             </div>
           </div>
+          </template>
         </div>
 
         <!-- ═══════ SOZLAMALAR ═══════ -->
@@ -884,7 +915,7 @@
     <el-drawer
       v-model="userDetailVisible"
       direction="rtl"
-      size="400px"
+      size="min(780px, 100vw)"
       :title="'Foydalanuvchi: ' + (selectedUser?.username || '')"
       destroy-on-close
     >
@@ -903,6 +934,39 @@
           <el-tag :type="selectedUser.is_blocked ? 'danger' : 'success'">
             {{ selectedUser.is_blocked ? 'Bloklangan' : 'Faol' }}
           </el-tag>
+        </div>
+        <div
+          class="seen user-drawer__seen"
+          :class="{ 'is-online': isOnline(selectedUser.last_seen_at), 'is-never': !selectedUser.last_seen_at }"
+        >
+          <span class="seen__dot"></span>
+          {{ isOnline(selectedUser.last_seen_at) ? 'Hozir onlayn' : 'Oxirgi faollik: ' + lastSeenText(selectedUser.last_seen_at) }}
+        </div>
+
+        <!-- Faollik qisqacha -->
+        <div class="user-drawer__kpis">
+          <div class="udk">
+            <span class="udk__lbl">Oxirgi kirish</span>
+            <b class="udk__val">{{ userSummary?.last_login ? fmtDateTime(userSummary.last_login.createdAt) : '—' }}</b>
+            <span v-if="userSummary?.last_login" class="udk__sub">{{ deviceText(userSummary.last_login) }}</span>
+          </div>
+          <div class="udk">
+            <span class="udk__lbl">Bugungi amallar</span>
+            <b class="udk__val">{{ fmtNum(userSummary?.today ?? 0) }}</b>
+          </div>
+          <div class="udk">
+            <span class="udk__lbl">30 kunda</span>
+            <b class="udk__val">{{ fmtNum(summaryMonthTotal) }}</b>
+            <span class="udk__sub">
+              {{ userSummary?.last_30_days?.create || 0 }} qo'shish ·
+              {{ userSummary?.last_30_days?.update || 0 }} tahrir ·
+              {{ userSummary?.last_30_days?.delete || 0 }} o'chirish
+            </span>
+          </div>
+          <div class="udk">
+            <span class="udk__lbl">Jami yozuvlar</span>
+            <b class="udk__val">{{ fmtNum(userSummary?.total ?? 0) }}</b>
+          </div>
         </div>
 
         <el-divider />
@@ -969,9 +1033,11 @@
           </template>
         </div>
 
-        <el-divider content-position="left">
-          <span style="font-size: 12px; color: #909399">Bu foydalanuvchiga tegishli amallar</span>
-        </el-divider>
+        <el-tabs v-model="userDrawerTab" class="user-drawer__tabs">
+          <el-tab-pane label="Faoliyat jurnali" name="activity">
+            <ActivityFeed :user-id="selectedUser.id" />
+          </el-tab-pane>
+          <el-tab-pane label="Unga nisbatan admin amallari" name="admin">
         <div class="user-audit-list">
           <div
             v-for="log in selectedUserLogs"
@@ -992,6 +1058,8 @@
             Bu foydalanuvchiga hech qanday amal bajarilamagan
           </div>
         </div>
+          </el-tab-pane>
+        </el-tabs>
       </div>
     </el-drawer>
 
@@ -1202,6 +1270,9 @@ import { useKPsStore } from '@/stores/kp'
 import AmoCrmStats from '@/components/amocrm/AmoCrmStats.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import CreateUserDialog from '@/components/admin/CreateUserDialog.vue'
+import ActivityFeed from '@/components/admin/ActivityFeed.vue'
+import activityApi from '@/api/activity'
+import { deviceText, isOnline, lastSeenText } from '@/utils/activity'
 import partnersApi from '@/api/partners'
 import checkInOutApi from '@/api/checkInOut'
 import usersApi from '@/api/users'
@@ -1319,7 +1390,7 @@ const tabs = [
   { name: 'objects', label: 'Obyektlar', icon: OfficeBuilding },
   { name: 'kp', label: 'KP', icon: Document },
   { name: 'amocrm', label: 'amoCRM', icon: Phone },
-  { name: 'audit', label: 'Audit Log', icon: Document },
+  { name: 'audit', label: 'Faoliyat jurnali', icon: Document },
   { name: 'settings', label: 'Sozlamalar', icon: Setting },
 ]
 
@@ -1744,9 +1815,25 @@ async function toggleBlockUser(user, closeDrawer = false) {
   }
 }
 
+// Faoliyat jurnali: tab rejimi va xodim kartasidagi qisqacha ko'rsatkichlar
+const auditMode = ref('activity')
+const userDrawerTab = ref('activity')
+const userSummary = ref(null)
+const summaryMonthTotal = computed(() =>
+  Object.values(userSummary.value?.last_30_days || {}).reduce((a, b) => a + b, 0),
+)
+
 async function openUserDetail(user) {
   selectedUser.value = user
   userDetailVisible.value = true
+  userDrawerTab.value = 'activity'
+  userSummary.value = null
+  activityApi
+    .userSummary(user.id)
+    .then((s) => {
+      if (selectedUser.value?.id === user.id) userSummary.value = s
+    })
+    .catch(() => {})
   selectedUserLogs.value = await fetchByTarget(user.username)
   addAuditLog({
     action: 'view',
@@ -3398,6 +3485,85 @@ onMounted(async () => {
   }
   .adm-select {
     width: 100%;
+  }
+}
+
+/* ─── Oxirgi faollik va faoliyat jurnali ─── */
+.seen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ui-muted);
+}
+.seen__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ui-faint);
+  flex: none;
+}
+.seen.is-online {
+  color: var(--ui-good);
+  font-weight: 600;
+}
+.seen.is-online .seen__dot {
+  background: var(--ui-good);
+  box-shadow: 0 0 0 3px var(--ui-good-soft);
+}
+.seen.is-never {
+  color: var(--ui-faint);
+}
+.user-drawer__seen {
+  margin-top: 8px;
+  justify-content: center;
+}
+.user-drawer__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+.udk {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--ui-line-soft);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-2);
+  text-align: left;
+  min-width: 0;
+}
+.udk__lbl {
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.udk__val {
+  font-size: 16px;
+  color: var(--ui-ink);
+}
+.udk__sub {
+  font-size: 11px;
+  color: var(--ui-faint);
+  overflow-wrap: anywhere;
+}
+.user-drawer__tabs {
+  margin-top: 8px;
+  text-align: left;
+}
+.audit-mode {
+  margin-left: 12px;
+}
+.activity-card {
+  padding: 16px;
+  border: 1px solid var(--ui-line-soft);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-surface);
+}
+@media (max-width: 640px) {
+  .user-drawer__kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 </style>
