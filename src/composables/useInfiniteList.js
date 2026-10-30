@@ -4,26 +4,43 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 // ro'yxat oxiridagi belgi (sentinel) ekran pastiga yaqinlashganda yana `step` ta qo'shiladi.
 // Ma'lumot allaqachon xotirada — faqat DOM'ga chiziladigan qatorlar soni oshadi.
 // Filtr/saralash o'zgarsa (manba yangi massiv bo'lsa) — yana boshidan.
-export function useInfiniteList(source, { step = 30, threshold = 400 } = {}) {
+//
+// Silliqlik uchun: qo'shish paytida `loadingMore` yoqiladi (sahifa skelet ko'rsatadi), qatorlar
+// keyingi kadrda chiziladi — scroll to'xtab qolmaydi; yuklash davomida qayta yuklash boshlanmaydi.
+export function useInfiniteList(source, { step = 30, threshold = 500, delay = 120 } = {}) {
   const limit = ref(step)
   const sentinel = ref(null)
+  const loadingMore = ref(false)
   let observer = null
-  let frame = 0
+  let scrollTimer = 0
+  let renderTimer = 0
 
   const visible = computed(() => source.value.slice(0, limit.value))
   const hasMore = computed(() => limit.value < source.value.length)
 
   function loadMore() {
-    if (hasMore.value) limit.value += step
+    if (!hasMore.value || loadingMore.value) return
+    loadingMore.value = true
+    // Avval skelet chizilsin, keyin og'ir qism — yangi qatorlar
+    renderTimer = setTimeout(async () => {
+      limit.value += step
+      await nextTick()
+      loadingMore.value = false
+      // Qo'shilganlar ekranni to'ldirmagan bo'lsa — yana
+      await nextTick()
+      check()
+    }, delay)
   }
 
   function reset() {
+    clearTimeout(renderTimer)
+    loadingMore.value = false
     limit.value = step
   }
 
   // Sentinel ekran pastidan `threshold` px masofaga kelgan bo'lsa — yana qo'shamiz
   function check() {
-    frame = 0
+    scrollTimer = 0
     const el = sentinel.value
     // Yashirin tabdagi ro'yxat (display:none) koordinatasi 0 — "ekranda" deb o'ylab hammasini
     // chizib yubormasin: offsetParent faqat ko'rinadigan elementda bor
@@ -32,15 +49,10 @@ export function useInfiniteList(source, { step = 30, threshold = 400 } = {}) {
   }
   // Scroll juda tez-tez keladi — 80 ms'da bir martadan ko'p tekshirmaymiz
   const onScroll = () => {
-    if (!frame) frame = setTimeout(check, 80)
+    if (!scrollTimer) scrollTimer = setTimeout(check, 80)
   }
 
   watch(source, reset)
-  // Qo'shilgan qatorlar ekranni to'ldirmasa, sentinel ko'rinishda qoladi — yana tekshiramiz
-  watch(limit, async () => {
-    await nextTick()
-    check()
-  })
 
   // Asosiy yo'l — IntersectionObserver; scroll hodisasi — u ishlamaydigan holatlar uchun zaxira
   watch(sentinel, (el, old) => {
@@ -66,8 +78,9 @@ export function useInfiniteList(source, { step = 30, threshold = 400 } = {}) {
     observer?.disconnect()
     window.removeEventListener('scroll', onScroll)
     window.removeEventListener('resize', onScroll)
-    clearTimeout(frame)
+    clearTimeout(scrollTimer)
+    clearTimeout(renderTimer)
   })
 
-  return { visible, hasMore, loadMore, reset, sentinel, limit }
+  return { visible, hasMore, loadMore, loadingMore, reset, sentinel, limit }
 }

@@ -1250,6 +1250,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuditLog } from '@/composables/useAuditLog'
 import * as XLSX from 'xlsx'
 import router from '@/router'
+import { useRoute } from 'vue-router'
 
 const comeandgoInsideStore = useComeAndGoInsideStore()
 const partnersStore = usePartnersStore()
@@ -1321,6 +1322,14 @@ const tabs = [
   { name: 'audit', label: 'Audit Log', icon: Document },
   { name: 'settings', label: 'Sozlamalar', icon: Setting },
 ]
+
+// Faol tab URL'da (?tab=users): sahifa yangilansa yoki havola ulashilsa — o'sha tab ochiladi
+const route = useRoute()
+const tabFromUrl = String(route.query.tab || '')
+if (tabs.some((t) => t.name === tabFromUrl)) activeTab.value = tabFromUrl
+watch(activeTab, (tab) => {
+  if (route.query.tab !== tab) router.replace({ query: { ...route.query, tab } })
+})
 
 // ─── Hamkor turlari ───────────────────────────────────────
 const partnerTypes = [

@@ -39,22 +39,21 @@
       <span class="sk-count">{{ fmtNum(filtered.length) }}</span>
     </template>
     <template #actions>
-      <el-button v-if="cols.changed.value" size="small" text :title="$t('skResizeHint')" @click="cols.reset()">{{ $t('skResetWidths') }}</el-button>
       <span class="sk-sum">
         {{ $t('skStatIn') }}: <b class="is-in">+{{ fmtQty(sum.in) }}</b> · {{ $t('skStatOut') }}:
         <b class="is-out">−{{ fmtQty(sum.out) }}</b>
       </span>
     </template>
-    <el-table v-loading="loading" :data="visible" :key="cols.version.value" class="sk-table ui-resizable" row-class-name="sk-row" border @header-dragend="cols.onDragEnd" @row-click="(r) => $emit('open', r.item_id)">
-      <el-table-column :label="$t('skColDate')" v-bind="cols.col('skColDate', { width: 90 })" column-key="skColDate">
+    <el-table v-loading="loading" :data="visible" class="sk-table" row-class-name="sk-row" @row-click="(r) => $emit('open', r.item_id)">
+      <el-table-column :label="$t('skColDate')" min-width="90" column-key="skColDate">
         <template #default="{ row }">{{ dayMonth(row.move_date) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skMoveType')" v-bind="cols.col('skMoveType', { width: 140 })" column-key="skMoveType">
+      <el-table-column :label="$t('skMoveType')" min-width="140" column-key="skMoveType">
         <template #default="{ row }">
           <span class="sk-tag" :class="`t-${row.type}`">{{ moveTypeLabel(row.type) }}</span>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skColName')" v-bind="cols.col('skColName', { minWidth: 220 })" column-key="skColName">
+      <el-table-column :label="$t('skColName')" min-width="220" column-key="skColName">
         <template #default="{ row }">
           <div class="sk-name">{{ itemName(row.item) }}</div>
           <div class="sk-group">
@@ -62,18 +61,18 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skColQty')" v-bind="cols.col('skColQty', { width: 100 })" column-key="skColQty" align="right">
+      <el-table-column :label="$t('skColQty')" min-width="100" column-key="skColQty" align="right">
         <template #default="{ row }">
           <b :class="`q-${row.type}`">{{ signedQty(row.type, row.qty) }}</b>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skColDogovor')" v-bind="cols.col('skColDogovor', { width: 110 })" column-key="skColDogovor">
+      <el-table-column :label="$t('skColDogovor')" min-width="110" column-key="skColDogovor">
         <template #default="{ row }">
           <span v-if="row.dogovor_number">{{ row.dogovor_number }}</span><span v-else class="sk-none">—</span>
         </template>
       </el-table-column>
       <!-- Kimdan/kimga, hujjat, izoh va kim kiritgani — bitta ustunda (jadval ekranga sig'sin) -->
-      <el-table-column :label="$t('skColDetails')" v-bind="cols.col('skColDetails', { minWidth: 200 })" column-key="skColDetails">
+      <el-table-column :label="$t('skColDetails')" min-width="200" column-key="skColDetails">
         <template #default="{ row }">
           <div v-if="row.counterparty">{{ row.counterparty }}</div>
           <div v-if="row.doc_number" class="sk-group">№ {{ row.doc_number }}</div>
@@ -100,11 +99,13 @@
         <div class="sk-empty">{{ $t('skNoMoves') }}</div>
       </template>
     </el-table>
+    <!-- Keyingi qatorlar chizilayotganda — skelet -->
+    <UiSkeletonRows v-if="loadingMore" :columns="[1, 1.4, 3, 1, 1, 2.4]" :numeric-from="3" />
     <!-- Infinite scroll: oxiriga yaqinlashganda keyingi qatorlar o'zi qo'shiladi -->
     <div v-if="filtered.length" class="sk-pager">
       <span ref="sentinel" class="sk-sentinel" aria-hidden="true" />
       <span class="sk-shown">{{ $t('skShownOf', { n: visible.length, total: filtered.length }) }}</span>
-      <el-button v-if="hasMore" size="small" @click="loadMore">{{ $t('skShowMore') }}</el-button>
+      <el-button v-if="hasMore" size="small" :loading="loadingMore" @click="loadMore">{{ $t('skShowMore') }}</el-button>
     </div>
   </UiPanel>
 </template>
@@ -118,14 +119,12 @@ import { Delete, Download, Search } from '@element-plus/icons-vue'
 import UiToolbar from '@/components/ui/UiToolbar.vue'
 import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
+import UiSkeletonRows from '@/components/ui/UiSkeletonRows.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { useInfiniteList } from '@/composables/useInfiniteList'
 import { fmtNum } from '@/utils/format'
 import { apiError, dayMonth, fmtQty, itemName, moveComment, moveTypeLabel, signedQty } from '@/utils/skladFormat'
-import { useColumnWidths } from '@/composables/useColumnWidths'
 
-// Ustun chegarasini sudrab kenglikni o'zgartirish (brauzerda eslab qolinadi)
-const cols = useColumnWidths('sklad-moves')
 
 const props = defineProps({
   isAdmin: { type: Boolean, default: false },
@@ -182,7 +181,7 @@ const filtered = computed(() => {
   })
 })
 // Avval 30 ta harakat, pastga aylantirilgani sayin yana 30 tadan
-const { visible, hasMore, loadMore, sentinel } = useInfiniteList(filtered, { step: 30 })
+const { visible, hasMore, loadMore, loadingMore, sentinel } = useInfiniteList(filtered, { step: 30 })
 
 const sum = computed(() =>
   filtered.value.reduce(
@@ -286,13 +285,15 @@ function exportExcel() {
   /* Element Plus so'zni istalgan harfdan bo'ladi — sarlavhada bo'lmasin */
   :deep(th .cell) {
     word-break: normal;
-    white-space: nowrap;
+    white-space: normal;
+    line-height: 1.3;
   }
   :deep(.cell) {
     font-variant-numeric: tabular-nums;
     word-break: normal;
   }
   :deep(td .cell) {
+    overflow-wrap: anywhere;
     font-size: 14px;
     line-height: 1.45;
   }
