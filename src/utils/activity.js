@@ -1,4 +1,4 @@
-// Faoliyat jurnali yozuvlarini odam tilida ko'rsatish
+// Faoliyat jurnali yozuvlarini odam tilida ko'rsatish (t — vue-i18n tarjima funksiyasi)
 
 const ONLINE_MS = 3 * 60 * 1000
 
@@ -8,113 +8,106 @@ export const isOnline = (lastSeen) =>
 
 const pad = (n) => String(n).padStart(2, '0')
 const hm = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`
+const day = (d) => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
 
-/** "Hozir onlayn" · "12 daqiqa oldin" · "bugun 14:20" · "kecha 09:05" · "28.10.2026" */
-export function lastSeenText(value) {
-  if (!value) return 'Hali kirmagan'
+/** "Hozir onlayn" · "12 daqiqa oldin" · "bugun 14:20" · "kecha 09:05" · "3 kun oldin" · "28.10.2026" */
+export function lastSeenText(t, value) {
+  if (!value) return t('actNeverLoggedIn')
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return '—'
   const diff = Date.now() - d.getTime()
-  if (diff < ONLINE_MS) return 'Hozir onlayn'
+  if (diff < ONLINE_MS) return t('actOnlineNow')
   const mins = Math.round(diff / 60000)
-  if (mins < 60) return `${mins} daqiqa oldin`
+  if (mins < 60) return t('actMinAgo', { n: mins })
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  if (d >= today) return `bugun ${hm(d)}`
-  if (d >= new Date(today.getTime() - 86400000)) return `kecha ${hm(d)}`
+  if (d >= today) return t('actTodayAt', { x: hm(d) })
+  if (d >= new Date(today.getTime() - 86400000)) return t('actYesterdayAt', { x: hm(d) })
   const days = Math.floor((today - d) / 86400000) + 1
-  if (days < 7) return `${days} kun oldin`
-  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
+  if (days < 7) return t('actDaysAgo', { n: days })
+  return day(d)
 }
 
-export const ACTIONS = {
-  login: { label: 'Tizimga kirdi', tag: 'Kirish', color: 'good', icon: 'SwitchButton' },
-  logout: { label: 'Tizimdan chiqdi', tag: 'Chiqish', color: 'muted', icon: 'Back' },
-  login_failed: { label: 'Kirishga urindi — muvaffaqiyatsiz', tag: 'Xato kirish', color: 'bad', icon: 'WarningFilled' },
-  login_blocked: { label: 'Bloklangan akkount bilan kirishga urindi', tag: 'Blok', color: 'bad', icon: 'Lock' },
-  create: { label: "Qo'shdi", tag: "Qo'shish", color: 'link', icon: 'Plus' },
-  update: { label: "O'zgartirdi", tag: 'Tahrir', color: 'warn', icon: 'Edit' },
-  delete: { label: "O'chirdi", tag: "O'chirish", color: 'bad', icon: 'Delete' },
-  import: { label: 'Import qildi', tag: 'Import', color: 'violet', icon: 'Upload' },
-  export: { label: 'Eksport qildi', tag: 'Eksport', color: 'violet', icon: 'Download' },
-  password: { label: "Parolni o'zgartirdi", tag: 'Parol', color: 'warn', icon: 'Key' },
-  view: { label: "Ko'rdi", tag: "Ko'rish", color: 'muted', icon: 'View' },
-  role: { label: "Rolini o'zgartirdi", tag: 'Rol', color: 'warn', icon: 'StarFilled' },
-  block: { label: 'Blokladi', tag: 'Blok', color: 'bad', icon: 'Lock' },
-  unblock: { label: 'Blokdan chiqardi', tag: 'Blokdan', color: 'good', icon: 'Unlock' },
-  action: { label: 'Amal bajardi', tag: 'Amal', color: 'muted', icon: 'Operation' },
+// Amal → rang va ikonka; matn — actA_<amal> kaliti
+const ACTIONS = {
+  login: { color: 'good', icon: 'SwitchButton' },
+  logout: { color: 'muted', icon: 'Back' },
+  login_failed: { color: 'bad', icon: 'WarningFilled' },
+  login_blocked: { color: 'bad', icon: 'Lock' },
+  create: { color: 'link', icon: 'Plus' },
+  update: { color: 'warn', icon: 'Edit' },
+  delete: { color: 'bad', icon: 'Delete' },
+  import: { color: 'violet', icon: 'Upload' },
+  export: { color: 'violet', icon: 'Download' },
+  password: { color: 'warn', icon: 'Key' },
+  view: { color: 'muted', icon: 'View' },
+  role: { color: 'warn', icon: 'StarFilled' },
+  block: { color: 'bad', icon: 'Lock' },
+  unblock: { color: 'good', icon: 'Unlock' },
+  action: { color: 'muted', icon: 'Operation' },
 }
-export const actionMeta = (a) => ACTIONS[a] || { label: a, tag: a, color: 'muted', icon: 'Operation' }
+export const actionMeta = (a) => ACTIONS[a] || ACTIONS.action
 
-// URL bo'limi → nom
-export const MODULES = {
-  users: 'Foydalanuvchilar',
-  partners: 'Mijozlar',
-  'come-and-goes': 'Obyektlar',
-  'come-and-go-inside': 'Obyekt tashriflari',
-  'location-videos': 'Obyekt videolari',
-  tasks: 'Vazifalar',
-  attendance: 'Davomat',
-  kp: 'KP',
-  dogovor: 'Shartnomalar',
-  competitors: 'Raqiblar',
-  loyiha: 'Loyihalar',
-  sklad: 'Ombor',
-  training: "O'qitish",
-  boss: 'Boss',
-  announcements: "E'lonlar",
-  amocrm: 'amoCRM',
-  'app-releases': 'Ilova versiyalari',
-  admin: 'Admin panel',
+// Kalit topilmasa — asl qiymat (yangi bo'lim yoki jadval qo'shilsa ham jurnal ishlayveradi)
+const tr = (t, key, fallback) => {
+  const s = t(key)
+  return s === key ? fallback : s
 }
-export const moduleLabel = (m) => MODULES[m] || m || '—'
+const slug = (s) => String(s || '').replace(/[^a-zA-Z0-9]/g, '_')
 
+export const actionLabel = (t, a) => tr(t, `actA_${a}`, a)
+// URL bo'limi → nom (partners → Mijozlar)
+export const MODULES = [
+  'users',
+  'partners',
+  'come-and-goes',
+  'come-and-go-inside',
+  'location-videos',
+  'tasks',
+  'attendance',
+  'kp',
+  'dogovor',
+  'competitors',
+  'loyiha',
+  'sklad',
+  'training',
+  'boss',
+  'announcements',
+  'amocrm',
+  'app-releases',
+  'admin',
+]
+export const moduleLabel = (t, m) => (m ? tr(t, `actM_${slug(m)}`, m) : '—')
 // Jadval → birlik nomi ("mijoz", "KP"...)
-const TABLES = {
-  partners: 'mijoz',
-  comeandgo: 'obyekt',
-  comeandgoinside: 'obyekt tashrifi',
-  location_videos: 'video',
-  tasks: 'vazifa',
-  attendance: 'davomat',
-  attendance_events: 'davomat belgisi',
-  kp: 'KP',
-  dogovor: 'shartnoma',
-  competitors: 'raqib',
-  competitor_encounters: 'raqib bilan uchrashuv',
-  loyiha: 'loyiha',
-  loyiha_file: 'loyiha fayli',
-  sklad_items: 'ombor mahsuloti',
-  sklad_movements: 'ombor harakati',
-  sklad_contract_lines: 'shartnoma qatori',
-  sklad_sources: 'ombor manbasi',
-  sklad_settings: 'ombor sozlamasi',
-  training_records: "o'qitish yozuvi",
-  users: 'foydalanuvchi',
-  announcements: "e'lon",
-  boss_targets: 'reja',
-  app_releases: 'ilova versiyasi',
-}
-export const tableLabel = (t) => TABLES[t] || t || ''
+export const tableLabel = (t, table) => (table ? tr(t, `actT_${slug(table)}`, table) : '')
+export const fieldLabel = (t, f) => tr(t, `actF_${slug(f)}`, f)
 
-/** Bir qatorli tavsif: "Mijoz qo'shdi: «Aziz Grand»" */
-export function describe(row) {
-  const meta = actionMeta(row.action)
-  if (['login_failed', 'login_blocked'].includes(row.action)) {
-    return row.error ? `Kirishga urindi — ${row.error.toLowerCase()}` : meta.label
+/** Bir qatorli tavsif: "Mijoz qo'shdi: «Aziz Grand»" / "Добавил — клиент: «Aziz Grand»" */
+export function describe(t, row) {
+  const a = row.action
+  if (a === 'login_failed' || a === 'login_blocked') {
+    if (!row.error) return actionLabel(t, a)
+    // Backend sababni o'zbekcha yozadi — ma'lumlarini tarjima qilamiz
+    const key = LOGIN_ERRORS[row.error]
+    return t('actLoginAttempt', { e: key ? t(key) : row.error.toLowerCase() })
   }
-  if (['login', 'logout', 'password'].includes(row.action)) return meta.label
+  if (a === 'login' || a === 'logout' || a === 'password') return actionLabel(t, a)
   if (row.module === 'admin' && row.entity_label) return row.entity_label
-  const what = tableLabel(row.entity_type) || moduleLabel(row.module).toLowerCase()
+  const what = tableLabel(t, row.entity_type) || moduleLabel(t, row.module).toLowerCase()
+  const verb = tr(t, `actVerb_${a}`, actionLabel(t, a).toLowerCase())
+  const head = t('actSentence', { what, verb, What: cap(what), Verb: cap(verb) })
   const name = row.entity_label ? `«${row.entity_label}»` : row.entity_id ? `#${row.entity_id}` : ''
-  const verb =
-    row.action === 'create' ? "qo'shdi" : row.action === 'update' ? "o'zgartirdi" : row.action === 'delete' ? "o'chirdi" : meta.label.toLowerCase()
-  const head = `${what.charAt(0).toUpperCase()}${what.slice(1)} ${verb}`
   return name ? `${head}: ${name}` : head
 }
+const LOGIN_ERRORS = {
+  "Parol noto'g'ri": 'actErrWrongPassword',
+  "Bunday login yo'q": 'actErrNoUser',
+  'Akkount bloklangan': 'actErrBlocked',
+}
+const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s)
 
 /** Brauzer satridan qurilma: "Telefon ilovasi · Android" / "Sayt · Chrome, Windows" */
-export function deviceText(row) {
+export function deviceText(t, row) {
   const ua = row.user_agent || ''
   const os = /Android/i.test(ua)
     ? 'Android'
@@ -127,64 +120,28 @@ export function deviceText(row) {
           : /Linux/i.test(ua)
             ? 'Linux'
             : ''
-  if (row.platform === 'mobile') return ['Telefon ilovasi', os].filter(Boolean).join(' · ')
-  const br = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : ''
-  return ['Sayt', [br, os].filter(Boolean).join(', ')].filter(Boolean).join(' · ')
+  if (row.platform === 'mobile') return [t('actMobileApp'), os].filter(Boolean).join(' · ')
+  const br = /Edg\//.test(ua)
+    ? 'Edge'
+    : /OPR\//.test(ua)
+      ? 'Opera'
+      : /Chrome\//.test(ua)
+        ? 'Chrome'
+        : /Firefox\//.test(ua)
+          ? 'Firefox'
+          : /Safari\//.test(ua)
+            ? 'Safari'
+            : ''
+  return [t('actWebsite'), [br, os].filter(Boolean).join(', ')].filter(Boolean).join(' · ')
 }
 
-// Maydon nomlari (eng ko'p uchraydiganlari; qolgani o'z nomi bilan)
-const FIELDS = {
-  fullname: 'Nomi',
-  name: 'Nomi',
-  firstname: 'Ism',
-  lastname: 'Familiya',
-  username: 'Login',
-  phone_number: 'Telefon',
-  phone: 'Telefon',
-  email: 'Email',
-  address: 'Manzil',
-  inn: 'INN',
-  is_admin: 'Admin',
-  is_blocked: 'Bloklangan',
-  permissions: 'Ruxsatlar',
-  password: 'Parol',
-  status: 'Holat',
-  title: 'Sarlavha',
-  description: 'Tavsif',
-  note: 'Izoh',
-  more_info: 'Izoh',
-  client_name: 'Mijoz',
-  kp_number: 'KP raqami',
-  kp_date: 'KP sanasi',
-  dogovor_number: 'Shartnoma raqami',
-  dogovor_date: 'Shartnoma sanasi',
-  summa: 'Summa',
-  amount: 'Summa',
-  price: 'Narx',
-  quantity: 'Miqdor',
-  qty: 'Miqdor',
-  outcome: 'Natija',
-  reason: 'Sabab',
-  deadline: 'Muddat',
-  stage: 'Bosqich',
-  user_id: 'Xodim (id)',
-  partner_id: 'Mijoz (id)',
-  admin_comment: 'Admin izohi',
-  whereto: 'Qayerga',
-  company_name: 'Firma',
-  locationname: 'Manzil',
-}
-export const fieldLabel = (f) => FIELDS[f] || f
-
-export function fmtValue(v) {
+export function fmtValue(t, v) {
   if (v === null || v === undefined || v === '') return '—'
-  if (v === true) return 'Ha'
-  if (v === false) return "Yo'q"
+  if (v === true) return t('actYes')
+  if (v === false) return t('actNo')
   if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)) {
     const d = new Date(v)
-    if (!Number.isNaN(d.getTime())) {
-      return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${hm(d)}`
-    }
+    if (!Number.isNaN(d.getTime())) return `${day(d)} ${hm(d)}`
   }
   if (typeof v === 'object') return JSON.stringify(v)
   return String(v)

@@ -6,33 +6,33 @@
         v-model="search"
         :prefix-icon="Search"
         clearable
-        placeholder="Qidiruv: nom, IP, maydon qiymati..."
+        :placeholder="$t('actSearchPh')"
         class="af-search"
       />
-      <el-select v-if="!userId" v-model="filters.user_id" clearable filterable placeholder="Xodim" class="af-sel">
+      <el-select v-if="!userId" v-model="filters.user_id" clearable filterable :placeholder="$t('actEmployee')" class="af-sel">
         <el-option v-for="u in users" :key="u.id" :label="`${u.firstname || ''} ${u.lastname || ''} (@${u.username})`" :value="u.id" />
       </el-select>
-      <el-select v-model="filters.action" clearable placeholder="Amal turi" class="af-sel">
-        <el-option v-for="g in ACTION_GROUPS" :key="g.value" :label="g.label" :value="g.value" />
+      <el-select v-model="filters.action" clearable :placeholder="$t('admActionType')" class="af-sel">
+        <el-option v-for="g in ACTION_GROUPS" :key="g.value" :label="$t(g.label)" :value="g.value" />
       </el-select>
-      <el-select v-model="filters.module" clearable filterable placeholder="Bo'lim" class="af-sel">
-        <el-option v-for="(label, key) in MODULES" :key="key" :label="label" :value="key" />
+      <el-select v-model="filters.module" clearable filterable :placeholder="$t('actSection')" class="af-sel">
+        <el-option v-for="key in MODULES" :key="key" :label="moduleLabel(t, key)" :value="key" />
       </el-select>
       <el-date-picker
         v-model="filters.range"
         type="daterange"
         value-format="YYYY-MM-DD"
         format="DD.MM.YYYY"
-        start-placeholder="Dan"
-        end-placeholder="Gacha"
+        :start-placeholder="$t('actFrom')"
+        :end-placeholder="$t('actTo')"
         class="af-range"
       />
-      <el-checkbox v-model="filters.onlyErrors" class="af-err">Faqat rad etilganlar</el-checkbox>
+      <el-checkbox v-model="filters.onlyErrors" class="af-err">{{ $t('actOnlyRejected') }}</el-checkbox>
     </div>
 
     <div class="af-count">
-      <span v-if="!loading">Jami: <b>{{ fmtNum(total) }}</b> ta yozuv</span>
-      <el-button text size="small" :icon="RefreshLeft" @click="reload">Yangilash</el-button>
+      <span v-if="!loading">{{ $t('actTotalN', { n: fmtNum(total) }) }}</span>
+      <el-button text size="small" :icon="RefreshLeft" @click="reload">{{ $t('actRefresh') }}</el-button>
     </div>
 
     <div v-if="loading" class="af-skel"><el-skeleton :rows="6" animated /></div>
@@ -51,18 +51,18 @@
             <span class="af-main">
               <span class="af-title">
                 <b v-if="!userId && row.user" class="af-who">{{ row.user.firstname }} {{ row.user.lastname }}</b>
-                <b v-else-if="!userId" class="af-who">{{ row.payload?.username ? '@' + row.payload.username : "Noma'lum" }}</b>
-                {{ describe(row) }}
+                <b v-else-if="!userId" class="af-who">{{ row.payload?.username ? '@' + row.payload.username : $t('actUnknown') }}</b>
+                {{ describe(t, row) }}
               </span>
               <span class="af-meta">
                 <span>{{ timeOf(row.createdAt) }}</span>
-                <span class="af-chip">{{ moduleLabel(row.module) }}</span>
+                <span class="af-chip">{{ moduleLabel(t, row.module) }}</span>
                 <span class="af-dev">
                   <el-icon><component :is="row.platform === 'mobile' ? Iphone : Monitor" /></el-icon>
-                  {{ deviceText(row) }}
+                  {{ deviceText(t, row) }}
                 </span>
                 <span v-if="row.ip">IP {{ row.ip }}</span>
-                <span v-if="!row.ok" class="af-bad">Rad etildi{{ row.status ? ` (${row.status})` : '' }}</span>
+                <span v-if="!row.ok" class="af-bad">{{ $t('actRejected') }}{{ row.status ? ` (${row.status})` : '' }}</span>
               </span>
             </span>
             <el-icon class="af-caret"><ArrowDown /></el-icon>
@@ -73,55 +73,55 @@
 
             <div v-for="(c, i) in row.changes || []" :key="i" class="af-change">
               <template v-if="c.more">
-                <div class="af-change__head">… yana {{ c.more }} ta o'zgarish</div>
+                <div class="af-change__head">{{ $t('actMoreChanges', { n: c.more }) }}</div>
               </template>
               <template v-else>
                 <div class="af-change__head">
-                  <span class="af-op" :class="`op-${opColor(c.op)}`">{{ OPS[c.op] || c.op }}</span>
-                  {{ tableLabel(c.table) || c.table }}
+                  <span class="af-op" :class="`op-${opColor(c.op)}`">{{ $t(`actOp_${c.op}`) }}</span>
+                  {{ tableLabel(t, c.table) }}
                   <span v-if="c.id != null" class="af-faint">#{{ c.id }}</span>
                   <b v-if="c.label">«{{ c.label }}»</b>
-                  <span v-if="c.count" class="af-faint">· {{ fmtNum(c.count) }} ta qator</span>
+                  <span v-if="c.count" class="af-faint">· {{ $t('actNRows', { n: fmtNum(c.count) }) }}</span>
                 </div>
                 <table v-if="c.op === 'update' && c.fields" class="af-diff">
                   <tr v-for="(v, f) in c.fields" :key="f">
-                    <td class="af-diff__f">{{ fieldLabel(f) }}</td>
-                    <td class="af-diff__old">{{ fmtValue(v?.[0]) }}</td>
+                    <td class="af-diff__f">{{ fieldLabel(t, f) }}</td>
+                    <td class="af-diff__old">{{ fmtValue(t, v?.[0]) }}</td>
                     <td class="af-diff__arrow">→</td>
-                    <td class="af-diff__new">{{ fmtValue(v?.[1]) }}</td>
+                    <td class="af-diff__new">{{ fmtValue(t, v?.[1]) }}</td>
                   </tr>
                 </table>
                 <table v-else-if="c.fields" class="af-diff">
                   <tr v-for="(v, f) in c.fields" :key="f">
-                    <td class="af-diff__f">{{ fieldLabel(f) }}</td>
+                    <td class="af-diff__f">{{ fieldLabel(t, f) }}</td>
                     <td class="af-diff__arrow">→</td>
-                    <td class="af-diff__new" colspan="2">{{ fmtValue(v) }}</td>
+                    <td class="af-diff__new" colspan="2">{{ fmtValue(t, v) }}</td>
                   </tr>
                 </table>
                 <dl v-if="c.data" class="af-data">
                   <template v-for="(v, f) in c.data" :key="f">
                     <template v-if="v !== null && v !== '' && !(typeof v === 'object' && !Object.keys(v).length)">
-                      <dt>{{ fieldLabel(f) }}</dt>
-                      <dd>{{ fmtValue(v) }}</dd>
+                      <dt>{{ fieldLabel(t, f) }}</dt>
+                      <dd>{{ fmtValue(t, v) }}</dd>
                     </template>
                   </template>
                 </dl>
-                <div v-if="c.where && !c.data" class="af-faint af-where">Shart: {{ fmtValue(c.where) }}</div>
+                <div v-if="c.where && !c.data" class="af-faint af-where">{{ $t('actWhere') }}: {{ fmtValue(t, c.where) }}</div>
               </template>
             </div>
 
             <details v-if="row.payload && !(row.changes || []).length" class="af-payload" open>
-              <summary>Yuborilgan ma'lumot</summary>
+              <summary>{{ $t('actPayload') }}</summary>
               <pre>{{ JSON.stringify(row.payload, null, 2) }}</pre>
             </details>
             <details v-else-if="row.payload" class="af-payload">
-              <summary>Yuborilgan ma'lumot</summary>
+              <summary>{{ $t('actPayload') }}</summary>
               <pre>{{ JSON.stringify(row.payload, null, 2) }}</pre>
             </details>
 
             <div class="af-tech">
               <span v-if="row.method">{{ row.method }} {{ row.path }}</span>
-              <span v-if="row.status">Javob: {{ row.status }}</span>
+              <span v-if="row.status">{{ $t('actResponse') }}: {{ row.status }}</span>
               <span v-if="row.duration_ms != null">{{ row.duration_ms }} ms</span>
               <span>{{ fullTime(row.createdAt) }}</span>
               <span v-if="row.user_agent" class="af-ua" :title="row.user_agent">{{ row.user_agent }}</span>
@@ -130,11 +130,11 @@
         </div>
       </div>
 
-      <el-empty v-if="!rows.length" :image-size="70" description="Bu filtr bo'yicha yozuv yo'q" />
+      <el-empty v-if="!rows.length" :image-size="70" :description="$t('actEmpty')" />
 
       <div v-if="rows.length < total" ref="sentinel" class="af-more">
         <el-button :loading="loadingMore" @click="loadMore">
-          Yana yuklash ({{ fmtNum(total - rows.length) }} ta qoldi)
+          {{ $t('actLoadMore', { n: fmtNum(total - rows.length) }) }}
         </el-button>
       </div>
     </template>
@@ -143,6 +143,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   ArrowDown,
   Back,
@@ -177,6 +178,8 @@ import {
   tableLabel,
 } from '@/utils/activity'
 
+const { t } = useI18n()
+
 const props = defineProps({
   // Berilsa — faqat shu xodimning amallari
   userId: { type: Number, default: null },
@@ -189,23 +192,14 @@ const ICONS = { SwitchButton, Back, WarningFilled, Lock, Plus, Edit, Delete, Upl
 const iconOf = (a) => ICONS[actionMeta(a).icon] || Operation
 
 const ACTION_GROUPS = [
-  { value: 'login,logout,login_failed,login_blocked', label: 'Kirish va chiqish' },
-  { value: 'login_failed,login_blocked', label: 'Muvaffaqiyatsiz kirishlar' },
-  { value: 'create', label: "Qo'shish" },
-  { value: 'update,password,role,block,unblock', label: "O'zgartirish" },
-  { value: 'delete', label: "O'chirish" },
-  { value: 'import,export', label: 'Import / eksport' },
-  { value: 'view', label: "Ko'rish (admin)" },
+  { value: 'login,logout,login_failed,login_blocked', label: 'actGrpLogin' },
+  { value: 'login_failed,login_blocked', label: 'actGrpFailed' },
+  { value: 'create', label: 'actGrpCreate' },
+  { value: 'update,password,role,block,unblock', label: 'actGrpUpdate' },
+  { value: 'delete', label: 'actGrpDelete' },
+  { value: 'import,export', label: 'actGrpImport' },
+  { value: 'view', label: 'actGrpView' },
 ]
-const OPS = {
-  create: "qo'shildi",
-  update: "o'zgardi",
-  delete: "o'chirildi",
-  upsert: 'saqlandi',
-  bulk_create: "ko'p qator qo'shildi",
-  bulk_update: "ko'p qator o'zgardi",
-  bulk_delete: "ko'p qator o'chirildi",
-}
 const opColor = (op) => (/create/.test(op) ? 'good' : /delete/.test(op) ? 'bad' : 'warn')
 
 const filters = reactive({ user_id: null, action: '', module: '', range: null, onlyErrors: false })
@@ -283,7 +277,7 @@ const groups = computed(() => {
     const day = formatDate(r.createdAt)
     let g = out[out.length - 1]
     if (!g || g.day !== day) {
-      g = { day, label: day === today ? `Bugun · ${day}` : day === yesterday ? `Kecha · ${day}` : day, items: [] }
+      g = { day, label: day === today ? `${t('actToday')} · ${day}` : day === yesterday ? `${t('actYesterday')} · ${day}` : day, items: [] }
       out.push(g)
     }
     g.items.push(r)

@@ -1,0 +1,1206 @@
+// Admin panel uslublari. Tablar alohida komponentlarda (tabs/), shuning uchun uslub
+// scoped emas — butunlay .admin-wrap ichiga o'ralgan va tashqariga ta'sir qilmaydi.
+// Dialog va drawer'lar append-to-body EMAS: ular ham .admin-wrap ichida qoladi.
+.admin-wrap {
+  /* Admin panel — umumiy klassik uslub (--ui-* tokenlar, main.css) */
+  & {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    color: var(--ui-ink-2);
+    background: var(--ui-surface-2);
+    box-sizing: border-box;
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+    button {
+      font-family: inherit;
+    }
+  }
+
+  // ── SARLAVHA ─────────────────────────────────────────────
+  .adm-header {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    min-height: 64px;
+    padding: 10px 24px;
+    background: var(--ui-surface);
+    border-bottom: 1px solid var(--ui-line);
+
+    &__left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    &__right {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      font-size: 12px;
+      color: var(--ui-muted);
+    }
+  }
+  .adm-logo {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--ui-link);
+    background: var(--ui-link-soft);
+    border-radius: 8px;
+  }
+  .adm-title {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--ui-ink);
+  }
+  .adm-sub {
+    font-size: 12px;
+    color: var(--ui-muted);
+  }
+  .adm-clock b {
+    font-weight: 600;
+    color: var(--ui-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .adm-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    font-weight: 600;
+    color: var(--ui-good);
+    background: var(--ui-good-soft);
+    border: 1px solid var(--ui-good-line);
+    border-radius: 999px;
+  }
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--ui-good);
+    border-radius: 50%;
+  }
+
+  // ── TANA ─────────────────────────────────────────────────
+  .adm-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+  .adm-sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 220px;
+    min-width: 220px;
+    padding: 12px 10px;
+    overflow-y: auto;
+    background: var(--ui-surface);
+    border-right: 1px solid var(--ui-line);
+  }
+  .adm-nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .adm-nav__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    color: var(--ui-ink-2);
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.12s;
+
+    &:hover {
+      background: var(--ui-surface-2);
+    }
+    &.is-active {
+      font-weight: 600;
+      color: var(--ui-link);
+      background: var(--ui-link-soft);
+
+      .adm-nav__icon {
+        color: var(--ui-link);
+      }
+    }
+  }
+  .adm-nav__icon {
+    display: flex;
+    font-size: 16px;
+    color: var(--ui-muted);
+  }
+  .adm-nav__lbl {
+    flex: 1;
+    white-space: nowrap;
+  }
+  .nav-badge {
+    min-width: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+    text-align: center;
+    color: var(--ui-muted);
+    background: var(--ui-line-soft);
+    border-radius: 999px;
+  }
+  .adm-sidebar__footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--ui-line);
+  }
+  .adm-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 6px;
+
+    > div:last-child {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+  .adm-user__av {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ui-link);
+    background: var(--ui-link-soft);
+    border-radius: 50%;
+  }
+  .adm-user__name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ui-ink);
+  }
+  .adm-user__role {
+    font-size: 11px;
+    color: var(--ui-muted);
+  }
+  .adm-exit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 10px;
+    font-size: 13px;
+    color: var(--ui-ink-2);
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-line);
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--ui-link);
+      border-color: var(--ui-link-line);
+    }
+  }
+  .adm-main {
+    flex: 1;
+    min-width: 0;
+    padding: 20px 24px 32px;
+    overflow-y: auto;
+  }
+  .adm-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+
+  // ── SAHIFA SARLAVHASI ───────────────────────────────────
+  .page-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--ui-line);
+  }
+  .page-accent {
+    display: none;
+  }
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ui-ink);
+  }
+  .page-date {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--ui-muted);
+  }
+
+  // ── DASHBOARD ────────────────────────────────────────────
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .dash-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+  .dash-card {
+    min-width: 0;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-line);
+    border-radius: var(--ui-radius);
+  }
+  .dash-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--ui-line-soft);
+  }
+  .dash-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ui-ink);
+  }
+  .chart-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+  }
+  .chart-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .chart-bar-lbl {
+    width: 190px;
+    flex-shrink: 0;
+    color: var(--ui-ink-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chart-bar-track {
+    flex: 1;
+    height: 8px;
+    overflow: hidden;
+    background: var(--ui-line-soft);
+    border-radius: 999px;
+  }
+  .chart-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+  .chart-bar-num {
+    min-width: 36px;
+    text-align: right;
+    font-weight: 600;
+    color: var(--ui-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .top-users {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 16px 12px;
+  }
+  .top-user-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--ui-line);
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+  }
+  .top-user-rank {
+    width: 22px;
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--ui-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .top-user-av {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--ui-link);
+    background: var(--ui-link-soft);
+    border-radius: 50%;
+
+    &.av--gold {
+      color: var(--ui-warn);
+      background: var(--ui-warn-soft);
+    }
+    &.av--silver {
+      color: var(--ui-ink-2);
+      background: var(--ui-line);
+    }
+    &.av--bronze {
+      color: var(--ui-orange-ink);
+      background: var(--ui-orange-soft);
+    }
+  }
+  .top-user-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .top-user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ui-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .top-user-un {
+    font-size: 11px;
+    color: var(--ui-muted);
+  }
+  .top-user-bar {
+    height: 4px;
+    margin: 3px 0;
+    overflow: hidden;
+    background: var(--ui-line-soft);
+    border-radius: 999px;
+
+    &__fill {
+      height: 100%;
+      background: var(--ui-link);
+      border-radius: 999px;
+    }
+  }
+  .top-user-stats {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--ui-muted);
+  }
+  .tus-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .tus-divider {
+    color: var(--ui-faint);
+  }
+  .top-user-total {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--ui-ink);
+    font-variant-numeric: tabular-nums;
+
+    span {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--ui-muted);
+    }
+    &.total--gold {
+      color: var(--ui-warn);
+    }
+  }
+  .show-all-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px;
+    font-size: 12px;
+    color: var(--ui-link);
+    background: var(--ui-surface-2);
+    border: 1px solid var(--ui-line);
+    border-radius: 6px;
+    cursor: pointer;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    &:hover {
+      background: var(--ui-link-soft);
+    }
+  }
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 20px;
+    font-size: 13px;
+    color: var(--ui-faint);
+  }
+
+  .activity-feed {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 16px 8px;
+  }
+  .activity-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    font-size: 13px;
+    border-bottom: 1px dashed var(--ui-line);
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+  }
+  .activity-dot {
+    display: none;
+  }
+  .activity-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--ui-muted);
+    background: var(--ui-line-soft);
+    border-radius: 6px;
+  }
+  .activity-item--success .activity-icon {
+    color: var(--ui-good);
+    background: var(--ui-good-soft);
+  }
+  .activity-item--warning .activity-icon {
+    color: var(--ui-warn);
+    background: var(--ui-warn-soft);
+  }
+  .activity-item--danger .activity-icon {
+    color: var(--ui-bad);
+    background: var(--ui-bad-soft);
+  }
+  .activity-content {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+  }
+  .activity-actor {
+    font-weight: 600;
+    color: var(--ui-ink);
+  }
+  .activity-msg {
+    color: var(--ui-ink-2);
+  }
+  .activity-time {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--ui-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // ── FILTRLAR ─────────────────────────────────────────────
+  .adm-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--ui-surface-2);
+    border: 1px solid var(--ui-line);
+    border-radius: var(--ui-radius);
+  }
+  .adm-search {
+    flex: 1 1 260px;
+    max-width: 420px;
+  }
+  .adm-select {
+    width: 180px;
+  }
+  .adm-add-btn {
+    margin-left: auto;
+  }
+  .reset-pw-hint {
+    margin-bottom: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ui-muted);
+  }
+  // Bloklangan foydalanuvchi qatori xira — amallar ustuni (blokdan chiqarish) aniq qoladi
+  .el-table__row.row--blocked > td:not(:last-child) .cell {
+    opacity: 0.35;
+  }
+  .adm-reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13px;
+    color: var(--ui-ink-2);
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-line);
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      color: var(--ui-link);
+      border-color: var(--ui-link-line);
+    }
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+  .kp-filtered-count {
+    font-size: 13px;
+    color: var(--ui-muted);
+    white-space: nowrap;
+  }
+
+  // ── JADVALLAR ────────────────────────────────────────────
+  .tbl-wrap {
+    overflow: hidden;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-line);
+    border-radius: var(--ui-radius);
+
+    .el-table {
+      --el-table-border-color: var(--ui-line-soft);
+
+      th.el-table__cell {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--ui-muted);
+        background: var(--ui-surface-2) !important;
+      }
+      td.el-table__cell {
+        color: var(--ui-ink-2);
+      }
+      .kp-wrap-col .cell {
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.5;
+      }
+    }
+  }
+  .user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .user-cell__av {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: 50%;
+  }
+  .av--admin {
+    color: var(--ui-good);
+    background: var(--ui-good-soft);
+  }
+  .av--user {
+    color: var(--ui-link);
+    background: var(--ui-link-soft);
+  }
+  .user-cell__name {
+    font-weight: 600;
+    color: var(--ui-ink);
+  }
+  .user-cell__un {
+    font-size: 12px;
+    color: var(--ui-muted);
+  }
+  .action-btns {
+    display: inline-flex;
+    gap: 4px;
+  }
+  .act-btn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ui-muted);
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-line);
+    border-radius: 6px;
+    cursor: pointer;
+    transition:
+      color 0.12s,
+      border-color 0.12s;
+
+    &--view:hover,
+    &--promote:hover,
+    &--unblock:hover {
+      color: var(--ui-link);
+      border-color: var(--ui-link-line);
+    }
+    &--promote {
+      color: var(--ui-warn);
+    }
+    &--unblock {
+      color: var(--ui-good);
+    }
+    &--demote,
+    &--block {
+      &:hover {
+        color: var(--ui-bad);
+        border-color: var(--ui-bad-line);
+      }
+    }
+  }
+
+  // ── AUDIT ────────────────────────────────────────────────
+  .audit-mini-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .audit-ms-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-line);
+    border-radius: var(--ui-radius);
+  }
+  .audit-ms-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ui-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .audit-ms-lbl {
+    font-size: 12px;
+    color: var(--ui-muted);
+  }
+  .audit-timeline {
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-line);
+    border-radius: var(--ui-radius);
+  }
+  .audit-entry {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--ui-line-soft);
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+  }
+  .audit-entry__line {
+    display: none;
+  }
+  .audit-entry__dot {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--ui-muted);
+    background: var(--ui-line-soft);
+    border-radius: 6px;
+  }
+  .audit-entry--success .audit-entry__dot {
+    color: var(--ui-good);
+    background: var(--ui-good-soft);
+  }
+  .audit-entry--warning .audit-entry__dot {
+    color: var(--ui-warn);
+    background: var(--ui-warn-soft);
+  }
+  .audit-entry--danger .audit-entry__dot {
+    color: var(--ui-bad);
+    background: var(--ui-bad-soft);
+  }
+  .audit-entry__body {
+    flex: 1;
+    min-width: 0;
+  }
+  .audit-entry__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    margin-bottom: 4px;
+  }
+  .audit-entry__actor,
+  .audit-entry__time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+  }
+  .audit-entry__actor {
+    font-weight: 600;
+    color: var(--ui-ink);
+  }
+  .audit-entry__time {
+    margin-left: auto;
+    color: var(--ui-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .audit-entry__action-tag {
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 20px;
+    color: var(--ui-muted);
+    background: var(--ui-line-soft);
+    border-radius: 999px;
+
+    &.tag--success {
+      color: var(--ui-good);
+      background: var(--ui-good-soft);
+    }
+    &.tag--warning {
+      color: var(--ui-warn);
+      background: var(--ui-warn-soft);
+    }
+    &.tag--danger {
+      color: var(--ui-bad);
+      background: var(--ui-bad-soft);
+    }
+    &.tag--info {
+      color: var(--ui-link);
+      background: var(--ui-link-soft);
+    }
+  }
+  .audit-entry__msg {
+    font-size: 13px;
+    color: var(--ui-ink-2);
+  }
+  .audit-entry__meta {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--ui-muted);
+  }
+  .empty-audit {
+    padding: 40px 16px;
+    text-align: center;
+
+    &__icon {
+      font-size: 26px;
+      color: var(--ui-faint);
+    }
+    &__title {
+      margin-top: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ui-ink);
+    }
+    &__sub {
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--ui-muted);
+    }
+  }
+
+  // ── SOZLAMALAR ───────────────────────────────────────────
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .settings-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-line);
+    border-radius: var(--ui-radius);
+  }
+  .sc-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+    color: var(--ui-link);
+    background: var(--ui-link-soft);
+    border-radius: 8px;
+
+    &--purple {
+      color: var(--ui-violet-ink);
+      background: var(--ui-violet-soft);
+    }
+  }
+  .sc-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ui-ink);
+  }
+  .sc-desc {
+    font-size: 13px;
+    color: var(--ui-muted);
+  }
+  .sc-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .sc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 14px;
+    font-size: 13px;
+    color: var(--ui-ink-2);
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-line);
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      color: var(--ui-link);
+      border-color: var(--ui-link-line);
+    }
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+
+  // ── FOYDALANUVCHI DRAWER ─────────────────────────────────
+  .user-drawer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+
+    &__avatar {
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    &__name {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ui-ink);
+    }
+    &__un {
+      font-size: 13px;
+      color: var(--ui-muted);
+    }
+    &__tags {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    &__fields {
+      width: 100%;
+      text-align: left;
+    }
+    &__actions {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      // Element Plus ketma-ket tugmalarga chap chekinish beradi — ustunda kerak emas
+      .el-button {
+        width: 100%;
+        margin: 0;
+      }
+    }
+    .el-divider {
+      margin: 16px 0;
+    }
+  }
+  .udf-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    font-size: 13px;
+    border-bottom: 1px dashed var(--ui-line);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+  .udf-lbl {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ui-muted);
+  }
+  .udf-val {
+    font-weight: 600;
+    color: var(--ui-ink);
+  }
+  .user-audit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    text-align: left;
+  }
+  .user-audit-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--ui-ink-2);
+    background: var(--ui-surface-2);
+    border: 1px solid var(--ui-line-soft);
+    border-radius: 6px;
+  }
+  .user-audit-time {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--ui-faint);
+  }
+
+  // ── KP ───────────────────────────────────────────────────
+  .kp-admin-comment {
+    font-style: italic;
+    color: var(--ui-warn);
+  }
+  .admin-comment-textarea .el-textarea__inner {
+    background: var(--ui-warn-soft);
+    border-color: var(--ui-warn-line);
+  }
+  .col-filter-admin {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 7px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--ui-ink-2);
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-line);
+    border-radius: 6px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--ui-link);
+    }
+  }
+  .kp-pagination-bar {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  // ── MOSLASHUVCHAN ────────────────────────────────────────
+  @media (max-width: 1200px) {
+    .kpi-grid,
+    .audit-mini-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .dash-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 1024px) {
+    .adm-sidebar {
+      width: 190px;
+      min-width: 190px;
+    }
+    .adm-main {
+      padding: 16px;
+    }
+    .chart-bar-lbl {
+      width: 130px;
+    }
+  }
+  @media (max-width: 640px) {
+    & {
+      height: auto;
+      overflow: visible;
+    }
+    .adm-header {
+      padding: 10px 12px;
+    }
+    .adm-body {
+      flex-direction: column;
+    }
+    .adm-sidebar {
+      width: 100%;
+      min-width: 0;
+      padding: 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      border-right: none;
+      border-bottom: 1px solid var(--ui-line);
+
+      .adm-nav {
+        flex-direction: row;
+        min-width: max-content;
+      }
+      .adm-sidebar__footer {
+        display: none;
+      }
+    }
+    .adm-main {
+      padding: 12px;
+      overflow: visible;
+    }
+    .settings-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .adm-select {
+      width: 100%;
+    }
+  }
+
+  /* ─── Oxirgi faollik va faoliyat jurnali ─── */
+  .seen {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ui-muted);
+  }
+  .seen__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ui-faint);
+    flex: none;
+  }
+  .seen.is-online {
+    color: var(--ui-good);
+    font-weight: 600;
+  }
+  .seen.is-online .seen__dot {
+    background: var(--ui-good);
+    box-shadow: 0 0 0 3px var(--ui-good-soft);
+  }
+  .seen.is-never {
+    color: var(--ui-faint);
+  }
+  .user-drawer__seen {
+    margin-top: 8px;
+    justify-content: center;
+  }
+  .user-drawer__kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .udk {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid var(--ui-line-soft);
+    border-radius: var(--ui-radius);
+    background: var(--ui-surface-2);
+    text-align: left;
+    min-width: 0;
+  }
+  .udk__lbl {
+    font-size: 12px;
+    color: var(--ui-muted);
+  }
+  .udk__val {
+    font-size: 16px;
+    color: var(--ui-ink);
+  }
+  .udk__sub {
+    font-size: 11px;
+    color: var(--ui-faint);
+    overflow-wrap: anywhere;
+  }
+  .user-drawer__tabs {
+    margin-top: 8px;
+    text-align: left;
+  }
+  .audit-mode {
+    margin-left: 12px;
+  }
+  .activity-card {
+    padding: 16px;
+    border: 1px solid var(--ui-line-soft);
+    border-radius: var(--ui-radius-lg);
+    background: var(--ui-surface);
+  }
+  @media (max-width: 640px) {
+    .user-drawer__kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .user-audit-empty {
+    padding: 12px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ui-muted);
+  }
+}

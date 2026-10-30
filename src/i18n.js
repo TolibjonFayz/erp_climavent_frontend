@@ -2,10 +2,11 @@ import { createI18n } from 'vue-i18n'
 import uz from './locales/uz.json'
 import ru from './locales/ru.json'
 import * as sklad from './locales/sklad.js'
+import * as admin from './locales/admin.js'
 
 const messages = {
-  uz: { ...uz, ...sklad.uz },
-  ru: { ...ru, ...sklad.ru },
+  uz: { ...uz, ...sklad.uz, ...admin.uz },
+  ru: { ...ru, ...sklad.ru, ...admin.ru },
 }
 
 const SUPPORTED_LOCALES = Object.keys(messages)
