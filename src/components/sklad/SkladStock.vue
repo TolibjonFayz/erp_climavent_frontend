@@ -79,7 +79,7 @@
       </template>
       <el-table
         v-loading="loading"
-        :data="paged"
+        :data="visible"
         :key="cols.version.value"
         class="sk-table ui-resizable"
         row-class-name="sk-row"
@@ -166,16 +166,12 @@
         </template>
       </el-table>
 
-      <div v-if="filtered.length > pageSizes[0]" class="sk-pager">
-        <el-pagination
-          v-model:current-page="page"
-          v-model:page-size="pageSize"
-          :page-sizes="pageSizes"
-          :total="filtered.length"
-          :layout="narrow ? 'prev, pager, next' : 'total, prev, pager, next, sizes'"
-          :pager-count="narrow ? 5 : 7"
-          background
-        />
+      <!-- Infinite scroll: oxiriga yaqinlashganda keyingi qatorlar o'zi qo'shiladi -->
+      <div v-if="filtered.length" class="sk-more-row">
+        <span ref="sentinel" class="sk-sentinel" aria-hidden="true" />
+        <span class="sk-shown">{{ $t('skShownOf', { n: fmtNum(visible.length), total: fmtNum(filtered.length) }) }}</span>
+        <el-button v-if="hasMore" size="small" @click="loadMore">{{ $t('skShowMore') }}</el-button>
+        <el-button v-else-if="visible.length > 30" size="small" text :icon="Top" @click="toTop">{{ $t('skToTop') }}</el-button>
       </div>
     </UiPanel>
   </div>
@@ -185,7 +181,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as XLSX from 'xlsx'
-import { ArrowRight, Download, InfoFilled, Plus, RefreshLeft, Search } from '@element-plus/icons-vue'
+import { ArrowRight, Download, InfoFilled, Plus, RefreshLeft, Search, Top } from '@element-plus/icons-vue'
 import UiField from '@/components/ui/UiField.vue'
 import UiHint from '@/components/ui/UiHint.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
@@ -194,6 +190,7 @@ import { stockStatus } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
 import { dayMonth, fmtQty, periodLabel, unitLabel } from '@/utils/skladFormat'
 import { useColumnWidths } from '@/composables/useColumnWidths'
+import { useInfiniteList } from '@/composables/useInfiniteList'
 
 // Ustun chegarasini sudrab kenglikni o'zgartirish (brauzerda eslab qolinadi)
 const cols = useColumnWidths('sklad-stock')
@@ -212,29 +209,18 @@ const search = ref('')
 const group = ref('')
 const status = ref('')
 const onlyMoved = ref(false)
-const page = ref(1)
-const pageSizes = [50, 100, 200]
-const pageSize = ref(50)
 const sort = ref({ prop: 'sort_order', order: 'ascending' })
 
 // ─── Tepada qotib turadigan panel balandligi (jadval sarlavhasi uning ostiga yopishadi) ───
 const rootEl = ref(null)
 const stickyEl = ref(null)
 const stickyH = ref(0)
-// Telefonda sahifalash ixcham bo'lsin (aks holda ekrandan chiqib ketadi)
-const narrow = ref(false)
 let ro = null
-const onResize = () => (narrow.value = window.innerWidth < 640)
 onMounted(() => {
   ro = new ResizeObserver(() => (stickyH.value = stickyEl.value?.offsetHeight || 0))
   if (stickyEl.value) ro.observe(stickyEl.value)
-  onResize()
-  window.addEventListener('resize', onResize)
 })
-onBeforeUnmount(() => {
-  ro?.disconnect()
-  window.removeEventListener('resize', onResize)
-})
+onBeforeUnmount(() => ro?.disconnect())
 
 // Holat bo'yicha filtr (rezerv — alohida belgi, holat emas)
 const matchesStatus = (it, s) => {
@@ -302,7 +288,8 @@ const filtered = computed(() => {
 const hasSap = computed(() => props.items.some((it) => it.sap_code || it.sap_name))
 const hasCode = computed(() => props.items.some((it) => it.sap_code))
 
-const paged = computed(() => filtered.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value))
+// Avval 30 ta qator, pastga aylantirilgani sayin yana 30 tadan
+const { visible, hasMore, loadMore, sentinel } = useInfiniteList(filtered, { step: 30 })
 
 const sum = computed(() =>
   filtered.value.reduce(
@@ -313,14 +300,12 @@ const sum = computed(() =>
 
 const hasFilters = computed(() => !!(search.value || group.value || status.value || onlyMoved.value))
 
-// Filtr o'zgarsa — 1-sahifaga va jadval boshiga
-watch([search, group, status, onlyMoved], () => {
-  page.value = 1
-})
-watch(page, () => {
+// Filtr o'zgarsa — ro'yxat boshidan ko'rinsin (pastda turgan bo'lsa, jadval tepasiga)
+function toTop() {
   const top = rootEl.value?.getBoundingClientRect().top
   if (top != null && top < 0) rootEl.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
-})
+}
+watch([search, group, status, onlyMoved], toTop)
 
 function onSort({ prop, order }) {
   sort.value = { prop: order ? prop : 'sort_order', order: order || 'ascending' }
@@ -685,16 +670,27 @@ function exportExcel() {
     color: var(--ui-ink);
   }
 }
-.sk-pager {
+.sk-more-row {
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
+  gap: 8px 14px;
   padding: 14px 12px;
   border-top: 1px solid var(--ui-line-soft);
-  :deep(.el-pagination) {
-    flex-wrap: wrap;
-    justify-content: center;
-    row-gap: 8px;
-  }
+}
+.sk-sentinel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+}
+.sk-shown {
+  font-size: 13px;
+  color: var(--ui-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 900px) {

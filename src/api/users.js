@@ -7,4 +7,5 @@ export default {
   getAll: () => apiClient.get('users/all'),
   updateProfile: (id, payload) => apiClient.patch(`users/update/${id}`, payload),
   updatePassword: (id, payload) => apiClient.patch(`users/update-password/${id}`, payload),
+  remove: (id) => apiClient.delete(`users/delete/${id}`),
 }

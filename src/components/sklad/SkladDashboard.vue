@@ -1,46 +1,56 @@
 <template>
   <UiPage :title="$t('skTitle')" wide class="sk-page">
     <template #subtitle>
-      <span class="sk-mode" :class="`is-${store.mode}`">
-        {{ store.mode === 'live' ? $t('skModeLive') : $t('skModeMirror') }}
-      </span>
+      <!-- Rejim izohi katta banner emas — belgining o'zida (sichqoncha bilan yoki fokusda o'qiladi) -->
+      <el-tooltip
+        :content="store.mode === 'mirror' ? $t('skMirrorBanner') : $t('skModeLiveHint')"
+        placement="bottom-start"
+        :show-after="150"
+      >
+        <span class="sk-mode" :class="`is-${store.mode}`" tabindex="0">
+          {{ store.mode === 'live' ? $t('skModeLive') : $t('skModeMirror') }}
+          <el-icon class="sk-mode__info"><InfoFilled /></el-icon>
+        </span>
+      </el-tooltip>
       <span v-if="store.mode === 'mirror' && store.lastSyncedAt" class="sk-sub">
         {{ $t('skLastSync') }}: {{ formatDateTime(store.lastSyncedAt) }}
       </span>
     </template>
 
     <template #actions>
-      <OnboardingLauncher :tour="tour" />
-      <!-- Test hammaga ko'rinadi (admin ham topshira oladi, unga majburiy emas) -->
-      <el-button
-        v-if="training"
-        :type="training.passed ? 'success' : 'default'"
-        :plain="training.passed"
-        :icon="training.passed ? CircleCheck : EditPen"
-        data-tour="sk-test"
-        @click="quizOpen = true"
-      >
-        {{ training.passed ? $t('trPassedChip') : $t('trTestBtn') }}
-      </el-button>
-      <el-select
-        v-model="period"
-        class="sk-period"
-        data-tour="sk-period"
-        :aria-label="$t('skPeriod')"
-        @change="onPeriodChange"
-      >
-        <el-option v-for="p in store.periods" :key="p" :label="periodLabel(p)" :value="p" />
-      </el-select>
-      <span class="sk-move-btns" data-tour="sk-move-btns">
-        <el-button :icon="Plus" @click="openMove('in')">{{ $t('skBtnIn') }}</el-button>
-        <el-button type="primary" :icon="Van" @click="openMove('out')">{{ $t('skBtnOut') }}</el-button>
+      <!-- Yordam (yo'riqnoma, test) — ikkinchi darajali; asosiy amallar: davr va kirim/chiqim -->
+      <span class="sk-help">
+        <OnboardingLauncher :tour="tour" />
+        <!-- Test hammaga ko'rinadi (admin ham topshira oladi, unga majburiy emas) -->
+        <el-button
+          v-if="training"
+          :type="training.passed ? 'success' : 'default'"
+          :plain="training.passed"
+          :icon="training.passed ? CircleCheck : EditPen"
+          data-tour="sk-test"
+          @click="quizOpen = true"
+        >
+          {{ training.passed ? $t('trPassedChip') : $t('trTestBtn') }}
+        </el-button>
+      </span>
+      <span class="sk-main-actions">
+        <el-select
+          v-model="period"
+          class="sk-period"
+          data-tour="sk-period"
+          :aria-label="$t('skPeriod')"
+          @change="onPeriodChange"
+        >
+          <template #prefix><el-icon><Calendar /></el-icon></template>
+          <el-option v-for="p in store.periods" :key="p" :label="periodLabel(p)" :value="p" />
+        </el-select>
+        <span class="sk-move-btns" data-tour="sk-move-btns">
+          <el-button :icon="Plus" @click="openMove('in')">{{ $t('skBtnIn') }}</el-button>
+          <el-button type="primary" :icon="Van" @click="openMove('out')">{{ $t('skBtnOut') }}</el-button>
+        </span>
       </span>
     </template>
 
-    <div v-if="store.mode === 'mirror'" class="sk-note">
-      <el-icon class="sk-note__icon"><InfoFilled /></el-icon>
-      <span>{{ $t('skMirrorBanner') }}</span>
-    </div>
     <el-alert v-if="loadError" type="error" show-icon :closable="false" :title="loadError" />
 
     <!-- O'qitish: yo'riqnoma + test (o'tish 80%). O'tmaguncha eslatma doim turadi -->
@@ -60,45 +70,51 @@
       <el-button v-else type="primary" size="large" @click="quizOpen = true">{{ $t('trStart') }}</el-button>
     </div>
 
-    <!-- Ko'rsatkichlar -->
-    <div class="sk-stats" data-tour="sk-stats">
-      <UiStat
-        :label="$t('skStatItems')"
-        :value="fmtNum(stats.items)"
-        :sub="$t('skStatGroups', { n: store.groups.length })"
-        clickable
-        @click="showStock('')"
-      />
-      <UiStat :label="$t('skStatOpening')" :value="fmtNum(stats.opening)" :sub="$t('skUnitsHint')" />
-      <UiStat
-        :label="$t('skStatIn')"
-        :value="fmtNum(stats.in)"
-        :sub="$t('skStatMoved', { n: stats.inItems })"
-        tone="good"
-      />
-      <UiStat
-        :label="$t('skStatOut')"
-        :value="fmtNum(stats.out)"
-        :sub="$t('skStatMoved', { n: stats.outItems })"
-      />
-      <UiStat :label="$t('skStatReserve')" :value="fmtNum(stats.reserve)" :sub="$t('skStatReserveSub')" />
-      <UiStat :label="$t('skStatClosing')" :value="fmtNum(stats.closing)" :sub="$t('skStatClosingSub')" />
-      <UiStat
-        :label="$t('skStatEmpty')"
-        :value="fmtNum(stats.empty)"
-        :sub="stats.negative ? $t('skStatNegative', { n: stats.negative }) : $t('skStatEmptySub')"
-        :tone="stats.negative ? 'bad' : 'warn'"
-        clickable
-        @click="showStock('empty')"
-      />
-      <UiStat
-        :label="$t('skStatLow')"
-        :value="fmtNum(stats.low)"
-        :sub="$t('skStatLowSub')"
-        tone="warn"
-        clickable
-        @click="showStock('low')"
-      />
+    <!-- Ko'rsatkichlar: 4 ta asosiy raqam (keng — raqamlar kesilmaydi) -->
+    <div class="sk-overview" data-tour="sk-stats">
+      <div class="sk-stats">
+        <UiStat
+          :label="$t('skStatItems')"
+          :value="fmtNum(stats.items)"
+          :sub="$t('skStatGroups', { n: store.groups.length })"
+          clickable
+          @click="showStock('')"
+        />
+        <UiStat
+          :label="$t('skStatClosing')"
+          :value="fmtNum(stats.closing)"
+          :sub="$t('skStatClosingSub2', { opening: fmtNum(stats.opening), reserve: fmtNum(stats.reserve) })"
+        />
+        <UiStat
+          :label="$t('skStatIn')"
+          tone="good"
+          :value="`+${fmtNum(stats.in)}`"
+          :sub="$t('skStatMoved', { n: stats.inItems })"
+        />
+        <UiStat
+          :label="$t('skStatOut')"
+          :value="`−${fmtNum(stats.out)}`"
+          :sub="$t('skStatMoved', { n: stats.outItems })"
+        />
+      </div>
+
+      <!-- Diqqat talab qiladiganlar — bosilsa ro'yxat shu holat bo'yicha filtrlanadi -->
+      <div class="sk-attn" :class="{ 'is-ok': !attention.length }">
+        <el-icon class="sk-attn__icon">
+          <component :is="attention.length ? WarningFilled : CircleCheck" />
+        </el-icon>
+        <span class="sk-attn__label">{{ attention.length ? $t('skAttnTitle') : $t('skAttnOk') }}</span>
+        <button
+          v-for="a in attention"
+          :key="a.status"
+          type="button"
+          class="sk-attn__chip"
+          :class="`is-${a.status}`"
+          @click="showStock(a.status)"
+        >
+          <b>{{ fmtNum(a.count) }}</b> {{ a.label }}
+        </button>
+      </div>
     </div>
 
     <el-tabs v-model="tab" class="sk-tabs" @tab-change="onTabChange">
@@ -154,7 +170,7 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { CircleCheck, EditPen, InfoFilled, Plus, Van } from '@element-plus/icons-vue'
+import { Calendar, CircleCheck, EditPen, InfoFilled, Plus, Van, WarningFilled } from '@element-plus/icons-vue'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import OnboardingTour from '@/components/onboarding/OnboardingTour.vue'
@@ -213,6 +229,15 @@ const stats = computed(() => {
   }
   return s
 })
+
+// Diqqat qatori: faqat noldan katta holatlar (tugagan, minusda, kam qolgan)
+const attention = computed(() =>
+  [
+    { status: 'empty', count: stats.value.empty - stats.value.negative, label: t('skSt_empty') },
+    { status: 'negative', count: stats.value.negative, label: t('skSt_negative') },
+    { status: 'low', count: stats.value.low, label: t('skSt_low') },
+  ].filter((a) => a.count > 0),
+)
 
 async function load(p) {
   loading.value = true
@@ -390,24 +415,26 @@ onMounted(async () => {
   letter-spacing: 0;
   color: var(--ui-ink-2);
 }
-.sk-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 14px;
-  border: 1px solid var(--ui-line);
-  border-left: 3px solid var(--ui-link);
-  border-radius: var(--ui-radius);
-  background: var(--ui-surface);
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--ui-ink-2);
+.sk-mode {
+  cursor: help;
 }
-.sk-note__icon {
-  margin-top: 2px;
-  font-size: 16px;
-  color: var(--ui-link);
-  flex-shrink: 0;
+.sk-mode__info {
+  font-size: 12px;
+  opacity: 0.75;
+}
+.sk-help,
+.sk-main-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+.sk-help {
+  padding-right: 12px;
+  border-right: 1px solid var(--ui-line);
 }
 .sk-train {
   display: flex;
@@ -436,7 +463,7 @@ onMounted(async () => {
   }
 }
 .sk-period {
-  width: 140px;
+  width: 170px;
 }
 .sk-move-btns {
   display: inline-flex;
@@ -446,20 +473,82 @@ onMounted(async () => {
     margin-left: 0;
   }
 }
+.sk-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .sk-stats {
-  /* Keng ekranda boshqa sahifalardagi kabi bitta qator, o'rtachada 4 tadan ikki qator (7+1 bo'lib qolmasin) */
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
-@media (min-width: 1400px) {
-  .sk-stats {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
+.sk-attn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--ui-bad-line);
+  border-radius: var(--ui-radius);
+  background: var(--ui-bad-soft);
+  font-size: 14px;
+  &.is-ok {
+    border-color: var(--ui-good-line);
+    background: var(--ui-good-soft);
   }
 }
-@media (max-width: 640px) {
+.sk-attn__icon {
+  font-size: 18px;
+  color: var(--ui-bad);
+  .is-ok & {
+    color: var(--ui-good);
+  }
+}
+.sk-attn__label {
+  margin-right: 4px;
+  font-weight: 600;
+  color: var(--ui-ink);
+}
+.sk-attn__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid var(--ui-line);
+  border-radius: 99px;
+  background: var(--ui-surface);
+  color: var(--ui-ink-2);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  b {
+    font-variant-numeric: tabular-nums;
+  }
+  &.is-empty b,
+  &.is-negative b {
+    color: var(--ui-bad);
+  }
+  &.is-low b {
+    color: var(--ui-warn);
+  }
+  &:hover {
+    border-color: var(--ui-link-line);
+    color: var(--ui-ink);
+  }
+  &:focus-visible {
+    outline: 3px solid var(--ui-link-line);
+    outline-offset: 2px;
+  }
+}
+@media (max-width: 900px) {
   .sk-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sk-help {
+    padding-right: 0;
+    border-right: 0;
   }
 }
 .sk-tabs {

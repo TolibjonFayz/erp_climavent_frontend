@@ -45,7 +45,7 @@
         <b class="is-out">−{{ fmtQty(sum.out) }}</b>
       </span>
     </template>
-    <el-table v-loading="loading" :data="paged" :key="cols.version.value" class="sk-table ui-resizable" row-class-name="sk-row" border @header-dragend="cols.onDragEnd" @row-click="(r) => $emit('open', r.item_id)">
+    <el-table v-loading="loading" :data="visible" :key="cols.version.value" class="sk-table ui-resizable" row-class-name="sk-row" border @header-dragend="cols.onDragEnd" @row-click="(r) => $emit('open', r.item_id)">
       <el-table-column :label="$t('skColDate')" v-bind="cols.col('skColDate', { width: 90 })" column-key="skColDate">
         <template #default="{ row }">{{ dayMonth(row.move_date) }}</template>
       </el-table-column>
@@ -100,15 +100,11 @@
         <div class="sk-empty">{{ $t('skNoMoves') }}</div>
       </template>
     </el-table>
-    <div v-if="filtered.length > pageSize" class="sk-pager">
-      <el-pagination
-        v-model:current-page="page"
-        :page-size="pageSize"
-        :total="filtered.length"
-        layout="total, prev, pager, next"
-        background
-        small
-      />
+    <!-- Infinite scroll: oxiriga yaqinlashganda keyingi qatorlar o'zi qo'shiladi -->
+    <div v-if="filtered.length" class="sk-pager">
+      <span ref="sentinel" class="sk-sentinel" aria-hidden="true" />
+      <span class="sk-shown">{{ $t('skShownOf', { n: visible.length, total: filtered.length }) }}</span>
+      <el-button v-if="hasMore" size="small" @click="loadMore">{{ $t('skShowMore') }}</el-button>
     </div>
   </UiPanel>
 </template>
@@ -123,6 +119,7 @@ import UiToolbar from '@/components/ui/UiToolbar.vue'
 import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { useSkladStore } from '@/stores/sklad'
+import { useInfiniteList } from '@/composables/useInfiniteList'
 import { fmtNum } from '@/utils/format'
 import { apiError, dayMonth, fmtQty, itemName, moveComment, moveTypeLabel, signedQty } from '@/utils/skladFormat'
 import { useColumnWidths } from '@/composables/useColumnWidths'
@@ -142,8 +139,6 @@ const search = ref('')
 const type = ref('')
 const day = ref('')
 const source = ref('')
-const page = ref(1)
-const pageSize = 100
 const currentUserId = Number(localStorage.getItem('userid'))
 const EDIT_WINDOW_MS = 2 * 24 * 60 * 60 * 1000
 
@@ -186,8 +181,8 @@ const filtered = computed(() => {
     return true
   })
 })
-const paged = computed(() => filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize))
-watch([search, type, day, source], () => (page.value = 1))
+// Avval 30 ta harakat, pastga aylantirilgani sayin yana 30 tadan
+const { visible, hasMore, loadMore, sentinel } = useInfiniteList(filtered, { step: 30 })
 
 const sum = computed(() =>
   filtered.value.reduce(
@@ -361,9 +356,24 @@ function exportExcel() {
   color: var(--ui-muted);
 }
 .sk-pager {
+  position: relative;
   display: flex;
-  justify-content: flex-end;
-  padding: 10px 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px;
   border-top: 1px solid var(--ui-line-soft);
+}
+.sk-sentinel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+}
+.sk-shown {
+  font-size: 13px;
+  color: var(--ui-muted);
+  font-variant-numeric: tabular-nums;
 }
 </style>
