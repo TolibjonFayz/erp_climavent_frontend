@@ -8,22 +8,16 @@ import router from './router'
 import 'element-plus/dist/index.css'
 import 'element-plus/theme-chalk/dark/css-vars.css'
 import './composables/useTheme'
-import ElementPlus from 'element-plus'
-import ru from 'element-plus/dist/locale/ru.mjs'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-import i18n from './i18n'
+import element from './plugins/element'
+import i18n, { currentLanguage, loadLanguage } from './i18n'
 
 const app = createApp(App)
-
-for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component)
-}
 
 app.use(createPinia())
 app.use(router)
 app.use(i18n)
-app.use(ElementPlus, {
-  locale: ru,
-})
+// Element Plus — faqat ishlatiladigan komponentlar va ikonkalar (plugins/element.js)
+app.use(element)
 
-app.mount('#app')
+// Joriy til matnlari yuklangach chiziladi (aks holda birinchi kadrda kalit nomlari ko'rinadi)
+loadLanguage(currentLanguage()).finally(() => app.mount('#app'))
