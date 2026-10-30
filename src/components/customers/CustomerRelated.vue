@@ -115,12 +115,33 @@
           </el-table>
         </el-tab-pane>
 
+        <!-- Shu mijoz bo'yicha raqiblar bilan uchrashuvlar -->
+        <el-tab-pane :label="`${$t('crCompetitors')} · ${encounters.length}`" name="competitors">
+          <div class="cr-tab-actions">
+            <el-button size="small" :icon="Plus" @click="openEncounter(null)">{{ $t('cmpEncAdd') }}</el-button>
+          </div>
+          <EncountersTable
+            :rows="encounters"
+            :show-client="false"
+            @edit="openEncounter"
+            @delete="removeEncounter"
+          />
+        </el-tab-pane>
+
         <!-- amoCRM qo'ng'iroqlari — faqat admin/Boss (backend AdminOrBossGuard) -->
         <el-tab-pane v-if="canSeeCalls" :label="$t('ccTab')" name="calls" lazy>
           <CustomerCalls :phones="phones" />
         </el-tab-pane>
       </el-tabs>
     </UiPanel>
+
+    <EncounterDialog
+      v-model="encounterDialog"
+      :competitors="competitors"
+      :encounter="editingEncounter"
+      :preset="{ partner_id: Number(partnerId) }"
+      @saved="loadEncounters"
+    />
   </section>
 </template>
 
@@ -128,8 +149,12 @@
 import { computed, defineAsyncComponent, h, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ElTag } from 'element-plus'
+import { ElMessageBox, ElTag } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import partnersApi from '@/api/partners'
+import competitorsApi from '@/api/competitors'
+import EncountersTable from '@/components/competitors/EncountersTable.vue'
+import EncounterDialog from '@/components/competitors/EncounterDialog.vue'
 import { useUsersStore } from '@/stores/user'
 // amoCRM kodi faqat admin/Boss tabni ochganda yuklanadi
 const CustomerCalls = defineAsyncComponent(() => import('./CustomerCalls.vue'))
@@ -216,8 +241,46 @@ async function load() {
   }
 }
 
-onMounted(load)
-watch(() => props.partnerId, load)
+// ─── Raqiblar bilan uchrashuvlar ───
+const encounters = ref([])
+const competitors = ref([])
+const encounterDialog = ref(false)
+const editingEncounter = ref(null)
+
+async function loadEncounters() {
+  try {
+    encounters.value = (await competitorsApi.encounters({ partner_id: props.partnerId })) || []
+  } catch {
+    encounters.value = []
+  }
+}
+async function openEncounter(e) {
+  // Raqiblar ro'yxati faqat dialog kerak bo'lganda yuklanadi
+  if (!competitors.value.length) competitors.value = (await competitorsApi.list()) || []
+  editingEncounter.value = e
+  encounterDialog.value = true
+}
+async function removeEncounter(e) {
+  try {
+    await ElMessageBox.confirm(t('cmpDeleteEncConfirm'), t('delete'), { type: 'warning' })
+    await competitorsApi.removeEncounter(e.id)
+    await loadEncounters()
+  } catch {
+    // bekor qilindi yoki xato — ro'yxat o'zgarmaydi
+  }
+}
+
+onMounted(() => {
+  load()
+  loadEncounters()
+})
+watch(
+  () => props.partnerId,
+  () => {
+    load()
+    loadEncounters()
+  },
+)
 // Mijoz nomi/INN/telefoni tahrirlansa, bog'lanishlar qayta hisoblanadi
 defineExpose({ reload: load })
 </script>
@@ -236,6 +299,11 @@ defineExpose({ reload: load })
 }
 .cr-tabs {
   padding: 0 16px 8px;
+}
+.cr-tab-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
 }
 .cr-tabs :deep(.el-table__row) {
   cursor: pointer;

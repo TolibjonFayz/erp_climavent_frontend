@@ -13,6 +13,9 @@ export default {
   // Barcha xodimlar o'qiydigan e'lonlar lentasi (bildirishnoma qo'ng'irog'i)
   getFeed: () => apiClient.get('announcements/feed'),
 
+  // Savdo: KP, shartnomalar, menejerlar konversiyasi (period: month | quarter | year)
+  getSales: (period) => apiClient.get('boss/sales', { params: { period } }),
+
   // Promote / demote
   setAdmin: (userId, isAdmin) => apiClient.patch(`boss/promote/${userId}`, { is_admin: isAdmin }),
 }

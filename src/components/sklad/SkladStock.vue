@@ -71,25 +71,22 @@
           {{ $t('skSumIn') }}: <b class="is-in">+{{ fmtQty(sum.in) }}</b> · {{ $t('skSumOut') }}:
           <b class="is-out">−{{ fmtQty(sum.out) }}</b> · {{ $t('skSumClosing') }}: <b>{{ fmtQty(sum.closing) }}</b>
         </span>
-        <el-button v-if="cols.changed.value" size="small" text :title="$t('skResizeHint')" @click="cols.reset()">{{ $t('skResetWidths') }}</el-button>
         <el-button v-if="hasFilters" size="small" :icon="RefreshLeft" @click="resetFilters">{{ $t('skResetAll') }}</el-button>
         <el-button v-if="mode === 'live'" size="small" type="primary" plain :icon="Plus" @click="$emit('new-item')">
           {{ $t('skNewItem') }}
         </el-button>
       </template>
+      <!-- Ustunlar moslashuvchan: ekranga sig'adi, uzun matn keyingi qatorga tushadi -->
       <el-table
         v-loading="loading"
-        :data="paged"
-        :key="cols.version.value"
-        class="sk-table ui-resizable"
+        :data="visible"
+        class="sk-table"
         row-class-name="sk-row"
         :default-sort="{ prop: 'sort_order', order: 'ascending' }"
-        border
         @row-click="(row) => $emit('open', row.id)"
-        @header-dragend="cols.onDragEnd"
         @sort-change="onSort"
       >
-        <el-table-column v-if="hasCode" prop="sap_code" v-bind="cols.col('sap_code', { width: 125 })" column-key="sap_code" sortable="custom">
+        <el-table-column v-if="hasCode" prop="sap_code" min-width="100" column-key="sap_code" sortable="custom">
           <template #header><UiHint :label="$t('skSapCode')" :hint="$t('skHintSap')" /></template>
           <template #default="{ row }">
             <span v-if="row.sap_code" class="sk-code">{{ row.sap_code }}</span>
@@ -97,7 +94,7 @@
           </template>
         </el-table-column>
         <!-- SAP nomi va ombor jadvalidagi nom — alohida ustunlar (birlashtirilmaydi) -->
-        <el-table-column prop="sap_name" v-bind="cols.col('sap_name', { minWidth: 170 })" column-key="sap_name" sortable="custom">
+        <el-table-column prop="sap_name" min-width="170" column-key="sap_name" sortable="custom">
           <template #header><UiHint :label="$t('skSapName')" :hint="$t('skHintSapName')" /></template>
           <template #default="{ row }">
             <div v-if="row.sap_name" class="sk-name">
@@ -106,37 +103,37 @@
             <span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="name" v-bind="cols.col('name', { minWidth: 170 })" column-key="name" sortable="custom">
+        <el-table-column prop="name" min-width="170" column-key="name" sortable="custom">
           <template #header>{{ $t('skColName') }}</template>
           <template #default="{ row }">
             <div class="sk-name">{{ row.name }}</div>
             <div class="sk-sub">{{ row.group_name || '—' }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="opening" v-bind="cols.col('opening', { width: 88 })" column-key="opening" align="right">
+        <el-table-column prop="opening" min-width="78" column-key="opening" align="right">
           <template #header><UiHint :label="$t('skColOpeningFull')" :hint="$t('skHintOpening')" /></template>
           <template #default="{ row }">{{ fmtQty(row.opening) }}</template>
         </el-table-column>
-        <el-table-column prop="in" v-bind="cols.col('in', { width: 88 })" column-key="in" align="right">
+        <el-table-column prop="in" min-width="70" column-key="in" align="right">
           <template #header><UiHint :label="$t('skColIn')" :hint="$t('skHintIn')" /></template>
           <template #default="{ row }">
             <b v-if="row.in" class="is-in">+{{ fmtQty(row.in) }}</b><span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="out" v-bind="cols.col('out', { width: 88 })" column-key="out" align="right">
+        <el-table-column prop="out" min-width="70" column-key="out" align="right">
           <template #header><UiHint :label="$t('skColOut')" :hint="$t('skHintOut')" /></template>
           <template #default="{ row }">
             <b v-if="row.out" class="is-out">−{{ fmtQty(row.out) }}</b><span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="reserve" v-bind="cols.col('reserve', { width: 92 })" column-key="reserve" align="right">
+        <el-table-column prop="reserve" min-width="76" column-key="reserve" align="right">
           <template #header><UiHint :label="$t('skColReserve')" :hint="$t('skHintReserve')" /></template>
           <template #default="{ row }">
             <b v-if="row.reserve - row.release" class="is-reserve">{{ fmtQty(row.reserve - row.release) }}</b>
             <span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="closing" v-bind="cols.col('closing', { width: 165 })" column-key="closing" align="right" sortable="custom">
+        <el-table-column prop="closing" min-width="132" column-key="closing" align="right" sortable="custom">
           <template #header><UiHint :label="$t('skColClosing')" :hint="$t('skHintClosing')" /></template>
           <template #default="{ row }">
             <span v-if="stockStatus(row) !== 'ok'" class="sk-badge" :class="`st-${stockStatus(row)}`">
@@ -148,7 +145,7 @@
             <div v-if="row.last_move_date" class="sk-sub">{{ $t('skLastMove', { d: dayMonth(row.last_move_date) }) }}</div>
           </template>
         </el-table-column>
-        <el-table-column width="48" align="center" :resizable="false">
+        <el-table-column width="40" align="center">
           <template #default>
             <el-icon class="sk-more" :aria-label="$t('skDetails')"><ArrowRight /></el-icon>
           </template>
@@ -166,16 +163,15 @@
         </template>
       </el-table>
 
-      <div v-if="filtered.length > pageSizes[0]" class="sk-pager">
-        <el-pagination
-          v-model:current-page="page"
-          v-model:page-size="pageSize"
-          :page-sizes="pageSizes"
-          :total="filtered.length"
-          :layout="narrow ? 'prev, pager, next' : 'total, prev, pager, next, sizes'"
-          :pager-count="narrow ? 5 : 7"
-          background
-        />
+      <!-- Keyingi qatorlar chizilayotganda — skelet (sahifa "qotib qolgandek" tuyulmasin) -->
+      <UiSkeletonRows v-if="loadingMore" :columns="[2, 2, 1, 1, 1, 1, 1.6]" />
+
+      <!-- Infinite scroll: oxiriga yaqinlashganda keyingi qatorlar o'zi qo'shiladi -->
+      <div v-if="filtered.length" class="sk-more-row">
+        <span ref="sentinel" class="sk-sentinel" aria-hidden="true" />
+        <span class="sk-shown">{{ $t('skShownOf', { n: fmtNum(visible.length), total: fmtNum(filtered.length) }) }}</span>
+        <el-button v-if="hasMore" size="small" :loading="loadingMore" @click="loadMore">{{ $t('skShowMore') }}</el-button>
+        <el-button v-else-if="visible.length > 30" size="small" text :icon="Top" @click="toTop">{{ $t('skToTop') }}</el-button>
       </div>
     </UiPanel>
   </div>
@@ -185,18 +181,16 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as XLSX from 'xlsx'
-import { ArrowRight, Download, InfoFilled, Plus, RefreshLeft, Search } from '@element-plus/icons-vue'
+import { ArrowRight, Download, InfoFilled, Plus, RefreshLeft, Search, Top } from '@element-plus/icons-vue'
 import UiField from '@/components/ui/UiField.vue'
 import UiHint from '@/components/ui/UiHint.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import UiToolbar from '@/components/ui/UiToolbar.vue'
+import UiSkeletonRows from '@/components/ui/UiSkeletonRows.vue'
 import { stockStatus } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
 import { dayMonth, fmtQty, periodLabel, unitLabel } from '@/utils/skladFormat'
-import { useColumnWidths } from '@/composables/useColumnWidths'
-
-// Ustun chegarasini sudrab kenglikni o'zgartirish (brauzerda eslab qolinadi)
-const cols = useColumnWidths('sklad-stock')
+import { useInfiniteList } from '@/composables/useInfiniteList'
 
 const props = defineProps({
   items: { type: Array, required: true },
@@ -212,29 +206,18 @@ const search = ref('')
 const group = ref('')
 const status = ref('')
 const onlyMoved = ref(false)
-const page = ref(1)
-const pageSizes = [50, 100, 200]
-const pageSize = ref(50)
 const sort = ref({ prop: 'sort_order', order: 'ascending' })
 
 // ─── Tepada qotib turadigan panel balandligi (jadval sarlavhasi uning ostiga yopishadi) ───
 const rootEl = ref(null)
 const stickyEl = ref(null)
 const stickyH = ref(0)
-// Telefonda sahifalash ixcham bo'lsin (aks holda ekrandan chiqib ketadi)
-const narrow = ref(false)
 let ro = null
-const onResize = () => (narrow.value = window.innerWidth < 640)
 onMounted(() => {
   ro = new ResizeObserver(() => (stickyH.value = stickyEl.value?.offsetHeight || 0))
   if (stickyEl.value) ro.observe(stickyEl.value)
-  onResize()
-  window.addEventListener('resize', onResize)
 })
-onBeforeUnmount(() => {
-  ro?.disconnect()
-  window.removeEventListener('resize', onResize)
-})
+onBeforeUnmount(() => ro?.disconnect())
 
 // Holat bo'yicha filtr (rezerv — alohida belgi, holat emas)
 const matchesStatus = (it, s) => {
@@ -302,7 +285,8 @@ const filtered = computed(() => {
 const hasSap = computed(() => props.items.some((it) => it.sap_code || it.sap_name))
 const hasCode = computed(() => props.items.some((it) => it.sap_code))
 
-const paged = computed(() => filtered.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value))
+// Avval 30 ta qator, pastga aylantirilgani sayin yana 30 tadan
+const { visible, hasMore, loadMore, loadingMore, sentinel } = useInfiniteList(filtered, { step: 30 })
 
 const sum = computed(() =>
   filtered.value.reduce(
@@ -313,14 +297,12 @@ const sum = computed(() =>
 
 const hasFilters = computed(() => !!(search.value || group.value || status.value || onlyMoved.value))
 
-// Filtr o'zgarsa — 1-sahifaga va jadval boshiga
-watch([search, group, status, onlyMoved], () => {
-  page.value = 1
-})
-watch(page, () => {
+// Filtr o'zgarsa — ro'yxat boshidan ko'rinsin (pastda turgan bo'lsa, jadval tepasiga)
+function toTop() {
   const top = rootEl.value?.getBoundingClientRect().top
   if (top != null && top < 0) rootEl.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
-})
+}
+watch([search, group, status, onlyMoved], toTop)
 
 function onSort({ prop, order }) {
   sort.value = { prop: order ? prop : 'sort_order', order: order || 'ascending' }
@@ -561,6 +543,8 @@ function exportExcel() {
   }
   :deep(td .cell) {
     word-break: normal;
+    overflow-wrap: anywhere;
+    white-space: normal;
     font-size: 15px;
     line-height: 1.4;
     font-variant-numeric: tabular-nums;
@@ -685,16 +669,27 @@ function exportExcel() {
     color: var(--ui-ink);
   }
 }
-.sk-pager {
+.sk-more-row {
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
+  gap: 8px 14px;
   padding: 14px 12px;
   border-top: 1px solid var(--ui-line-soft);
-  :deep(.el-pagination) {
-    flex-wrap: wrap;
-    justify-content: center;
-    row-gap: 8px;
-  }
+}
+.sk-sentinel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+}
+.sk-shown {
+  font-size: 13px;
+  color: var(--ui-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 900px) {

@@ -444,15 +444,27 @@
             <button class="adm-reset-btn" @click="handleResetPartners">
               <el-icon><RefreshLeft /></el-icon> Tozalash
             </button>
+            <el-button
+              v-if="selectedPartners.length"
+              type="danger"
+              :icon="Delete"
+              class="adm-add-btn"
+              @click="deletePartners(selectedPartners)"
+            >
+              Tanlanganlarni o'chirish ({{ selectedPartners.length }})
+            </el-button>
           </div>
           <div class="tbl-wrap" v-loading="partnersLoading">
             <el-table
               :data="filteredPartners"
+              row-key="id"
               stripe
               border
               style="width: 100%"
               empty-text="Hech narsa topilmadi"
+              @selection-change="(rows) => (selectedPartners = rows)"
             >
+              <el-table-column type="selection" width="48" align="center" />
               <el-table-column label="№" type="index" width="75" align="center" />
               <el-table-column prop="id" label="ID" width="75" />
               <el-table-column label="Turi" min-width="150">
@@ -483,6 +495,22 @@
               </el-table-column>
               <el-table-column prop="mijozturi" label="Yuridik/Jismoniy" min-width="130" />
               <el-table-column prop="inn" label="INN" min-width="110" />
+              <el-table-column label="Amallar" width="110" align="center" fixed="right">
+                <template #default="{ row }">
+                  <div class="action-btns">
+                    <el-tooltip content="Mijoz kartasi (360°)" placement="top">
+                      <button class="act-btn act-btn--view" @click="router.push(`/customers/${row.id}`)">
+                        <el-icon><View /></el-icon>
+                      </button>
+                    </el-tooltip>
+                    <el-tooltip content="O'chirish" placement="top">
+                      <button class="act-btn act-btn--block" @click="deletePartners([row])">
+                        <el-icon><Delete /></el-icon>
+                      </button>
+                    </el-tooltip>
+                  </div>
+                </template>
+              </el-table-column>
             </el-table>
           </div>
         </div>
@@ -517,16 +545,28 @@
             <button class="adm-reset-btn" @click="handleResetObjects">
               <el-icon><RefreshLeft /></el-icon> Tozalash
             </button>
+            <el-button
+              v-if="selectedObjects.length"
+              type="danger"
+              :icon="Delete"
+              class="adm-add-btn"
+              @click="deleteObjects(selectedObjects)"
+            >
+              Tanlanganlarni o'chirish ({{ selectedObjects.length }})
+            </el-button>
           </div>
           <div class="tbl-wrap" v-loading="objectsLoading">
             <el-table
               :data="filteredObjects"
+              row-key="id"
               stripe
               border
               style="width: 100%"
               empty-text="Hech narsa topilmadi"
               :default-sort="{ prop: 'createdAt', order: 'descending' }"
+              @selection-change="(rows) => (selectedObjects = rows)"
             >
+              <el-table-column type="selection" width="48" align="center" />
               <el-table-column label="№" type="index" width="75" align="center" />
               <el-table-column prop="id" label="ID" width="75" />
               <el-table-column prop="whereto" label="Qayerga" min-width="120" />
@@ -546,6 +586,25 @@
               <el-table-column prop="company_name" label="Firma nomi" min-width="140" />
               <el-table-column prop="createdAt" label="Kiritilgan vaqt" min-width="140" sortable>
                 <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+              </el-table-column>
+              <el-table-column label="Amallar" width="110" align="center" fixed="right">
+                <template #default="{ row }">
+                  <div class="action-btns">
+                    <el-tooltip content="Obyekt sahifasi" placement="top">
+                      <button
+                        class="act-btn act-btn--view"
+                        @click="router.push(`/sites/${row.come_and_go_father_id}`)"
+                      >
+                        <el-icon><View /></el-icon>
+                      </button>
+                    </el-tooltip>
+                    <el-tooltip content="O'chirish" placement="top">
+                      <button class="act-btn act-btn--block" @click="deleteObjects([row])">
+                        <el-icon><Delete /></el-icon>
+                      </button>
+                    </el-tooltip>
+                  </div>
+                </template>
               </el-table-column>
             </el-table>
           </div>
@@ -883,38 +942,31 @@
 
         <el-divider />
 
+        <!-- Barcha amallar bitta ustunda: bir xil kenglik, ikonka va matn orasida bo'shliq -->
         <div class="user-drawer__actions">
-          <el-button style="width: 100%; margin-bottom: 10px" @click="openEditUser(selectedUser)">
-            <el-icon><Edit /></el-icon>
+          <el-button :icon="Edit" @click="openEditUser(selectedUser)">
             Ma'lumotlarini tahrirlash
           </el-button>
-          <el-button
-            v-if="selectedUser.id !== usersStore.currentUser?.id"
-            style="width: 100%; margin: 0 0 10px"
-            @click="openResetPassword(selectedUser)"
-          >
-            <el-icon><Key /></el-icon>
-            Parolni tiklash
-          </el-button>
-        </div>
-
-        <div class="user-drawer__actions" v-if="selectedUser.id !== usersStore.currentUser?.id">
-          <el-button
-            :type="selectedUser.is_admin ? 'warning' : 'success'"
-            style="width: 100%; margin-bottom: 10px"
-            @click="toggleAdminRole(selectedUser, true)"
-          >
-            <el-icon><component :is="selectedUser.is_admin ? Minus : StarFilled" /></el-icon>
-            {{ selectedUser.is_admin ? 'Admin rolini olib tashlash' : 'Admin qilish' }}
-          </el-button>
-          <el-button
-            :type="selectedUser.is_blocked ? 'success' : 'danger'"
-            style="width: 100%"
-            @click="toggleBlockUser(selectedUser, true)"
-          >
-            <el-icon><component :is="selectedUser.is_blocked ? Unlock : Lock" /></el-icon>
-            {{ selectedUser.is_blocked ? 'Blokdan chiqarish' : 'Bloklash' }}
-          </el-button>
+          <template v-if="selectedUser.id !== usersStore.currentUser?.id">
+            <el-button :icon="Key" @click="openResetPassword(selectedUser)">Parolni tiklash</el-button>
+            <el-button
+              :type="selectedUser.is_admin ? 'warning' : 'success'"
+              :icon="selectedUser.is_admin ? Minus : StarFilled"
+              @click="toggleAdminRole(selectedUser, true)"
+            >
+              {{ selectedUser.is_admin ? 'Admin rolini olib tashlash' : 'Admin qilish' }}
+            </el-button>
+            <el-button
+              :type="selectedUser.is_blocked ? 'success' : 'danger'"
+              :icon="selectedUser.is_blocked ? Unlock : Lock"
+              @click="toggleBlockUser(selectedUser, true)"
+            >
+              {{ selectedUser.is_blocked ? 'Blokdan chiqarish' : 'Bloklash' }}
+            </el-button>
+            <el-button type="danger" plain :icon="Delete" @click="deleteUser(selectedUser)">
+              Foydalanuvchini o'chirish
+            </el-button>
+          </template>
         </div>
 
         <el-divider content-position="left">
@@ -1150,6 +1202,9 @@ import { useKPsStore } from '@/stores/kp'
 import AmoCrmStats from '@/components/amocrm/AmoCrmStats.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import CreateUserDialog from '@/components/admin/CreateUserDialog.vue'
+import partnersApi from '@/api/partners'
+import checkInOutApi from '@/api/checkInOut'
+import usersApi from '@/api/users'
 import { fmtNum, formatDate as fmtDay, formatDateTime as fmtDateTime } from '@/utils/format'
 import {
   KP_COMMENT_OPTIONS,
@@ -1195,6 +1250,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuditLog } from '@/composables/useAuditLog'
 import * as XLSX from 'xlsx'
 import router from '@/router'
+import { useRoute } from 'vue-router'
 
 const comeandgoInsideStore = useComeAndGoInsideStore()
 const partnersStore = usePartnersStore()
@@ -1266,6 +1322,14 @@ const tabs = [
   { name: 'audit', label: 'Audit Log', icon: Document },
   { name: 'settings', label: 'Sozlamalar', icon: Setting },
 ]
+
+// Faol tab URL'da (?tab=users): sahifa yangilansa yoki havola ulashilsa — o'sha tab ochiladi
+const route = useRoute()
+const tabFromUrl = String(route.query.tab || '')
+if (tabs.some((t) => t.name === tabFromUrl)) activeTab.value = tabFromUrl
+watch(activeTab, (tab) => {
+  if (route.query.tab !== tab) router.replace({ query: { ...route.query, tab } })
+})
 
 // ─── Hamkor turlari ───────────────────────────────────────
 const partnerTypes = [
@@ -1453,6 +1517,101 @@ const filteredObjects = computed(() =>
     )
   }),
 )
+// ─── O'chirish (mijoz, obyekt, foydalanuvchi) ─────────────
+const selectedPartners = ref([])
+const selectedObjects = ref([])
+
+// Bir nechta yozuvni ketma-ket o'chiradi; birortasi o'tmasa ham qolganlari davom etadi
+async function deleteMany(rows, remove) {
+  let ok = 0
+  const failed = []
+  for (const row of rows) {
+    try {
+      await remove(row)
+      ok++
+    } catch (err) {
+      failed.push(errorText(err, `#${row.id}`))
+    }
+  }
+  return { ok, failed }
+}
+
+async function deletePartners(rows) {
+  const names = rows.slice(0, 3).map((r) => r.fullname).join(', ')
+  try {
+    await ElMessageBox.confirm(
+      `${rows.length} ta mijoz butunlay o'chiriladi: ${names}${rows.length > 3 ? '…' : ''}. Qaytarib bo'lmaydi.`,
+      "Mijozlarni o'chirish",
+      { confirmButtonText: "O'chirish", cancelButtonText: 'Bekor qilish', type: 'warning' },
+    )
+  } catch {
+    return
+  }
+  partnersLoading.value = true
+  const { ok, failed } = await deleteMany(rows, (r) => partnersApi.remove(r.id))
+  if (failed.length) {
+    // Qaysilari o'chganini aniq bilish uchun ro'yxatni qayta yuklaymiz
+    await partnersStore.getAllPartners()
+  } else {
+    const gone = new Set(rows.map((r) => r.id))
+    partnersStore.allPartners = partnersStore.allPartners.filter((p) => !gone.has(p.id))
+  }
+  partnersLoading.value = false
+  addAuditLog({ action: 'delete', message: `${ok} ta mijoz o'chirildi (${names})`, type: 'danger' })
+  if (failed.length) ElMessage.error(`${ok} ta o'chdi, ${failed.length} ta o'chmadi: ${failed[0]}`)
+  else ElMessage.success(`✅ ${ok} ta mijoz o'chirildi`)
+}
+
+async function deleteObjects(rows) {
+  // Admin ro'yxatidagi qator — tashrif; o'chiriladigani uning obyekti (barcha tashriflari bilan)
+  const fatherIds = [...new Set(rows.map((r) => r.come_and_go_father_id).filter(Boolean))]
+  try {
+    await ElMessageBox.confirm(
+      `${fatherIds.length} ta obyekt barcha tashriflari va videolari bilan butunlay o'chiriladi. Qaytarib bo'lmaydi.`,
+      "Obyektlarni o'chirish",
+      { confirmButtonText: "O'chirish", cancelButtonText: 'Bekor qilish', type: 'warning' },
+    )
+  } catch {
+    return
+  }
+  objectsLoading.value = true
+  const { ok, failed } = await deleteMany(
+    fatherIds.map((id) => ({ id })),
+    (r) => checkInOutApi.remove(r.id),
+  )
+  await comeandgoInsideStore.getAllComeAndGoInside()
+  objectsLoading.value = false
+  addAuditLog({ action: 'delete', message: `${ok} ta obyekt o'chirildi`, type: 'danger' })
+  if (failed.length) ElMessage.error(`${ok} ta o'chdi, ${failed.length} ta o'chmadi: ${failed[0]}`)
+  else ElMessage.success(`✅ ${ok} ta obyekt o'chirildi`)
+}
+
+async function deleteUser(user) {
+  try {
+    await ElMessageBox.confirm(
+      `"${user.firstname} ${user.lastname}" (@${user.username}) butunlay o'chiriladi. Ish ma'lumotlari bor xodimni o'chirib bo'lmaydi — uni bloklang.`,
+      "Foydalanuvchini o'chirish",
+      { confirmButtonText: "O'chirish", cancelButtonText: 'Bekor qilish', type: 'warning' },
+    )
+  } catch {
+    return
+  }
+  try {
+    await usersApi.remove(user.id)
+    usersStore.allUsers = usersStore.allUsers.filter((u) => u.id !== user.id)
+    userDetailVisible.value = false
+    addAuditLog({
+      action: 'delete',
+      message: `"${user.firstname} ${user.lastname}" (@${user.username}) — foydalanuvchi o'chirildi`,
+      type: 'danger',
+      target_id: user.id,
+    })
+    ElMessage.success(`✅ @${user.username} o'chirildi`)
+  } catch (err) {
+    ElMessage.error(errorText(err, "Foydalanuvchi o'chirilmadi"))
+  }
+}
+
 const filteredAuditLogs = computed(() =>
   auditLogs.value.filter((l) => {
     const s = auditSearch.value.toLowerCase().trim()
@@ -1496,7 +1655,7 @@ watch(
 // ─── Audit helpers ────────────────────────────────────────
 function getAuditIcon(action) {
   return (
-    { role: StarFilled, block: Lock, unblock: Unlock, view: View, create: Plus, edit: Edit, password: Key, export: Download, login: User }[
+    { role: StarFilled, block: Lock, unblock: Unlock, view: View, create: Plus, edit: Edit, delete: Delete, password: Key, export: Download, login: User }[
       action
     ] || Document
   )
@@ -1510,6 +1669,7 @@ function getActionLabel(action) {
       view: "Ko'rildi",
       create: "Qo'shildi",
       edit: 'Tahrirlandi',
+      delete: "O'chirildi",
       password: 'Parol tiklandi',
       export: 'Export',
       login: 'Kirish',
@@ -3086,6 +3246,15 @@ onMounted(async () => {
   }
   &__actions {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    // Element Plus ketma-ket tugmalarga chap chekinish beradi — ustunda kerak emas
+    :deep(.el-button) {
+      width: 100%;
+      margin: 0;
+    }
   }
   :deep(.el-divider) {
     margin: 16px 0;

@@ -24,19 +24,17 @@
     <el-table
       v-loading="loading"
       :data="filtered"
-      class="sk-table ui-resizable"
+      class="sk-table"
       :span-method="spanMethod"
       max-height="640"
-      border
-      @header-dragend="cols.onDragEnd"
     >
-      <el-table-column :label="$t('skColDogovor')" v-bind="cols.col('skColDogovor', { width: 110 })" column-key="skColDogovor">
+      <el-table-column :label="$t('skColDogovor')" min-width="110" column-key="skColDogovor">
         <template #default="{ row }">
           <b>{{ row.dogovor_number || '—' }}</b>
           <div class="sk-muted">{{ $t('skCtrPositions', { n: groupSize(row) }) }}</div>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skColName')" v-bind="cols.col('skColName', { minWidth: 220 })" column-key="skColName">
+      <el-table-column :label="$t('skColName')" min-width="220" column-key="skColName">
         <template #default="{ row }">
           <span class="sk-name">{{ row.item_name }}</span>
           <el-button v-if="row.item_id" link type="primary" size="small" @click="$emit('open', row.item_id)">
@@ -44,19 +42,19 @@
           </el-button>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skCtrQty')" v-bind="cols.col('skCtrQty', { width: 120 })" column-key="skCtrQty" align="right">
+      <el-table-column :label="$t('skCtrQty')" min-width="120" column-key="skCtrQty" align="right">
         <template #default="{ row }">{{ row.qty_contract == null ? '—' : fmtQty(row.qty_contract) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skColIn')" v-bind="cols.col('skColIn', { width: 100 })" column-key="skColIn" align="right">
+      <el-table-column :label="$t('skColIn')" min-width="100" column-key="skColIn" align="right">
         <template #default="{ row }">{{ fmtQty(row.qty_in) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skColOut')" v-bind="cols.col('skColOut', { width: 100 })" column-key="skColOut" align="right">
+      <el-table-column :label="$t('skColOut')" min-width="100" column-key="skColOut" align="right">
         <template #default="{ row }">{{ fmtQty(row.qty_out) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skCtrLeft')" v-bind="cols.col('skCtrLeft', { width: 110 })" column-key="skCtrLeft" align="right">
+      <el-table-column :label="$t('skCtrLeft')" min-width="110" column-key="skCtrLeft" align="right">
         <template #default="{ row }"><b>{{ fmtQty(left(row)) }}</b></template>
       </el-table-column>
-      <el-table-column :label="$t('skStatus')" v-bind="cols.col('skStatus', { width: 170 })" column-key="skStatus">
+      <el-table-column :label="$t('skStatus')" min-width="170" column-key="skStatus">
         <template #default="{ row }">
           <span class="sk-tag" :class="`c-${lineStatus(row)}`">{{ $t(`skCtr_${lineStatus(row)}`) }}</span>
         </template>
@@ -78,10 +76,7 @@ import UiStat from '@/components/ui/UiStat.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
 import { fmtQty } from '@/utils/skladFormat'
-import { useColumnWidths } from '@/composables/useColumnWidths'
 
-// Ustun chegarasini sudrab kenglikni o'zgartirish (brauzerda eslab qolinadi)
-const cols = useColumnWidths('sklad-contracts')
 
 defineEmits(['open'])
 const store = useSkladStore()
@@ -178,13 +173,15 @@ const stats = computed(() => {
   /* Element Plus so'zni istalgan harfdan bo'ladi — sarlavhada bo'lmasin */
   :deep(th .cell) {
     word-break: normal;
-    white-space: nowrap;
+    white-space: normal;
+    line-height: 1.3;
   }
   :deep(.cell) {
     font-variant-numeric: tabular-nums;
     word-break: normal;
   }
   :deep(td .cell) {
+    overflow-wrap: anywhere;
     font-size: 14px;
     line-height: 1.45;
   }

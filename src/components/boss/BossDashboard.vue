@@ -229,6 +229,9 @@
       </UiPanel>
     </div>
 
+    <!-- Savdo: KP, shartnomalar, menejerlar, mijozlar, raqiblar -->
+    <BossSales />
+
     <!-- amoCRM: qo'ng'iroqlar va sdelkalar -->
     <AmoCrmStats class="bs-amo" />
 
@@ -317,6 +320,7 @@ import { useTasksStore } from '@/stores/tasks'
 import { useAttendanceStore } from '@/stores/attendance'
 import { useBossStore } from '@/stores/boss'
 import AmoCrmStats from '@/components/amocrm/AmoCrmStats.vue'
+import BossSales from './BossSales.vue'
 import { ElMessage } from 'element-plus'
 import {
   Aim,

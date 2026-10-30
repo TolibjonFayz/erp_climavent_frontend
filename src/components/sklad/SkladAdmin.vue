@@ -33,20 +33,20 @@
         {{ $t('skAdmSyncAll') }}
       </el-button>
     </template>
-    <el-table :data="store.sources" size="small" class="sk-table ui-resizable" border @header-dragend="srcCols.onDragEnd">
-      <el-table-column :label="$t('skAdmSheet')" v-bind="srcCols.col('skAdmSheet', { minWidth: 170 })" column-key="skAdmSheet">
+    <el-table :data="store.sources" size="small" class="sk-table">
+      <el-table-column :label="$t('skAdmSheet')" min-width="170" column-key="skAdmSheet">
         <template #default="{ row }">
           <b>{{ row.title || `gid ${row.gid}` }}</b>
           <div class="sk-muted">{{ row.kind === 'month' ? $t('skAdmKindMonth') : $t('skAdmKindContracts') }}</div>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('skPeriod')" v-bind="srcCols.col('skPeriod', { width: 130 })" column-key="skPeriod">
+      <el-table-column :label="$t('skPeriod')" min-width="130" column-key="skPeriod">
         <template #default="{ row }">{{ row.period ? periodLabel(row.period) : '—' }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skLastSync')" v-bind="srcCols.col('skLastSync', { width: 150 })" column-key="skLastSync">
+      <el-table-column :label="$t('skLastSync')" min-width="150" column-key="skLastSync">
         <template #default="{ row }">{{ formatDateTime(row.last_synced_at) }}</template>
       </el-table-column>
-      <el-table-column :label="$t('skAdmResult')" v-bind="srcCols.col('skAdmResult', { minWidth: 260 })" column-key="skAdmResult">
+      <el-table-column :label="$t('skAdmResult')" min-width="260" column-key="skAdmResult">
         <template #default="{ row }">
           <template v-if="row.last_result">
             <span v-if="!row.last_result.ok" class="sk-bad">⚠️ {{ codeMessage(row.last_result.code, row.last_result.params, row.last_result.error) || $t('skError') }}</span>
@@ -71,7 +71,7 @@
           <span v-else class="sk-muted">{{ $t('skAdmNever') }}</span>
         </template>
       </el-table-column>
-      <el-table-column v-bind="srcCols.col('actions', { width: 150 })" column-key="actions" align="right">
+      <el-table-column min-width="150" column-key="actions" align="right">
         <template #default="{ row }">
           <el-button
             link
@@ -157,9 +157,9 @@
     append-to-body
   >
     <p class="sk-muted">{{ $t('skAdmSapApproxText') }}</p>
-    <el-table :data="sapResult?.approx || []" max-height="60vh" size="small" class="ui-resizable" border @header-dragend="approxCols.onDragEnd">
-      <el-table-column :label="$t('skXlsSheetName')" prop="name" v-bind="approxCols.col('name', { minWidth: 260 })" column-key="name" />
-      <el-table-column :label="$t('skSapName')" prop="sap_name" v-bind="approxCols.col('sap_name', { minWidth: 260 })" column-key="sap_name" />
+    <el-table :data="sapResult?.approx || []" max-height="60vh" size="small">
+      <el-table-column :label="$t('skXlsSheetName')" prop="name" min-width="260" column-key="name" />
+      <el-table-column :label="$t('skSapName')" prop="sap_name" min-width="260" column-key="sap_name" />
     </el-table>
     <p v-if="(sapResult?.approx_total || 0) > (sapResult?.approx?.length || 0)" class="sk-muted">
       {{ $t('skAdmSapMore', { n: fmtNum(sapResult.approx_total - sapResult.approx.length) }) }}
@@ -190,11 +190,7 @@ import TrainingReport from '@/components/onboarding/TrainingReport.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { fmtNum, formatDateTime } from '@/utils/format'
 import { apiError, codeMessage, compactSheetFile, periodLabel, syncWarning } from '@/utils/skladFormat'
-import { useColumnWidths } from '@/composables/useColumnWidths'
 
-// Ustun chegarasini sudrab kenglikni o'zgartirish (brauzerda eslab qolinadi)
-const srcCols = useColumnWidths('sklad-sources')
-const approxCols = useColumnWidths('sklad-sap-approx')
 
 const { t } = useI18n()
 const store = useSkladStore()
