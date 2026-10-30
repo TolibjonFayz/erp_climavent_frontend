@@ -25,6 +25,7 @@ const work = computed(() =>
   [
     can('kp') && { key: 'kp', icon: 'description-o', title: t('kp'), sub: t('m.kpSub'), to: { name: 'kp' }, color: '#2a78d6' },
     can('dogovor') && { key: 'dogovor', icon: 'records-o', title: t('dogovortext'), sub: t('m.dogovorSub'), to: { name: 'dogovor' }, color: '#15803d' },
+    can('competitors') && { key: 'competitors', icon: 'flag-o', title: t('raqib'), sub: t('m.competitorsSub'), to: { name: 'competitors' }, color: '#b91c1c' },
     can('loyiha') && { key: 'loyiha', icon: 'cluster-o', title: t('loyihatext'), sub: t('m.loyihaSub'), to: { name: 'loyiha' }, color: '#d97706' },
   ].filter(Boolean),
 )

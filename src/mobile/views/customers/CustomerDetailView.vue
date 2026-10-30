@@ -1,9 +1,10 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showFailToast, showSuccessToast, showToast } from 'vant'
 import { usePartnersStore } from '@/stores/partners'
+import competitorsApi from '@/api/competitors'
 import { partnerTypeLabel } from '@/utils/partners'
 import { formatDate, telHref } from '@/utils/format'
 import MPage from '../../components/MPage.vue'
@@ -14,7 +15,18 @@ import { formatPlace } from './place'
 
 const { t, locale } = useI18n()
 const route = useRoute()
+const router = useRouter()
 const partnersStore = usePartnersStore()
+
+// Raqiblar bilan uchrashuvlar (ikkinchi darajali — xato bo'lsa karta baribir ochiladi)
+const encounters = ref([])
+async function loadEncounters() {
+  try {
+    encounters.value = (await competitorsApi.encounters({ partner_id: route.params.id })) || []
+  } catch {
+    encounters.value = []
+  }
+}
 
 const loading = ref(true)
 const failed = ref(false)
@@ -36,6 +48,7 @@ onMounted(() => {
     partnersStore.partnerbyid = null
   }
   load()
+  loadEncounters()
 })
 
 // Mijozni faqat qo'shilganidan keyin 1 kun ichida tahrirlash mumkin (saytdagi qoida)
@@ -243,6 +256,31 @@ async function saveNote() {
         <p v-if="p.more_info">{{ p.more_info }}</p>
         <p v-else class="m-faint">{{ $t('m.noNote') }}</p>
       </div>
+
+      <!-- Shu mijoz bo'yicha raqiblar bilan uchrashuvlar -->
+      <div class="m-section">
+        <span class="m-section__title">{{ $t('crCompetitors') }} · {{ encounters.length }}</span>
+        <button
+          type="button"
+          class="m-section__action"
+          @click="router.push({ name: 'encounter-new', query: { partner_id: p.id } })"
+        >
+          {{ $t('m.add') }}
+        </button>
+      </div>
+      <div v-for="e in encounters" :key="e.id" class="m-card cd-enc">
+        <div class="cd-enc__top">
+          <b>{{ e.competitor?.name || '—' }}</b>
+          <span class="m-tag" :class="`is-${e.outcome === 'won' ? 'good' : e.outcome === 'lost' ? 'bad' : 'warn'}`">
+            {{ $t(`cmpOutcome_${e.outcome}`) }}
+          </span>
+        </div>
+        <div class="cd-enc__meta">
+          <span>{{ formatDate(e.encounter_date) }}</span>
+          <span v-if="e.reason">· {{ $t(`cmpReason_${e.reason}`) }}</span>
+        </div>
+      </div>
+      <p v-if="!encounters.length" class="m-faint cd-enc-empty">{{ $t('cmpNoEncounters') }}</p>
     </template>
 
     <!-- Tahrirlash -->
@@ -400,6 +438,21 @@ async function saveNote() {
 
 .cd-form :deep(.van-field__label) {
   color: var(--m-muted);
+  font-size: 13px;
+}
+.cd-enc__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cd-enc__meta {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--m-muted);
+}
+.cd-enc-empty {
+  margin: 0 16px;
   font-size: 13px;
 }
 </style>

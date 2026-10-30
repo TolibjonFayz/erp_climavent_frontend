@@ -102,6 +102,37 @@ const routes = [
   },
 
   {
+    path: '/competitors',
+    name: 'competitors',
+    component: () => import('./views/competitors/CompetitorsView.vue'),
+    meta: page('competitors'),
+  },
+  {
+    path: '/competitors/new',
+    name: 'competitor-new',
+    component: () => import('./views/competitors/CompetitorFormView.vue'),
+    meta: page('competitors'),
+  },
+  {
+    path: '/competitors/:id/edit',
+    name: 'competitor-edit',
+    component: () => import('./views/competitors/CompetitorFormView.vue'),
+    meta: page('competitors'),
+  },
+  {
+    path: '/competitors/encounters/new',
+    name: 'encounter-new',
+    component: () => import('./views/competitors/EncounterFormView.vue'),
+    meta: page('competitors'),
+  },
+  {
+    path: '/competitors/encounters/:id/edit',
+    name: 'encounter-edit',
+    component: () => import('./views/competitors/EncounterFormView.vue'),
+    meta: page('competitors'),
+  },
+
+  {
     path: '/kp',
     name: 'kp',
     component: () => import('./views/kp/KpView.vue'),
