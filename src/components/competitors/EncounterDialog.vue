@@ -11,7 +11,14 @@
       <el-row :gutter="12">
         <el-col :span="14">
           <el-form-item :label="$t('cmpCompetitor')" prop="competitor_id">
-            <el-select v-model="form.competitor_id" filterable style="width: 100%">
+            <el-select
+              v-model="form.competitor_id"
+              filterable
+              allow-create
+              default-first-option
+              :placeholder="$t('cmpPickOrType')"
+              style="width: 100%"
+            >
               <el-option v-for="c in competitors" :key="c.id" :label="c.name" :value="c.id" />
             </el-select>
           </el-form-item>
@@ -188,6 +195,17 @@ async function submit() {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
   loading.value = true
+  // Ro'yxatda yo'q nom yozilgan bo'lsa — avval katalogga qo'shamiz
+  if (typeof form.competitor_id === 'string') {
+    try {
+      const created = await competitorsApi.create({ name: form.competitor_id.trim() })
+      form.competitor_id = created.id
+    } catch (err) {
+      ElMessage.error(errorText(err, t('xatolikYuzBerdi')))
+      loading.value = false
+      return
+    }
+  }
   const kp = String(form.kp_number ?? '').replace(/\D/g, '')
   const payload = {
     competitor_id: form.competitor_id,
