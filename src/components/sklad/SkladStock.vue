@@ -133,7 +133,7 @@
             <span v-else class="sk-none">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="closing" min-width="132" column-key="closing" align="right" sortable="custom">
+        <el-table-column prop="closing" min-width="160" column-key="closing" align="right" sortable="custom">
           <template #header><UiHint :label="$t('skColClosing')" :hint="$t('skHintClosing')" /></template>
           <template #default="{ row }">
             <span v-if="stockStatus(row) !== 'ok'" class="sk-badge" :class="`st-${stockStatus(row)}`">
@@ -142,7 +142,7 @@
             <span class="sk-qty" :class="`st-${stockStatus(row)}`">{{ fmtQty(row.closing) }}</span>
             <span class="sk-unit">{{ unitLabel(row.unit) }}</span>
             <!-- Oxirgi harakat sanasi — alohida ustun emas (jadval ekranga sig'sin) -->
-            <div v-if="row.last_move_date" class="sk-sub">{{ $t('skLastMove', { d: dayMonth(row.last_move_date) }) }}</div>
+            <div v-if="row.last_move_date" class="sk-sub sk-last">{{ $t('skLastMove', { d: dayMonth(row.last_move_date) }) }}</div>
           </template>
         </el-table-column>
         <el-table-column width="40" align="center">
@@ -601,6 +601,10 @@ function exportExcel() {
   margin-top: 2px;
   font-size: 13px;
   color: var(--ui-muted);
+}
+/* "o'zgargan: 28 okt" bo'linmasin — Qoldiq ustuni kengligi shunga mo'ljallangan */
+.sk-last {
+  white-space: nowrap;
 }
 .sk-none {
   color: var(--ui-faint);
