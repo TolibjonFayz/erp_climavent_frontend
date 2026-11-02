@@ -113,10 +113,29 @@
     border-right: 1px solid var(--ui-line);
   }
   .adm-nav {
+    position: relative;
     display: flex;
     flex: 1;
     flex-direction: column;
     gap: 2px;
+  }
+  // Faol tab foni — bitta, tablar orasida suriladi (useActivePill)
+  .adm-nav__pill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 6px;
+    background: var(--ui-link-soft);
+    pointer-events: none;
+    transition: opacity var(--ui-dur-2) var(--ui-ease);
+
+    &.is-placed {
+      transition:
+        transform var(--ui-dur-3) var(--ui-ease-out),
+        width var(--ui-dur-3) var(--ui-ease-out),
+        height var(--ui-dur-3) var(--ui-ease-out),
+        opacity var(--ui-dur-2) var(--ui-ease);
+    }
   }
   .adm-nav__item {
     position: relative;
@@ -133,7 +152,9 @@
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    transition: background 0.12s;
+    transition:
+      background-color var(--ui-dur-1) var(--ui-ease),
+      color var(--ui-dur-2) var(--ui-ease);
 
     &:hover {
       background: var(--ui-surface-2);
@@ -141,7 +162,7 @@
     &.is-active {
       font-weight: 600;
       color: var(--ui-link);
-      background: var(--ui-link-soft);
+      background: transparent;
 
       .adm-nav__icon {
         color: var(--ui-link);
@@ -149,6 +170,7 @@
     }
   }
   .adm-nav__icon {
+    position: relative;
     display: flex;
     font-size: 16px;
     color: var(--ui-muted);

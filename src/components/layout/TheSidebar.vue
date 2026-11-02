@@ -49,7 +49,7 @@
     <nav class="sidebar-nav">
       <ul ref="navList" class="nav-list">
         <!-- Faol bo'lim foni: har bandda alohida emas, bitta — bo'lim almashganda yangi joyga suriladi -->
-        <li class="nav-pill" :class="{ 'is-placed': pill.placed }" :style="pillStyle" aria-hidden="true"></li>
+        <li class="nav-pill" :class="{ 'is-placed': pillPlaced }" :style="pillStyle" aria-hidden="true"></li>
         <li
           v-for="menu in visibleMenus"
           :key="menu.key"
@@ -153,7 +153,8 @@
 <script setup lang="ts">
 import { useUsersStore } from '@/stores/user'
 import { useTasksStore } from '@/stores/tasks'
-import { onMounted, onBeforeUnmount, ref, computed, inject, nextTick, watch } from 'vue'
+import { onMounted, ref, computed, inject } from 'vue'
+import { useActivePill } from '@/composables/useActivePill'
 import { useI18n } from 'vue-i18n'
 import { useSidebar } from '@/composables/useSidebar'
 import { useTheme } from '@/composables/useTheme'
@@ -332,47 +333,13 @@ const navTitle = (menu: { key: string; title: string }) => {
   return `${base} — ${parts.join(', ')}`
 }
 
-// ─── Faol bo'lim foni (pill) ───
+// ─── Faol bo'lim foni (pill) — bo'limlar orasida suriladi ───
 const navList = ref<HTMLElement | null>(null)
-const pill = ref({ top: 0, left: 0, width: 0, height: 0, visible: false, placed: false })
-const pillStyle = computed(() => ({
-  transform: `translate(${pill.value.left}px, ${pill.value.top}px)`,
-  width: `${pill.value.width}px`,
-  height: `${pill.value.height}px`,
-  opacity: pill.value.visible ? 1 : 0,
-}))
-function placePill() {
-  const item = navList.value?.querySelector<HTMLElement>('.nav-item.active')
-  if (!item) {
-    pill.value = { ...pill.value, visible: false }
-    return
-  }
-  const first = !pill.value.visible
-  pill.value = {
-    top: item.offsetTop,
-    left: item.offsetLeft,
-    width: item.offsetWidth,
-    height: item.offsetHeight,
-    visible: true,
-    // Birinchi joylashuv (yoki yashirindan chiqish) sakramasdan — faqat keyingi o'tishlar suriladi
-    placed: pill.value.placed && !first,
-  }
-  if (!pill.value.placed) requestAnimationFrame(() => requestAnimationFrame(() => (pill.value.placed = true)))
-}
-watch(
-  () => [props.activePath, visibleMenus.value.length, showCollapsed.value],
-  () => nextTick(placePill),
-)
-// Sidebar yig'ilib-yoyilganda (kenglik animatsiyasi) va oyna o'lchami o'zgarganda kuzatib boradi
-let resizeObserver: ResizeObserver | null = null
-onMounted(() => {
-  nextTick(placePill)
-  if (navList.value && 'ResizeObserver' in window) {
-    resizeObserver = new ResizeObserver(() => placePill())
-    resizeObserver.observe(navList.value)
-  }
-})
-onBeforeUnmount(() => resizeObserver?.disconnect())
+const { pillStyle, pillPlaced } = useActivePill(navList, '.nav-item.active', () => [
+  props.activePath,
+  visibleMenus.value.length,
+  showCollapsed.value,
+])
 
 onMounted(async () => {
   loading.value = true

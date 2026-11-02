@@ -21,7 +21,8 @@
     <div class="adm-body">
       <!-- SIDEBAR -->
       <aside class="adm-sidebar">
-        <nav class="adm-nav">
+        <nav ref="admNav" class="adm-nav">
+          <span class="adm-nav__pill" :class="{ 'is-placed': pillPlaced }" :style="pillStyle" aria-hidden="true"></span>
           <button
             v-for="tab in TABS"
             :key="tab.name"
@@ -55,17 +56,20 @@
 
       <!-- MAIN: har bir tab — alohida komponent (tabs/) -->
       <main v-loading="loading" class="adm-main">
-        <template v-if="ready">
-          <AdminDashboardTab v-if="activeTab === 'dashboard'" @go="(tab) => (activeTab = tab)" />
-          <AdminUsersTab v-else-if="activeTab === 'users'" />
-          <AdminPermissionsTab v-else-if="activeTab === 'permissions'" />
-          <AdminPartnersTab v-else-if="activeTab === 'partners'" />
-          <AdminObjectsTab v-else-if="activeTab === 'objects'" />
-          <AdminKpTab v-else-if="activeTab === 'kp'" />
-          <div v-else-if="activeTab === 'amocrm'" class="adm-page"><AmoCrmStats /></div>
-          <AdminAuditTab v-else-if="activeTab === 'audit'" />
-          <AdminSettingsTab v-else-if="activeTab === 'settings'" />
-        </template>
+        <!-- Tab almashganda: eski so'nadi, yangisi bloklari ketma-ket chiqadi (motion.css) -->
+        <Transition name="page" mode="out-in">
+          <div v-if="ready" :key="activeTab" class="adm-tab" :class="{ 'is-stagger': tabChanged }">
+            <AdminDashboardTab v-if="activeTab === 'dashboard'" @go="(tab) => (activeTab = tab)" />
+            <AdminUsersTab v-else-if="activeTab === 'users'" />
+            <AdminPermissionsTab v-else-if="activeTab === 'permissions'" />
+            <AdminPartnersTab v-else-if="activeTab === 'partners'" />
+            <AdminObjectsTab v-else-if="activeTab === 'objects'" />
+            <AdminKpTab v-else-if="activeTab === 'kp'" />
+            <div v-else-if="activeTab === 'amocrm'" class="adm-page"><AmoCrmStats /></div>
+            <AdminAuditTab v-else-if="activeTab === 'audit'" />
+            <AdminSettingsTab v-else-if="activeTab === 'settings'" />
+          </div>
+        </Transition>
       </main>
     </div>
   </div>
@@ -96,6 +100,7 @@ import { errorText } from '@/utils/errorText'
 import AdminDashboardTab from './tabs/AdminDashboardTab.vue'
 import AdminUsersTab from './tabs/AdminUsersTab.vue'
 import { todayLabel, useAdminAudit } from './adminShared'
+import { useActivePill } from '@/composables/useActivePill'
 
 // Kam ochiladigan tablar kerak bo'lganda yuklanadi
 const AdminPermissionsTab = defineAsyncComponent(() => import('./tabs/AdminPermissionsTab.vue'))
@@ -129,6 +134,11 @@ const TABS = [
 
 // Faol tab URL'da (?tab=users): sahifa yangilansa yoki havola ulashilsa — o'sha tab ochiladi
 const activeTab = ref('dashboard')
+// Menyu foni faol tab ostida suriladi; ketma-ket paydo bo'lish faqat tab almashganda
+const admNav = ref(null)
+const { pillStyle, pillPlaced } = useActivePill(admNav, '.adm-nav__item.is-active', () => activeTab.value)
+const tabChanged = ref(false)
+watch(activeTab, () => (tabChanged.value = true))
 const tabFromUrl = String(route.query.tab || '')
 if (TABS.some((tab) => tab.name === tabFromUrl)) activeTab.value = tabFromUrl
 watch(activeTab, (tab) => {
