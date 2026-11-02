@@ -53,7 +53,7 @@ import { usePartnersStore } from '@/stores/partners'
 import { useComeAndGoesStore } from '@/stores/comeandgoes'
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { useKPsStore } from '@/stores/kp'
-import { useDogovorStore } from '@/stores/dogovor'
+import dogovorApi from '@/api/dogovor'
 import { useLoyihaStore } from '@/stores/loyiha'
 import { useTasksStore } from '@/stores/tasks'
 import { useUsersStore } from '@/stores/user'
@@ -72,7 +72,6 @@ const partnersStore = usePartnersStore()
 const sitesStore = useComeAndGoesStore()
 const insideStore = useComeAndGoInsideStore()
 const kpStore = useKPsStore()
-const dogovorStore = useDogovorStore()
 const loyihaStore = useLoyihaStore()
 const tasksStore = useTasksStore()
 
@@ -107,7 +106,7 @@ async function loadSources() {
     )
   }
   if (can('kp')) jobs.push(kpStore.allKPs.length || kpStore.getAllKPs())
-  if (can('dogovor')) jobs.push(dogovorStore.allDogovors.length || dogovorStore.getAllDogovors())
+  // Shartnomalar (8 mingdan ortiq) oldindan yuklanmaydi — har so'rovda serverdan qidiriladi
   if (can('loyiha')) jobs.push(loyihaStore.allLoyihas.length || loyihaStore.getAllLoyihas())
   // Bitta manba yiqilsa qolganlari ishlayversin
   await Promise.allSettled(jobs)
@@ -177,7 +176,7 @@ const sources = computed(() => {
     list.push({
       key: 'dogovor',
       label: 'gsDogovor',
-      rows: dogovorStore.allDogovors || [],
+      rows: dogovorHits.value,
       fields: (d) => [d.dogovor_number, d.client_name, d.client_inn, d.client_phone, d.manager_name],
       item: (d) => ({
         title: `№${d.dogovor_number || '—'} · ${d.client_name || ''}`,
@@ -245,6 +244,28 @@ const groups = computed(() => {
 
 const flat = computed(() => groups.value.flatMap((g) => g.items))
 watch(query, () => (active.value = 0))
+
+// Shartnomalar: yozish to'xtagach serverdan bir nechta mos keladigani olinadi
+const dogovorHits = ref([])
+let dogovorTimer = 0
+let dogovorSeq = 0
+watch(query, (q) => {
+  clearTimeout(dogovorTimer)
+  const text = q.trim()
+  if (!text || !can('dogovor')) {
+    dogovorHits.value = []
+    return
+  }
+  dogovorTimer = setTimeout(async () => {
+    const seq = ++dogovorSeq
+    try {
+      const rows = await dogovorApi.search(text)
+      if (seq === dogovorSeq) dogovorHits.value = rows || []
+    } catch {
+      if (seq === dogovorSeq) dogovorHits.value = []
+    }
+  }, 220)
+})
 
 function move(step) {
   if (!flat.value.length) return

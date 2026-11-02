@@ -14,7 +14,7 @@
           {{ $t('dogovorButtonUploadFile') }}
         </el-button>
       </el-upload>
-      <el-button :icon="Download" @click="exportExcel">{{ $t('dogovorExportExcel') }}</el-button>
+      <el-button :icon="Download" :loading="exportLoading" @click="exportExcel">{{ $t('dogovorExportExcel') }}</el-button>
       <el-button type="primary" :icon="Plus" @click="openCreateDialog">
         {{ $t('dogovorButtonAdd') }}
       </el-button>
@@ -57,7 +57,7 @@
     />
 
     <!-- Filtrlar -->
-    <UiToolbar v-if="dogovors.length">
+    <UiToolbar v-if="stats.total">
       <UiField :label="$t('dogovorTableClient')" grow>
         <el-input
           v-model="filters.client"
@@ -125,10 +125,10 @@
     </UiToolbar>
 
     <!-- Jadval -->
-    <UiPanel v-if="dogovors.length || showSkeleton" flush>
+    <UiPanel v-if="stats.total || showSkeleton" flush>
       <template #title>
         {{ $t('dogovorListTitle') }}
-        <span class="dg-count">{{ fmtNum(filteredDogovors.length) }}</span>
+        <span class="dg-count">{{ fmtNum(total) }}</span>
       </template>
       <template #actions>
         <el-button v-if="hasFilters" link type="primary" @click="resetFilters">
@@ -139,7 +139,8 @@
       <el-skeleton v-if="showSkeleton" :rows="6" animated class="dg-skeleton" />
       <el-table
         v-else
-        :data="pagedDogovors"
+        v-loading="loading && !!stats.total"
+        :data="pageRows"
         class="dg-table"
         :empty-text="$t('dogovorNoMatchDescription')"
       >
@@ -254,12 +255,12 @@
         </el-table-column>
       </el-table>
 
-      <div v-if="filteredDogovors.length > pageSize" class="dg-pager">
+      <div v-if="total > pageSize" class="dg-pager">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
           :page-sizes="[20, 50, 100, 200]"
-          :total="filteredDogovors.length"
+          :total="total"
           layout="total, sizes, prev, pager, next, jumper"
           background
         />
@@ -645,6 +646,7 @@
 import { errorText } from '@/utils/errorText'
 import { useQueryPrefill } from '@/composables/useQueryPrefill'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import dogovorApi from '@/api/dogovor'
 import { useI18n } from 'vue-i18n'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
@@ -674,7 +676,6 @@ const { t } = useI18n()
 const dogovorStore = useDogovorStore()
 const usersStore = useUsersStore()
 
-const dogovors = computed(() => dogovorStore.allDogovors || [])
 const currentUserId = Number(localStorage.getItem('userid'))
 const isAdmin = computed(() => !!usersStore.currentUser?.is_admin)
 
@@ -764,48 +765,59 @@ const hiddenFilterCount = computed(
 const hasFilters = computed(() => Object.values(filters).some(filled))
 const rowIndex = (i) => (currentPage.value - 1) * pageSize.value + i + 1
 
-const textMatch = (value, filter) => {
-  const f = String(filter ?? '')
-    .trim()
-    .toLowerCase()
-  return (
-    !f ||
-    String(value ?? '')
-      .toLowerCase()
-      .includes(f)
+// ─── Ro'yxat: filtr va bo'laklash serverda (8 mingdan ortiq shartnoma — hammasini yuklamaymiz) ───
+const pageRows = ref([])
+const total = ref(0)
+const stats = ref({ total: 0, sum: 0, byStatus: {} })
+const loading = ref(false)
+const loaded = ref(false)
+
+// Bo'sh maydonlar yuborilmaydi
+const filterParams = () =>
+  Object.fromEntries(
+    Object.entries(filters)
+      .map(([k, v]) => [k, String(v ?? '').trim()])
+      .filter(([, v]) => v),
   )
+
+let requestSeq = 0
+async function load() {
+  const seq = ++requestSeq
+  loading.value = true
+  try {
+    const res = await dogovorApi.getPage({
+      ...filterParams(),
+      page: currentPage.value,
+      limit: pageSize.value,
+    })
+    if (seq !== requestSeq) return // eskiroq so'rov kech qaytdi — yangisini bosib ketmasin
+    pageRows.value = res.rows || []
+    total.value = res.total || 0
+    stats.value = res.stats || { total: 0, sum: 0, byStatus: {} }
+    loaded.value = true
+  } catch (error) {
+    if (seq === requestSeq) ElMessage.error(errorText(error, t('dogovorMessageLoadError')))
+  } finally {
+    if (seq === requestSeq) loading.value = false
+  }
 }
 
-// Backend dogovor_number bo'yicha kamayish tartibida qaytaradi — tartibni saqlaymiz
-const filteredDogovors = computed(() =>
-  dogovors.value.filter(
-    (row) =>
-      textMatch(row.dogovor_number, filters.number) &&
-      (!filters.status || row.dogovor_status === filters.status) &&
-      textMatch(row.client_name, filters.client) &&
-      textMatch(row.manager_name, filters.manager) &&
-      textMatch(formatDate(row.dogovor_date), filters.date) &&
-      textMatch(formatDate(row.payment_date), filters.paymentDate) &&
-      textMatch(row.dogovor_sum, filters.sum) &&
-      textMatch(row.prepayment_percent, filters.prepayment) &&
-      textMatch(row.client_inn, filters.inn) &&
-      textMatch(row.client_phone, filters.phone) &&
-      textMatch(row.comment, filters.comment) &&
-      (!isAdmin.value || textMatch(row.admin_comment, filters.adminComment)),
-  ),
-)
-
-const pagedDogovors = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  return filteredDogovors.value.slice(start, start + pageSize.value)
-})
-
+// Matn yozilayotganda har harfda emas — biroz to'xtagach so'raymiz; holat tanlansa darhol
+let filterTimer = 0
 watch(
   () => ({ ...filters }),
-  () => {
-    currentPage.value = 1
+  (now, before) => {
+    clearTimeout(filterTimer)
+    const onlyStatus = Object.keys(now).every((k) => k === 'status' || now[k] === before[k])
+    const run = () => {
+      if (currentPage.value !== 1) currentPage.value = 1 // sahifa watch'i o'zi yuklaydi
+      else load()
+    }
+    if (onlyStatus) run()
+    else filterTimer = setTimeout(run, 300)
   },
 )
+watch([currentPage, pageSize], () => load())
 
 const resetFilters = () => {
   Object.keys(filters).forEach((key) => {
@@ -813,31 +825,20 @@ const resetFilters = () => {
   })
 }
 
-// ─── Statistika ───
-const totalDogovors = computed(() => dogovors.value.length)
-const statusCount = computed(() => ({
-  Open: dogovors.value.filter((d) => d.dogovor_status === 'Open').length,
-  Shipped: dogovors.value.filter((d) => d.dogovor_status === 'Shipped').length,
-  PartlyShipped: dogovors.value.filter((d) => d.dogovor_status === 'PartlyShipped').length,
-  Closed: dogovors.value.filter((d) => d.dogovor_status === 'Closed').length,
-}))
-const totalSum = computed(() =>
-  dogovors.value.reduce((acc, d) => acc + (Number(d.dogovor_sum) || 0), 0),
-)
+// ─── Statistika (server hisoblaydi — butun ro'yxat bo'yicha, filtrga bog'liq emas) ───
+const totalDogovors = computed(() => stats.value.total)
+const totalSum = computed(() => stats.value.sum)
 // Har holat: soni va summasi (ko'rsatkich kartalari uchun)
 const STATUS_TONE = { Open: '', PartlyShipped: 'warn', Shipped: 'good', Closed: '' }
 const statusStats = computed(() =>
-  statusOptions.map((o) => {
-    const list = dogovors.value.filter((d) => d.dogovor_status === o.value)
-    return {
-      ...o,
-      tone: STATUS_TONE[o.value],
-      count: list.length,
-      sum: list.reduce((acc, d) => acc + (Number(d.dogovor_sum) || 0), 0),
-    }
-  }),
+  statusOptions.map((o) => ({
+    ...o,
+    tone: STATUS_TONE[o.value],
+    count: stats.value.byStatus[o.value]?.count || 0,
+    sum: stats.value.byStatus[o.value]?.sum || 0,
+  })),
 )
-const showSkeleton = computed(() => dogovorStore.isLoading && !dogovors.value.length)
+const showSkeleton = computed(() => loading.value && !loaded.value)
 
 // ─── Formatlash ───
 const formatMoney = (value) => {
@@ -868,7 +869,7 @@ const handleBeforeUpload = async (file) => {
   uploadLoading.value = true
   try {
     const result = await dogovorStore.importDogovors(file)
-    await dogovorStore.getAllDogovors()
+    await load()
     ElMessage.success(
       t('dogovorImportSummary', {
         created: result?.imported ?? 0,
@@ -887,8 +888,18 @@ const handleBeforeUpload = async (file) => {
   return false // Element Plus o'zi yubormasin — biz o'zimiz yubordik
 }
 
-const exportExcel = () => {
-  const list = filteredDogovors.value
+const exportLoading = ref(false)
+const exportExcel = async () => {
+  let list = []
+  exportLoading.value = true
+  try {
+    list = await dogovorApi.exportList(filterParams())
+  } catch (error) {
+    ElMessage.error(errorText(error, t('dogovorMessageLoadError')))
+    return
+  } finally {
+    exportLoading.value = false
+  }
   if (!list.length) {
     ElMessage.warning(t('dogovorNoDataToExport'))
     return
@@ -1032,7 +1043,13 @@ const handlePdfFill = async (file) => {
       (k) => !keys.includes(k),
     )
     if (missing.length) warnings.push(t('dogovorPdfMissingMain'))
-    const duplicate = dogovors.value.some(
+    // Shu raqam va sanali shartnoma bazada bormi — serverdan tekshiramiz (ro'yxat to'liq yuklanmaydi)
+    const same = form.dogovor_number
+      ? await dogovorApi
+          .getPage({ number: String(form.dogovor_number), date: formatDate(form.dogovor_date), limit: 50 })
+          .catch(() => null)
+      : null
+    const duplicate = (same?.rows || []).some(
       (d) =>
         Number(d.dogovor_number) === Number(form.dogovor_number) &&
         String(d.dogovor_date).slice(0, 10) === form.dogovor_date,
@@ -1126,7 +1143,7 @@ const handleSubmit = async () => {
       ElMessage.success(t('dogovorMessageSaved'))
     }
     dialogVisible.value = false
-    await dogovorStore.getAllDogovors()
+    await load()
   } catch (error) {
     ElMessage.error(errorText(error, t('dogovorMessageSaveError')))
   }
@@ -1136,7 +1153,7 @@ const handleDelete = async (id) => {
   try {
     await dogovorStore.deleteDogovor(id)
     ElMessage.success(t('dogovorMessageDeleted'))
-    await dogovorStore.getAllDogovors()
+    await load()
   } catch (error) {
     ElMessage.error(errorText(error, t('dogovorMessageDeleteError')))
   }
@@ -1145,10 +1162,10 @@ const handleDelete = async (id) => {
 onMounted(async () => {
   try {
     if (!usersStore.currentUser) await usersStore.getUserInfo(currentUserId)
-    await dogovorStore.getAllDogovors()
-  } catch (error) {
-    ElMessage.error(errorText(error, t('dogovorMessageLoadError')))
+  } catch {
+    // foydalanuvchi ma'lumoti keyin ham keladi — ro'yxat yuklanishiga to'sqinlik qilmasin
   }
+  await load()
 })
 </script>
 
