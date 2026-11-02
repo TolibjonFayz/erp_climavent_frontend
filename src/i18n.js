@@ -40,6 +40,8 @@ function getCookieLanguage(name = 'lang') {
 }
 
 const i18n = createI18n({
+  // Composition rejimi (legacy v11'da eskirgan): global.locale — ref, shablonlarda $t avvalgidek
+  legacy: false,
   locale: getCookieLanguage(),
   fallbackLocale: 'uz',
   globalInjection: true,
