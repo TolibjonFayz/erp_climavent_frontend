@@ -546,6 +546,7 @@ import {
   DataAnalysis,
 } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { useOpenFromQuery } from '@/composables/useOpenFromQuery'
 import { useFlip } from '@/composables/useFlip'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
@@ -1051,6 +1052,9 @@ onMounted(async () => {
   }
   if (isApprover.value) await tasksStore.getPendingApprovals()
 })
+
+// "+ Yangi" menyusidan kelganda (?new=1) qo'shish oynasi ochiladi
+useOpenFromQuery(() => isAdmin.value && openCreateDialog())
 </script>
 
 <style lang="scss" scoped>

@@ -6,6 +6,9 @@
       </el-button>
     </template>
 
+    <!-- Salomlashish va bugungi ishlar -->
+    <TodayBar />
+
     <!-- Ko'rsatkichlar -->
     <div class="cl-stats">
       <UiStat
@@ -33,6 +36,7 @@
         :hint="$t('custHintAdded')"
         :value="fmtNum(addedMonth)"
         :sub="$t('custAdded')"
+        :trend="monthTrendPartners"
       />
     </div>
 
@@ -215,6 +219,9 @@
 import router from '@/router'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useOpenFromQuery } from '@/composables/useOpenFromQuery'
+import TodayBar from '@/components/home/TodayBar.vue'
+import { monthTrend } from '@/utils/trend'
 import { usePartnersStore } from '@/stores/partners'
 import { ArrowRight, Plus, Search } from '@element-plus/icons-vue'
 import UiPage from '@/components/ui/UiPage.vue'
@@ -248,6 +255,8 @@ const partnerGroups = computed(() =>
 )
 
 const allPartners = computed(() => partnersStore.allPartnersofUser || [])
+// Shu oy qo'shilganlar — o'tgan oyning shu davriga nisbatan
+const monthTrendPartners = computed(() => monthTrend(allPartners.value, (p) => p.createdAt))
 
 // ─── Filtrlar ─────────────────────────────────────────────
 const group = ref('all')
@@ -377,6 +386,9 @@ async function handleAddSuccess() {
 }
 
 onMounted(reload)
+
+// "+ Yangi" menyusidan kelganda (?new=1) qo'shish oynasi ochiladi
+useOpenFromQuery(openAddDialog)
 </script>
 
 <style scoped>

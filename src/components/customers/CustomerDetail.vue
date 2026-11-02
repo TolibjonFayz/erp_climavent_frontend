@@ -135,6 +135,11 @@
         show-word-limit
         maxlength="1000"
       />
+      <UiQuickPhrases
+        v-model="moreInfoForm.more_info"
+        :maxlength="1000"
+        :phrases="['qpCuRegular', 'qpCallBack', 'qpCuPriceSensitive', 'qpCuWholesale', 'qpCuReferral']"
+      />
       <template #footer>
         <el-button @click="moreInfoDialogVisible = false">{{ $t('bekor_qilish') }}</el-button>
         <el-button type="primary" :loading="moreInfoLoading" @click="handleSaveMoreInfo">
@@ -153,6 +158,7 @@ import { ArrowLeft, Document, Edit, Location, Phone, User } from '@element-plus/
 import { usePartnersStore } from '@/stores/partners'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import UiQuickPhrases from '@/components/ui/UiQuickPhrases.vue'
 import router from '@/router'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'

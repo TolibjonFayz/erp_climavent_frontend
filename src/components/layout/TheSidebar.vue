@@ -46,6 +46,14 @@
       </button>
     </div>
 
+    <!-- Istalgan joydan tez qo'shish -->
+    <QuickCreate
+      :collapsed="showCollapsed"
+      :can="canAccess"
+      :is-admin="!!currentUser?.is_admin"
+      @navigate="closeMobile"
+    />
+
     <nav class="sidebar-nav">
       <ul ref="navList" class="nav-list">
         <!-- Faol bo'lim foni: har bandda alohida emas, bitta — bo'lim almashganda yangi joyga suriladi -->
@@ -160,6 +168,7 @@ import { useSidebar } from '@/composables/useSidebar'
 import { useTheme } from '@/composables/useTheme'
 import { useNotifications } from '@/composables/useNotifications'
 import NotificationsDrawer from './NotificationsDrawer.vue'
+import QuickCreate from './QuickCreate.vue'
 
 type CurrentUser = {
   profile_image?: string | null
@@ -206,6 +215,9 @@ const avatarUrl = computed(() => {
 
 // Collapsed visuals only apply on desktop (mobile uses the full drawer)
 const showCollapsed = computed(() => isCollapsed.value && !isMobile.value)
+
+// Bo'lim ruxsati (menyu va "+ Yangi" uchun): aniq false bo'lmasa — bor
+const canAccess = (key: string) => currentUser.value?.permissions?.[key] !== false
 
 const menus = computed(() => {
   const perms = currentUser.value?.permissions || {};

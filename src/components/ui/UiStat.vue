@@ -16,12 +16,21 @@
     <span class="ui-stat__value"
       ><slot>{{ shown }}</slot></span
     >
-    <span class="ui-stat__sub">{{ sub || ' ' }}</span>
+    <span class="ui-stat__sub">
+      <span
+        v-if="trendPct !== null"
+        class="ui-stat__trend"
+        :class="trendPct > 0 ? 'is-up' : trendPct < 0 ? 'is-down' : ''"
+        :title="$t('statTrendHint', { cur: trend.current, prev: trend.previous })"
+        >{{ trendPct > 0 ? '▲' : trendPct < 0 ? '▼' : '•' }} {{ Math.abs(trendPct) }}%</span
+      >{{ sub || ' ' }}
+    </span>
   </component>
 </template>
 
 <script setup>
 import UiHint from './UiHint.vue'
+import { computed } from 'vue'
 import { useCountUp } from '@/composables/useCountUp'
 
 const props = defineProps({
@@ -37,6 +46,15 @@ const props = defineProps({
   size: { type: String, default: 'md' },
   // Katta summalar — shrift kichrayadi va pastga tushadi (kesilmaydi)
   money: { type: Boolean, default: false },
+  // Oy dinamikasi: { current, previous } — shu oy boshidan bugungacha vs o'tgan oyning shu davri
+  trend: { type: Object, default: null },
+})
+
+const trendPct = computed(() => {
+  const prev = Number(props.trend?.previous)
+  const cur = Number(props.trend?.current)
+  if (!props.trend || !prev || Number.isNaN(cur)) return null
+  return Math.round(((cur - prev) / prev) * 100)
 })
 
 // Qiymat o'zgarganda eski raqamdan yangisiga sanab boradi
@@ -160,5 +178,29 @@ const shown = useCountUp(() => props.value)
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.ui-stat__trend {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  color: var(--ui-muted);
+  background: var(--ui-surface-3);
+  font-variant-numeric: tabular-nums;
+}
+.ui-stat__trend.is-up {
+  color: var(--ui-good);
+  background: color-mix(in srgb, var(--ui-good) 12%, transparent);
+}
+.ui-stat__trend.is-down {
+  color: var(--ui-bad);
+  background: color-mix(in srgb, var(--ui-bad) 12%, transparent);
+}
+.ui-stat.is-acc .ui-stat__trend {
+  color: inherit;
+  background: rgba(255, 255, 255, 0.18);
 }
 </style>
