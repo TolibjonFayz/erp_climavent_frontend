@@ -12,7 +12,10 @@ import MSheet from '../../components/MSheet.vue'
 import MEmpty from '../../components/MEmpty.vue'
 import { avatarColor, errorText, initials } from '../../utils'
 import { formatPlace } from './place'
-import { legalTypeLabel } from '@/utils/partners'
+import { LEGAL_TYPE_VALUES, legalTypeLabel, legalTypeValue } from '@/utils/partners'
+import { locationFormFromPartner, locationPayload } from '@/constants/locations'
+import MLocationFields from '../../components/MLocationFields.vue'
+import MLegalTypeField from '../../components/MLegalTypeField.vue'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -79,12 +82,26 @@ const form = reactive({
   phone_number: '',
   additional_phone_number: '',
   republic: '',
+  otherrepublic: '',
   viloyat: '',
+  otherviloyat: '',
   shahar_tuman: '',
+  other_shahar_tuman: '',
 })
 
+const LEGAL_KEYS = Object.fromEntries(Object.entries(LEGAL_TYPE_VALUES).map(([k, v]) => [v, k]))
+
 function openEdit() {
-  for (const k of Object.keys(form)) form[k] = p.value?.[k] || ''
+  const c = p.value || {}
+  Object.assign(form, {
+    fullname: c.fullname || '',
+    // eski ruscha yozuv ham tugmada belgilanib tursin
+    mijozturi: LEGAL_KEYS[legalTypeValue(c.mijozturi)] || '',
+    inn: c.inn || '',
+    phone_number: c.phone_number || '',
+    additional_phone_number: c.additional_phone_number || '',
+    ...locationFormFromPartner(c, t),
+  })
   editOpen.value = true
 }
 
@@ -95,7 +112,17 @@ async function saveEdit() {
   }
   saving.value = true
   try {
-    await partnersStore.updateOnePartner({ ...form }, route.params.id)
+    await partnersStore.updateOnePartner(
+      {
+        fullname: form.fullname.trim(),
+        mijozturi: LEGAL_TYPE_VALUES[form.mijozturi] || '',
+        inn: form.mijozturi === 'yuridik' ? form.inn : '',
+        phone_number: form.phone_number.trim(),
+        additional_phone_number: form.additional_phone_number.trim(),
+        ...locationPayload(form),
+      },
+      route.params.id,
+    )
     showSuccessToast(t('hamkor_yangilandi'))
     editOpen.value = false
     await load()
@@ -288,8 +315,14 @@ async function saveNote() {
     <MSheet v-model="editOpen" :title="$t('edit')" full>
       <van-cell-group inset class="cd-form">
         <van-field v-model="form.fullname" :label="$t('ismFamiliya')" label-align="top" />
-        <van-field v-model="form.mijozturi" :label="$t('mijozTuri')" label-align="top" />
-        <van-field v-model="form.inn" :label="$t('inn')" label-align="top" inputmode="numeric" />
+        <MLegalTypeField v-model="form.mijozturi" />
+        <van-field
+          v-if="form.mijozturi === 'yuridik'"
+          v-model="form.inn"
+          :label="$t('inn')"
+          label-align="top"
+          inputmode="numeric"
+        />
         <van-field
           v-model="form.phone_number"
           :label="$t('telefon')"
@@ -302,9 +335,7 @@ async function saveNote() {
           label-align="top"
           type="tel"
         />
-        <van-field v-model="form.republic" :label="$t('respublika')" label-align="top" />
-        <van-field v-model="form.viloyat" :label="$t('viloyat')" label-align="top" />
-        <van-field v-model="form.shahar_tuman" :label="$t('shaharTuman')" label-align="top" />
+        <MLocationFields :form="form" />
       </van-cell-group>
       <template #footer>
         <van-button @click="editOpen = false">{{ $t('cancel') }}</van-button>
