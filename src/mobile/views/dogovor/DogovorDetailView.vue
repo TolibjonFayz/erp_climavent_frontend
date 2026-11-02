@@ -96,7 +96,6 @@ async function remove() {
   try {
     await store.deleteDogovor(id)
     showSuccessToast(t('dogovorMessageDeleted'))
-    store.getAllDogovors().catch(() => {})
     router.back()
   } catch (e) {
     showFailToast(errorText(e, t, locale.value))

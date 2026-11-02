@@ -143,7 +143,6 @@ async function save() {
       showSuccessToast(t('dogovorMessageSaved'))
     }
     tapFeedback()
-    store.getAllDogovors().catch(() => {})
     router.back()
   } catch (e) {
     showFailToast({ message: errorText(e, t, locale.value), wordBreak: 'break-word' })

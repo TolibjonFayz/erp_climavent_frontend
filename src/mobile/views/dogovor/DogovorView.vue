@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { showFailToast, showToast } from 'vant'
 import { useDogovorStore } from '@/stores/dogovor'
+import dogovorApi from '@/api/dogovor'
 import { formatDate, telHref } from '@/utils/format'
 import MPage from '../../components/MPage.vue'
 import MStats from '../../components/MStats.vue'
@@ -12,75 +13,83 @@ import { showActionSheet } from '../../actionSheet'
 import { exportExcel } from '../../exporter'
 import { useSession } from '../../session'
 import { DOGOVOR_STATUSES, canModifyDoc, statusOf } from '../../docRules'
-import { errorText, includesText, money, moneyShort } from '../../utils'
+import { errorText, money, moneyShort } from '../../utils'
 
 const { t, locale } = useI18n()
 const router = useRouter()
 const store = useDogovorStore()
 const { user, isAdmin } = useSession()
 
+// ─── Ro'yxat: serverdan bo'laklab (8 mingdan ortiq shartnoma — hammasini yuklamaymiz) ───
+const PAGE = 30
+const rows = ref([])
+const total = ref(0)
+const stats = ref({ total: 0, sum: 0, byStatus: {} })
 const loaded = ref(false)
-async function load() {
-  try {
-    await store.getAllDogovors()
-  } catch (e) {
-    showFailToast(errorText(e, t, locale.value))
-  } finally {
-    loaded.value = true
-  }
-}
-onMounted(load)
-onActivated(() => loaded.value && load())
-
-const all = computed(() => store.allDogovors || [])
+const listLoading = ref(false)
+const finished = ref(false)
 
 const search = ref('')
 const status = ref('')
-const filtered = computed(() => {
-  const q = search.value.trim()
-  return all.value.filter(
-    (d) =>
-      (!status.value || d.dogovor_status === status.value) &&
-      (!q ||
-        [d.dogovor_number, d.client_name, d.manager_name, d.client_inn, d.client_phone, d.comment].some(
-          (v) => includesText(v, q),
-        )),
-  )
-})
+const params = () => ({ q: search.value.trim() || undefined, status: status.value || undefined })
 
-const PAGE = 40
-const shown = ref(PAGE)
-const listLoading = ref(false)
-const finished = computed(() => shown.value >= filtered.value.length)
-const rows = computed(() => filtered.value.slice(0, shown.value))
-watch([search, status], () => (shown.value = PAGE))
-function onLoadMore() {
-  shown.value += PAGE
-  listLoading.value = false
+let seq = 0
+async function fetchPage(page) {
+  const my = ++seq
+  try {
+    const res = await dogovorApi.getPage({ ...params(), page, limit: PAGE })
+    if (my !== seq) return
+    rows.value = page === 1 ? res.rows || [] : [...rows.value, ...(res.rows || [])]
+    total.value = res.total || 0
+    stats.value = res.stats || stats.value
+    finished.value = rows.value.length >= total.value
+  } catch (e) {
+    if (my === seq) {
+      finished.value = true
+      showFailToast(errorText(e, t, locale.value))
+    }
+  } finally {
+    if (my === seq) {
+      loaded.value = true
+      listLoading.value = false
+    }
+  }
 }
+const reload = () => fetchPage(1)
+function onLoadMore() {
+  if (finished.value) return (listLoading.value = false)
+  fetchPage(Math.floor(rows.value.length / PAGE) + 1)
+}
+onMounted(reload)
+onActivated(() => loaded.value && reload())
 
-const sumOf = (list) => list.reduce((acc, d) => acc + (Number(d.dogovor_sum) || 0), 0)
-const stats = computed(() => [
+// Qidiruv yozish to'xtagach, holat darhol
+let timer = 0
+watch(search, () => {
+  clearTimeout(timer)
+  timer = setTimeout(reload, 300)
+})
+watch(status, reload)
+
+const stat = (key) => stats.value.byStatus?.[key] || { count: 0, sum: 0 }
+const statsCards = computed(() => [
   {
     key: 'all',
     label: t('dogovorStatTotal'),
-    value: all.value.length,
-    sub: moneyShort(sumOf(all.value), t),
+    value: stats.value.total,
+    sub: moneyShort(stats.value.sum, t),
     active: !status.value,
     onClick: () => (status.value = ''),
   },
-  ...DOGOVOR_STATUSES.map((s) => {
-    const list = all.value.filter((d) => d.dogovor_status === s.value)
-    return {
-      key: s.value,
-      label: t(s.labelKey),
-      value: list.length,
-      sub: moneyShort(sumOf(list), t),
-      tone: s.value === 'Shipped' ? 'good' : s.value === 'PartlyShipped' ? 'warn' : '',
-      active: status.value === s.value,
-      onClick: () => (status.value = status.value === s.value ? '' : s.value),
-    }
-  }),
+  ...DOGOVOR_STATUSES.map((s) => ({
+    key: s.value,
+    label: t(s.labelKey),
+    value: stat(s.value).count,
+    sub: moneyShort(stat(s.value).sum, t),
+    tone: s.value === 'Shipped' ? 'good' : s.value === 'PartlyShipped' ? 'warn' : '',
+    active: status.value === s.value,
+    onClick: () => (status.value = status.value === s.value ? '' : s.value),
+  })),
 ])
 
 
@@ -108,7 +117,7 @@ const exporting = ref(false)
 function openMenu() {
   showActionSheet({
     actions: [
-      { name: t('m.exportExcel'), subname: t('m.exportCount', { n: filtered.value.length }), key: 'export' },
+      { name: t('m.exportExcel'), subname: t('m.exportCount', { n: total.value }), key: 'export' },
       { name: t('m.importExcel'), key: 'import' },
     ],
     cancelText: t('cancel'),
@@ -117,10 +126,12 @@ function openMenu() {
     .catch(() => {})
 }
 async function doExport() {
-  if (!filtered.value.length) return showToast(t('m.nothingToExport'))
+  if (!total.value) return showToast(t('m.nothingToExport'))
   exporting.value = true
   try {
-    await exportExcel('Dogovorlar', [{ name: 'Dogovorlar', rows: filtered.value.map(dgRow) }])
+    // Filtrga mos hammasi serverdan (ro'yxatda faqat yuklangan bo'lak turadi)
+    const list = await dogovorApi.exportList(params())
+    await exportExcel('Dogovorlar', [{ name: 'Dogovorlar', rows: list.map(dgRow) }])
   } catch (e) {
     showFailToast(errorText(e, t, locale.value))
   } finally {
@@ -138,7 +149,7 @@ async function onImport(e) {
   importing.value = true
   try {
     const res = await store.importDogovors(file)
-    await store.getAllDogovors()
+    await reload()
     showToast({
       message: t('dogovorImportSummary', {
         created: res?.imported ?? 0,
@@ -157,7 +168,7 @@ async function onImport(e) {
 </script>
 
 <template>
-  <MPage :title="$t('dogovortext')" :back="{ name: 'more' }" :on-refresh="load">
+  <MPage :title="$t('dogovortext')" :back="{ name: 'more' }" :on-refresh="reload">
     <template #right>
       <button type="button" class="m-head__btn" :disabled="importing || exporting" @click="openMenu">
         <van-loading v-if="importing || exporting" size="18" />
@@ -173,15 +184,15 @@ async function onImport(e) {
     </template>
 
     <p class="dv-scope">{{ isAdmin ? $t('dogovorPageSubtitle') : $t('dogovorPageSubtitleOwn') }}</p>
-    <MStats :items="stats" />
+    <MStats :items="statsCards" />
 
     <div v-if="!loaded">
       <van-skeleton v-for="i in 5" :key="i" :row="3" class="m-card" />
     </div>
     <template v-else>
-      <p v-if="filtered.length" class="dv-count">{{ $t('m.foundCount', { n: filtered.length }) }}</p>
+      <p v-if="total" class="dv-count">{{ $t('m.foundCount', { n: total }) }}</p>
       <van-list
-        v-if="filtered.length"
+        v-if="rows.length"
         v-model:loading="listLoading"
         :finished="finished"
         :immediate-check="false"
@@ -218,8 +229,8 @@ async function onImport(e) {
       <MEmpty
         v-else
         icon="records-o"
-        :title="all.length ? $t('m.nothingFound') : $t('dogovorEmptyTitle')"
-        :text="all.length ? $t('dogovorNoMatchDescription') : $t('dogovorEmptyDescription')"
+        :title="stats.total ? $t('m.nothingFound') : $t('dogovorEmptyTitle')"
+        :text="stats.total ? $t('dogovorNoMatchDescription') : $t('dogovorEmptyDescription')"
       />
     </template>
   </MPage>
