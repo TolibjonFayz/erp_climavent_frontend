@@ -597,10 +597,7 @@ const editingKP = ref(null)
 const uploadLoading = ref(false)
 const uploadError = ref('')
 
-const uploadButtonText = computed(() => {
-  const s = t('kpButtonUploadFile')
-  return s === 'kpButtonUploadFile' ? 'Fayl yuklash' : s
-})
+const uploadButtonText = computed(() => t('kpButtonUploadFile'))
 
 // Ko'rinish: jadval yoki doska (tanlov brauzerda eslab qolinadi)
 const VIEW_KEY = 'kp-view'

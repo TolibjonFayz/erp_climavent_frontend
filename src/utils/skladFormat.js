@@ -15,7 +15,8 @@ const qtyFmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 3 })
 export const fmtQty = (n) => qtyFmt.format(Number(n) || 0)
 
 /** Harakat turi nomi */
-export const moveTypeLabel = (type) => t(`skType_${type}`)
+// el-table ustun shablonini bo'sh qator bilan ham chizadi — tur yo'q bo'lsa jim qaytamiz
+export const moveTypeLabel = (type) => (type ? t(`skType_${type}`) : '')
 
 /** Qoldiqqa ta'siri bo'yicha belgili miqdor: "+5" / "−3" */
 export function signedQty(type, qty) {

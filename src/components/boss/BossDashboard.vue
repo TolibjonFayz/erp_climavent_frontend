@@ -219,7 +219,7 @@
       <UiPanel :title="$t('byRegionTitle')" :icon="Location">
         <div class="bs-hbars">
           <div v-for="(r, i) in byRegion" :key="i" class="bs-hbar">
-            <span class="bs-hbar__label is-wide" :title="r.region">{{ r.region }}</span>
+            <span class="bs-hbar__label is-wide" :title="formatLocationName(r.region)">{{ formatLocationName(r.region) }}</span>
             <div class="bs-hbar__track">
               <div class="bs-hbar__fill is-link" :style="{ width: regionPct(r.count) + '%' }"></div>
             </div>
@@ -337,6 +337,7 @@ import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { fmtNum } from '@/utils/format'
+import { formatLocationName } from '@/utils/partners'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()

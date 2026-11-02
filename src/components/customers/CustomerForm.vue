@@ -39,75 +39,7 @@
 
       <!-- Manzil -->
       <h4 class="cf__section">{{ $t('custFormAddress') }}</h4>
-      <div class="cf__grid cf__grid--3">
-        <el-form-item :label="$t('respublika')" prop="republic" required>
-          <el-select
-            v-model="form.republic"
-            filterable
-            :placeholder="$t('tanlang')"
-            @change="onRepublicChange"
-          >
-            <el-option
-              v-for="item in republicOptions"
-              :key="item.key"
-              :label="item.label"
-              :value="item.key"
-            />
-          </el-select>
-          <el-input
-            v-if="form.republic === 'boshqa'"
-            v-model="form.otherrepublic"
-            class="cf__other"
-            :placeholder="$t('qaysiRespublika')"
-          />
-        </el-form-item>
-
-        <el-form-item :label="$t('viloyat')" prop="viloyat" required>
-          <el-select
-            v-model="form.viloyat"
-            filterable
-            :placeholder="$t('tanlang')"
-            :disabled="!form.republic || (form.republic === 'boshqa' && !form.otherrepublic)"
-            @change="onViloyatChange"
-          >
-            <el-option
-              v-for="item in availableViloyatlar"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-          <el-input
-            v-if="form.viloyat === 'boshqa'"
-            v-model="form.otherviloyat"
-            class="cf__other"
-            :placeholder="$t('qaysiViloyat')"
-          />
-        </el-form-item>
-
-        <el-form-item :label="$t('shaharTuman')" prop="shahar_tuman" required>
-          <el-select
-            v-model="form.shahar_tuman"
-            filterable
-            :placeholder="$t('tanlang')"
-            :disabled="!form.viloyat || (form.viloyat === 'boshqa' && !form.otherviloyat)"
-            @change="onShaharTumanChange"
-          >
-            <el-option
-              v-for="item in availableShaharTumanlar"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-          <el-input
-            v-if="form.shahar_tuman === 'boshqa'"
-            v-model="form.other_shahar_tuman"
-            class="cf__other"
-            :placeholder="$t('qaysiShaharTuman')"
-          />
-        </el-form-item>
-      </div>
+      <LocationFields :form="form" required />
     </el-form>
 
     <div class="cf__footer">
@@ -124,7 +56,9 @@ import { ElMessage } from 'element-plus'
 import { Back } from '@element-plus/icons-vue'
 import router from '@/router'
 import { useI18n } from 'vue-i18n'
-import { createLocationData, createRepublicOptions } from '@/constants/locations'
+import { locationPayload } from '@/constants/locations'
+import LocationFields from './LocationFields.vue'
+import { LEGAL_TYPE_VALUES } from '@/utils/partners'
 import { getCookie } from '@/utils/cookies'
 
 const props = defineProps({
@@ -154,61 +88,6 @@ const form = reactive({
   additional_phone_number: '',
   fullname: '',
 })
-
-// ─── Location data ────────────────────────────────────────────────────────────
-const LOCATION_DATA = createLocationData(t)
-
-const republicOptions = createRepublicOptions(t)
-
-// ─── Computed cascading options ───────────────────────────────────────────────
-const availableViloyatlar = computed(() => {
-  const republic = form.republic
-  if (!republic) return []
-  if (republic === 'boshqa') {
-    return form.otherrepublic ? [{ value: 'boshqa', label: t('Boshqa') }] : []
-  }
-  const viloyatlar = LOCATION_DATA[republic] || []
-  return [
-    ...viloyatlar.map((v) => ({ value: v.value, label: v.label })),
-    { value: 'boshqa', label: t('Boshqa') },
-  ]
-})
-
-const availableShaharTumanlar = computed(() => {
-  const republic = form.republic
-  const viloyat = form.viloyat
-  if (!republic || !viloyat) return []
-  if (viloyat === 'boshqa') {
-    return form.otherviloyat ? [{ value: 'boshqa', label: t('Boshqa') }] : []
-  }
-  if (republic === 'boshqa') return []
-  const viloyatlar = LOCATION_DATA[republic] || []
-  const found = viloyatlar.find((v) => v.value === viloyat)
-  if (!found) return []
-  return found.tumanlar.map((item) => ({
-    ...item,
-    value: item.value === t('Boshqa') ? 'boshqa' : item.value,
-  }))
-})
-
-// ─── Cascade reset handlers ───────────────────────────────────────────────────
-const onRepublicChange = () => {
-  form.viloyat = ''
-  form.otherviloyat = ''
-  form.shahar_tuman = ''
-  form.other_shahar_tuman = ''
-  form.otherrepublic = ''
-}
-
-const onViloyatChange = () => {
-  form.shahar_tuman = ''
-  form.other_shahar_tuman = ''
-  form.otherviloyat = ''
-}
-
-const onShaharTumanChange = () => {
-  form.other_shahar_tuman = ''
-}
 
 // ─── Validation messages ──────────────────────────────────────────────────────
 const messages = {
@@ -299,23 +178,9 @@ const rules = computed(() => ({
 }))
 
 // ─── Payload builder ──────────────────────────────────────────────────────────
-// Resolve the translated republic name (its value, not the key)
-const getRepublicValue = (key) => {
-  if (!key || key === 'boshqa') return null
-  const found = republicOptions.find((r) => r.key === key)
-  return found ? found.value : key
-}
-
-const PARTNER_TYPE_LABELS = {
-  yuridik: t('yuridikShaxs'),
-  jismoniy: t('jismoniyShaxs'),
-}
-
 const buildPartnerPayload = (obj) => ({
-  republic: obj.republic === 'boshqa' ? obj.otherrepublic : getRepublicValue(obj.republic),
-  viloyat: obj.viloyat === 'boshqa' ? obj.otherviloyat : obj.viloyat,
-  shahar_tuman: obj.shahar_tuman === 'boshqa' ? obj.other_shahar_tuman : obj.shahar_tuman,
-  mijozturi: PARTNER_TYPE_LABELS[obj.mijozturi] || obj.mijozturi,
+  ...locationPayload(obj),
+  mijozturi: LEGAL_TYPE_VALUES[obj.mijozturi] || obj.mijozturi,
   inn: obj.inn,
   phone_number: obj.phone_number,
   additional_phone_number: obj.additional_phone_number,
@@ -388,9 +253,6 @@ const goback = () => {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 16px;
 }
-.cf__grid--3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
 .cf__form :deep(.el-form-item) {
   margin-bottom: 16px;
 }
@@ -403,9 +265,6 @@ const goback = () => {
 .cf__form :deep(.el-input) {
   width: 100%;
 }
-.cf__other {
-  margin-top: 8px;
-}
 .cf__footer {
   display: flex;
   justify-content: flex-end;
@@ -415,8 +274,7 @@ const goback = () => {
 }
 
 @media (max-width: 640px) {
-  .cf__grid,
-  .cf__grid--3 {
+  .cf__grid {
     grid-template-columns: 1fr;
   }
 }

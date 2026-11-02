@@ -11,7 +11,7 @@
         <el-tag size="small" effect="plain">{{
           partnerTypeLabel(partnerData.partner_type)
         }}</el-tag>
-        <span v-if="partnerData.mijozturi">{{ partnerData.mijozturi }}</span>
+        <span v-if="partnerData.mijozturi">{{ legalTypeLabel(partnerData.mijozturi) }}</span>
         <span v-if="partnerData.createdAt">
           · {{ $t('custCreated') }}: {{ formatDate(partnerData.createdAt) }}
         </span>
@@ -79,10 +79,10 @@
         </el-form-item>
         <div class="cd-form__grid">
           <el-form-item :label="$t('form_mijozTuri')" prop="mijozturi">
-            <el-input
-              v-model="editForm.mijozturi"
-              :placeholder="$t('form_mijozTuri_placeholder')"
-            />
+            <el-radio-group v-model="editForm.mijozturi">
+              <el-radio-button :value="LEGAL_TYPE_VALUES.yuridik">{{ $t('yuridikShaxs') }}</el-radio-button>
+              <el-radio-button :value="LEGAL_TYPE_VALUES.jismoniy">{{ $t('jismoniyShaxs') }}</el-radio-button>
+            </el-radio-group>
           </el-form-item>
           <el-form-item :label="$t('form_inn')" prop="inn">
             <el-input v-model="editForm.inn" :placeholder="$t('form_inn_placeholder')" />
@@ -100,23 +100,7 @@
             />
           </el-form-item>
         </div>
-        <div class="cd-form__grid cd-form__grid--3">
-          <el-form-item :label="$t('form_respublika')" prop="republic">
-            <el-input
-              v-model="editForm.republic"
-              :placeholder="$t('form_respublika_placeholder')"
-            />
-          </el-form-item>
-          <el-form-item :label="$t('form_viloyat')" prop="viloyat">
-            <el-input v-model="editForm.viloyat" :placeholder="$t('form_viloyat_placeholder')" />
-          </el-form-item>
-          <el-form-item :label="$t('form_shaharTuman')" prop="shahar_tuman">
-            <el-input
-              v-model="editForm.shahar_tuman"
-              :placeholder="$t('form_shaharTuman_placeholder')"
-            />
-          </el-form-item>
-        </div>
+        <LocationFields :form="editForm" />
         <el-form-item :label="$t('form_qoshimchamalumot')" prop="more_info">
           <el-input
             v-model="editForm.more_info"
@@ -174,7 +158,15 @@ import UiPage from '@/components/ui/UiPage.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import UiInfoList from '@/components/ui/UiInfoList.vue'
 import CustomerRelated from './CustomerRelated.vue'
-import { partnerTypeLabel } from '@/utils/partners'
+import {
+  formatLocationName,
+  LEGAL_TYPE_VALUES,
+  legalTypeLabel,
+  legalTypeValue,
+  partnerTypeLabel,
+} from '@/utils/partners'
+import { locationFormFromPartner, locationPayload } from '@/constants/locations'
+import LocationFields from './LocationFields.vue'
 import { formatDate, telHref } from '@/utils/format'
 
 const partnersStore = usePartnersStore()
@@ -215,41 +207,11 @@ const getCreatedDaysAgo = () => {
 }
 
 // ─── Ko'rsatish ───────────────────────────────────────────
-const SPECIAL_NAMES = {
-  ozbekiston: "O'zbekiston",
-  qazoqstan: 'Qozoqstan',
-  turkmonistaon: 'Turkmaniston',
-  tajikiston: 'Tajikiston',
-  kirgiziston: 'Qirgiziston',
-  rossiya: 'Rossiya',
-}
-const capitalize = (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
-
-// "chilonzor_tumani" → "Chilonzor tumani"
-function formatLocationName(name) {
-  if (!name) return ''
-  return name
-    .split('_')
-    .map((word) => {
-      const lower = word.toLowerCase()
-      if (SPECIAL_NAMES[lower]) return SPECIAL_NAMES[lower]
-      for (const [re, suffix] of [
-        [/shahri$|shahr$/, 'shahri'],
-        [/tumani$|tuman$/, 'tumani'],
-        [/rayoni$|rayon$/, 'rayoni'],
-      ]) {
-        if (re.test(lower)) return `${capitalize(lower.replace(re, ''))} ${suffix}`
-      }
-      return capitalize(word)
-    })
-    .join(' ')
-}
-
 const mainItems = computed(() => {
   const p = partnerData.value
   return [
     { key: 'fullname', label: t('toliqFIO'), value: p.fullname },
-    { key: 'type', label: t('mijozTuri'), value: p.mijozturi },
+    { key: 'type', label: t('mijozTuri'), value: legalTypeLabel(p.mijozturi) },
     { key: 'inn', label: t('inn'), value: p.inn },
     { key: 'group', label: t('guruh'), value: partnerTypeLabel(p.partner_type) },
     { key: 'created', label: t('custCreated'), value: p.createdAt ? formatDate(p.createdAt) : '' },
@@ -284,13 +246,11 @@ function openEditDialog() {
     const p = partnerData.value
     editForm.value = {
       fullname: p.fullname || '',
-      mijozturi: p.mijozturi || '',
+      mijozturi: legalTypeValue(p.mijozturi),
       inn: p.inn || '',
       phone_number: p.phone_number || '',
       additional_phone_number: p.additional_phone_number || '',
-      republic: p.republic || '',
-      viloyat: p.viloyat || '',
-      shahar_tuman: p.shahar_tuman || '',
+      ...locationFormFromPartner(p, t),
       more_info: p.more_info || '',
     }
   }
@@ -304,7 +264,11 @@ async function handleSaveEdit() {
   }
   editLoading.value = true
   try {
-    await partnersStore.updateOnePartner(editForm.value, route.params.id)
+    const { otherrepublic, otherviloyat, other_shahar_tuman, ...rest } = editForm.value
+    await partnersStore.updateOnePartner(
+      { ...rest, ...locationPayload({ ...editForm.value, otherrepublic, otherviloyat, other_shahar_tuman }) },
+      route.params.id,
+    )
     ElMessage.success(t('hamkor_yangilandi'))
     editDialogVisible.value = false
     await partnersStore.getOnePartner(route.params.id)
@@ -398,9 +362,6 @@ onMounted(async () => {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 16px;
 }
-.cd-form__grid--3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
 
 @media (max-width: 1100px) {
   .cd-grid {
@@ -409,8 +370,7 @@ onMounted(async () => {
 }
 @media (max-width: 700px) {
   .cd-grid,
-  .cd-form__grid,
-  .cd-form__grid--3 {
+  .cd-form__grid {
     grid-template-columns: 1fr;
   }
 }
