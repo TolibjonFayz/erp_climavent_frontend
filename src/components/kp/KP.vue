@@ -198,57 +198,53 @@
         @row-click="onRowClick"
       >
         <el-table-column type="index" :index="rowIndex" label="#" width="60" />
-        <el-table-column :label="$t('kpTableNumber')" min-width="90">
+        <!-- Jadval ekranga sig'sin: bog'liq ma'lumotlar bitta ustunda, ikkinchisi ostida -->
+        <el-table-column :label="$t('kpTableNumber')" min-width="80">
           <template #default="{ row }">
             <span class="kp-num">{{ row.kp_number ?? '—' }}</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('kpTableStatus')" min-width="130">
+        <el-table-column :label="$t('kpTableStatus')" min-width="120">
           <template #default="{ row }">
             <el-tag :type="statusTag(row.kp_status || row.status)" size="small" effect="light">
               {{ statusLabel(row.kp_status || row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('kpTableClient')" min-width="200">
+        <el-table-column :label="$t('kpTableClientManager')" min-width="220">
           <template #default="{ row }">
-            <span class="kp-strong">{{ row.client_name || row.client || '—' }}</span>
+            <div class="kp-strong">{{ row.client_name || row.client || '—' }}</div>
+            <div class="kp-sub">{{ row.manager_name || row.manager || '—' }}</div>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('kpTableManager')" min-width="170">
-          <template #default="{ row }">{{ row.manager_name || row.manager || '—' }}</template>
-        </el-table-column>
-        <el-table-column :label="$t('kpTableDate')" min-width="115">
-          <template #default="{ row }">{{ formatDate(row.kp_date || row.kpDate) }}</template>
-        </el-table-column>
-        <el-table-column :label="$t('kpTableClosedDate')" min-width="125">
+        <el-table-column :label="$t('kpTableDate')" min-width="110">
           <template #default="{ row }">
-            <span :class="{ 'kp-muted': !row.closed_date }">{{ formatDate(row.closed_date) }}</span>
+            <div>{{ formatDate(row.kp_date || row.kpDate) }}</div>
+            <div v-if="row.closed_date" class="kp-sub" :title="$t('kpTableClosedDate')">
+              {{ $t('kpClosedShort') }}: {{ formatDate(row.closed_date) }}
+            </div>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('kpTableSum')" min-width="150" align="right">
+        <el-table-column :label="$t('kpTableSum')" min-width="140" align="right">
           <template #default="{ row }">
             <span class="kp-money">{{ fmtMoney(row.kp_sum || row.sum) }}</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('kpTableComment')" min-width="200" show-overflow-tooltip>
+        <el-table-column :label="$t('kpTableComment')" min-width="200">
           <template #default="{ row }">
-            <span :class="{ 'kp-muted': !row.comment }">{{ row.comment || '—' }}</span>
+            <div class="kp-clamp" :class="{ 'kp-muted': !row.comment }" :title="row.comment || ''">
+              {{ row.comment || '—' }}
+            </div>
+            <div
+              v-if="isAdmin && row.admin_comment"
+              class="kp-admin-note kp-clamp"
+              :title="$t('kpTableAdminComment') + ': ' + row.admin_comment"
+            >
+              {{ row.admin_comment }}
+            </div>
           </template>
         </el-table-column>
-        <el-table-column
-          v-if="isAdmin"
-          :label="$t('kpTableAdminComment')"
-          min-width="180"
-          show-overflow-tooltip
-        >
-          <template #default="{ row }">
-            <span :class="row.admin_comment ? 'kp-admin-note' : 'kp-muted'">
-              {{ row.admin_comment || '—' }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column width="100" align="right" fixed="right">
+        <el-table-column width="90" align="right" fixed="right">
           <template #default="{ row }">
             <div v-if="canModify(row)" class="kp-actions">
               <el-tooltip :content="$t('edit')" placement="top">
@@ -1041,6 +1037,17 @@ useOpenFromQuery(openCreateDialog)
   color: var(--ui-ink);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+.kp-sub {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--ui-muted);
+}
+.kp-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .kp-muted {
   color: var(--ui-faint);

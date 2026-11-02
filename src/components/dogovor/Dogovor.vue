@@ -145,76 +145,60 @@
         class="dg-table"
         :empty-text="$t('dogovorNoMatchDescription')"
       >
-        <el-table-column type="index" :index="rowIndex" label="#" width="60" />
-        <el-table-column :label="$t('dogovorTableNumber')" min-width="90">
+        <!-- Jadval ekranga sig'sin: bog'liq ma'lumotlar bitta ustunda, ikkinchisi ostida -->
+        <el-table-column type="index" :index="rowIndex" label="#" width="50" />
+        <el-table-column :label="$t('dogovorTableNumberDate')" min-width="95">
           <template #default="{ row }">
-            <span class="dg-strong">{{ row.dogovor_number ?? '—' }}</span>
+            <div class="dg-strong">{{ row.dogovor_number ?? '—' }}</div>
+            <div class="dg-sub">{{ formatDate(row.dogovor_date) }}</div>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('dogovorTableStatus')" min-width="150">
+        <el-table-column :label="$t('dogovorTableStatus')" min-width="135">
           <template #default="{ row }">
             <el-tag :type="statusTag(row.dogovor_status)" size="small" effect="light">
               {{ statusLabel(row.dogovor_status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('dogovorTableClient')" min-width="210">
+        <el-table-column :label="$t('dogovorTableClientManager')" min-width="230">
           <template #default="{ row }">
-            <span class="dg-strong">{{ row.client_name || '—' }}</span>
-            <div v-if="row.client_inn" class="dg-sub">
-              {{ $t('dogovorTableInn') }}: {{ row.client_inn }}
+            <div class="dg-strong">{{ row.client_name || '—' }}</div>
+            <div class="dg-sub">
+              {{ row.manager_name || '—' }}<template v-if="row.client_inn"> · {{ $t('dogovorTableInn') }} {{ row.client_inn }}</template>
+            </div>
+            <a v-if="row.client_phone" :href="telHref(row.client_phone)" class="dg-link dg-sub" @click.stop>
+              {{ row.client_phone }}
+            </a>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('dogovorTablePaymentShort')" min-width="115">
+          <template #default="{ row }">
+            <div :class="{ 'dg-muted': !row.payment_date }">{{ formatDate(row.payment_date) }}</div>
+            <div v-if="row.prepayment_percent != null" class="dg-sub">
+              {{ $t('dogovorTablePrepayment') }}: {{ row.prepayment_percent }}%
             </div>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('dogovorTableManager')" min-width="160">
-          <template #default="{ row }">{{ row.manager_name || '—' }}</template>
-        </el-table-column>
-        <el-table-column :label="$t('dogovorTableDate')" min-width="110">
-          <template #default="{ row }">{{ formatDate(row.dogovor_date) }}</template>
-        </el-table-column>
-        <el-table-column :label="$t('dogovorTablePaymentDate')" min-width="120">
-          <template #default="{ row }">
-            <span :class="{ 'dg-muted': !row.payment_date }">{{
-              formatDate(row.payment_date)
-            }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('dogovorTableSum')" min-width="150" align="right">
+        <el-table-column :label="$t('dogovorTableSum')" min-width="135" align="right">
           <template #default="{ row }">
             <span class="dg-money">{{ fmtMoney(row.dogovor_sum) }}</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('dogovorTablePrepayment')" min-width="100" align="right">
+        <el-table-column :label="$t('dogovorTableComment')" min-width="155">
           <template #default="{ row }">
-            {{ row.prepayment_percent != null ? `${row.prepayment_percent}%` : '—' }}
+            <div class="dg-clamp" :class="{ 'dg-muted': !row.comment }" :title="row.comment || ''">
+              {{ row.comment || '—' }}
+            </div>
+            <div
+              v-if="isAdmin && row.admin_comment"
+              class="dg-admin-note dg-clamp"
+              :title="$t('dogovorTableAdminComment') + ': ' + row.admin_comment"
+            >
+              {{ row.admin_comment }}
+            </div>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('dogovorTablePhone')" min-width="150">
-          <template #default="{ row }">
-            <a v-if="row.client_phone" :href="telHref(row.client_phone)" class="dg-link">
-              {{ row.client_phone }}
-            </a>
-            <span v-else class="dg-muted">—</span>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('dogovorTableComment')" min-width="190" show-overflow-tooltip>
-          <template #default="{ row }">
-            <span :class="{ 'dg-muted': !row.comment }">{{ row.comment || '—' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          v-if="isAdmin"
-          :label="$t('dogovorTableAdminComment')"
-          min-width="170"
-          show-overflow-tooltip
-        >
-          <template #default="{ row }">
-            <span :class="row.admin_comment ? 'dg-admin-note' : 'dg-muted'">
-              {{ row.admin_comment || '—' }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column width="120" align="right" fixed="right">
+        <el-table-column width="110" align="right" fixed="right">
           <template #default="{ row }">
             <div class="dg-actions">
               <el-tooltip :content="$t('dogovorPrint')" placement="top">
@@ -1413,5 +1397,11 @@ useOpenFromQuery(openCreateDialog)
 
 .pdf-filled-table td {
   background: var(--ui-warn-soft);
+}
+.dg-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>
