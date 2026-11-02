@@ -33,7 +33,7 @@
     </template>
   </UiToolbar>
 
-  <UiPanel flush>
+  <UiPanel flush class="sk-list">
     <template #title>
       {{ $t('skMovesTitle') }}
       <span class="sk-count">{{ fmtNum(filtered.length) }}</span>
@@ -99,13 +99,12 @@
         <div class="sk-empty">{{ $t('skNoMoves') }}</div>
       </template>
     </el-table>
-    <!-- Keyingi qatorlar chizilayotganda — skelet -->
-    <UiSkeletonRows v-if="loadingMore" :columns="[1, 1.4, 3, 1, 1, 2.4]" :numeric-from="3" />
     <!-- Infinite scroll: oxiriga yaqinlashganda keyingi qatorlar o'zi qo'shiladi -->
     <div v-if="filtered.length" class="sk-pager">
       <span ref="sentinel" class="sk-sentinel" aria-hidden="true" />
       <span class="sk-shown">{{ $t('skShownOf', { n: visible.length, total: filtered.length }) }}</span>
-      <el-button v-if="hasMore" size="small" :loading="loadingMore" @click="loadMore">{{ $t('skShowMore') }}</el-button>
+      <span v-if="loadingMore" class="sk-loading"><el-icon class="is-loading"><Loading /></el-icon> {{ $t('gsLoading') }}</span>
+      <el-button v-else-if="hasMore" size="small" @click="loadMore">{{ $t('skShowMore') }}</el-button>
     </div>
   </UiPanel>
 </template>
@@ -115,11 +114,10 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import * as XLSX from 'xlsx'
-import { Delete, Download, Search } from '@element-plus/icons-vue'
+import { Delete, Download, Loading, Search } from '@element-plus/icons-vue'
 import UiToolbar from '@/components/ui/UiToolbar.vue'
 import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
-import UiSkeletonRows from '@/components/ui/UiSkeletonRows.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { useInfiniteList } from '@/composables/useInfiniteList'
 import { fmtNum } from '@/utils/format'
@@ -270,6 +268,13 @@ function exportExcel() {
 .sk-sum {
   font-size: 12px;
 }
+.sk-list {
+  /* Brauzerning "scroll anchoring"i jadval ostidagi elementlarni (el-table yordamchi qismlari,
+     "Ko'proq" qatori) langar qilib oladi: pastga 30 qator qo'shilganda butun ro'yxat tepaga
+     sakraydi va yuklash zanjirga aylanadi. Ro'yxat bloki langar bo'lmasin — ko'rinib turgan
+     qatorlar joyida qoladi, yangilari pastga qo'shiladi. */
+  overflow-anchor: none;
+}
 .sk-table {
   :deep(.sk-row) {
     cursor: pointer;
@@ -376,5 +381,14 @@ function exportExcel() {
   font-size: 13px;
   color: var(--ui-muted);
   font-variant-numeric: tabular-nums;
+}
+.sk-loading {
+  display: inline-flex;
+  /* tugma bilan bir xil balandlik — almashganda qatorlar siljimasin */
+  height: 24px;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ui-muted);
 }
 </style>

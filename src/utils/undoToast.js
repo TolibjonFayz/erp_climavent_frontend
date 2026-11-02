@@ -5,7 +5,10 @@ import { ElMessage } from 'element-plus'
 
 export function undoToast({ message, undoLabel, onUndo, duration = 6000 }) {
   let instance
+  let used = false
   const run = async () => {
+    if (used) return
+    used = true
     instance?.close()
     await onUndo()
   }
@@ -13,7 +16,6 @@ export function undoToast({ message, undoLabel, onUndo, duration = 6000 }) {
     customClass: 'undo-message',
     showClose: false,
     duration,
-    grouping: true,
     message: h('div', { class: 'undo-toast' }, [
       h('span', { class: 'undo-toast__text' }, message),
       h('button', { type: 'button', class: 'undo-toast__btn', onClick: run }, undoLabel),

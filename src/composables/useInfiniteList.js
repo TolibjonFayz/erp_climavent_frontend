@@ -5,7 +5,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 // Ma'lumot allaqachon xotirada — faqat DOM'ga chiziladigan qatorlar soni oshadi.
 // Filtr/saralash o'zgarsa (manba yangi massiv bo'lsa) — yana boshidan.
 //
-// Silliqlik uchun: qo'shish paytida `loadingMore` yoqiladi (sahifa skelet ko'rsatadi), qatorlar
+// Silliqlik uchun: qo'shish paytida `loadingMore` yoqiladi (sahifa loader ko'rsatadi), qatorlar
 // keyingi kadrda chiziladi — scroll to'xtab qolmaydi; yuklash davomida qayta yuklash boshlanmaydi.
 export function useInfiniteList(source, { step = 30, threshold = 500, delay = 120 } = {}) {
   const limit = ref(step)
@@ -21,7 +21,7 @@ export function useInfiniteList(source, { step = 30, threshold = 500, delay = 12
   function loadMore() {
     if (!hasMore.value || loadingMore.value) return
     loadingMore.value = true
-    // Avval skelet chizilsin, keyin og'ir qism — yangi qatorlar
+    // Avval loader chizilsin, keyin og'ir qism — yangi qatorlar
     renderTimer = setTimeout(async () => {
       limit.value += step
       await nextTick()

@@ -47,8 +47,14 @@ export async function loadAllEmployees({ month, employees }) {
     attendanceStore.getCameraSetup(),
   ])
   const cameraEmployees = attendanceStore.cameraEmployees
-  const people = employees.filter((u) => !u.is_blocked)
-  const linked = people.filter((u) => cameraEmployees.some((e) => e.user_id === u.id))
+  const confirmed = asArray(existing)
+  const isLinked = (u) => cameraEmployees.some((e) => e.user_id === u.id)
+  // Kameraga bog'lanmagan va shu oy bironta tasdiqlangan kuni yo'q xodim (rahbar, buxgalter...)
+  // jadvalga faqat taxminiy "Ofisda" kunlari bilan tushib, noto'g'ri tasavvur bermasin
+  const people = employees.filter(
+    (u) => !u.is_blocked && (isLinked(u) || confirmed.some((r) => r.user_id === u.id)),
+  )
+  const linked = people.filter(isLinked)
   const tripsByUser = {}
   await Promise.all(
     linked.map((u) =>
@@ -70,7 +76,7 @@ export async function loadAllEmployees({ month, employees }) {
         cameraEmployees,
       ),
     })),
-    confirmed: asArray(existing),
+    confirmed,
     camera: camera || [],
     officeOpen: new Set(officeDays || []),
     tripsByUser,

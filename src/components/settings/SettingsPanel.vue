@@ -188,7 +188,7 @@ import { getCookie } from '@/utils/cookies'
 import { useUsersStore } from '@/stores/user'
 import { logoutSession } from '@/api/client'
 import { errorText } from '@/utils/errorText'
-import i18n from '@/i18n'
+import i18n, { loadLanguage } from '@/i18n'
 
 const changePasswordDialog = ref(false)
 const changeUsernameDialog = ref(false)
@@ -238,9 +238,11 @@ const getCurrentLanguageLabel = computed(() => {
   return lang ? lang.label : ''
 })
 
-const handleLanguageChange = (value: string) => {
+const handleLanguageChange = async (value: string) => {
   languageLoading.value = true
   setCookieLanguage(value)
+  // Ikkinchi til matnlari faqat kerak bo'lganda yuklanadi
+  await loadLanguage(value)
 
   if (typeof i18n.global.locale === 'object' && 'value' in i18n.global.locale) {
     i18n.global.locale.value = value

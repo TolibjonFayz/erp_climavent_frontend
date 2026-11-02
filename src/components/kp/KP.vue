@@ -192,7 +192,9 @@
         v-else-if="view === 'table'"
         :data="pagedKps"
         class="kp-table is-clickable"
-        @row-click="onRowClick" :empty-text="$t('kpNoMatchDescription')">
+        :empty-text="$t('kpNoMatchDescription')"
+        @row-click="onRowClick"
+      >
         <el-table-column type="index" :index="rowIndex" label="#" width="60" />
         <el-table-column :label="$t('kpTableNumber')" min-width="90">
           <template #default="{ row }">
@@ -283,7 +285,7 @@
           :fmt-money="fmtMoney"
           :format-date="formatDate"
           @move="moveKp"
-          @edit="openDetail"
+          @open="openDetail"
         />
       </div>
 
@@ -312,8 +314,17 @@
       </el-empty>
     </UiPanel>
 
+    <!-- KP yopilganda: "Raqib bormidi?" -->
+    <KpCompetitorPrompt :kp="closedKp" @done="closedKp = null" />
+
     <!-- KP tafsilotlari: yon panel -->
-    <el-drawer v-model="detailOpen" size="440px" :with-header="false" append-to-body>
+    <el-drawer
+      v-model="detailOpen"
+      size="440px"
+      class="ui-side-panel"
+      :with-header="false"
+      append-to-body
+    >
       <div v-if="detailKp" class="kd">
         <div class="kd__head">
           <div>
@@ -550,6 +561,7 @@ import UiToolbar from '@/components/ui/UiToolbar.vue'
 import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import KpBoard from './KpBoard.vue'
+import KpCompetitorPrompt from './KpCompetitorPrompt.vue'
 import { undoToast } from '@/utils/undoToast'
 import { fmtNum, formatDate } from '@/utils/format'
 import {
@@ -860,8 +872,10 @@ const handleSubmit = async () => {
   try {
     if (editingKP.value) {
       const id = editingKP.value.id || editingKP.value._id
+      const wasClosed = (editingKP.value.kp_status || editingKP.value.status) === 'Closed'
       await kpStore.updateKP(id, payload)
       ElMessage.success(t('kpMessageUpdated'))
+      if (payload.kp_status === 'Closed' && !wasClosed) askCompetitor({ ...editingKP.value, ...payload })
     } else {
       await kpStore.createKP(payload)
       ElMessage.success(t('kpMessageSaved'))
@@ -875,6 +889,12 @@ const handleSubmit = async () => {
     )
     ElMessage.error(message)
   }
+}
+
+// KP yopilganda raqib haqida so'rash (uchrashuvlar shu yo'l bilan o'z-o'zidan to'planadi)
+const closedKp = ref(null)
+const askCompetitor = (kp) => {
+  closedKp.value = kp
 }
 
 // Doskada kartani boshqa ustunga sudrash — faqat holat (Yopilganda yopilgan sana ham) o'zgaradi
@@ -894,9 +914,13 @@ const moveKp = async (kp, status) => {
     ElMessage.error(errorText(error, t('kpMessageUpdateError')))
     return
   }
+  if (status === 'Closed' && prev !== 'Closed') askCompetitor({ ...kp, ...payload })
   const label = statusOptions.find((o) => o.value === status)?.labelKey
   undoToast({
-    message: t('kpMoved', { n: kp.client_name || kp.kp_number || '', status: label ? t(label) : status }),
+    message: t('kpMoved', {
+      n: kp.client_name || kp.kp_number || '',
+      status: label ? t(label) : status,
+    }),
     undoLabel: t('undoAction'),
     onUndo: async () => {
       try {

@@ -143,9 +143,13 @@
             v-for="task in filteredTasks(column.status)"
             :key="task.id"
             class="tb-card"
-            :class="[`is-${task.priority}`, `st-${task.status}`, { 'is-pending': !!task.pending_status }]"
+            :class="[
+              `is-${task.priority}`,
+              `st-${task.status}`,
+              { 'is-pending': !!task.pending_status },
+            ]"
             draggable="true"
-            @dragstart="onDragStart(task.id)"
+            @dragstart="onDragStart($event, task.id)"
             @dragend="onDragEnd"
           >
             <div class="tb-card__top">
@@ -708,8 +712,11 @@ const refresh = async () => {
 const draggedTaskId = ref(null)
 const dragOverColumn = ref(null)
 
-const onDragStart = (id) => {
+const onDragStart = (event, id) => {
   draggedTaskId.value = id
+  // Firefox ma'lumotsiz drag'ni boshlamaydi
+  event.dataTransfer?.setData('text/plain', String(id))
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
 }
 const onDragEnd = () => {
   draggedTaskId.value = null
@@ -742,7 +749,9 @@ const moveTask = async (id, status, { undoable = true } = {}) => {
     ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
     return
   }
-  if (undoable && prev && prev !== status) {
+  // Xodim oldinga faqat tasdiq orqali o'tadi — orqaga qaytarishni "bekor qilish" ham shunga bo'ysunadi
+  const undoGoesForward = STAGE_ORDER.indexOf(prev) > STAGE_ORDER.indexOf(status)
+  if (undoable && prev && prev !== status && (isAdmin.value || !undoGoesForward)) {
     undoToast({
       message: t('taskMovedTo', { status: t(statusLabelKey(status)) }),
       undoLabel: t('undoAction'),

@@ -163,14 +163,12 @@
         </template>
       </el-table>
 
-      <!-- Keyingi qatorlar chizilayotganda — skelet (sahifa "qotib qolgandek" tuyulmasin) -->
-      <UiSkeletonRows v-if="loadingMore" :columns="[2, 2, 1, 1, 1, 1, 1.6]" />
-
       <!-- Infinite scroll: oxiriga yaqinlashganda keyingi qatorlar o'zi qo'shiladi -->
       <div v-if="filtered.length" class="sk-more-row">
         <span ref="sentinel" class="sk-sentinel" aria-hidden="true" />
         <span class="sk-shown">{{ $t('skShownOf', { n: fmtNum(visible.length), total: fmtNum(filtered.length) }) }}</span>
-        <el-button v-if="hasMore" size="small" :loading="loadingMore" @click="loadMore">{{ $t('skShowMore') }}</el-button>
+        <span v-if="loadingMore" class="sk-loading"><el-icon class="is-loading"><Loading /></el-icon> {{ $t('gsLoading') }}</span>
+        <el-button v-else-if="hasMore" size="small" @click="loadMore">{{ $t('skShowMore') }}</el-button>
         <el-button v-else-if="visible.length > 30" size="small" text :icon="Top" @click="toTop">{{ $t('skToTop') }}</el-button>
       </div>
     </UiPanel>
@@ -181,12 +179,11 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as XLSX from 'xlsx'
-import { ArrowRight, Download, InfoFilled, Plus, RefreshLeft, Search, Top } from '@element-plus/icons-vue'
+import { ArrowRight, Download, InfoFilled, Loading, Plus, RefreshLeft, Search, Top } from '@element-plus/icons-vue'
 import UiField from '@/components/ui/UiField.vue'
 import UiHint from '@/components/ui/UiHint.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import UiToolbar from '@/components/ui/UiToolbar.vue'
-import UiSkeletonRows from '@/components/ui/UiSkeletonRows.vue'
 import { stockStatus } from '@/stores/sklad'
 import { fmtNum } from '@/utils/format'
 import { dayMonth, fmtQty, periodLabel, unitLabel } from '@/utils/skladFormat'
@@ -348,6 +345,11 @@ function exportExcel() {
 /* Yoshi kattaroq foydalanuvchilar uchun: yirik shrift, katta bosiladigan joylar,
    KATTA HARFSIZ sarlavhalar, holat — rang bilan birga so'z bilan ham */
 .sk-stock {
+  /* Brauzerning "scroll anchoring"i jadval ostidagi elementlarni (el-table yordamchi qismlari,
+     "Ko'proq" qatori) langar qilib oladi: pastga 30 qator qo'shilganda butun ro'yxat tepaga
+     sakraydi va yuklash zanjirga aylanadi. Ro'yxat bloki langar bo'lmasin — ko'rinib turgan
+     qatorlar joyida qoladi, yangilari pastga qo'shiladi. */
+  overflow-anchor: none;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -708,5 +710,14 @@ function exportExcel() {
     flex: none;
     padding-top: 0;
   }
+}
+.sk-loading {
+  display: inline-flex;
+  /* tugma bilan bir xil balandlik — almashganda qatorlar siljimasin */
+  height: 24px;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ui-muted);
 }
 </style>

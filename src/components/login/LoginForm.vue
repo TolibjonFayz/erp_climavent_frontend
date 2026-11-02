@@ -86,6 +86,7 @@ import { ElNotification } from 'element-plus'
 import { ref } from 'vue'
 import { setCookie } from '@/utils/cookies'
 import { useI18n } from 'vue-i18n'
+import { loadLanguage } from '@/i18n'
 
 const { t, locale } = useI18n()
 
@@ -98,8 +99,10 @@ const loading = ref(false)
 
 const currentLang = ref(locale.value)
 
-const changeLanguage = (lang) => {
+const changeLanguage = async (lang) => {
   currentLang.value = lang
+  // Ikkinchi til matnlari faqat kerak bo'lganda yuklanadi
+  await loadLanguage(lang)
   locale.value = lang
   setCookie('lang', lang, 365)
 }

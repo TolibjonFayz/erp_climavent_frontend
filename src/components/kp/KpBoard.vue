@@ -24,9 +24,12 @@
           class="kb-card"
           :class="{ 'is-locked': !canModify(kp) }"
           :draggable="canModify(kp)"
-          @dragstart="onDragStart(kp)"
+          tabindex="0"
+          role="button"
+          @dragstart="onDragStart($event, kp)"
           @dragend="onDragEnd"
-          @click="canModify(kp) && emit('edit', kp)"
+          @click="emit('open', kp)"
+          @keydown.enter.prevent="emit('open', kp)"
         >
           <div class="kb-card__top">
             <span class="kb-card__num">№ {{ kp.kp_number ?? '—' }}</span>
@@ -66,7 +69,7 @@ const props = defineProps({
   formatDate: { type: Function, required: true },
   limit: { type: Number, default: 40 },
 })
-const emit = defineEmits(['move', 'edit'])
+const emit = defineEmits(['move', 'open'])
 
 const STAGES = [
   { value: 'Open', labelKey: 'kpStatusOpen', tone: 'open' },
@@ -91,8 +94,11 @@ const columns = computed(() =>
 
 const dragged = ref(null)
 const overCol = ref('')
-const onDragStart = (kp) => {
+const onDragStart = (event, kp) => {
   dragged.value = kp
+  // Firefox ma'lumotsiz drag'ni boshlamaydi
+  event.dataTransfer?.setData('text/plain', String(kp.id || kp._id || ''))
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
 }
 const onDragEnd = () => {
   dragged.value = null
@@ -205,8 +211,12 @@ const onDrop = (value) => {
   cursor: grabbing;
 }
 .kb-card.is-locked {
-  cursor: default;
+  cursor: pointer;
   opacity: 0.85;
+}
+.kb-card:focus-visible {
+  outline: 2px solid var(--ui-ink);
+  outline-offset: 2px;
 }
 .kb-card__top {
   display: flex;
@@ -280,6 +290,10 @@ const onDrop = (value) => {
 @media (max-width: 1100px) {
   .kb {
     grid-template-columns: minmax(0, 1fr);
+  }
+  /* Bitta ustunda sahifaning o'zi aylanadi — ichki scroll kerak emas */
+  .kb-col__body {
+    max-height: none;
   }
 }
 </style>

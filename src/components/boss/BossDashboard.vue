@@ -359,7 +359,7 @@ const PALETTE = [
   '#2b6b4f',
   '#f2c230',
   '#c8431f',
-  '#1f1b14',
+  '#5b6b8c',
   '#8a8272',
   '#4e9a7a',
   '#e08a3c',
@@ -824,7 +824,7 @@ onMounted(async () => {
 }
 .bs-bar__fill {
   height: 100%;
-  background: var(--ui-acc-ink);
+  background: var(--ui-ink-2);
   border-radius: 999px;
   transition: width 0.3s ease;
 
@@ -1063,7 +1063,7 @@ onMounted(async () => {
   transition: width 0.3s ease;
 
   &.is-link {
-    background: var(--ui-acc-ink);
+    background: var(--ui-ink-2);
   }
 }
 .bs-hbar__val {

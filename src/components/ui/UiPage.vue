@@ -93,11 +93,17 @@ defineProps({
 
 @media (max-width: 900px) {
   .ui-page {
-    /* tepada: mobil hamburger tugmasi (44px, top 16px) sarlavhani yopmasin */
-    padding: 68px 16px 16px;
+    padding: 16px;
   }
   .ui-page__title h1 {
     font-size: 19px;
+  }
+}
+/* Mobil hamburger tugmasi (44px, top 16px; useSidebar: < 768px) sarlavhani yopmasin.
+   900px qoidasidagi padding shorthand'idan keyin turishi shart. */
+@media (max-width: 767px) {
+  .ui-page {
+    padding-top: 68px;
   }
 }
 </style>
