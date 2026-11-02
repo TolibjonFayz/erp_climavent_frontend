@@ -1,5 +1,5 @@
 <template>
-  <UiPage :title="$t('skTitle')" wide class="sk-page">
+  <UiPage :title="$t('skTitle')" class="sk-page">
     <template #subtitle>
       <!-- Rejim izohi katta banner emas — belgining o'zida (sichqoncha bilan yoki fokusda o'qiladi) -->
       <el-tooltip

@@ -227,14 +227,14 @@
   .adm-main {
     flex: 1;
     min-width: 0;
-    padding: 20px 24px 32px;
+    padding: 20px var(--ui-page-pad) 32px;
     overflow-y: auto;
   }
   .adm-page {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-width: 1440px;
+    max-width: var(--ui-page-max);
     margin: 0 auto;
   }
 
