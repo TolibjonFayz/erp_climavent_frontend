@@ -120,7 +120,7 @@
       </template>
     </UiToolbar>
 
-    <div class="tb-board">
+    <div ref="board" class="tb-board">
       <section
         v-for="column in columns"
         :key="column.status"
@@ -141,6 +141,7 @@
           <article
             v-for="task in filteredTasks(column.status)"
             :key="task.id"
+            :data-flip-id="task.id"
             class="tb-card"
             :class="[
               `is-${task.priority}`,
@@ -545,6 +546,7 @@ import {
   DataAnalysis,
 } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { useFlip } from '@/composables/useFlip'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import UiToolbar from '@/components/ui/UiToolbar.vue'
@@ -552,6 +554,10 @@ import UiField from '@/components/ui/UiField.vue'
 import { fmtNum } from '@/utils/format'
 
 const { t } = useI18n()
+
+// Vazifa boshqa ustunga o'tganda yangi joyiga silliq suriladi
+const board = ref(null)
+useFlip(board)
 const tasksStore = useTasksStore()
 const usersStore = useUsersStore()
 
@@ -740,11 +746,15 @@ const onDrop = (status) => {
 }
 
 const moveTask = async (id, status, { undoable = true } = {}) => {
-  const prev = sourceTasks.value.find((x) => x.id === id)?.status
+  const local = sourceTasks.value.find((x) => x.id === id)
+  const prev = local?.status
+  // Karta darhol yangi ustunga o'tadi (serverni kutmasdan); xato bo'lsa joyiga qaytadi
+  if (local) local.status = status
   try {
     await tasksStore.updateStatus(id, status)
     await refresh()
   } catch (error) {
+    if (local) local.status = prev
     ElMessage.error(errorText(error, t('xatolikYuzBerdi')))
     return
   }

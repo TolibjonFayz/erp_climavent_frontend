@@ -904,10 +904,15 @@ const moveKp = async (kp, status) => {
     payload.closed_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }
   const prev = kp.kp_status || kp.status || 'Open'
+  // Doskada karta darhol yangi ustunga o'tadi (serverni kutmasdan); xato bo'lsa joyiga qaytadi
+  const local = kpStore.allKPs.find((k) => (k.id || k._id) === id)
+  const snapshot = local && { kp_status: local.kp_status, closed_date: local.closed_date }
+  if (local) Object.assign(local, payload)
   try {
     await kpStore.updateKP(id, payload)
     await kpStore.getAllKPs()
   } catch (error) {
+    if (local) Object.assign(local, snapshot)
     ElMessage.error(errorText(error, t('kpMessageUpdateError')))
     return
   }

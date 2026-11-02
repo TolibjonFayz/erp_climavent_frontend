@@ -1,5 +1,5 @@
 <template>
-  <div class="kb">
+  <div ref="board" class="kb">
     <section
       v-for="col in columns"
       :key="col.value"
@@ -21,6 +21,7 @@
         <article
           v-for="kp in col.shown"
           :key="kp.id || kp._id"
+          :data-flip-id="kp.id || kp._id"
           class="kb-card"
           :class="{ 'is-locked': !canModify(kp) }"
           :draggable="canModify(kp)"
@@ -61,6 +62,7 @@
 // (faqat tahrirlash ruxsati bor KP'lar sudraladi — 2 kunlik cheklov KP.vue'dagi canModify'da).
 import { computed, ref } from 'vue'
 import { Lock } from '@element-plus/icons-vue'
+import { useFlip } from '@/composables/useFlip'
 
 const props = defineProps({
   kps: { type: Array, default: () => [] },
@@ -70,6 +72,10 @@ const props = defineProps({
   limit: { type: Number, default: 40 },
 })
 const emit = defineEmits(['move', 'open'])
+
+// Karta boshqa ustunga o'tganda (yoki ro'yxat o'zgarganda) yangi joyiga silliq suriladi
+const board = ref(null)
+useFlip(board)
 
 const STAGES = [
   { value: 'Open', labelKey: 'kpStatusOpen', tone: 'open' },
