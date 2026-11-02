@@ -1,5 +1,5 @@
 <template>
-  <div class="app-layout">
+  <div class="app-layout" :class="{ 'is-ready': ready }">
     <TheSidebar :active-path="active" />
     <main class="app-layout__content">
       <slot />
@@ -20,6 +20,11 @@ defineProps({
 
 const { sidebarWidth } = useSidebar()
 
+// Sidebar kengligi (v-bind CSS o'zgaruvchisi) birinchi chizishdan keyin o'rnatiladi — animatsiya
+// shu paytda yoqilgan bo'lsa, sahifa yangilanganda kontent chapdan surilib keladi. Shuning uchun
+// animatsiya faqat birinchi kadrlardan keyin (sidebar yig'ilib-yoyilganda) ishlaydi.
+const ready = ref(false)
+
 // Umumiy qidiruv: Ctrl+K (Mac'da Cmd+K) yoki sidebar'dagi tugma
 const searchOpen = ref(false)
 provide('openGlobalSearch', () => (searchOpen.value = true))
@@ -29,7 +34,10 @@ const onKeydown = (e) => {
     searchOpen.value = true
   }
 }
-onMounted(() => window.addEventListener('keydown', onKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  requestAnimationFrame(() => requestAnimationFrame(() => (ready.value = true)))
+})
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
@@ -38,9 +46,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   min-height: 100vh;
   width: v-bind('`calc(100% - ${sidebarWidth}px)`');
   margin-left: v-bind('`${sidebarWidth}px`');
+  background: var(--bg-color); /* Match global background */
+}
+.is-ready .app-layout__content {
   transition:
     width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
     margin-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  background: var(--bg-color); /* Match global background */
 }
 </style>
