@@ -21,8 +21,8 @@ initTheme()
 Locale.add({ 'uz-UZ': vantUz })
 const syncVantLocale = (lang) =>
   Locale.use(lang === 'ru' ? 'ru-RU' : 'uz-UZ', lang === 'ru' ? vantRu : vantUz)
-// i18n legacy rejimda: global.locale — oddiy xususiyat (reaktiv getter)
-watch(() => i18n.global.locale, syncVantLocale, { immediate: true })
+// composition rejimi: global.locale — ref
+watch(i18n.global.locale, syncVantLocale, { immediate: true })
 
 const app = createApp(App)
 const pinia = createPinia()

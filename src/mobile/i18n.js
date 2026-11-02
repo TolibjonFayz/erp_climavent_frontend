@@ -720,7 +720,8 @@ export function installMobileMessages(i18n) {
   i18n.global.mergeLocaleMessage('ru', { m: ru })
   // iOS'da (capacitor://) cookie saqlanmasligi mumkin — til localStorage'da ham turadi
   const saved = localStorage.getItem('lang')
-  if (saved === 'uz' || saved === 'ru') i18n.global.locale = saved
+  // composition rejimi: global.locale — ref
+  if (saved === 'uz' || saved === 'ru') i18n.global.locale.value = saved
   i18nRef = i18n
 }
 
@@ -730,7 +731,7 @@ export async function setLanguage(lang) {
   if (!i18nRef) return
   // Sayt matnlari tilma-til yuklanadi — avval yuklab, keyin o'tamiz
   lang = await loadLanguage(lang)
-  i18nRef.global.locale = lang
+  i18nRef.global.locale.value = lang
   localStorage.setItem('lang', lang)
   setCookie('lang', lang, 365)
   refreshPushLang()
