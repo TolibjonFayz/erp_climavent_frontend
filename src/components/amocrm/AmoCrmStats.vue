@@ -1583,7 +1583,7 @@ button {
     cursor: pointer;
     &:hover {
       border-color: var(--ui-link-line);
-      box-shadow: 0 4px 12px rgba(42, 120, 214, 0.1);
+      box-shadow: var(--ui-shadow-hover);
     }
   }
   &__label {
