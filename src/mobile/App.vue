@@ -8,6 +8,7 @@ import { tapFeedback } from './native'
 import { useI18n } from 'vue-i18n'
 import { initPush } from './push'
 import { checkForUpdate } from './updater'
+import MQuickCreate from './components/MQuickCreate.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -103,6 +104,9 @@ function onTabChange() {
       {{ $t(t.label) }}
     </van-tabbar-item>
   </van-tabbar>
+
+  <!-- "+ Yangi": tabbar sahifalarida istalgan narsani tez qo'shish -->
+  <MQuickCreate v-if="showTabbar" />
 </template>
 
 <style>

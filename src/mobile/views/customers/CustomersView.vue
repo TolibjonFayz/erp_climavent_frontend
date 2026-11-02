@@ -7,6 +7,7 @@ import { formatLocationName, legalTypeLabel } from '@/utils/partners'
 import { countByPeriod, digitsOf, fmtNum, telHref } from '@/utils/format'
 import MPage from '../../components/MPage.vue'
 import MStats from '../../components/MStats.vue'
+import MTodayBar from '../../components/MTodayBar.vue'
 import MEmpty from '../../components/MEmpty.vue'
 import MSheet from '../../components/MSheet.vue'
 import { PARTNER_GROUPS } from './groups'
@@ -158,6 +159,8 @@ function openNew() {
       </div>
     </template>
 
+    <!-- Salomlashish va bugungi ishlar -->
+    <MTodayBar />
     <MStats :items="stats" />
 
     <div v-if="loading && !loaded" class="cl-skeleton">

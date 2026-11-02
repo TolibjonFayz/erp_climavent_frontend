@@ -7,6 +7,7 @@ import { useComeAndGoesStore } from '@/stores/comeandgoes'
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { useVideosStore } from '@/stores/videos'
 import MPage from '../../components/MPage.vue'
+import MQuickPhrases from '../../components/MQuickPhrases.vue'
 import MapPicker from '../../components/MapPicker.vue'
 import MediaPicker from '../../components/MediaPicker.vue'
 import MDateSheet from '../../components/MDateSheet.vue'
@@ -384,6 +385,11 @@ const uploadedCount = computed(() => media.value.filter((m) => m.progress === 10
             rows="2"
             autosize
             :placeholder="$t('m.commentPlaceholder')"
+          />
+          <MQuickPhrases
+            v-model="o.moreInfo"
+            class="sf-phrases"
+            :phrases="['qpSiteMet', 'qpSiteEstimate', 'qpSiteSendKp', 'qpCallBack', 'qpSiteMeasured', 'qpSiteNobody']"
           />
         </div>
       </section>

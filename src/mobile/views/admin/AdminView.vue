@@ -19,8 +19,10 @@ import { avatarColor, errorText, includesText, initials, photoUrl, smartDate } f
 import { whereTone } from '../sites/siteData'
 import { exportExcel } from '../../exporter'
 import AppReleases from './AppReleases.vue'
+import ActivityList from './ActivityList.vue'
+import { lastSeenText } from '@/utils/activity'
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 const router = useRouter()
 const usersStore = useUsersStore()
 const partnersStore = usePartnersStore()
@@ -33,6 +35,7 @@ const TABS = computed(() => [
   { key: 'users', label: t('m.admUsers') },
   { key: 'partners', label: t('m.admPartners') },
   { key: 'objects', label: t('m.admObjects') },
+  { key: 'activity', label: t('m.admActivity') },
   { key: 'audit', label: t('m.admAudit') },
   { key: 'releases', label: t('m.admReleases') },
 ])
@@ -258,7 +261,8 @@ const objectParentId = (o) => o.come_and_go_father_id || o.come_and_go_father?.i
 const auditSearch = ref('')
 const auditAction = ref('')
 const ACTIONS = ['role', 'block', 'unblock', 'view', 'export', 'login']
-const actionLabel = (a) => t(`m.audit_${a}`) === `m.audit_${a}` ? a : t(`m.audit_${a}`)
+// Tarjimasi yo'q amal — o'z nomi bilan (te: konsolga "kalit topilmadi" deb yozmaydi)
+const actionLabel = (a) => (te(`m.audit_${a}`) ? t(`m.audit_${a}`) : a)
 const logActor = (l) =>
   (typeof l.actor === 'string' && l.actor) || (l.admin ? nameOf(l.admin) : '') || '—'
 const filteredLogs = computed(() =>
@@ -525,6 +529,7 @@ function onLoadMore() {
     </template>
 
     <!-- Ilova versiyalari (APK) -->
+    <ActivityList v-else-if="tab === 'activity'" />
     <AppReleases v-else-if="tab === 'releases'" />
 
     <!-- Xodim oynasi -->
@@ -545,6 +550,7 @@ function onLoadMore() {
           <van-cell :title="$t('telefonRaqam')" :value="selected.phone_number || '—'" :url="telHref(selected.phone_number)" :is-link="!!telHref(selected.phone_number)" />
           <van-cell :title="$t('email')" :value="selected.email || '—'" />
           <van-cell :title="$t('m.createdAt')" :value="formatDateTime(selected.createdAt)" />
+          <van-cell :title="$t('admColLastSeen')" :value="lastSeenText(t, selected.last_seen_at)" />
         </van-cell-group>
 
         <div class="ad-actions">
@@ -569,6 +575,9 @@ function onLoadMore() {
             </template>
           </van-cell>
         </van-cell-group>
+
+        <div class="m-section"><span class="m-section__title">{{ $t('m.admActivity') }}</span></div>
+        <ActivityList :key="selected.id" :user-id="selected.id" compact />
 
         <div class="m-section"><span class="m-section__title">{{ $t('m.admAudit') }}</span></div>
         <div class="m-card ad-logs">

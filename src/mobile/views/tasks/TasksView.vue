@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onActivated, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useOpenFromQuery } from '@/composables/useOpenFromQuery'
 import { showConfirmDialog, showFailToast, showSuccessToast } from 'vant'
 import { showActionSheet } from '../../actionSheet'
 import { exportExcel } from '../../exporter'
@@ -338,6 +339,9 @@ const report = computed(() => {
       .sort((a, b) => b.total - a.total),
   }
 })
+
+// "+ Yangi" tugmasidan kelganda (?new=1) — yangi vazifa oynasi
+useOpenFromQuery(() => isAdmin.value && openCreate())
 </script>
 
 <template>

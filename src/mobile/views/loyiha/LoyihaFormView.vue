@@ -6,6 +6,7 @@ import { showFailToast, showSuccessToast } from 'vant'
 import loyihaApi from '@/api/loyiha'
 import { useLoyihaStore } from '@/stores/loyiha'
 import MPage from '../../components/MPage.vue'
+import MQuickPhrases from '../../components/MQuickPhrases.vue'
 import MDateField from '../../components/MDateField.vue'
 import { errorText, money, numOrUndef, textOrUndef } from '../../utils'
 import { tapFeedback } from '../../native'
@@ -197,6 +198,7 @@ async function save() {
       <div class="m-section"><span class="m-section__title">{{ $t('loyihaCommentLabel') }}</span></div>
       <van-cell-group inset>
         <van-field v-model="form.comment" type="textarea" rows="3" autosize :placeholder="$t('loyihaCommentPlaceholder')" />
+        <MQuickPhrases v-model="form.comment" :phrases="['qpLyDrawingsReady', 'qpLyAwaitApproval', 'qpLyChanged', 'qpCallBack']" />
       </van-cell-group>
     </div>
 

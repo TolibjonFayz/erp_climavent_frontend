@@ -6,6 +6,7 @@ import { showFailToast, showSuccessToast, showToast } from 'vant'
 import dogovorApi from '@/api/dogovor'
 import { useDogovorStore } from '@/stores/dogovor'
 import MPage from '../../components/MPage.vue'
+import MQuickPhrases from '../../components/MQuickPhrases.vue'
 import MDateField from '../../components/MDateField.vue'
 import { useSession } from '../../session'
 import { DOGOVOR_STATUSES } from '../../docRules'
@@ -227,6 +228,10 @@ async function save() {
       <div class="m-section"><span class="m-section__title">{{ $t('dogovorSectionNotes') }}</span></div>
       <van-cell-group inset>
         <van-field v-model="form.comment" :label="$t('dogovorCommentLabel')" label-align="top" type="textarea" rows="2" autosize />
+        <MQuickPhrases
+          v-model="form.comment"
+          :phrases="['qpDgAdvancePaid', 'qpDgAwaitPayment', 'qpDgDeliveryAgreed', 'qpDgSigned', 'qpDgDiscount']"
+        />
         <van-field v-if="isAdmin" v-model="form.admin_comment" :label="$t('dogovorAdminCommentLabel')" label-align="top" type="textarea" rows="2" autosize />
       </van-cell-group>
     </div>

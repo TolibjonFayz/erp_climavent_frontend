@@ -8,6 +8,7 @@ import competitorsApi from '@/api/competitors'
 import { partnerTypeLabel } from '@/utils/partners'
 import { formatDate, telHref } from '@/utils/format'
 import MPage from '../../components/MPage.vue'
+import MQuickPhrases from '../../components/MQuickPhrases.vue'
 import MSheet from '../../components/MSheet.vue'
 import MEmpty from '../../components/MEmpty.vue'
 import { avatarColor, errorText, initials } from '../../utils'
@@ -354,6 +355,11 @@ async function saveNote() {
           maxlength="2000"
           show-word-limit
           :placeholder="$t('m.notePlaceholder')"
+        />
+        <MQuickPhrases
+          v-model="note"
+          :maxlength="2000"
+          :phrases="['qpCuRegular', 'qpCallBack', 'qpCuPriceSensitive', 'qpCuWholesale', 'qpCuReferral']"
         />
       </van-cell-group>
       <template #footer>

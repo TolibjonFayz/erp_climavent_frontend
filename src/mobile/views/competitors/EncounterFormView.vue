@@ -7,6 +7,7 @@ import competitorsApi from '@/api/competitors'
 import { usePartnersStore } from '@/stores/partners'
 import { OUTCOMES, REASONS } from '@/components/competitors/competitorFormat'
 import MPage from '../../components/MPage.vue'
+import MQuickPhrases from '../../components/MQuickPhrases.vue'
 import MDateField from '../../components/MDateField.vue'
 import MSelectSheet from '../../components/MSelectSheet.vue'
 import { currentUserId, useSession } from '../../session'
@@ -219,6 +220,7 @@ async function save() {
       <div class="m-section"><span class="m-section__title">{{ $t('cmpNote') }}</span></div>
       <van-cell-group inset>
         <van-field v-model="form.note" type="textarea" rows="3" autosize :placeholder="$t('m.optional')" />
+        <MQuickPhrases v-model="form.note" :phrases="['qpEncPrice', 'qpEncDeadline', 'qpEncAcquaintance', 'qpEncQuality', 'qpEncService']" />
       </van-cell-group>
     </div>
 
