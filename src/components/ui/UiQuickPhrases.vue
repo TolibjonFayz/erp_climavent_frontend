@@ -16,6 +16,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
+import { appendPhrase } from '@/utils/phrases'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -29,13 +30,8 @@ const { t } = useI18n()
 const used = (key) => String(props.modelValue || '').includes(t(key))
 
 function add(key) {
-  const phrase = t(key)
-  const text = String(props.modelValue || '').trimEnd()
-  if (text.includes(phrase)) return
-  // Oldingi gap tugamagan bo'lsa nuqta qo'yamiz
-  const next = !text ? phrase : /[.!?:;\n]$/.test(text) ? `${text} ${phrase}` : `${text}. ${phrase}`
-  if (props.maxlength && next.length > props.maxlength) return
-  emit('update:modelValue', next)
+  const next = appendPhrase(props.modelValue, t(key), props.maxlength)
+  if (next !== props.modelValue) emit('update:modelValue', next)
 }
 </script>
 

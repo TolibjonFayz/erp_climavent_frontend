@@ -24,52 +24,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useUsersStore } from '@/stores/user'
-import { useTasksStore } from '@/stores/tasks'
 import { todayLabel } from '@/components/admin/adminShared'
+import { greetingKey as greetingFor, useTodayTasks } from '@/composables/useTodayTasks'
 import UiCount from '@/components/ui/UiCount.vue'
 
 const { locale } = useI18n()
 const router = useRouter()
-const usersStore = useUsersStore()
-const tasksStore = useTasksStore()
-
-const user = computed(() => usersStore.currentUser || {})
-const firstName = computed(() => user.value.firstname || user.value.username || '')
-const greetingKey = computed(() => {
-  const h = new Date().getHours()
-  if (h >= 5 && h < 12) return 'admGreetMorning'
-  if (h >= 12 && h < 17) return 'admGreetDay'
-  if (h >= 17 && h < 21) return 'admGreetEvening'
-  return 'admGreetNight'
-})
-
-const canTasks = computed(() => user.value.permissions?.tasks !== false)
-
-// Vazifalar ro'yxatini sidebar yuklaydi (admin — hammasi, xodim — o'zinikilar)
-const startOfToday = () => {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d.getTime()
-}
-const chips = computed(() => {
-  const list = (user.value.is_admin ? tasksStore.allTasks : tasksStore.myTasks) || []
-  const open = list.filter((t) => t.status !== 'done')
-  const today = startOfToday()
-  const dayMs = 24 * 60 * 60 * 1000
-  const due = (t) => (t.deadline ? new Date(t.deadline).getTime() : NaN)
-  const all = [
-    { key: 'overdue', tone: 'bad', label: 'tbOverdue', count: open.filter((t) => due(t) < today).length },
-    { key: 'today', tone: 'warn', label: 'tbDueToday', count: open.filter((t) => due(t) >= today && due(t) < today + dayMs).length },
-    { key: 'todo', tone: 'ink', label: 'tbNew', count: open.filter((t) => t.status === 'todo').length },
-    { key: 'progress', tone: 'link', label: 'tbInProgress', count: open.filter((t) => t.status === 'in_progress').length },
-    { key: 'approvals', tone: 'good', label: 'tbApprovals', count: (tasksStore.pendingApprovals || []).length },
-  ]
-  return all.filter((c) => c.count > 0)
-})
+const { canTasks, chips, firstName } = useTodayTasks()
+const greetingKey = greetingFor()
 </script>
 
 <style scoped>
