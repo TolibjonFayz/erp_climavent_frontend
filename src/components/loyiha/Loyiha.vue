@@ -314,6 +314,7 @@ import { errorText } from '@/utils/errorText'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useOpenFromQuery } from '@/composables/useOpenFromQuery'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
 import {
@@ -533,6 +534,9 @@ onMounted(async () => {
     ElMessage.error(errorText(error, t('loyihaMessageLoadError')))
   }
 })
+
+// "+ Yangi" menyusidan kelganda (?new=1) qo'shish oynasi ochiladi
+useOpenFromQuery(openCreateDialog)
 </script>
 
 <style scoped>

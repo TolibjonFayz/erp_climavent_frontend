@@ -151,6 +151,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useOpenFromQuery } from '@/composables/useOpenFromQuery'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Edit, Plus } from '@element-plus/icons-vue'
 import competitorsApi from '@/api/competitors'
@@ -315,6 +316,17 @@ async function removeCompetitor(c) {
     ElMessage.error(errorText(err, t('xatolikYuzBerdi')))
   }
 }
+
+// "+ Yangi" menyusidan kelganda (?new=1) qo'shish oynasi ochiladi
+useOpenFromQuery(async () => {
+  // Raqiblar ro'yxati yuklanguncha kutamiz: raqib bo'lsa — uchrashuv, bo'lmasa — avval raqib qo'shiladi
+  await new Promise((resolve) => {
+    const check = () => (loading.value ? setTimeout(check, 50) : resolve())
+    setTimeout(check, 0)
+  })
+  if (competitors.value.length) openEncounter(null)
+  else openCompetitor(null)
+})
 </script>
 
 <style scoped>

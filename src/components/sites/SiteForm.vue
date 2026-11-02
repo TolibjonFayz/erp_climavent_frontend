@@ -130,6 +130,7 @@
             :placeholder="$t('qoshimchamalumotlarUchunJoy')"
             type="textarea"
           />
+          <UiQuickPhrases v-model="form.more_info" :phrases="SITE_PHRASES" />
         </el-form-item>
 
         <!-- Rasm va videolar -->
@@ -328,6 +329,7 @@
             :placeholder="$t('qoshimchamalumotlarUchunJoy')"
             type="textarea"
           />
+          <UiQuickPhrases v-model="obj.more_info" :phrases="SITE_PHRASES" />
         </el-form-item>
       </el-form>
     </UiPanel>
@@ -362,6 +364,10 @@ import { useComeAndGoesStore } from '@/stores/comeandgoes'
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { useVideosStore } from '@/stores/videos'
 import LocationPicker from './LocationPicker.vue'
+import UiQuickPhrases from '@/components/ui/UiQuickPhrases.vue'
+
+// Tashrif izohi uchun tez iboralar
+const SITE_PHRASES = ['qpSiteMet', 'qpSiteEstimate', 'qpSiteSendKp', 'qpCallBack', 'qpSiteMeasured', 'qpSiteNobody']
 import { UploadFilled } from '@element-plus/icons-vue'
 import ru from 'element-plus/dist/locale/ru.mjs'
 import { reactive, ref, watch, computed } from 'vue'

@@ -331,6 +331,11 @@
             show-word-limit
             :placeholder="$t('loyihaCommentPlaceholder')"
           />
+          <UiQuickPhrases
+            v-model="form.comment"
+            :maxlength="2000"
+            :phrases="['qpLyDrawingsReady', 'qpLyAwaitApproval', 'qpLyChanged', 'qpCallBack']"
+          />
         </el-form-item>
       </div>
     </el-form>
@@ -349,6 +354,7 @@ import { errorText } from '@/utils/errorText'
 import { computed, reactive, ref, watch } from 'vue'
 import { InfoFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import UiQuickPhrases from '@/components/ui/UiQuickPhrases.vue'
 import { ElMessage } from 'element-plus'
 import { useLoyihaStore } from '@/stores/loyiha'
 import { difficultyClass, LOYIHA_STATUS_OPTIONS } from '@/utils/loyihaFormat'

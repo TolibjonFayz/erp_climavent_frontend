@@ -26,6 +26,7 @@
         :label="$t('dogovorStatTotal')"
         :value="fmtNum(totalDogovors)"
         :sub="formatMoneyShort(totalSum)"
+        :trend="monthCounts"
         clickable
         @click="filters.status = ''"
       />
@@ -611,6 +612,11 @@
                 maxlength="500"
                 show-word-limit
               />
+              <UiQuickPhrases
+                v-model="form.comment"
+                :maxlength="500"
+                :phrases="['qpDgAdvancePaid', 'qpDgAwaitPayment', 'qpDgDeliveryAgreed', 'qpDgSigned', 'qpDgDiscount']"
+              />
             </el-form-item>
           </el-col>
           <el-col v-if="isAdmin" :span="24">
@@ -648,6 +654,8 @@ import { useQueryPrefill } from '@/composables/useQueryPrefill'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import dogovorApi from '@/api/dogovor'
 import { useI18n } from 'vue-i18n'
+import { useOpenFromQuery } from '@/composables/useOpenFromQuery'
+import UiQuickPhrases from '@/components/ui/UiQuickPhrases.vue'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
 import {
@@ -828,6 +836,12 @@ const resetFilters = () => {
 // ─── Statistika (server hisoblaydi — butun ro'yxat bo'yicha, filtrga bog'liq emas) ───
 const totalDogovors = computed(() => stats.value.total)
 const totalSum = computed(() => stats.value.sum)
+// Shu oy boshidan bugungacha tuzilgan shartnomalar — o'tgan oyning shu davriga nisbatan
+const monthCounts = computed(() =>
+  stats.value.month
+    ? { current: stats.value.month.current.count, previous: stats.value.month.previous.count }
+    : null,
+)
 // Har holat: soni va summasi (ko'rsatkich kartalari uchun)
 const STATUS_TONE = { Open: '', PartlyShipped: 'warn', Shipped: 'good', Closed: '' }
 const statusStats = computed(() =>
@@ -1167,6 +1181,9 @@ onMounted(async () => {
   }
   await load()
 })
+
+// "+ Yangi" menyusidan kelganda (?new=1) qo'shish oynasi ochiladi
+useOpenFromQuery(openCreateDialog)
 </script>
 
 <style lang="scss" scoped>

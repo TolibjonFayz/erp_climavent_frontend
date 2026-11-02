@@ -89,6 +89,10 @@
         <el-col :span="24">
           <el-form-item :label="$t('cmpNote')">
             <el-input v-model="form.note" type="textarea" :rows="2" />
+            <UiQuickPhrases
+              v-model="form.note"
+              :phrases="['qpEncPrice', 'qpEncDeadline', 'qpEncAcquaintance', 'qpEncQuality', 'qpEncService']"
+            />
           </el-form-item>
         </el-col>
       </el-row>
@@ -103,6 +107,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import UiQuickPhrases from '@/components/ui/UiQuickPhrases.vue'
 import { ElMessage } from 'element-plus'
 import competitorsApi from '@/api/competitors'
 import { usePartnersStore } from '@/stores/partners'

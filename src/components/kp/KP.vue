@@ -25,6 +25,7 @@
         :label="$t('kpStatTotal')"
         :value="fmtNum(totalKPs)"
         :sub="fmtMoney(statusSum.all)"
+        :trend="kpTrend"
         clickable
         @click="filterStatus = ''"
       />
@@ -47,6 +48,7 @@
         :label="$t('kpStatClosed')"
         :value="fmtNum(statusCount.Closed)"
         :sub="fmtMoney(statusSum.Closed)"
+        :trend="closedTrend"
         tone="good"
         clickable
         @click="filterStatus = 'Closed'"
@@ -551,6 +553,8 @@ import { errorText } from '@/utils/errorText'
 import { useQueryPrefill } from '@/composables/useQueryPrefill'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useOpenFromQuery } from '@/composables/useOpenFromQuery'
+import { monthTrend } from '@/utils/trend'
 import { useKPsStore } from '@/stores/kp'
 import { useUsersStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
@@ -578,6 +582,9 @@ const { t } = useI18n()
 const kpStore = useKPsStore()
 const usersStore = useUsersStore()
 const kps = computed(() => kpStore.allKPs || [])
+// Oy dinamikasi: yangi KP'lar (KP sanasi) va yopilganlar (yopilgan sana) — o'tgan oyning shu davriga nisbatan
+const kpTrend = computed(() => monthTrend(kps.value, (k) => k.kp_date || k.kpDate))
+const closedTrend = computed(() => monthTrend(kps.value, (k) => k.closed_date))
 
 const currentUserId = Number(localStorage.getItem('userid'))
 const isAdmin = computed(() => !!usersStore.currentUser?.is_admin)
@@ -981,6 +988,9 @@ onMounted(async () => {
     ElMessage.error(errorText(error, t('kpMessageLoadError')))
   }
 })
+
+// "+ Yangi" menyusidan kelganda (?new=1) qo'shish oynasi ochiladi
+useOpenFromQuery(openCreateDialog)
 </script>
 
 <style scoped>
