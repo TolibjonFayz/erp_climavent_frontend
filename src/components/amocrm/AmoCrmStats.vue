@@ -128,7 +128,7 @@
           <span class="amo-stat__label">
             <AmoHint :label="k.label" :hint="k.hint" />
           </span>
-          <span class="amo-stat__value">{{ k.value }}</span>
+          <UiCount class="amo-stat__value" :value="k.value" />
           <span class="amo-stat__sub">{{ k.sub || ' ' }}</span>
         </component>
       </div>
@@ -399,7 +399,7 @@
               @click="k.onClick && k.onClick()"
             >
               <span class="amo-stat__label"><AmoHint :label="k.label" :hint="k.hint" /></span>
-              <span class="amo-stat__value">{{ k.value }}</span>
+              <UiCount class="amo-stat__value" :value="k.value" />
               <span class="amo-stat__sub">{{ k.sub || ' ' }}</span>
             </component>
           </div>
@@ -505,7 +505,7 @@
                 @click="k.onClick && k.onClick()"
               >
                 <span class="amo-stat__label"><AmoHint :label="k.label" :hint="k.hint" /></span>
-                <span class="amo-stat__value">{{ k.value }}</span>
+                <UiCount class="amo-stat__value" :value="k.value" />
                 <span class="amo-stat__sub">{{ k.sub || ' ' }}</span>
               </component>
             </div>
@@ -653,6 +653,7 @@ import AmoDrillDrawer from './AmoDrillDrawer.vue'
 import AmoExclusionsDrawer from './AmoExclusionsDrawer.vue'
 import AmoRecordings from './AmoRecordings.vue'
 import AmoYearReport from './AmoYearReport.vue'
+import UiCount from '@/components/ui/UiCount.vue'
 import {
   AMO_CALL_STATUS_RU,
   MONTHS,

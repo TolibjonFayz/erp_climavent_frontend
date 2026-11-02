@@ -145,7 +145,7 @@
             <div v-if="row.last_move_date" class="sk-sub sk-last">{{ $t('skLastMove', { d: dayMonth(row.last_move_date) }) }}</div>
           </template>
         </el-table-column>
-        <el-table-column width="40" align="center">
+        <el-table-column width="44" align="center" class-name="sk-arrow-col">
           <template #default>
             <el-icon class="sk-more" :aria-label="$t('skDetails')"><ArrowRight /></el-icon>
           </template>
@@ -559,6 +559,12 @@ function exportExcel() {
   }
   :deep(.sk-row:hover .sk-more) {
     color: var(--ui-link);
+  }
+  /* Strelka ustuni tor — ichki chetlar bo'lsa ikonka sig'maydi va Element Plus "…" qo'yadi */
+  :deep(.sk-arrow-col .cell) {
+    padding: 0;
+    overflow: visible;
+    text-overflow: clip;
   }
 }
 .sk-code {

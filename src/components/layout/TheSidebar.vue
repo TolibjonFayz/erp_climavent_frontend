@@ -47,7 +47,9 @@
     </div>
 
     <nav class="sidebar-nav">
-      <ul class="nav-list">
+      <ul ref="navList" class="nav-list">
+        <!-- Faol bo'lim foni: har bandda alohida emas, bitta — bo'lim almashganda yangi joyga suriladi -->
+        <li class="nav-pill" :class="{ 'is-placed': pillPlaced }" :style="pillStyle" aria-hidden="true"></li>
         <li
           v-for="menu in visibleMenus"
           :key="menu.key"
@@ -152,6 +154,7 @@
 import { useUsersStore } from '@/stores/user'
 import { useTasksStore } from '@/stores/tasks'
 import { onMounted, ref, computed, inject } from 'vue'
+import { useActivePill } from '@/composables/useActivePill'
 import { useI18n } from 'vue-i18n'
 import { useSidebar } from '@/composables/useSidebar'
 import { useTheme } from '@/composables/useTheme'
@@ -329,6 +332,14 @@ const navTitle = (menu: { key: string; title: string }) => {
   const parts = visibleTaskBadges.value.map((b) => `${b.title}: ${b.count}`)
   return `${base} — ${parts.join(', ')}`
 }
+
+// ─── Faol bo'lim foni (pill) — bo'limlar orasida suriladi ───
+const navList = ref<HTMLElement | null>(null)
+const { pillStyle, pillPlaced } = useActivePill(navList, '.nav-item.active', () => [
+  props.activePath,
+  visibleMenus.value.length,
+  showCollapsed.value,
+])
 
 onMounted(async () => {
   loading.value = true
@@ -578,9 +589,30 @@ $accent-dark: #2f7fe0;
 }
 
 .nav-list {
+  position: relative;
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.nav-pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, $accent 0%, $accent-dark 100%);
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.35);
+  pointer-events: none;
+  transition: opacity var(--ui-dur-2) var(--ui-ease);
+
+  &.is-placed {
+    transition:
+      transform var(--ui-dur-3) var(--ui-ease-out),
+      width var(--ui-dur-3) var(--ui-ease-out),
+      height var(--ui-dur-3) var(--ui-ease-out),
+      opacity var(--ui-dur-2) var(--ui-ease);
+  }
 }
 
 .nav-item {
@@ -599,12 +631,13 @@ $accent-dark: #2f7fe0;
   color: var(--ui-ink-2);
   border-radius: 12px;
   transition:
-    background 0.2s ease,
-    color 0.2s ease;
+    background-color var(--ui-dur-2) var(--ui-ease),
+    color var(--ui-dur-3) var(--ui-ease);
   position: relative;
+  z-index: 1;
 
   &:hover {
-    background: var(--ui-link-soft);
+    background-color: var(--ui-link-soft);
     color: var(--ui-ink);
   }
 
@@ -628,10 +661,30 @@ $accent-dark: #2f7fe0;
   }
 }
 
+/* Asosiy ro'yxatda fonni .nav-pill beradi; pastki tizim guruhida (Sozlamalar) — o'zi, silliq paydo bo'ladi */
 .nav-item.active .nav-link {
-  background: linear-gradient(135deg, $accent 0%, $accent-dark 100%);
   color: #fff;
+}
+.nav-list .nav-item.active .nav-link,
+.nav-list .nav-item.active .nav-link:hover {
+  background-color: transparent;
+}
+.sidebar-system .nav-link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(135deg, $accent 0%, $accent-dark 100%);
   box-shadow: 0 6px 16px rgba(64, 158, 255, 0.35);
+  opacity: 0;
+  transition: opacity var(--ui-dur-3) var(--ui-ease);
+}
+.sidebar-system .nav-item.active .nav-link::before {
+  opacity: 1;
+}
+.sidebar-system .nav-item.active .nav-link:hover {
+  background-color: transparent;
 }
 
 .sidebar-system {

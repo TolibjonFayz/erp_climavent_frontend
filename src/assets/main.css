@@ -237,7 +237,7 @@ body {
   border-radius: 999px !important;
   font-weight: 600 !important;
   letter-spacing: 0.2px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  /* transition — assets/motion.css */
 }
 /* Gradient faqat to'ldirilgan tugmalarga — link/text/plain tugmalar o'z ko'rinishida qoladi */
 .el-button--primary:not(.is-link):not(.is-text):not(.is-plain) {

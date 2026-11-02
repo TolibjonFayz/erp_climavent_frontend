@@ -1,0 +1,167 @@
+/* ─── Harakat (motion) ──────────────────────────────────────────────────────
+   Butun saytda bir xil tezlik va egri chiziq: tez javob beradi, yumshoq to'xtaydi.
+   Element Plus uslublaridan keyin yuklanadi (main.js), shuning uchun ularni ham silliqlaydi. */
+:root {
+  --ui-ease: cubic-bezier(0.2, 0, 0, 1); /* rang, soya, fon */
+  --ui-ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* surilish, o'lcham */
+  --ui-dur-1: 120ms; /* bosish, kichik o'zgarish */
+  --ui-dur-2: 200ms; /* hover, rang */
+  --ui-dur-3: 320ms; /* surilish, sahifa */
+}
+
+/* Bosiladigan elementlar: o'z transition'i yo'q joylarda rang/fon/soya silliq o'zgaradi.
+   :where — nol specificity, komponentning o'z qoidasi har doim ustun. */
+:where(button, a, [role='button'], summary) {
+  transition-property: color, background-color, border-color, box-shadow, opacity, scale;
+  transition-duration: var(--ui-dur-2);
+  transition-timing-function: var(--ui-ease);
+}
+
+/* Bosilganda yengil "botish" — `scale` alohida xususiyat, komponentlarning transform'iga
+   (masalan translate(-50%)) tegmaydi */
+:where(button, [role='button'], .el-button):not(:disabled, .is-disabled, .is-link, .is-text):active {
+  scale: 0.97;
+  transition-duration: 80ms;
+}
+
+/* Element Plus: tugma, tab, segment, radio, tag, sahifalash — bir xil ritm */
+.el-button {
+  transition:
+    color var(--ui-dur-2) var(--ui-ease),
+    background-color var(--ui-dur-2) var(--ui-ease),
+    border-color var(--ui-dur-2) var(--ui-ease),
+    box-shadow var(--ui-dur-2) var(--ui-ease),
+    scale var(--ui-dur-1) var(--ui-ease) !important;
+}
+.el-tabs__item,
+.el-radio-button__inner,
+.el-checkbox__inner,
+.el-tag,
+.el-pager li,
+.el-pagination button,
+.el-select-dropdown__item,
+.el-dropdown-menu__item {
+  transition:
+    color var(--ui-dur-2) var(--ui-ease),
+    background-color var(--ui-dur-2) var(--ui-ease),
+    border-color var(--ui-dur-2) var(--ui-ease),
+    box-shadow var(--ui-dur-2) var(--ui-ease);
+}
+.el-tabs__active-bar {
+  transition:
+    transform var(--ui-dur-3) var(--ui-ease-out),
+    width var(--ui-dur-3) var(--ui-ease-out);
+}
+.el-segmented__item-selected {
+  transition:
+    transform var(--ui-dur-3) var(--ui-ease-out),
+    width var(--ui-dur-3) var(--ui-ease-out) !important;
+}
+
+/* Jadval qatori hover'i — keskin emas */
+.el-table__body tr > td.el-table__cell {
+  transition: background-color var(--ui-dur-1) var(--ui-ease);
+}
+
+/* Fokus halqasi silliq paydo bo'ladi */
+:where(button, a, input, textarea, [tabindex]):focus-visible {
+  transition-property: outline-offset, box-shadow, color, background-color;
+}
+
+/* Tab almashganda ichidagi kontent yumshoq paydo bo'ladi (display o'zgarganda animatsiya qayta ishlaydi) */
+.el-tab-pane {
+  animation: ui-fade-in var(--ui-dur-2) var(--ui-ease);
+}
+@keyframes ui-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* ─── Bo'limlar orasida o'tish (App.vue) ───
+   Eski sahifa tez so'nadi, yangisi biroz pastdan yumshoq chiqadi. Birinchi yuklanishda ishlamaydi. */
+.page-leave-active {
+  transition: opacity 90ms var(--ui-ease);
+}
+.page-enter-active {
+  transition:
+    opacity var(--ui-dur-2) var(--ui-ease),
+    transform var(--ui-dur-3) var(--ui-ease-out);
+}
+.page-enter-from {
+  opacity: 0;
+}
+.page-leave-to {
+  opacity: 0;
+}
+
+/* Ketma-ket paydo bo'lish: sarlavha, keyin bloklar, KPI kartalari va jadvalning birinchi qatorlari
+   bir-biridan biroz keyin pastdan ko'tariladi. Faqat bo'lim yoki admin tabi almashganda
+   (App.vue, AdminPanel.vue → .is-stagger). */
+@keyframes ui-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.is-stagger .ui-page__head,
+.is-stagger .ui-page__body > *,
+.is-stagger .adm-page > *,
+.is-stagger .ui-stat,
+.is-stagger .el-table__body tr:nth-child(-n + 12) {
+  animation: ui-rise 460ms var(--ui-ease-out) backwards; /* tugagach hech qanday transform qolmaydi */
+}
+.is-stagger .ui-page__body > :nth-child(1) { animation-delay: 50ms; }
+.is-stagger .ui-page__body > :nth-child(2) { animation-delay: 100ms; }
+.is-stagger .ui-page__body > :nth-child(3) { animation-delay: 150ms; }
+.is-stagger .ui-page__body > :nth-child(4) { animation-delay: 200ms; }
+.is-stagger .ui-page__body > :nth-child(n + 5) { animation-delay: 250ms; }
+.is-stagger .adm-page > :nth-child(1) { animation-delay: 30ms; }
+.is-stagger .adm-page > :nth-child(2) { animation-delay: 80ms; }
+.is-stagger .adm-page > :nth-child(3) { animation-delay: 130ms; }
+.is-stagger .adm-page > :nth-child(4) { animation-delay: 180ms; }
+.is-stagger .adm-page > :nth-child(n + 5) { animation-delay: 230ms; }
+.is-stagger .ui-stat:nth-child(1) { animation-delay: 80ms; }
+.is-stagger .ui-stat:nth-child(2) { animation-delay: 120ms; }
+.is-stagger .ui-stat:nth-child(3) { animation-delay: 160ms; }
+.is-stagger .ui-stat:nth-child(4) { animation-delay: 200ms; }
+.is-stagger .ui-stat:nth-child(n + 5) { animation-delay: 240ms; }
+.is-stagger .el-table__body tr:nth-child(1) { animation-delay: 160ms; }
+.is-stagger .el-table__body tr:nth-child(2) { animation-delay: 185ms; }
+.is-stagger .el-table__body tr:nth-child(3) { animation-delay: 210ms; }
+.is-stagger .el-table__body tr:nth-child(4) { animation-delay: 235ms; }
+.is-stagger .el-table__body tr:nth-child(5) { animation-delay: 260ms; }
+.is-stagger .el-table__body tr:nth-child(6) { animation-delay: 285ms; }
+.is-stagger .el-table__body tr:nth-child(7) { animation-delay: 310ms; }
+.is-stagger .el-table__body tr:nth-child(8) { animation-delay: 335ms; }
+.is-stagger .el-table__body tr:nth-child(n + 9) { animation-delay: 360ms; }
+
+/* Oyna (dialog, drawer) ochilganda orqa fon xiralashadi */
+.el-overlay {
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+/* Tizimda "harakatni kamaytirish" yoqilgan bo'lsa — animatsiyalarsiz */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+  :where(button, [role='button'], .el-button):active {
+    scale: none;
+  }
+}
+
+/* Chop etishda hech narsa yarim-shaffof qolmasin */
+@media print {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -14,7 +14,7 @@
       <UiHint :label="label" :hint="hint" />
     </span>
     <span class="ui-stat__value"
-      ><slot>{{ value }}</slot></span
+      ><slot>{{ shown }}</slot></span
     >
     <span class="ui-stat__sub">{{ sub || ' ' }}</span>
   </component>
@@ -22,8 +22,9 @@
 
 <script setup>
 import UiHint from './UiHint.vue'
+import { useCountUp } from '@/composables/useCountUp'
 
-defineProps({
+const props = defineProps({
   label: { type: String, required: true },
   hint: { type: String, default: '' },
   value: { type: [String, Number], default: '' },
@@ -37,6 +38,9 @@ defineProps({
   // Katta summalar — shrift kichrayadi va pastga tushadi (kesilmaydi)
   money: { type: Boolean, default: false },
 })
+
+// Qiymat o'zgarganda eski raqamdan yangisiga sanab boradi
+const shown = useCountUp(() => props.value)
 </script>
 
 <style scoped>
