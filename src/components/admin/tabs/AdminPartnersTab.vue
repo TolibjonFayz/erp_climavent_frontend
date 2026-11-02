@@ -51,10 +51,12 @@
         <el-table-column prop="additional_phone_number" :label="$t('admExtraPhone')" min-width="150" />
         <el-table-column :label="$t('admAddress')" min-width="250">
           <template #default="{ row }">
-            <el-tag>{{ row.republic }} {{ row.viloyat }} {{ row.shahar_tuman }}</el-tag>
+            <el-tag>{{ [row.republic, row.viloyat, row.shahar_tuman].filter(Boolean).map(formatLocationName).join(', ') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="mijozturi" :label="$t('admLegalType')" min-width="130" />
+        <el-table-column :label="$t('admLegalType')" min-width="130">
+          <template #default="{ row }">{{ legalTypeLabel(row.mijozturi) }}</template>
+        </el-table-column>
         <el-table-column prop="inn" label="INN" min-width="110" />
         <el-table-column :label="$t('admActions')" width="110" align="center" fixed="right">
           <template #default="{ row }">
@@ -86,6 +88,7 @@ import { Delete, RefreshLeft, Search, View } from '@element-plus/icons-vue'
 import partnersApi from '@/api/partners'
 import { usePartnersStore } from '@/stores/partners'
 import { PARTNER_TYPES, deleteMany, partnerTypeLabel, useAdminAudit } from '../adminShared'
+import { formatLocationName, legalTypeLabel } from '@/utils/partners'
 
 const { t } = useI18n()
 const router = useRouter()

@@ -52,6 +52,7 @@ import {
   partnerTypeLabel,
   useAdminAudit,
 } from '../adminShared'
+import { formatLocationName, legalTypeLabel } from '@/utils/partners'
 
 const { t } = useI18n()
 const partnersStore = usePartnersStore()
@@ -85,10 +86,10 @@ const exportPartners = () =>
       [t('admFullName')]: p.fullname ?? '—',
       [t('admPhone')]: p.phone_number ?? '—',
       [t('admExtraPhone')]: p.additional_phone_number ?? '—',
-      [t('admRepublic')]: p.republic ?? '—',
-      [t('admRegion')]: p.viloyat ?? '—',
-      [t('admDistrict')]: p.shahar_tuman ?? '—',
-      [t('admLegalType')]: p.mijozturi ?? '—',
+      [t('admRepublic')]: formatLocationName(p.republic) || '—',
+      [t('admRegion')]: formatLocationName(p.viloyat) || '—',
+      [t('admDistrict')]: formatLocationName(p.shahar_tuman) || '—',
+      [t('admLegalType')]: legalTypeLabel(p.mijozturi) || '—',
       INN: p.inn ?? '—',
     })),
   )

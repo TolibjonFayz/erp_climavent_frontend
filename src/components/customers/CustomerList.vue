@@ -140,7 +140,7 @@
               size="small"
               effect="plain"
             >
-              {{ row.mijozturi }}
+              {{ legalTypeLabel(row.mijozturi) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -223,7 +223,7 @@ import UiToolbar from '@/components/ui/UiToolbar.vue'
 import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import CustomerForm from './CustomerForm.vue'
-import { formatLocationName, partnerTypeLabel, partnerTypeTag } from '@/utils/partners'
+import { formatLocationName, legalTypeLabel, partnerTypeLabel, partnerTypeTag } from '@/utils/partners'
 import { countByPeriod, digitsOf, fmtNum, formatDate, telHref } from '@/utils/format'
 
 const { t } = useI18n()
