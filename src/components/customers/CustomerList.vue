@@ -104,7 +104,7 @@
         @row-click="openDetail"
       >
         <el-table-column type="index" :index="rowIndex" label="#" width="56" />
-        <el-table-column prop="fullname" :label="$t('ism')" min-width="190" sortable="custom">
+        <el-table-column prop="fullname" :label="$t('ism')" min-width="180" sortable="custom">
           <template #default="{ row }">
             <span class="cl-name">{{ row.fullname || '—' }}</span>
             <span v-if="group === 'all'" class="cl-group-tag">
@@ -112,7 +112,7 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('telefon')" min-width="170">
+        <el-table-column :label="$t('telefon')" min-width="150">
           <template #default="{ row }">
             <a
               v-if="row.phone_number"
@@ -130,13 +130,13 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('custRegion')" min-width="200">
+        <el-table-column :label="$t('custRegion')" min-width="170">
           <template #default="{ row }">
             <span>{{ regionLine(row) || '—' }}</span>
             <div v-if="row.republic" class="cl-sub">{{ formatLocationName(row.republic) }}</div>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('turi')" min-width="130">
+        <el-table-column :label="$t('turi')" min-width="120">
           <template #default="{ row }">
             <el-tag
               v-if="row.mijozturi"
@@ -154,12 +154,12 @@
         <el-table-column
           prop="createdAt"
           :label="$t('custCreated')"
-          min-width="140"
+          min-width="130"
           sortable="custom"
         >
           <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
         </el-table-column>
-        <el-table-column width="120" align="right" fixed="right">
+        <el-table-column width="100" align="right" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click.stop="openDetail(row)">
               {{ $t('viewDetails') }} <el-icon class="cl-arrow"><ArrowRight /></el-icon>

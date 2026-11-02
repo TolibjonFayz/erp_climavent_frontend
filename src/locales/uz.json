@@ -2046,5 +2046,11 @@
   "qpCuRegular": "Doimiy mijoz",
   "qpCuPriceSensitive": "Narxga sezgir",
   "qpCuWholesale": "Ulgurji xaridor",
-  "qpCuReferral": "Tavsiya orqali keldi"
+  "qpCuReferral": "Tavsiya orqali keldi",
+  "kpTableClientManager": "Mijoz / menejer",
+  "kpClosedShort": "yopildi",
+  "dogovorTableNumberDate": "№ / sana",
+  "dogovorTableClientManager": "Mijoz / menejer",
+  "dogovorTablePaymentShort": "To'lov",
+  "siteGoneCame": "Ketilgan → qaytilgan"
 }

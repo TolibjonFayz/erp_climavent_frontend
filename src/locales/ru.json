@@ -2060,5 +2060,11 @@
   "qpCuRegular": "Постоянный клиент",
   "qpCuPriceSensitive": "Чувствителен к цене",
   "qpCuWholesale": "Оптовый покупатель",
-  "qpCuReferral": "Пришёл по рекомендации"
+  "qpCuReferral": "Пришёл по рекомендации",
+  "kpTableClientManager": "Клиент / менеджер",
+  "kpClosedShort": "закрыт",
+  "dogovorTableNumberDate": "№ / дата",
+  "dogovorTableClientManager": "Клиент / менеджер",
+  "dogovorTablePaymentShort": "Оплата",
+  "siteGoneCame": "Выезд → возврат"
 }

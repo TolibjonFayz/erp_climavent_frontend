@@ -85,18 +85,16 @@
             <div v-if="row.company" class="sl-sub">{{ row.company }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="gone" :label="$t('ketilganvaqt')" min-width="170" sortable="custom">
-          <template #default="{ row }">{{ formatDateTime(row.gone) }}</template>
-        </el-table-column>
-        <el-table-column :label="$t('kelganvaqt')" min-width="150">
+        <!-- Ketilgan va qaytilgan vaqt bitta ustunda (jadval ekranga sig'sin) -->
+        <el-table-column prop="gone" :label="$t('siteGoneCame')" min-width="190" sortable="custom">
           <template #default="{ row }">
-            <span v-if="row.came">{{ formatDateTime(row.came) }}</span>
-            <el-tag v-else size="small" type="warning" effect="plain">{{
+            <div>{{ formatDateTime(row.gone) }}</div>
+            <div v-if="row.came" class="sl-sub">
+              → {{ formatDateTime(row.came) }}<template v-if="row.gone"> · {{ formatSpan(row.gone, row.came, t) }}</template>
+            </div>
+            <el-tag v-else size="small" type="warning" effect="plain" class="sl-notback">{{
               $t('siteNotBack')
             }}</el-tag>
-            <div v-if="row.came && row.gone" class="sl-sub">
-              {{ formatSpan(row.gone, row.came, t) }}
-            </div>
           </template>
         </el-table-column>
         <el-table-column :label="$t('shartnomaKp')" min-width="150">
@@ -107,18 +105,18 @@
             <span v-else class="sl-muted">—</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('joylashuv')" min-width="170">
+        <el-table-column :label="$t('joylashuv')" min-width="150">
           <template #default="{ row }">{{ row.location || '—' }}</template>
         </el-table-column>
         <el-table-column
           prop="created"
           :label="$t('custCreated')"
-          min-width="170"
+          min-width="150"
           sortable="custom"
         >
           <template #default="{ row }">{{ formatDateTime(row.created) }}</template>
         </el-table-column>
-        <el-table-column width="120" align="right" fixed="right">
+        <el-table-column width="110" align="right" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click.stop="openDetail(row)">
               {{ $t('viewDetails') }} <el-icon class="sl-arrow"><ArrowRight /></el-icon>

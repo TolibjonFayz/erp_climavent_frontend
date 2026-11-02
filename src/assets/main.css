@@ -228,6 +228,13 @@ body {
   font-weight: 500;
   border-bottom: 1px solid var(--border-light) !important;
 }
+/* O'ngga qotirilgan amallar ustuni (tugmalar): sig'masa "…" emas — tugmalar to'liq ko'rinsin */
+.el-table .el-table-fixed-column--right .cell {
+  overflow: visible;
+  text-overflow: clip;
+  padding-left: 4px;
+  padding-right: 8px;
+}
 .el-table::before, .el-table::after {
   display: none !important;
 }
