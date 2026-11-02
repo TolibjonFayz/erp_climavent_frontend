@@ -1,3 +1,4 @@
+import { loadLanguage } from '@/i18n'
 import { setCookie } from '@/utils/cookies'
 import { refreshPushLang } from './push'
 
@@ -725,8 +726,10 @@ export function installMobileMessages(i18n) {
 
 let i18nRef = null
 
-export function setLanguage(lang) {
+export async function setLanguage(lang) {
   if (!i18nRef) return
+  // Sayt matnlari tilma-til yuklanadi — avval yuklab, keyin o'tamiz
+  lang = await loadLanguage(lang)
   i18nRef.global.locale = lang
   localStorage.setItem('lang', lang)
   setCookie('lang', lang, 365)

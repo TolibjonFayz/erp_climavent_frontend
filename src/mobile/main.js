@@ -4,7 +4,7 @@ import Vant, { Locale } from 'vant'
 import vantRu from 'vant/es/locale/lang/ru-RU'
 import 'vant/lib/index.css'
 
-import i18n from '@/i18n'
+import i18n, { currentLanguage, loadLanguage } from '@/i18n'
 import { setUnauthorizedHandler } from '@/api/client'
 import { useUsersStore } from '@/stores/user'
 import { installMobileMessages, vantUz } from './i18n'
@@ -37,5 +37,8 @@ setUnauthorizedHandler(() => {
   if (router.currentRoute.value.name !== 'login') router.replace({ name: 'login' })
 })
 
-app.mount('#app')
-initNative(router)
+// Joriy til matnlari yuklangach chiziladi (aks holda birinchi kadrda kalit nomlari ko'rinadi)
+loadLanguage(currentLanguage()).finally(() => {
+  app.mount('#app')
+  initNative(router)
+})
