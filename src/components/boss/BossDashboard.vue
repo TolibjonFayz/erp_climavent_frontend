@@ -1,5 +1,5 @@
 <template>
-  <UiPage v-loading="loading" :subtitle="$t('bossSubtitle')" wide>
+  <UiPage v-loading="loading" :subtitle="$t('bossSubtitle')">
     <template #title>
       <h1 class="bs-title">
         {{ $t('boss') }}

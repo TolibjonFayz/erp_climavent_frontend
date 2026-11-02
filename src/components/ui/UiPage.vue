@@ -1,6 +1,6 @@
 <template>
   <!-- Sahifa: sarlavha (nomi, izoh, holat) + o'ngda amallar, keyin mazmun -->
-  <div class="ui-page" :class="{ 'ui-page--wide': wide }">
+  <div class="ui-page">
     <header v-if="title || $slots.actions || $slots.title" class="ui-page__head">
       <div class="ui-page__title">
         <slot name="title">
@@ -30,22 +30,17 @@ defineProps({
   title: { type: String, default: '' },
   subtitle: { type: String, default: '' },
   hint: { type: String, default: '' },
-  // Katta jadvalli sahifalar uchun kenglik cheklovisiz
-  wide: { type: Boolean, default: false },
 })
 </script>
 
 <style scoped>
 .ui-page {
   width: 100%;
-  max-width: 1440px;
+  max-width: var(--ui-page-max);
   margin: 0 auto;
   padding: var(--ui-page-pad);
   color: var(--ui-ink-2);
   box-sizing: border-box;
-}
-.ui-page--wide {
-  max-width: none;
 }
 .ui-page__head {
   display: flex;

@@ -3,7 +3,6 @@
     v-loading="attendanceStore.isLoading"
     :title="$t('davomat')"
     :subtitle="$t('davomatSubtitle')"
-    wide
   >
     <template #actions>
       <button

@@ -3,7 +3,6 @@
     v-loading="tasksStore.isLoading"
     :title="$t('tasks')"
     :subtitle="$t('tasksSubtitle')"
-    wide
   >
     <template #actions>
       <el-button :icon="DataAnalysis" @click="reportDialog = true">

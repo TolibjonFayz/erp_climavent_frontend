@@ -1,5 +1,5 @@
 <template>
-  <UiPage :title="$t('raqibtext')" :subtitle="$t('compSubtitle')" wide>
+  <UiPage :title="$t('raqibtext')" :subtitle="$t('compSubtitle')">
     <template #actions>
       <el-button :icon="Plus" @click="openCompetitor(null)">{{ $t('cmpAdd') }}</el-button>
       <el-button type="primary" :icon="Plus" :disabled="!competitors.length" @click="openEncounter(null)">
