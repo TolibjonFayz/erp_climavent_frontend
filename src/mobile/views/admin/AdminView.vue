@@ -8,7 +8,7 @@ import { usePartnersStore } from '@/stores/partners'
 import { useComeAndGoInsideStore } from '@/stores/comeandgoInside'
 import { useAuditLog } from '@/composables/useAuditLog'
 import { fmtNum, formatDateTime, telHref } from '@/utils/format'
-import { partnerTypeLabel } from '@/utils/partners'
+import { formatLocationName, legalTypeLabel, partnerTypeLabel } from '@/utils/partners'
 import MPage from '../../components/MPage.vue'
 import MStats from '../../components/MStats.vue'
 import MEmpty from '../../components/MEmpty.vue'
@@ -302,10 +302,10 @@ async function exportTab() {
         "To'liq nomi": p.fullname ?? '—',
         Telefon: p.phone_number ?? '—',
         "Qo'shimcha telefon": p.additional_phone_number ?? '—',
-        Respublika: p.republic ?? '—',
-        Viloyat: p.viloyat ?? '—',
-        'Shahar/Tuman': p.shahar_tuman ?? '—',
-        'Yuridik/Jismoniy': p.mijozturi ?? '—',
+        Respublika: formatLocationName(p.republic) || '—',
+        Viloyat: formatLocationName(p.viloyat) || '—',
+        'Shahar/Tuman': formatLocationName(p.shahar_tuman) || '—',
+        'Yuridik/Jismoniy': legalTypeLabel(p.mijozturi) || '—',
         INN: p.inn ?? '—',
       })),
     }),
@@ -470,7 +470,7 @@ function onLoadMore() {
           </div>
           <div class="ad-user__tags">
             <span class="m-tag">{{ partnerTypeLabel(p.partner_type) }}</span>
-            <span class="m-tag" :class="/yuridik|юрид/i.test(p.mijozturi || '') ? 'is-good' : 'is-warn'">{{ p.mijozturi || '—' }}</span>
+            <span class="m-tag" :class="/yuridik|юрид/i.test(p.mijozturi || '') ? 'is-good' : 'is-warn'">{{ legalTypeLabel(p.mijozturi) || '—' }}</span>
           </div>
           <small class="ad-sub">{{ p.phone_number || '—' }} · {{ p.user?.firstname || '—' }} · {{ smartDate(p.createdAt, t, locale, false) }}</small>
         </article>

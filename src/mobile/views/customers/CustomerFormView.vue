@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { showFailToast, showSuccessToast } from 'vant'
 import { usePartnersStore } from '@/stores/partners'
 import { createLocationData, createRepublicOptions } from '@/constants/locations'
+import { LEGAL_TYPE_VALUES } from '@/utils/partners'
 import MPage from '../../components/MPage.vue'
 import MSelectSheet from '../../components/MSelectSheet.vue'
 import { PARTNER_GROUPS } from './groups'
@@ -53,7 +54,7 @@ const tumanlar = computed(() => {
   if (!found) return [{ value: BOSHQA, label: t('Boshqa') }]
   return found.tumanlar.map((item) => ({
     label: item.label,
-    value: item.value === t('Boshqa') ? BOSHQA : item.value,
+    value: item.value === 'Boshqa' ? BOSHQA : item.value,
   }))
 })
 
@@ -96,7 +97,6 @@ const getRepublicValue = (key) => {
   if (!key || key === BOSHQA) return null
   return republicOptions.find((r) => r.key === key)?.value || key
 }
-const LEGAL_LABELS = computed(() => ({ yuridik: t('yuridikShaxs'), jismoniy: t('jismoniyShaxs') }))
 
 const saving = ref(false)
 async function onSubmit() {
@@ -106,7 +106,7 @@ async function onSubmit() {
       republic: form.republic === BOSHQA ? form.otherrepublic : getRepublicValue(form.republic),
       viloyat: form.viloyat === BOSHQA ? form.otherviloyat : form.viloyat,
       shahar_tuman: form.shahar_tuman === BOSHQA ? form.other_shahar_tuman : form.shahar_tuman,
-      mijozturi: LEGAL_LABELS.value[form.mijozturi] || form.mijozturi,
+      mijozturi: LEGAL_TYPE_VALUES[form.mijozturi] || form.mijozturi,
       inn: form.mijozturi === 'yuridik' ? form.inn : '',
       phone_number: form.phone_number.trim(),
       additional_phone_number: form.additional_phone_number.trim(),

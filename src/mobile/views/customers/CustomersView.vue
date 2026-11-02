@@ -3,7 +3,7 @@ import { computed, onActivated, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { usePartnersStore } from '@/stores/partners'
-import { formatLocationName } from '@/utils/partners'
+import { formatLocationName, legalTypeLabel } from '@/utils/partners'
 import { countByPeriod, digitsOf, fmtNum, telHref } from '@/utils/format'
 import MPage from '../../components/MPage.vue'
 import MStats from '../../components/MStats.vue'
@@ -189,7 +189,7 @@ function openNew() {
             <h3 class="cl-item__name">{{ p.fullname || '—' }}</h3>
             <div class="cl-item__tags">
               <span class="m-tag" :class="isLegal(p) ? 'is-good' : 'is-warn'">
-                {{ p.mijozturi || '—' }}
+                {{ legalTypeLabel(p.mijozturi) || '—' }}
               </span>
               <span v-if="group === 'all'" class="m-tag">
                 {{ $t(PARTNER_GROUPS.find((g) => g.value === p.partner_type)?.labelKey || 'boshqa') }}
@@ -244,7 +244,7 @@ function openNew() {
           :class="{ 'is-active': legalType === lt }"
           @click="legalType = lt"
         >
-          {{ lt }}
+          {{ legalTypeLabel(lt) }}
         </button>
       </div>
       <div class="m-section"><span class="m-section__title">{{ $t('viloyat') }}</span></div>

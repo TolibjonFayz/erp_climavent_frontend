@@ -12,6 +12,7 @@ import MSheet from '../../components/MSheet.vue'
 import MEmpty from '../../components/MEmpty.vue'
 import { avatarColor, errorText, initials } from '../../utils'
 import { formatPlace } from './place'
+import { legalTypeLabel } from '@/utils/partners'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -152,7 +153,7 @@ async function saveNote() {
         </div>
         <h2 class="cd-hero__name">{{ p.fullname }}</h2>
         <div class="cd-hero__tags">
-          <span class="m-tag" :class="isLegal ? 'is-good' : 'is-warn'">{{ p.mijozturi || '—' }}</span>
+          <span class="m-tag" :class="isLegal ? 'is-good' : 'is-warn'">{{ legalTypeLabel(p.mijozturi) || '—' }}</span>
           <span class="m-tag">{{ partnerTypeLabel(p.partner_type) }}</span>
         </div>
 
@@ -214,7 +215,7 @@ async function saveNote() {
 
       <div class="m-section"><span class="m-section__title">{{ $t('m.mainInfo') }}</span></div>
       <van-cell-group inset>
-        <van-cell :title="$t('mijozTuri')" :value="p.mijozturi || '—'" value-class="cd-value" />
+        <van-cell :title="$t('mijozTuri')" :value="legalTypeLabel(p.mijozturi) || '—'" value-class="cd-value" />
         <van-cell
           v-if="p.inn"
           :title="$t('inn')"
