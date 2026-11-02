@@ -14,6 +14,14 @@ export function avatarColor(name = '') {
   return AVATAR_COLORS[h % AVATAR_COLORS.length]
 }
 
+/**
+ * Profil rasmi manzili yoki bo'sh satr. Rasm yuklamagan xodimlarda bazada "profile.jpg"
+ * (standart qiymat) turadi — u haqiqiy fayl emas, o'rniga bosh harflar ko'rsatiladi.
+ */
+export function photoUrl(src) {
+  return /^(https?:|data:|blob:)/.test(src || '') ? src : ''
+}
+
 export function initials(name = '') {
   // Qo'shtirnoq va belgilarni tashlab, faqat so'zlarning bosh harflari ("Ventstroy" MChJ → VM)
   const parts = String(name)

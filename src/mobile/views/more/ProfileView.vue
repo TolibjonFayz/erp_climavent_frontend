@@ -6,7 +6,7 @@ import { useUsersStore } from '@/stores/user'
 import MPage from '../../components/MPage.vue'
 import MSheet from '../../components/MSheet.vue'
 import { currentUserId, useSession } from '../../session'
-import { avatarColor, errorText, initials } from '../../utils'
+import { avatarColor, errorText, initials, photoUrl } from '../../utils'
 import { uploadToCloudinary } from '../sites/siteData'
 import { devicesApi } from '../../api'
 import { pushEnabled } from '../../push'
@@ -134,7 +134,7 @@ async function onAvatar(e) {
   <MPage :title="$t('m.profile')" :back="{ name: 'more' }">
     <section class="pf-hero">
       <button type="button" class="pf-avatar" :disabled="avatarBusy" @click="avatarInput?.click()">
-        <img v-if="user?.profile_image" :src="user.profile_image" alt="" />
+        <img v-if="photoUrl(user?.profile_image)" :src="photoUrl(user.profile_image)" alt="" />
         <span v-else class="m-avatar" :style="{ background: avatarColor(fullName) }">{{ initials(fullName) }}</span>
         <span class="pf-avatar__cam">
           <van-loading v-if="avatarBusy" size="14" color="#fff" />

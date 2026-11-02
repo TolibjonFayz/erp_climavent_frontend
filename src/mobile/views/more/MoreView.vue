@@ -11,7 +11,7 @@ import { setLanguage } from '../../i18n'
 import { isDark, toggleTheme } from '../../theme'
 import { stopPush } from '../../push'
 import { availableUpdate, promptUpdate } from '../../updater'
-import { avatarColor, initials } from '../../utils'
+import { avatarColor, initials, photoUrl } from '../../utils'
 
 const { t, locale } = useI18n()
 const router = useRouter()
@@ -59,7 +59,7 @@ async function logout() {
 <template>
   <MPage :title="$t('m.tabMore')" large tabbar>
     <button type="button" class="mv-profile" @click="router.push({ name: 'profile' })">
-      <img v-if="user?.profile_image" :src="user.profile_image" class="mv-profile__img" alt="" />
+      <img v-if="photoUrl(user?.profile_image)" :src="photoUrl(user.profile_image)" class="mv-profile__img" alt="" />
       <span v-else class="m-avatar mv-profile__img" :style="{ background: avatarColor(fullName) }">
         {{ initials(fullName) }}
       </span>

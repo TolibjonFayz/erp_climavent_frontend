@@ -15,7 +15,7 @@ import MEmpty from '../../components/MEmpty.vue'
 import MSheet from '../../components/MSheet.vue'
 import { PARTNER_GROUPS } from '../customers/groups'
 import { BOSS_USER_ID, currentUserId } from '../../session'
-import { avatarColor, errorText, includesText, initials, smartDate } from '../../utils'
+import { avatarColor, errorText, includesText, initials, photoUrl, smartDate } from '../../utils'
 import { whereTone } from '../sites/siteData'
 import { exportExcel } from '../../exporter'
 import AppReleases from './AppReleases.vue'
@@ -433,7 +433,7 @@ function onLoadMore() {
       </div>
       <van-list v-model:loading="listLoading" :finished="finished" :immediate-check="false" @load="onLoadMore">
         <article v-for="u in filteredUsers.slice(0, shown)" :key="u.id" class="m-card is-tappable ad-user" @click="openUser(u)">
-          <img v-if="u.profile_image" :src="u.profile_image" class="ad-user__img" alt="" />
+          <img v-if="photoUrl(u.profile_image)" :src="photoUrl(u.profile_image)" class="ad-user__img" alt="" />
           <span v-else class="m-avatar" :style="{ background: avatarColor(nameOf(u)) }">{{ initials(nameOf(u)) }}</span>
           <div class="ad-user__main">
             <b>{{ nameOf(u) }}</b>
@@ -531,7 +531,7 @@ function onLoadMore() {
     <MSheet v-model="userOpen" :title="selected ? nameOf(selected) : ''" max-height="90%">
       <template v-if="selected">
         <div class="ad-profile">
-          <img v-if="selected.profile_image" :src="selected.profile_image" class="ad-user__img is-lg" alt="" />
+          <img v-if="photoUrl(selected.profile_image)" :src="photoUrl(selected.profile_image)" class="ad-user__img is-lg" alt="" />
           <span v-else class="m-avatar ad-user__img is-lg" :style="{ background: avatarColor(nameOf(selected)) }">{{ initials(nameOf(selected)) }}</span>
           <div>
             <p class="ad-profile__user">@{{ selected.username }}</p>
