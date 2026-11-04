@@ -69,6 +69,7 @@ const PAGES = [
   { key: 'dogovor', label: 'admPermDogovor' },
   { key: 'loyiha', label: 'admPermLoyiha' },
   { key: 'sklad', label: 'admPermSklad' },
+  { key: 'otgruzka', label: 'admPermOtgruzka' },
   { key: 'attendance', label: 'admPermAttendance' },
   { key: 'tasks', label: 'admPermTasks' },
   { key: 'boss', label: 'admPermBoss' },

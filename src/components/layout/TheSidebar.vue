@@ -294,6 +294,14 @@ const menus = computed(() => {
       show: hasAccess('sklad'),
     },
     {
+      key: 'otgruzka',
+      href: '/otgruzka',
+      icon: 'otgruzka-icon',
+      title: 'otgruzkatext',
+      text: 'otgruzkatext',
+      show: hasAccess('otgruzka'),
+    },
+    {
       key: 'attendance',
       href: '/attendance',
       icon: 'project-icon',
@@ -987,6 +995,9 @@ $accent-dark: #2f7fe0;
   }
   &.sklad-icon::before {
     content: '📦';
+  }
+  &.otgruzka-icon::before {
+    content: '🚚';
   }
   &.oppenents-icon::before {
     content: '⚔️';

@@ -65,6 +65,12 @@ const router = createRouter({
       meta: { requiresAuth: true, permissionKey: 'sklad', nav: 'sklad' },
     },
     {
+      path: '/otgruzka',
+      name: 'otgruzka',
+      component: () => import('@/views/OtgruzkaView.vue'),
+      meta: { requiresAuth: true, permissionKey: 'otgruzka', nav: 'otgruzka' },
+    },
+    {
       path: '/competitors',
       name: 'competitors',
       component: () => import('@/views/CompetitorsView.vue'),
@@ -121,7 +127,7 @@ router.beforeEach(async (to, from, next) => {
 
       if (!hasAccess) {
         // Ruxsati yo'q pagega kirdi, ruxsati bor birinchi pagega redirect qilamiz
-        const allowedPages = ['customers', 'sites', 'competitors', 'kp', 'dogovor', 'loyiha', 'sklad', 'attendance', 'tasks'].filter(k => perms[k] !== false)
+        const allowedPages = ['customers', 'sites', 'competitors', 'kp', 'dogovor', 'loyiha', 'sklad', 'otgruzka', 'attendance', 'tasks'].filter(k => perms[k] !== false)
         if (perms.boss || Number(user.id) === BOSS_USER_ID) allowedPages.push('boss')
         
         if (allowedPages.length > 0) {

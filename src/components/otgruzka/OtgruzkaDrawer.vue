@@ -1,0 +1,607 @@
+<template>
+  <el-drawer
+    :model-value="modelValue != null"
+    :size="drawerSize"
+    :with-header="false"
+    class="ot-drawer"
+    @close="$emit('update:modelValue', null)"
+  >
+    <div v-loading="loading" class="ot-d">
+      <el-alert v-if="error" type="error" show-icon :closable="false" :title="error" />
+      <template v-if="o">
+        <header class="ot-d__head">
+          <div class="ot-d__title">
+            <div class="ot-d__meta">
+              № {{ o.dogovor_number || '—' }} · {{ $t(`otSeries_${o.series}`) }}
+              <template v-if="o.sheet_row && o.source === 'sheet'"> · {{ $t('otSheetRow', { row: o.sheet_row }) }}</template>
+            </div>
+            <h3>{{ o.client_name || '—' }}</h3>
+            <div class="ot-d__tags">
+              <span class="ot-tag" :class="`is-${STAGE_TONE[o.stage]}`">{{ $t(`otStage_${o.stage}`) }}</span>
+              <span class="ot-tag" :class="`is-${PAY_TONE[o.pay_status]}`">{{ $t(`otPay_${o.pay_status}`) }}</span>
+            </div>
+          </div>
+          <el-button text :icon="Close" :aria-label="$t('onbClose')" @click="$emit('update:modelValue', null)" />
+        </header>
+
+        <el-alert v-if="o.sheet_removed" type="warning" show-icon :closable="false" :title="$t('otRemoved')" />
+        <div v-if="o.alerts.length" class="ot-d__alerts">
+          <div v-for="a in o.alerts" :key="a"><el-icon><WarningFilled /></el-icon> {{ $t(`otAlert_${a}`) }}</div>
+        </div>
+        <div v-if="o.final_status && o.final_reason" class="ot-d__final">
+          <b>{{ $t('otFinalReason') }}:</b> {{ o.final_reason }}
+        </div>
+
+        <!-- Jarayon bosqichlari -->
+        <div class="ot-steps">
+          <div class="ot-step" :class="`is-${didoxTone}`">
+            <span class="ot-step__name">{{ $t('otStepDidox') }}</span>
+            <template v-if="o.official">
+              <span class="ot-step__val">{{ $t('otDidoxContract') }}: {{ flag(o.didox_contract) }}</span>
+              <span class="ot-step__val">{{ $t('otDidoxPoa') }}: {{ flag(o.didox_poa) }}</span>
+            </template>
+            <span v-else class="ot-step__val">{{ $t('otNa') }}</span>
+          </div>
+          <div class="ot-step" :class="`is-${PAY_TONE[o.pay_status]}`">
+            <span class="ot-step__name">{{ $t('otStepPay') }}</span>
+            <b>{{ fmtPct(o.contract_sum > 0 ? o.paid_sum / o.contract_sum : 0) }}</b>
+            <span class="ot-step__val">{{ fmtShort(o.paid_sum) }} / {{ fmtShort(o.contract_sum) }}</span>
+          </div>
+          <div class="ot-step" :class="o.ready_pct >= 1 ? 'is-good' : 'is-link'">
+            <span class="ot-step__name">{{ $t('otStepReady') }}</span>
+            <b>{{ fmtPct(o.ready_pct) }}</b>
+            <span v-if="o.sgp_date" class="ot-step__val">{{ formatDate(o.sgp_date) }}</span>
+          </div>
+          <div class="ot-step" :class="o.shipped_pct >= 1 ? 'is-good' : o.shipped_pct > 0 ? 'is-link' : 'is-muted'">
+            <span class="ot-step__name">{{ $t('otStepShip') }}</span>
+            <b>{{ fmtPct(o.shipped_pct) }}</b>
+          </div>
+          <div class="ot-step" :class="o.invoice_numbers ? 'is-good' : 'is-muted'">
+            <span class="ot-step__name">{{ $t('otStepInvoice') }}</span>
+            <span class="ot-step__val">{{ o.invoice_numbers || '—' }}</span>
+          </div>
+        </div>
+
+        <!-- Keyingi qadam — har doim tahrirlanadi -->
+        <section class="ot-sec ot-next">
+          <h4>{{ $t('otNextTitle') }}</h4>
+          <el-input v-model="next.text" type="textarea" :autosize="{ minRows: 2, maxRows: 5 }" :placeholder="$t('otNextPh')" maxlength="2000" />
+          <div class="ot-next__row">
+            <el-date-picker v-model="next.date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" :placeholder="$t('otNextDate')" />
+            <el-button type="primary" :disabled="!nextDirty" :loading="saving === 'next'" @click="saveNext">{{ $t('otSave') }}</el-button>
+          </div>
+        </section>
+
+        <!-- Asosiy ma'lumot -->
+        <section class="ot-sec">
+          <div class="ot-sec__head">
+            <h4>{{ $t('otColClient') }}</h4>
+            <el-button v-if="editable" size="small" :icon="Edit" @click="editOpen = true">{{ $t('otEdit') }}</el-button>
+          </div>
+          <dl class="ot-info">
+            <dt>{{ $t('otManager') }}</dt><dd>{{ o.manager_name || '—' }}</dd>
+            <dt>{{ $t('otInn') }}</dt><dd>{{ o.client_inn || '—' }}</dd>
+            <dt>{{ $t('otContact') }}</dt><dd>{{ o.client_contact || '—' }}</dd>
+            <dt>{{ $t('otPhone') }}</dt>
+            <dd>
+              <template v-if="phones.length">
+                <a v-for="p in phones" :key="p" :href="telHref(p)" class="ot-phone">{{ p }}</a>
+              </template>
+              <template v-else>—</template>
+            </dd>
+            <dt>{{ $t('otDate') }}</dt><dd>{{ o.dogovor_date ? formatDate(o.dogovor_date) : '—' }}</dd>
+            <dt>{{ $t('otSum') }}</dt><dd><b>{{ fmtMoney(o.contract_sum) }}</b></dd>
+            <dt>{{ $t('otInvoice') }}</dt><dd>{{ o.invoice_numbers || '—' }}</dd>
+            <dt>{{ $t('otErpDogovor') }}</dt>
+            <dd>
+              <router-link v-if="o.dogovor" :to="{ path: '/dogovor', query: { n: String(o.dogovor.dogovor_number), d: formatDate(o.dogovor.dogovor_date) } }">
+                № {{ o.dogovor.dogovor_number }} · {{ formatDate(o.dogovor.dogovor_date) }}
+              </router-link>
+              <span v-else class="ot-muted">{{ $t('otErpDogovorNone') }}</span>
+            </dd>
+          </dl>
+        </section>
+
+        <!-- To'lovlar -->
+        <section class="ot-sec">
+          <div class="ot-sec__head">
+            <h4>
+              <UiHint :label="$t('otPayments')" :hint="editable ? (twoWay ? $t('otPaymentsHintTwoWay') : '') : $t('otPaymentsHint')" />
+            </h4>
+            <span class="ot-muted">{{ $t('otPayTotal') }}: <b>{{ fmtMoney(o.paid_sum) }}</b></span>
+          </div>
+          <div v-if="!o.payments.length" class="ot-muted">{{ $t('otNoPayments') }}</div>
+          <div v-for="p in o.payments" :key="p.id" class="ot-pay">
+            <span class="ot-pay__date">{{ formatDate(p.pay_date) }}</span>
+            <span class="ot-pay__amount" :class="{ 'is-neg': p.amount < 0 }">{{ p.amount > 0 ? '+' : '' }}{{ fmtMoney(p.amount) }}</span>
+            <span class="ot-pay__comment">{{ payComment(p) }}</span>
+            <span class="ot-pay__btns">
+              <el-button text size="small" :icon="EditPen" :aria-label="$t('otPayEdit')" @click="editPayment(p)" />
+              <el-popconfirm v-if="editable && p.source === 'erp'" :title="$t('otConfirmDelete')" @confirm="removePayment(p)">
+                <template #reference><el-button text size="small" type="danger" :icon="Delete" :aria-label="$t('otDelete')" /></template>
+              </el-popconfirm>
+            </span>
+          </div>
+          <div v-if="editable" class="ot-pay-add">
+            <el-date-picker v-model="pay.date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" :placeholder="$t('otPayDate')" class="ot-pay-add__date" />
+            <el-input-number v-model="pay.amount" :controls="false" :placeholder="$t('otPayAmount')" class="ot-pay-add__amount" />
+            <el-input v-model="pay.comment" :placeholder="$t('otPayComment')" class="ot-pay-add__comment" />
+            <el-button type="primary" :icon="Plus" :disabled="!pay.amount || !pay.date" :loading="saving === 'pay'" @click="addPayment">
+              {{ $t('otPayAdd') }}
+            </el-button>
+          </div>
+        </section>
+
+        <!-- Tovarlar (Лист1) -->
+        <section v-if="o.lines.length" class="ot-sec">
+          <h4>{{ $t('otLines') }}</h4>
+          <table class="ot-lines">
+            <thead>
+              <tr>
+                <th>{{ $t('otLineName') }}</th>
+                <th>{{ $t('otLineQty') }}</th>
+                <th>{{ $t('otLineIn') }}</th>
+                <th>{{ $t('otLineOut') }}</th>
+                <th>{{ $t('otLineRest') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="l in o.lines" :key="l.id">
+                <td>{{ l.item_name }}<div v-if="l.client_label" class="ot-muted">{{ l.client_label }}</div></td>
+                <td>{{ l.qty_contract ?? '—' }}</td>
+                <td>{{ l.qty_in ?? '—' }}</td>
+                <td>{{ l.qty_out ?? '—' }}</td>
+                <td><b>{{ (l.qty_in ?? 0) - (l.qty_out ?? 0) }}</b></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Tarix -->
+        <section class="ot-sec">
+          <h4><UiHint :label="$t('otHistory')" :hint="twoWay ? $t('otHistoryHintTwoWay') : ''" /></h4>
+          <div class="ot-note-add">
+            <el-segmented v-model="note.kind" :options="noteKinds" size="small" />
+            <el-input v-model="note.text" type="textarea" :autosize="{ minRows: 2, maxRows: 6 }" :placeholder="$t('otNotePh')" maxlength="4000" />
+            <el-button type="primary" :disabled="!note.text.trim()" :loading="saving === 'note'" @click="addNote">{{ $t('otNoteAdd') }}</el-button>
+          </div>
+          <div v-if="!o.notes.length" class="ot-muted">{{ $t('otNoHistory') }}</div>
+          <ul class="ot-tl">
+            <li v-for="n in o.notes" :key="n.id" :class="`is-${n.kind}`">
+              <div class="ot-tl__meta">
+                <span class="ot-tl__kind">{{ $t(`otNoteKind_${n.kind}`) }}</span>
+                <span>{{ formatDateTime(n.createdAt) }}</span>
+                <span>· {{ author(n) }}</span>
+                <span v-if="n.source === 'sheet'" class="ot-tl__src">{{ n.data?.import ? $t('otNoteImport') : $t('otNoteFromSheet') }}</span>
+                <el-popconfirm v-if="canDeleteNote(n)" :title="$t('otConfirmDelete')" @confirm="removeNote(n)">
+                  <template #reference><el-button text size="small" type="danger" :icon="Delete" class="ot-tl__del" :aria-label="$t('otDelete')" /></template>
+                </el-popconfirm>
+              </div>
+              <div v-if="n.kind === 'change'" class="ot-tl__text">
+                <template v-if="n.data?.field === 'payment'">
+                  {{ $t('otPaymentFixed', { date: formatDate(n.data.pay_date), amount: fmtMoney(n.data.amount) }) }}
+                </template>
+                <template v-else>
+                  <b>{{ $t(`otField_${n.data?.field}`) }}:</b>
+                  {{ changeValue(n.data?.field, n.data?.from) }} → {{ changeValue(n.data?.field, n.data?.to) }}
+                </template>
+              </div>
+              <div v-else class="ot-tl__text">
+                <span v-if="n.data?.field === 'note_extra'" class="ot-muted">{{ $t('otField_note_extra') }}: </span>{{ n.text }}
+              </div>
+            </li>
+          </ul>
+        </section>
+      </template>
+    </div>
+
+    <!-- To'lovni to'g'rilash -->
+    <el-dialog v-model="payEdit.open" :title="$t('otPayEdit')" width="420px" append-to-body>
+      <el-form label-position="top">
+        <el-form-item :label="$t('otPayDate')">
+          <el-date-picker v-model="payEdit.date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" />
+        </el-form-item>
+        <el-form-item :label="$t('otPayAmount')">
+          <el-input-number v-model="payEdit.amount" :controls="false" :disabled="!editable" style="width: 100%" />
+        </el-form-item>
+        <el-form-item :label="$t('otPayComment')">
+          <el-input v-model="payEdit.comment" maxlength="1000" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="payEdit.open = false">{{ $t('otCancel') }}</el-button>
+        <el-button type="primary" :loading="saving === 'payEdit'" @click="savePayment">{{ $t('otSave') }}</el-button>
+      </template>
+    </el-dialog>
+
+    <OtgruzkaEditDialog v-if="o" v-model="editOpen" :order="o" @saved="applyDetail" />
+  </el-drawer>
+</template>
+
+<script setup>
+import { computed, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { ElMessage } from 'element-plus'
+import { Close, Delete, Edit, EditPen, Plus, WarningFilled } from '@element-plus/icons-vue'
+import UiHint from '@/components/ui/UiHint.vue'
+import api from '@/api/otgruzka'
+import { useUsersStore } from '@/stores/user'
+import { formatDate, formatDateTime, telHref } from '@/utils/format'
+import { changeValue, fmtMoney, fmtPct, fmtShort, otError, PAY_TONE, STAGE_TONE } from '@/utils/otgruzkaFormat'
+import OtgruzkaEditDialog from './OtgruzkaEditDialog.vue'
+
+const props = defineProps({
+  modelValue: { type: Number, default: null },
+  // ERP asosiy yoki ikki tomonlama sinxron — kartani to'liq tahrirlash mumkin
+  editable: Boolean,
+  twoWay: Boolean,
+  isAdmin: Boolean,
+})
+const emit = defineEmits(['update:modelValue', 'changed'])
+const { t } = useI18n()
+const usersStore = useUsersStore()
+
+const o = ref(null)
+const loading = ref(false)
+const error = ref('')
+const saving = ref('')
+const editOpen = ref(false)
+const next = reactive({ text: '', date: null })
+const pay = reactive({ date: new Date().toISOString().slice(0, 10), amount: undefined, comment: '' })
+const note = reactive({ kind: 'note', text: '' })
+const payEdit = reactive({ open: false, id: null, date: '', amount: 0, comment: '' })
+const drawerSize = computed(() => (window.innerWidth < 640 ? '100%' : '600px'))
+const noteKinds = computed(() => [
+  { label: t('otNoteKind_note'), value: 'note' },
+  { label: t('otNoteKind_call'), value: 'call' },
+])
+
+watch(
+  () => props.modelValue,
+  (id) => {
+    o.value = null
+    error.value = ''
+    editOpen.value = false
+    if (id) load(id)
+  },
+  { immediate: true },
+)
+
+async function load(id) {
+  loading.value = true
+  try {
+    applyDetail(await api.one(id), false)
+  } catch (e) {
+    error.value = otError(e)
+  } finally {
+    loading.value = false
+  }
+}
+function applyDetail(d, notify = true) {
+  o.value = d
+  next.text = d.next_action || ''
+  next.date = d.next_action_date || null
+  if (notify) emit('changed', d)
+}
+async function run(key, fn) {
+  saving.value = key
+  try {
+    applyDetail(await fn())
+    return true
+  } catch (e) {
+    ElMessage.error(otError(e))
+    return false
+  } finally {
+    saving.value = ''
+  }
+}
+
+const nextDirty = computed(() => o.value && ((next.text || '') !== (o.value.next_action || '') || (next.date || null) !== (o.value.next_action_date || null)))
+const saveNext = () => run('next', () => api.update(o.value.id, { next_action: next.text.trim() || null, next_action_date: next.date || null }))
+
+async function addPayment() {
+  const ok = await run('pay', () => api.addPayment(o.value.id, { amount: pay.amount, pay_date: pay.date, comment: pay.comment || undefined }))
+  if (ok) {
+    pay.amount = undefined
+    pay.comment = ''
+  }
+}
+const removePayment = (p) => run('pay', () => api.removePayment(p.id))
+function editPayment(p) {
+  Object.assign(payEdit, { open: true, id: p.id, date: p.pay_date, amount: p.amount, comment: p.comment?.startsWith('sys:') ? '' : p.comment || '' })
+}
+async function savePayment() {
+  const orig = o.value.payments.find((p) => p.id === payEdit.id)
+  const body = { pay_date: payEdit.date, comment: payEdit.comment.trim() || (orig?.comment?.startsWith('sys:') ? orig.comment : null) }
+  if (props.editable && payEdit.amount !== orig?.amount) body.amount = payEdit.amount
+  if (await run('payEdit', () => api.updatePayment(payEdit.id, body))) payEdit.open = false
+}
+
+async function addNote() {
+  if (await run('note', () => api.addNote(o.value.id, { kind: note.kind, text: note.text.trim() }))) note.text = ''
+}
+const removeNote = (n) => run('note', () => api.removeNote(n.id))
+const canDeleteNote = (n) =>
+  n.kind !== 'change' &&
+  n.source === 'erp' &&
+  (props.isAdmin || (n.created_by === usersStore.currentUser?.id && Date.now() - new Date(n.createdAt).getTime() < 2 * 86400000))
+
+const flag = (v) => (v === true ? t('otYes') : v === false ? t('otNo') : t('otNa'))
+const didoxTone = computed(() => {
+  if (!o.value?.official) return 'muted'
+  const { didox_contract: c, didox_poa: p } = o.value
+  if (c === true && p === true) return 'good'
+  if (c === false || p === false) return 'bad'
+  return 'warn'
+})
+const phones = computed(() => (o.value?.client_phone || '').split(/,\s*/).filter((p) => /\d{5,}/.test(p.replace(/\D/g, ''))))
+const payComment = (p) => (p.comment?.startsWith('sys:') ? t(`otPaySys_${p.comment.slice(4)}`) : p.comment || '')
+// Jadvaldan kelgan yozuvlar — sinxronni kim bosganidan qat'i nazar, muallifi jadval
+const author = (n) => {
+  const c = n.creator
+  if (!c || n.source === 'sheet') return t('otSystem')
+  return [c.firstname, c.lastname].filter(Boolean).join(' ') || c.username
+}
+</script>
+
+<style scoped lang="scss">
+.ot-d {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  min-height: 100%;
+  box-sizing: border-box;
+  font-size: 14px;
+  color: var(--ui-ink-2);
+}
+.ot-d__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  h3 {
+    margin: 2px 0 8px;
+    font-size: 20px;
+    color: var(--ui-ink);
+    line-height: 1.3;
+  }
+}
+.ot-d__meta {
+  font-size: 13px;
+  color: var(--ui-muted);
+}
+.ot-d__tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.ot-d__alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--ui-radius);
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn-ink);
+  border: 1px solid var(--ui-warn-line);
+  .el-icon {
+    vertical-align: -2px;
+  }
+}
+.ot-d__final {
+  padding: 10px 12px;
+  border-radius: var(--ui-radius);
+  background: var(--ui-bad-soft);
+  color: var(--ui-bad);
+}
+.ot-steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+@media (max-width: 560px) {
+  .ot-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.ot-step {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--ui-radius);
+  border-top: 3px solid var(--ui-line);
+  background: var(--ui-surface-2);
+  min-width: 0;
+  b {
+    font-size: 17px;
+    color: var(--ui-ink);
+  }
+  &.is-good {
+    border-top-color: var(--ui-good);
+  }
+  &.is-warn {
+    border-top-color: var(--ui-warn);
+  }
+  &.is-bad {
+    border-top-color: var(--ui-bad);
+  }
+  &.is-link {
+    border-top-color: var(--ui-link);
+  }
+}
+.ot-step__name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ui-muted);
+}
+.ot-step__val {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.ot-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ui-line-soft);
+  h4 {
+    margin: 0;
+    font-size: 15px;
+    color: var(--ui-ink);
+  }
+}
+.ot-sec__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.ot-next {
+  padding: 12px;
+  border: 1px solid var(--ui-link-line);
+  border-radius: var(--ui-radius);
+  background: var(--ui-link-soft);
+}
+.ot-next__row {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+.ot-info {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+  dt {
+    color: var(--ui-muted);
+  }
+  dd {
+    margin: 0;
+    color: var(--ui-ink);
+    overflow-wrap: anywhere;
+  }
+}
+.ot-phone {
+  display: block;
+}
+.ot-muted {
+  font-size: 13px;
+  color: var(--ui-muted);
+}
+.ot-pay {
+  display: grid;
+  grid-template-columns: 90px 130px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--ui-line-soft);
+}
+.ot-pay__amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-good);
+  text-align: right;
+  &.is-neg {
+    color: var(--ui-bad);
+  }
+}
+.ot-pay__comment {
+  font-size: 13px;
+  color: var(--ui-muted);
+}
+.ot-pay__btns {
+  display: inline-flex;
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+.ot-pay-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ot-pay-add__date {
+  width: 150px !important;
+}
+.ot-pay-add__amount {
+  width: 150px;
+}
+.ot-pay-add__comment {
+  flex: 1 1 140px;
+}
+.ot-lines {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  th,
+  td {
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--ui-line-soft);
+    text-align: right;
+  }
+  th:first-child,
+  td:first-child {
+    text-align: left;
+  }
+  th {
+    font-weight: 600;
+    color: var(--ui-muted);
+  }
+}
+.ot-note-add {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  .el-textarea {
+    width: 100%;
+  }
+}
+.ot-tl {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  li {
+    padding: 8px 10px 8px 12px;
+    border-left: 3px solid var(--ui-line);
+    background: var(--ui-surface-2);
+    border-radius: 0 var(--ui-radius) var(--ui-radius) 0;
+    &.is-note {
+      border-left-color: var(--ui-link);
+    }
+    &.is-call {
+      border-left-color: var(--ui-good);
+    }
+  }
+}
+.ot-tl__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  font-size: 12px;
+  color: var(--ui-muted);
+}
+.ot-tl__kind {
+  font-weight: 700;
+  color: var(--ui-ink-2);
+}
+.ot-tl__src {
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--ui-link-soft);
+  color: var(--ui-link);
+}
+.ot-tl__del {
+  margin-left: auto;
+}
+.ot-tl__text {
+  margin-top: 4px;
+  white-space: pre-wrap;
+  color: var(--ui-ink);
+}
+</style>

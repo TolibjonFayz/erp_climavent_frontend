@@ -70,6 +70,7 @@ export const MODULES = [
   'competitors',
   'loyiha',
   'sklad',
+  'otgruzka',
   'training',
   'boss',
   'announcements',

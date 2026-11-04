@@ -4,12 +4,20 @@ import { createI18n } from 'vue-i18n'
 // Ikkinchi til foydalanuvchi uni tanlagandagina alohida faylda yuklab olinadi.
 const loaders = {
   uz: () =>
-    Promise.all([import('./locales/uz.json'), import('./locales/sklad.js'), import('./locales/admin.js')]).then(
-      ([base, sklad, admin]) => ({ ...base.default, ...sklad.uz, ...admin.uz }),
+    Promise.all([
+      import('./locales/uz.json'),
+      import('./locales/sklad.js'),
+      import('./locales/admin.js'),
+      import('./locales/otgruzka.js'),
+    ]).then(([base, sklad, admin, otgruzka]) => ({ ...base.default, ...sklad.uz, ...admin.uz, ...otgruzka.uz }),
     ),
   ru: () =>
-    Promise.all([import('./locales/ru.json'), import('./locales/sklad.js'), import('./locales/admin.js')]).then(
-      ([base, sklad, admin]) => ({ ...base.default, ...sklad.ru, ...admin.ru }),
+    Promise.all([
+      import('./locales/ru.json'),
+      import('./locales/sklad.js'),
+      import('./locales/admin.js'),
+      import('./locales/otgruzka.js'),
+    ]).then(([base, sklad, admin, otgruzka]) => ({ ...base.default, ...sklad.ru, ...admin.ru, ...otgruzka.ru }),
     ),
 }
 
