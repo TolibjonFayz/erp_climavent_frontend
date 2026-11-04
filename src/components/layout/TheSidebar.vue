@@ -54,7 +54,13 @@
       @navigate="closeMobile"
     />
 
-    <nav class="sidebar-nav">
+    <!-- Sig'masa suriladi: tepa/past chetida xira soya — davomi borligini bildiradi -->
+    <nav
+      ref="navScroll"
+      class="sidebar-nav"
+      :class="{ 'fade-top': fadeTop, 'fade-bottom': fadeBottom }"
+      @scroll.passive="updateFades"
+    >
       <ul ref="navList" class="nav-list">
         <!-- Faol bo'lim foni: har bandda alohida emas, bitta — bo'lim almashganda yangi joyga suriladi -->
         <li class="nav-pill" :class="{ 'is-placed': pillPlaced }" :style="pillStyle" aria-hidden="true"></li>
@@ -92,8 +98,9 @@
 
     </nav>
 
-    <!-- Tizim guruhi: har doim pastda, ish bo'limlaridan ajralgan — Sozlamalar va tungi rejim -->
-    <div class="sidebar-system">
+    <!-- Tizim guruhi: har doim pastda, ish bo'limlaridan ajralgan — Sozlamalar va tungi rejim.
+         Ochiq sidebar'da bitta qator ikonkalar (joy tejaydi), yig'ilganda — ustun -->
+    <div class="sidebar-system" :class="{ 'is-row': !showCollapsed }">
       <!-- Umumiy qidiruv (Ctrl+K) -->
       <div class="nav-item">
         <button
@@ -161,7 +168,7 @@
 <script setup lang="ts">
 import { useUsersStore } from '@/stores/user'
 import { useTasksStore } from '@/stores/tasks'
-import { onMounted, ref, computed, inject } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed, inject, watch, nextTick } from 'vue'
 import { useActivePill } from '@/composables/useActivePill'
 import { useI18n } from 'vue-i18n'
 import { useSidebar } from '@/composables/useSidebar'
@@ -352,6 +359,34 @@ const { pillStyle, pillPlaced } = useActivePill(navList, '.nav-item.active', () 
   visibleMenus.value.length,
   showCollapsed.value,
 ])
+
+// ─── Menyu sig'masa: chetlardagi soya va faol bo'limni ko'rinadigan joyga olib kelish ───
+const navScroll = ref<HTMLElement | null>(null)
+const fadeTop = ref(false)
+const fadeBottom = ref(false)
+function updateFades() {
+  const el = navScroll.value
+  if (!el) return
+  fadeTop.value = el.scrollTop > 8
+  fadeBottom.value = el.scrollTop + el.clientHeight < el.scrollHeight - 8
+}
+function revealActive() {
+  nextTick(() => {
+    navScroll.value?.querySelector('.nav-item.active')?.scrollIntoView({ block: 'nearest' })
+    updateFades()
+  })
+}
+watch(() => [props.activePath, visibleMenus.value.length], revealActive)
+let navObserver: ResizeObserver | null = null
+onMounted(() => {
+  revealActive()
+  if (navScroll.value && 'ResizeObserver' in window) {
+    navObserver = new ResizeObserver(updateFades)
+    navObserver.observe(navScroll.value)
+    if (navList.value) navObserver.observe(navList.value)
+  }
+})
+onBeforeUnmount(() => navObserver?.disconnect())
 
 onMounted(async () => {
   loading.value = true
@@ -704,6 +739,139 @@ $accent-dark: #2f7fe0;
   margin-bottom: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--ui-line);
+}
+
+/* Ochiq sidebar: Qidiruv, Bildirishnomalar, Sozlamalar, Tungi rejim — bitta qator ikonkalar */
+.sidebar-system.is-row {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px 0;
+
+  .nav-item {
+    flex: 1;
+    margin: 0;
+  }
+  .nav-link {
+    justify-content: center;
+    height: 42px;
+    padding: 0;
+  }
+  .nav-text,
+  .nav-kbd {
+    display: none;
+  }
+  .icon {
+    font-size: 19px;
+  }
+  .task-badges {
+    position: absolute;
+    top: 3px;
+    right: 8px;
+  }
+  .task-badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+    line-height: 16px;
+  }
+}
+
+/* Menyu sig'masa: chetlarida xira soya — "davomi bor" degan ishora */
+.sidebar-nav.fade-top {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 28px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 28px);
+}
+.sidebar-nav.fade-bottom {
+  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 28px);
+  mask-image: linear-gradient(to top, transparent 0, #000 28px);
+}
+.sidebar-nav.fade-top.fade-bottom {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+}
+
+/* Noutbuklar (balandligi kichik ekranlar): hamma narsa ixchamroq — menyu scroll'siz sig'sin */
+@media (max-height: 860px) {
+  .sidebar-header {
+    padding: 14px 18px;
+  }
+  .sidebar.collapsed .sidebar-header {
+    padding: 14px 0;
+  }
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .logo-text h3 {
+    font-size: 17px;
+  }
+  .sidebar-nav {
+    padding: 8px 0;
+  }
+  .nav-item {
+    margin-bottom: 3px;
+  }
+  .nav-link {
+    padding: 9px 12px;
+  }
+  .sidebar.collapsed .nav-link {
+    padding: 9px;
+  }
+  .sidebar-system {
+    margin-bottom: 8px;
+    padding-top: 8px;
+  }
+  .sidebar-system.is-row .nav-link {
+    height: 38px;
+  }
+  .user-profile {
+    margin: 0 12px 10px;
+    padding: 8px 12px;
+  }
+  .user-avatar img {
+    width: 36px;
+    height: 36px;
+  }
+  .sidebar :deep(.qc) {
+    margin-top: 10px;
+  }
+  .sidebar :deep(.qc-btn) {
+    height: 38px;
+  }
+}
+
+@media (max-height: 720px) {
+  .sidebar-header {
+    padding: 10px 18px;
+  }
+  .sidebar-nav {
+    padding: 4px 0;
+  }
+  .nav-link {
+    padding: 6px 12px;
+  }
+  .sidebar.collapsed .nav-link {
+    padding: 6px;
+  }
+  .nav-item {
+    margin-bottom: 2px;
+  }
+  .sidebar-system {
+    margin-bottom: 6px;
+    padding-top: 6px;
+  }
+  .user-profile {
+    margin-bottom: 8px;
+  }
+  /* Uzun nom bitta qatorga (to'liq nomi — sichqoncha ustiga kelganda) */
+  .nav-link .nav-text.multiline {
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+  .user-info p {
+    display: none;
+  }
 }
 
 .el-nav-icon {
