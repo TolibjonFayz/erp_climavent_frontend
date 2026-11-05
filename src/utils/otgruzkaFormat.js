@@ -42,6 +42,8 @@ export const STAGE_TONE = {
   stopped: 'bad',
   stock: 'muted',
 }
+// Mahsulotning ombordagi tayyorligi: ready — to'liq, partial — qisman, none — yo'q, unknown — omborda topilmadi
+export const STOCK_TONE = { ready: 'good', partial: 'warn', none: 'bad', unknown: 'muted' }
 export const PAY_TONE = { paid: 'good', partial: 'warn', unpaid: 'bad', none: 'muted' }
 export const STAGES = ['waiting', 'ready', 'partial', 'shipped', 'done', 'refused', 'returned', 'stopped', 'stock']
 export const FINAL_STAGES = ['refused', 'returned', 'stopped', 'stock']

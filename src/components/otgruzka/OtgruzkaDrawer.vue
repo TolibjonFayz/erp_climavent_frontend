@@ -132,6 +132,67 @@
           </div>
         </section>
 
+        <!-- Mahsulotlar: shartnomadagi nom/soni/narxi + omborda nechtasi tayyor -->
+        <section class="ot-sec">
+          <div class="ot-sec__head">
+            <h4>
+              <UiHint :label="$t('otItems')" :hint="$t('otItemsHint')" />
+            </h4>
+            <span class="ot-sec__btns">
+              <span v-if="stock && o.items.length" class="ot-tag" :class="`is-${stockTone(stock.summary)}`">
+                {{ $t('otStockSummary', { ready: stock.summary.ready_positions, total: stock.summary.positions }) }}
+              </span>
+              <el-button size="small" :icon="Edit" @click="openItems">{{ o.items.length ? $t('otEdit') : $t('otItemAdd') }}</el-button>
+            </span>
+          </div>
+          <div v-if="o.items_from_dogovor" class="ot-muted">{{ $t('otItemsFromDogovor') }}</div>
+          <div v-if="!o.items.length" class="ot-muted">{{ $t('otNoItems') }}</div>
+          <table v-else v-loading="stockLoading" class="ot-lines ot-items">
+            <thead>
+              <tr>
+                <th>{{ $t('otItemName') }}</th>
+                <th class="is-r">{{ $t('otItemQty') }}</th>
+                <th class="is-r">{{ $t('otItemPrice') }}</th>
+                <th class="is-r">{{ $t('otItemSum') }}</th>
+                <th>{{ $t('otItemStock') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(it, i) in o.items" :key="i">
+                <td>{{ it.name }}</td>
+                <td class="is-r nowrap">{{ fmtQty(it.qty) }} {{ it.unit || '' }}</td>
+                <td class="is-r nowrap">{{ fmtMoney(it.price) }}</td>
+                <td class="is-r nowrap">{{ fmtMoney((it.qty || 0) * (it.price || 0)) }}</td>
+                <td>
+                  <template v-if="stock?.rows[i]">
+                    <el-tooltip placement="left" :disabled="stock.rows[i].status === 'unknown'">
+                      <template #content>
+                        <div v-if="stock.rows[i].item">
+                          {{ $t('otStockItem') }}: {{ stock.rows[i].item.sap_name || stock.rows[i].item.name }}
+                          <span v-if="stock.rows[i].approx">≈</span>
+                        </div>
+                        <div>{{ $t('otStockFree') }}: {{ fmtQty(stock.rows[i].balance ?? 0) }}</div>
+                        <div>{{ $t('otStockReserved') }}: {{ fmtQty(stock.rows[i].reserved) }}</div>
+                      </template>
+                      <span class="ot-tag" :class="`is-${STOCK_TONE[stock.rows[i].status]}`">
+                        <template v-if="stock.rows[i].status === 'unknown'">{{ $t('otStock_unknown') }}</template>
+                        <template v-else>{{ fmtQty(stock.rows[i].ready) }} / {{ fmtQty(stock.rows[i].qty) }}</template>
+                      </span>
+                    </el-tooltip>
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3" class="is-r ot-muted">{{ $t('otItemsTotal') }}</td>
+                <td class="is-r nowrap"><b>{{ fmtMoney(itemsTotal) }}</b></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </section>
+
         <!-- Tovarlar (Лист1) -->
         <section v-if="o.lines.length" class="ot-sec">
           <h4>{{ $t('otLines') }}</h4>
@@ -178,7 +239,8 @@
                 </el-popconfirm>
               </div>
               <div v-if="n.kind === 'change'" class="ot-tl__text">
-                <template v-if="n.data?.field === 'payment'">
+                <template v-if="n.data?.field === 'from_dogovor'">{{ $t('otFromDogovor') }}</template>
+                <template v-else-if="n.data?.field === 'payment'">
                   {{ $t('otPaymentFixed', { date: formatDate(n.data.pay_date), amount: fmtMoney(n.data.amount) }) }}
                 </template>
                 <template v-else>
@@ -214,6 +276,15 @@
       </template>
     </el-dialog>
 
+    <!-- Mahsulotlarni tahrirlash (faqat ERP'da yuritiladi, jadvalga tegmaydi) -->
+    <el-dialog v-model="itemsEdit.open" :title="$t('otItems')" width="min(820px, 96vw)" append-to-body>
+      <OtItemsEditor v-model="itemsEdit.list" />
+      <template #footer>
+        <el-button @click="itemsEdit.open = false">{{ $t('otCancel') }}</el-button>
+        <el-button type="primary" :loading="saving === 'items'" @click="saveItems">{{ $t('otSave') }}</el-button>
+      </template>
+    </el-dialog>
+
     <OtgruzkaEditDialog v-if="o" v-model="editOpen" :order="o" @saved="applyDetail" />
   </el-drawer>
 </template>
@@ -227,8 +298,10 @@ import UiHint from '@/components/ui/UiHint.vue'
 import api from '@/api/otgruzka'
 import { useUsersStore } from '@/stores/user'
 import { formatDate, formatDateTime, telHref } from '@/utils/format'
-import { changeValue, fmtMoney, fmtPct, fmtShort, otError, PAY_TONE, STAGE_TONE } from '@/utils/otgruzkaFormat'
+import { changeValue, fmtMoney, fmtPct, fmtShort, otError, PAY_TONE, STAGE_TONE, STOCK_TONE } from '@/utils/otgruzkaFormat'
 import OtgruzkaEditDialog from './OtgruzkaEditDialog.vue'
+import OtItemsEditor from './OtItemsEditor.vue'
+import { fmtQty } from '@/utils/skladFormat'
 
 const props = defineProps({
   modelValue: { type: Number, default: null },
@@ -246,6 +319,9 @@ const loading = ref(false)
 const error = ref('')
 const saving = ref('')
 const editOpen = ref(false)
+const stock = ref(null)
+const stockLoading = ref(false)
+const itemsEdit = reactive({ open: false, list: [] })
 const next = reactive({ text: '', date: null })
 const pay = reactive({ date: new Date().toISOString().slice(0, 10), amount: undefined, comment: '' })
 const note = reactive({ kind: 'note', text: '' })
@@ -260,6 +336,7 @@ watch(
   () => props.modelValue,
   (id) => {
     o.value = null
+    stock.value = null
     error.value = ''
     editOpen.value = false
     if (id) load(id)
@@ -278,7 +355,9 @@ async function load(id) {
   }
 }
 function applyDetail(d, notify = true) {
+  const itemsChanged = JSON.stringify(o.value?.items || null) !== JSON.stringify(d.items || null)
   o.value = d
+  if (itemsChanged || !stock.value) loadStock(d)
   next.text = d.next_action || ''
   next.date = d.next_action_date || null
   if (notify) emit('changed', d)
@@ -294,6 +373,36 @@ async function run(key, fn) {
   } finally {
     saving.value = ''
   }
+}
+
+// Ombordagi qoldiq — karta ochilgandan keyin alohida (ombor hisob-kitobi sekinroq)
+async function loadStock(d) {
+  if (!d.items?.length) {
+    stock.value = null
+    return
+  }
+  stockLoading.value = true
+  try {
+    const r = await api.stock(d.id)
+    if (o.value?.id === d.id) stock.value = r
+  } catch {
+    stock.value = null
+  } finally {
+    stockLoading.value = false
+  }
+}
+const itemsTotal = computed(() => (o.value?.items || []).reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.price) || 0), 0))
+const stockTone = (sum) => (sum.positions && sum.ready_positions === sum.positions ? 'good' : sum.pct > 0 ? 'warn' : 'muted')
+function openItems() {
+  itemsEdit.list = (o.value.items || []).map((i) => ({ name: i.name, unit: i.unit || '', qty: i.qty, price: i.price }))
+  if (!itemsEdit.list.length) itemsEdit.list.push({ name: '', unit: 'шт', qty: 1, price: 0 })
+  itemsEdit.open = true
+}
+async function saveItems() {
+  const items = itemsEdit.list
+    .filter((i) => String(i.name || '').trim())
+    .map((i) => ({ name: i.name.trim(), unit: String(i.unit || '').trim() || null, qty: Number(i.qty) || 0, price: Number(i.price) || 0 }))
+  if (await run('items', () => api.update(o.value.id, { items }))) itemsEdit.open = false
 }
 
 const nextDirty = computed(() => o.value && ((next.text || '') !== (o.value.next_action || '') || (next.date || null) !== (o.value.next_action_date || null)))
@@ -548,6 +657,25 @@ const author = (n) => {
     font-weight: 600;
     color: var(--ui-muted);
   }
+}
+.ot-items {
+  td {
+    vertical-align: top;
+  }
+  td:first-child {
+    color: var(--ui-ink);
+  }
+  .nowrap {
+    white-space: nowrap;
+  }
+  tfoot td {
+    border-bottom: 0;
+  }
+}
+.ot-sec__btns {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 .ot-note-add {
   display: flex;

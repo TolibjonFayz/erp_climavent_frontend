@@ -135,7 +135,12 @@
         <SkladMovements v-if="visited.movements" :is-admin="isAdmin" @open="openItem" />
       </el-tab-pane>
       <el-tab-pane name="contracts" :label="$t('skTabContracts')">
-        <SkladContracts v-if="visited.contracts" @open="openItem" />
+        <template v-if="visited.contracts">
+          <!-- ERP'ga tushgan yangi shartnomalar tayyorligi yoki jadvaldagi "договора на складе" -->
+          <el-segmented v-model="contractsView" :options="contractsViews" size="large" class="sk-ctr-switch" />
+          <SkladReadiness v-if="contractsView === 'erp'" @open="openItem" />
+          <SkladContracts v-else @open="openItem" />
+        </template>
       </el-tab-pane>
       <el-tab-pane name="analytics" :label="$t('skTabAnalytics')">
         <SkladAnalytics v-if="visited.analytics" :items="store.items" @open="openItem" />
@@ -185,6 +190,7 @@ import { apiError, periodLabel } from '@/utils/skladFormat'
 import SkladStock from './SkladStock.vue'
 import SkladMovements from './SkladMovements.vue'
 import SkladContracts from './SkladContracts.vue'
+import SkladReadiness from './SkladReadiness.vue'
 import SkladAnalytics from './SkladAnalytics.vue'
 import SkladAdmin from './SkladAdmin.vue'
 import SkladItemDrawer from './SkladItemDrawer.vue'
@@ -201,6 +207,11 @@ const loading = ref(false)
 const loadError = ref('')
 const tab = ref('stock')
 const visited = reactive({ stock: true })
+const contractsView = ref('erp')
+const contractsViews = computed(() => [
+  { label: t('skCtrViewErp'), value: 'erp' },
+  { label: t('skCtrViewSheet'), value: 'sheet' },
+])
 const stockRef = ref(null)
 
 const itemId = ref(null)
@@ -572,6 +583,9 @@ onMounted(async () => {
   }
   :deep(.el-tabs__item.is-active) {
     color: var(--ui-link);
+  }
+  .sk-ctr-switch {
+    align-self: flex-start;
   }
   :deep(.el-tab-pane) {
     display: flex;

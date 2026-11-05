@@ -380,7 +380,7 @@
 
           <el-col :span="8">
             <el-form-item :label="$t('dogovorManagerLabel')" prop="manager_name">
-              <el-input v-model="form.manager_name" maxlength="120" />
+              <ManagerSelect v-model="form.manager_name" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -663,6 +663,7 @@ import { useDogovorStore } from '@/stores/dogovor'
 import { useUsersStore } from '@/stores/user'
 import { printDogovorDocument } from '@/utils/dogovorPdf'
 import { readDogovorPdf } from '@/utils/dogovorPdfImport'
+import ManagerSelect from '@/components/ui/ManagerSelect.vue'
 
 const { t } = useI18n()
 const dogovorStore = useDogovorStore()

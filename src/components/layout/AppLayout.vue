@@ -5,6 +5,7 @@
       <slot />
     </main>
     <GlobalSearch v-model="searchOpen" />
+    <BackToTop />
   </div>
 </template>
 
@@ -13,6 +14,7 @@ import { onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import { useSidebar } from '@/composables/useSidebar'
 import TheSidebar from './TheSidebar.vue'
 import GlobalSearch from './GlobalSearch.vue'
+import BackToTop from './BackToTop.vue'
 
 defineProps({
   active: { type: String, required: true },

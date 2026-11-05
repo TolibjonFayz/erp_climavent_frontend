@@ -9,7 +9,7 @@
         </el-form-item>
         <el-form-item :label="$t('otClient')" class="is-wide"><el-input v-model="f.client_name" maxlength="255" /></el-form-item>
         <el-form-item :label="$t('otInn')"><el-input v-model="f.client_inn" maxlength="32" /></el-form-item>
-        <el-form-item :label="$t('otManager')"><el-input v-model="f.manager_name" maxlength="255" /></el-form-item>
+        <el-form-item :label="$t('otManager')"><ManagerSelect v-model="f.manager_name" /></el-form-item>
         <el-form-item :label="$t('otContact')"><el-input v-model="f.client_contact" maxlength="255" /></el-form-item>
         <el-form-item :label="$t('otPhone')"><el-input v-model="f.client_phone" maxlength="255" /></el-form-item>
         <el-form-item :label="$t('otSum')">
@@ -57,6 +57,7 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import api from '@/api/otgruzka'
 import { FINAL_STAGES, otError } from '@/utils/otgruzkaFormat'
+import ManagerSelect from '@/components/ui/ManagerSelect.vue'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -106,7 +107,7 @@ async function save() {
       dogovor_date: f.dogovor_date || null,
       client_name: f.client_name.trim(),
       client_inn: f.client_inn.trim() || null,
-      manager_name: f.manager_name.trim() || null,
+      manager_name: (f.manager_name || '').trim() || null,
       client_contact: f.client_contact.trim() || null,
       client_phone: f.client_phone.trim() || null,
       contract_sum: f.contract_sum || 0,
