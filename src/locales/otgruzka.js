@@ -81,6 +81,8 @@ export const uz = {
   // Ustunlar
   otColNumber: 'Shartnoma',
   otColClient: 'Mijoz va menejer',
+  otColCreated: 'Yaratilgan',
+  otCreatedErp: "ERP'ga qo'shilgan",
   otColSum: 'Summa',
   otColPay: "To'lov",
   otColReady: 'Tayyor',
@@ -358,6 +360,8 @@ export const ru = {
 
   otColNumber: 'Договор',
   otColClient: 'Клиент и менеджер',
+  otColCreated: 'Создан',
+  otCreatedErp: 'Добавлен в ERP',
   otColSum: 'Сумма',
   otColPay: 'Оплата',
   otColReady: 'Готовность',

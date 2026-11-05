@@ -57,12 +57,16 @@
             <div class="ot-series" :class="{ 'is-off': !row.official }">{{ $t(`otSeries_${row.series}`) }}</div>
           </template>
         </el-table-column>
+        <el-table-column :label="$t('otColCreated')" prop="created" sortable="custom" min-width="104">
+          <template #default="{ row }">
+            <div>{{ createdOf(row) ? formatDate(createdOf(row)) : '—' }}</div>
+            <div v-if="!row.dogovor_date && row.createdAt" class="ot-muted">{{ $t('otCreatedErp') }}</div>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('otColClient')" prop="client_name" sortable="custom" min-width="190">
           <template #default="{ row }">
             <div class="ot-client">{{ row.client_name || '—' }}</div>
-            <div class="ot-muted">
-              {{ row.manager_name || '—' }}<template v-if="row.dogovor_date"> · {{ formatDate(row.dogovor_date) }}</template>
-            </div>
+            <div class="ot-muted">{{ row.manager_name || '—' }}</div>
           </template>
         </el-table-column>
         <el-table-column :label="$t('otColSum')" prop="contract_sum" sortable="custom" align="right" min-width="120">
@@ -178,7 +182,14 @@ const sort = ref({ prop: 'sheet_row', order: 'ascending' })
 function onSort({ prop, order }) {
   sort.value = { prop: order ? prop : 'sheet_row', order: order || 'ascending' }
 }
+// "Yaratilgan": shartnoma sanasi, bo'lmasa karta ERP'ga qo'shilgan sana
+const createdOf = (r) => r.dogovor_date || r.createdAt || null
 const sortVal = (r, p) => {
+  // Bir kunda bir nechta bo'lsa — keyin qo'shilgani keyin turadi
+  if (p === 'created') {
+    const d = createdOf(r)
+    return d ? `${String(d).slice(0, 10)} ${String(r.createdAt || '')}` : ''
+  }
   if (p === 'paid_ratio') return r.contract_sum > 0 ? r.paid_sum / r.contract_sum : 0
   if (p === 'dogovor_number') return Number(r.dogovor_number) || 0
   if (p === 'stage') return STAGES.indexOf(r.stage)
