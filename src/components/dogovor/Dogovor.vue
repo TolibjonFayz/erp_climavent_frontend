@@ -59,12 +59,12 @@
 
     <!-- Filtrlar -->
     <UiToolbar v-if="stats.total">
-      <UiField :label="$t('dogovorTableClient')" grow>
+      <UiField :label="$t('dogovorClientFilterLabel')" grow>
         <el-input
           v-model="filters.client"
           :prefix-icon="Search"
           clearable
-          :placeholder="$t('dogovorFilterPlaceholder')"
+          :placeholder="$t('dogovorClientFilterPh')"
         />
       </UiField>
       <UiField :label="$t('dogovorTableStatus')">

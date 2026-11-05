@@ -1219,6 +1219,8 @@
   "dogovorStatusClosed": "Закрыто",
   "dogovorAllStatuses": "Все",
   "dogovorFilterPlaceholder": "Фильтр...",
+  "dogovorClientFilterLabel": "Заказчик или номер договора",
+  "dogovorClientFilterPh": "Название заказчика или № ...",
   "dogovorResetFilters": "Сбросить фильтры",
   "dogovorFilteredCount": "Найдено: {count}",
   "dogovorTableNumber": "Номер",

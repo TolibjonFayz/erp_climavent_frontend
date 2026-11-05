@@ -1206,6 +1206,8 @@
   "dogovorStatusClosed": "Yopilgan",
   "dogovorAllStatuses": "Barchasi",
   "dogovorFilterPlaceholder": "Filtr...",
+  "dogovorClientFilterLabel": "Mijoz yoki shartnoma raqami",
+  "dogovorClientFilterPh": "Mijoz nomi yoki № ...",
   "dogovorResetFilters": "Filtrlarni tozalash",
   "dogovorFilteredCount": "Topildi: {count} ta",
   "dogovorTableNumber": "Raqami",
