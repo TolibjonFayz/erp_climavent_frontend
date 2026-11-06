@@ -70,6 +70,7 @@ const PAGES = [
   { key: 'loyiha', label: 'admPermLoyiha' },
   { key: 'sklad', label: 'admPermSklad' },
   { key: 'otgruzka', label: 'admPermOtgruzka' },
+  { key: 'leads', label: 'admPermLeads' },
   { key: 'attendance', label: 'admPermAttendance' },
   { key: 'tasks', label: 'admPermTasks' },
   { key: 'boss', label: 'admPermBoss' },

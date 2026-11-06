@@ -9,7 +9,8 @@ const loaders = {
       import('./locales/sklad.js'),
       import('./locales/admin.js'),
       import('./locales/otgruzka.js'),
-    ]).then(([base, sklad, admin, otgruzka]) => ({ ...base.default, ...sklad.uz, ...admin.uz, ...otgruzka.uz }),
+      import('./locales/leads.js'),
+    ]).then(([base, sklad, admin, otgruzka, leads]) => ({ ...base.default, ...sklad.uz, ...admin.uz, ...otgruzka.uz, ...leads.uz }),
     ),
   ru: () =>
     Promise.all([
@@ -17,7 +18,8 @@ const loaders = {
       import('./locales/sklad.js'),
       import('./locales/admin.js'),
       import('./locales/otgruzka.js'),
-    ]).then(([base, sklad, admin, otgruzka]) => ({ ...base.default, ...sklad.ru, ...admin.ru, ...otgruzka.ru }),
+      import('./locales/leads.js'),
+    ]).then(([base, sklad, admin, otgruzka, leads]) => ({ ...base.default, ...sklad.ru, ...admin.ru, ...otgruzka.ru, ...leads.ru }),
     ),
 }
 
