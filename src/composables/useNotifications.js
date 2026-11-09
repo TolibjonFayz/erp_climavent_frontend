@@ -78,15 +78,16 @@ export function useNotifications() {
         to: '/tasks',
       })),
       ...(isApprover.value ? tasksStore.pendingApprovals : []).map((t) => ({
-        key: `appr-${t.id}`,
+        // So'rov qayta yuborilsa — yangi bildirishnoma (kalitda so'rov vaqti)
+        key: `appr-${t.id}-${ts(t.approval_requested_at)}`,
         type: 'approval',
         title: t.title,
         text: t.approval_note || t.description || '',
-        time: t.updatedAt || t.createdAt,
+        time: t.approval_requested_at || t.updatedAt || t.createdAt,
         to: '/tasks',
       })),
       ...(canSklad.value ? skladChecks.value : []).map((c) => ({
-        key: `sklad-${c.id}`,
+        key: `sklad-${c.id}-${ts(c.at)}`,
         type: 'sklad',
         title: `№ ${c.dogovor_number || '—'} · ${c.client_name || ''}`,
         text: c.manager_name || '',
@@ -139,7 +140,8 @@ export function useNotifications() {
   }
 
   function markAllSeen() {
-    seenAt.value = Date.now()
+    // Kompyuter soati serverdan orqada bo'lsa ham ko'rinib turganlarning hammasi o'qilgan bo'lsin
+    seenAt.value = Math.max(Date.now(), ...items.value.map((n) => ts(n.time)))
     readKeys.value = new Set() // vaqt bo'yicha hammasi o'qilgan — alohida ro'yxat kerak emas
     saveState()
   }

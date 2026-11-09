@@ -192,7 +192,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Bell, Calendar, CircleCheck, EditPen, InfoFilled, Plus, Van, WarningFilled } from '@element-plus/icons-vue'
 import { useRoute } from 'vue-router'
@@ -232,6 +232,16 @@ const route = useRoute()
 const tab = ref(route.query.tab === 'checks' ? 'checks' : 'stock')
 const visited = reactive({ stock: true, [tab.value]: true })
 const checksCount = ref(0)
+// Sahifa ochiq turganda bildirishnoma bosilsa (?tab=checks) — tab almashsin
+watch(
+  () => route.query.tab,
+  (v) => {
+    if (v === 'checks') {
+      showTab('checks')
+      loadChecksCount()
+    }
+  },
+)
 async function loadChecksCount() {
   try {
     checksCount.value = (await otgruzkaApi.skladChecksCount()).count || 0

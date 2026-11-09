@@ -228,7 +228,7 @@ const sorted = computed(() => {
 const PAGE = 40
 const limit = ref(PAGE)
 const visible = computed(() => sorted.value.slice(0, limit.value))
-watch(() => [props.filters.q, props.filters.manager, props.filters.stage, props.filters.pay, props.filters.series, props.filters.alert, props.filters.showFinal, sort.value], () => (limit.value = PAGE))
+watch(() => [props.filters.q, props.filters.manager, props.filters.stage, props.filters.pay, props.filters.series, props.filters.didox, props.filters.alert, props.filters.showFinal, sort.value], () => (limit.value = PAGE))
 const sentinel = ref(null)
 let io = null
 onMounted(() => {

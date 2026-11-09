@@ -15,7 +15,7 @@
           <div class="sk-muted">
             {{ c.dogovor_date ? formatDate(c.dogovor_date) : '' }}
             <template v-if="c.manager_name"> · {{ c.manager_name }}</template>
-            · {{ $t('skChkSince', { time: formatDateTime(c.updated_at || c.created_at) }) }}
+            · {{ $t('skChkSince', { time: formatDateTime(c.requested_at) }) }}
           </div>
         </div>
         <span v-if="c.items.length" class="sk-tag" :class="`c-${orderStatus(c)}`">
@@ -73,6 +73,7 @@ import otgruzkaApi from '@/api/otgruzka'
 import { formatDate, formatDateTime } from '@/utils/format'
 import { fmtQty } from '@/utils/skladFormat'
 import { otError } from '@/utils/otgruzkaFormat'
+import { useNotifications } from '@/composables/useNotifications'
 
 const emit = defineEmits(['open', 'count'])
 const { t } = useI18n()
@@ -81,6 +82,7 @@ const error = ref('')
 const list = ref([])
 const notes = reactive({})
 const saving = ref(null)
+const { refresh: refreshNotifications } = useNotifications()
 
 async function load() {
   loading.value = true
@@ -109,6 +111,7 @@ async function markDone(c) {
     await otgruzkaApi.skladCheck(c.id, { note: notes[c.id]?.trim() || undefined })
     list.value = list.value.filter((x) => x.id !== c.id)
     emit('count', list.value.length)
+    refreshNotifications() // qo'ng'iroqdagi raqam ham darhol kamaysin
     ElMessage.success(t('skChkSaved'))
   } catch (e) {
     ElMessage.error(otError(e))
