@@ -41,10 +41,11 @@
         </el-table-column>
         <el-table-column prop="kp_date" :label="$t('admDate')" width="120">
           <template #header><input v-model="filter.date" class="col-filter-admin" :placeholder="$t('admDate')" /></template>
+          <template #default="{ row }">{{ formatDate(row.kp_date) }}</template>
         </el-table-column>
         <el-table-column :label="$t('admClosedDate')" width="130">
           <template #header><input v-model="filter.closedDate" class="col-filter-admin" :placeholder="$t('admClosedDate')" /></template>
-          <template #default="{ row }">{{ row.closed_date ?? '—' }}</template>
+          <template #default="{ row }">{{ formatDate(row.closed_date) }}</template>
         </el-table-column>
         <el-table-column :label="$t('admSum')" width="140">
           <template #header><input v-model="filter.sum" class="col-filter-admin" :placeholder="$t('admSum')" /></template>
@@ -114,22 +115,22 @@
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('admKpDate')" prop="kp_date">
-              <el-date-picker v-model="form.kp_date" type="date" format="YYYY-MM-DD" value-format="YYYY-MM-DD" style="width: 100%" />
+              <el-date-picker v-model="form.kp_date" type="date" format="DD.MM.YYYY" value-format="YYYY-MM-DD" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('admClosedDate')" prop="closed_date">
-              <el-date-picker v-model="form.closed_date" type="date" format="YYYY-MM-DD" value-format="YYYY-MM-DD" style="width: 100%" />
+              <el-date-picker v-model="form.closed_date" type="date" format="DD.MM.YYYY" value-format="YYYY-MM-DD" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('admNextMeeting')" prop="dogovor_next">
-              <el-date-picker v-model="form.dogovor_next" type="date" format="YYYY-MM-DD" value-format="YYYY-MM-DD" style="width: 100%" />
+              <el-date-picker v-model="form.dogovor_next" type="date" format="DD.MM.YYYY" value-format="YYYY-MM-DD" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('admSum')" prop="kp_sum">
-              <el-input-number v-model="form.kp_sum" :min="0" :step="100" style="width: 100%" />
+              <UiMoneyInput v-model="form.kp_sum" :min="0" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="24">
@@ -172,13 +173,14 @@
 </template>
 
 <script setup>
+import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Download, Edit, Loading, RefreshLeft } from '@element-plus/icons-vue'
 import { useKPsStore } from '@/stores/kp'
 import { errorText } from '@/utils/errorText'
-import { fmtNum } from '@/utils/format'
+import { fmtNum, formatDate } from '@/utils/format'
 import {
   CONTRACT_NUMBER_OPTION,
   KP_COMMENT_FILTER_OPTIONS,
@@ -227,6 +229,10 @@ function resetFilters() {
   page.value = 1
 }
 const has = (value, f) => !f.trim() || String(value ?? '').toLowerCase().includes(f.trim().toLowerCase())
+// Sana ekranda 21.10.2026 ko'rinishida — qidiruv ham shunday ishlaydi (eski 2026-10-21 ham)
+const hasDate = (value, f) => !f.trim() || (value && (has(formatDate(value), f) || has(value, f)))
+// Summa probelsiz yozilsa ham, "1 200 000" deb yozilsa ham topiladi
+const hasSum = (value, f) => !f.trim() || String(value ?? '').includes(f.replace(/\s/g, ''))
 
 // Backend KP'larni createdAt bo'yicha (yangilari birinchi) qaytaradi — shu tartibni saqlaymiz
 const filtered = computed(() =>
@@ -236,9 +242,9 @@ const filtered = computed(() =>
       (!filter.status || kp.kp_status === filter.status) &&
       has(kp.client_name, filter.client) &&
       has(kp.manager_name, filter.manager) &&
-      has(kp.kp_date, filter.date) &&
-      has(kp.closed_date, filter.closedDate) &&
-      has(kp.kp_sum, filter.sum) &&
+      hasDate(kp.kp_date, filter.date) &&
+      hasDate(kp.closed_date, filter.closedDate) &&
+      hasSum(kp.kp_sum, filter.sum) &&
       commentMatchesFilter(kp.comment, filter.comment) &&
       has(kp.admin_comment, filter.adminComment) &&
       has(creatorName(kp), filter.creator),
@@ -374,8 +380,8 @@ function exportKp() {
       [t('admStatus')]: statusLabel(k.kp_status),
       [t('admClient')]: k.client_name ?? '—',
       [t('admManager')]: k.manager_name ?? '—',
-      [t('admDate')]: k.kp_date ?? '—',
-      [t('admClosedDate')]: k.closed_date ?? '—',
+      [t('admDate')]: formatDate(k.kp_date),
+      [t('admClosedDate')]: formatDate(k.closed_date),
       [t('admNextMeeting')]: k.dogovor_next ?? '—',
       [t('admSum')]: k.kp_sum ?? 0,
       [t('admComment')]: k.comment ?? '—',

@@ -59,7 +59,7 @@
         <el-input v-model="f.client_phone" maxlength="255" />
       </el-form-item>
       <el-form-item :label="$t('otSum')" :class="mark('contract_sum')">
-        <el-input-number v-model="f.contract_sum" :min="0" :controls="false" style="width: 100%" />
+        <UiMoneyInput v-model="f.contract_sum" :min="0" style="width: 100%" />
       </el-form-item>
       <el-form-item :label="$t('otItems')" class="is-wide" :class="mark('items')">
         <OtItemsEditor v-model="f.items" />
@@ -77,6 +77,7 @@
 </template>
 
 <script setup>
+import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'

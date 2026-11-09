@@ -1,55 +1,13 @@
+import { formatDateTime } from '@/utils/format'
+
+// Butun ilovada sana bir xil ko'rinishda: 21.10.2026 14:05
 export function formatDate(dateString) {
   if (!dateString) return 'Kiritilmagan'
-  const date = new Date(dateString)
-
-  const months = [
-    'yanvar',
-    'fevral',
-    'mart',
-    'aprel',
-    'may',
-    'iyun',
-    'iyul',
-    'avgust',
-    'sentabr',
-    'oktabr',
-    'noyabr',
-    'dekabr',
-  ]
-
-  const day = date.getDate()
-  const month = months[date.getMonth()]
-  const year = date.getFullYear()
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-yil, ${day}-${month}, ${hours}:${minutes}`
+  return formatDateTime(dateString)
 }
 
 export function formatDateShort(dateString) {
-  const date = new Date(dateString)
-
-  const months = [
-    'yanvar',
-    'fevral',
-    'mart',
-    'aprel',
-    'may',
-    'iyun',
-    'iyul',
-    'avgust',
-    'sentabr',
-    'oktabr',
-    'noyabr',
-    'dekabr',
-  ]
-
-  const day = date.getDate()
-  const month = months[date.getMonth()]
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-
-  return `${day}-${month}, ${hours}:${minutes}`
+  return formatDateTime(dateString)
 }
 
 // Relative time (e.g. "2 hours ago")

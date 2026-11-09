@@ -29,8 +29,8 @@ export function signedQty(type, qty) {
 /** "2026-10-20" → "20.10" (qisqa, jadval uchun) */
 export function shortDate(d) {
   if (!d) return '—'
-  const [, m, day] = String(d).slice(0, 10).split('-')
-  return `${day}.${m}`
+  const [y, m, day] = String(d).slice(0, 10).split('-')
+  return `${day}.${m}.${y}`
 }
 
 /** "2026-02" → "2026-02-28" */
@@ -111,9 +111,8 @@ export const sheetNameIfDiff = (it) =>
 /** "2026-10-19" → "19 окт" / "19 okt" (boshqa yil bo'lsa yil ham) */
 export function dayMonth(d) {
   if (!d) return ''
-  const [y, m, day] = String(d).slice(0, 10).split('-').map(Number)
-  const mon = t(`skMonth${m}`).slice(0, 3).toLowerCase()
-  return y === new Date().getFullYear() ? `${day} ${mon}` : `${day} ${mon} ${y}`
+  const [y, m, day] = String(d).slice(0, 10).split('-')
+  return `${day}.${m}.${y}`
 }
 
 /**

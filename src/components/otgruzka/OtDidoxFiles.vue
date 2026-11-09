@@ -72,7 +72,7 @@
           <el-button v-if="!up.busy && r.state !== 'done'" text size="small" :icon="Close" :aria-label="$t('otDelete')" @click="up.rows.splice(i, 1)" />
         </div>
         <div class="ot-dx__row-fields">
-          <el-input-number v-model="r.amount" :controls="false" :min="0" :placeholder="$t('otDidoxAmount')" :disabled="r.state === 'done'" class="ot-dx__f-amount" />
+          <UiMoneyInput v-model="r.amount" :min="0" :placeholder="$t('otDidoxAmount')" :disabled="r.state === 'done'" class="ot-dx__f-amount" />
           <el-input v-model="r.invoice_number" :placeholder="$t('otDidoxNumber')" maxlength="64" :disabled="r.state === 'done'" class="ot-dx__f-num" />
           <el-date-picker v-model="r.invoice_date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" :placeholder="$t('otDidoxDate')" :disabled="r.state === 'done'" class="ot-dx__f-date" />
         </div>
@@ -90,7 +90,7 @@
     <el-dialog v-model="ed.open" :title="$t('otDidoxEditTitle')" width="420px" append-to-body>
       <el-form label-position="top">
         <el-form-item :label="$t('otDidoxAmount')">
-          <el-input-number v-model="ed.amount" :controls="false" :min="0" style="width: 100%" />
+          <UiMoneyInput v-model="ed.amount" :min="0" style="width: 100%" />
         </el-form-item>
         <el-form-item :label="$t('otDidoxNumber')"><el-input v-model="ed.invoice_number" maxlength="64" /></el-form-item>
         <el-form-item :label="$t('otDidoxDate')">
@@ -107,6 +107,7 @@
 </template>
 
 <script setup>
+import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'

@@ -13,7 +13,7 @@
         <el-form-item :label="$t('otContact')"><el-input v-model="f.client_contact" maxlength="255" /></el-form-item>
         <el-form-item :label="$t('otPhone')"><el-input v-model="f.client_phone" maxlength="255" /></el-form-item>
         <el-form-item :label="$t('otSum')">
-          <el-input-number v-model="f.contract_sum" :min="0" :controls="false" style="width: 100%" />
+          <UiMoneyInput v-model="f.contract_sum" :min="0" style="width: 100%" />
         </el-form-item>
         <el-form-item :label="$t('otInvoice')"><el-input v-model="f.invoice_numbers" maxlength="255" /></el-form-item>
         <el-form-item :label="`${$t('otColReady')}: ${f.ready}%`">
@@ -52,6 +52,7 @@
 </template>
 
 <script setup>
+import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'

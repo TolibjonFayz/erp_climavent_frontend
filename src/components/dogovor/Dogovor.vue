@@ -331,7 +331,7 @@
               <el-date-picker
                 v-model="form.dogovor_date"
                 type="date"
-                format="YYYY-MM-DD"
+                format="DD.MM.YYYY"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
               />
@@ -389,10 +389,9 @@
               prop="dogovor_sum"
               :class="pdfMark('dogovor_sum')"
             >
-              <el-input-number
+              <UiMoneyInput
                 v-model="form.dogovor_sum"
                 :min="0"
-                :controls="false"
                 style="width: 100%"
               />
             </el-form-item>
@@ -402,7 +401,7 @@
               <el-date-picker
                 v-model="form.payment_date"
                 type="date"
-                format="YYYY-MM-DD"
+                format="DD.MM.YYYY"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
               />
@@ -411,10 +410,9 @@
 
           <el-col :span="8">
             <el-form-item :label="$t('dogovorInitialPaymentLabel')" prop="initial_payment">
-              <el-input-number
+              <UiMoneyInput
                 v-model="form.initial_payment"
                 :min="0"
-                :controls="false"
                 style="width: 100%"
               />
             </el-form-item>
@@ -547,10 +545,9 @@
                 />
               </td>
               <td>
-                <el-input-number
+                <UiMoneyInput
                   v-model="item.price"
                   :min="0"
-                  :controls="false"
                   size="small"
                   style="width: 100%"
                 />
@@ -633,6 +630,7 @@
 </template>
 
 <script setup>
+import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { errorText } from '@/utils/errorText'
 import { useQueryPrefill } from '@/composables/useQueryPrefill'
 import { computed, onMounted, reactive, ref, watch } from 'vue'

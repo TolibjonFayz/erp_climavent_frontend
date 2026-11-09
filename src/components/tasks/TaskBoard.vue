@@ -925,7 +925,7 @@ const exportExcel = () => {
     [t('taskApprovalNote')]: task.approval_note || '—',
     [t('taskRejectReason')]: task.approval_reject_reason || '—',
     [t('statusDone')]: task.completed_at
-      ? new Date(task.completed_at).toLocaleDateString('uz-UZ')
+      ? formatDeadline(task.completed_at)
       : '—',
   }))
 

@@ -120,7 +120,7 @@ import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { useSkladStore } from '@/stores/sklad'
 import { useInfiniteList } from '@/composables/useInfiniteList'
-import { fmtNum } from '@/utils/format'
+import { fmtNum, formatDate } from '@/utils/format'
 import { apiError, dayMonth, fmtQty, itemName, moveComment, moveTypeLabel, signedQty } from '@/utils/skladFormat'
 
 
@@ -207,7 +207,7 @@ async function remove(m) {
 
 function exportExcel() {
   const rows = filtered.value.map((m) => ({
-    [t('skColDate')]: m.move_date,
+    [t('skColDate')]: formatDate(m.move_date),
     [t('skMoveType')]: moveTypeLabel(m.type),
     [t('skSapCode')]: m.item?.sap_code || '',
     [t('skColName')]: itemName(m.item),

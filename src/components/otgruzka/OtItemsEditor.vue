@@ -19,7 +19,7 @@
           <td><el-input v-model="it.name" type="textarea" :autosize="{ minRows: 1, maxRows: 3 }" maxlength="500" /></td>
           <td><el-input v-model="it.unit" maxlength="32" /></td>
           <td><el-input-number v-model="it.qty" :min="0" :controls="false" style="width: 100%" /></td>
-          <td><el-input-number v-model="it.price" :min="0" :controls="false" style="width: 100%" /></td>
+          <td><UiMoneyInput v-model="it.price" :min="0" style="width: 100%" /></td>
           <td class="is-sum">{{ fmtMoney((it.qty || 0) * (it.price || 0)) }}</td>
           <td class="is-del">
             <el-button text type="danger" :icon="Delete" :aria-label="$t('otDelete')" @click="remove(i)" />
@@ -39,6 +39,7 @@
 </template>
 
 <script setup>
+import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { computed } from 'vue'
 import { Delete, Plus } from '@element-plus/icons-vue'
 import { fmtMoney } from '@/utils/otgruzkaFormat'

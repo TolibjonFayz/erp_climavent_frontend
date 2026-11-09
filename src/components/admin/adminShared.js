@@ -15,7 +15,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useAuditLog } from '@/composables/useAuditLog'
 import { errorText } from '@/utils/errorText'
-import { formatDateTime } from '@/utils/format'
+import { formatDate, formatDateTime } from '@/utils/format'
 
 // Eski admin audit jurnali — barcha tablar bitta holatni ko'rsin (dashboard, jurnal, eksport)
 let audit = null
@@ -43,14 +43,12 @@ export function partnerTypeLabel(t, value) {
 /** Sana-vaqt yoki "Kiritilmagan" */
 export const dateOrEmpty = (t, value) => (value ? formatDateTime(value) : t('admNotEntered'))
 
-// Sarlavhadagi sana: "30-oktabr 2026, juma" / "30 октября 2026 г., пятница"
-const UZ_MONTHS = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr']
+// Sarlavhadagi sana: "30.10.2026, juma" / "30.10.2026, пятница"
 const UZ_WEEKDAYS = ['yakshanba', 'dushanba', 'seshanba', 'chorshanba', 'payshanba', 'juma', 'shanba']
 export function todayLabel(locale, d = new Date()) {
-  if (locale === 'ru') {
-    return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }).format(d)
-  }
-  return `${d.getDate()}-${UZ_MONTHS[d.getMonth()]} ${d.getFullYear()}, ${UZ_WEEKDAYS[d.getDay()]}`
+  const date = formatDate(d)
+  if (locale === 'ru') return `${date}, ${new Intl.DateTimeFormat('ru-RU', { weekday: 'long' }).format(d)}`
+  return `${date}, ${UZ_WEEKDAYS[d.getDay()]}`
 }
 
 // ─── Eski audit yozuvlari ───

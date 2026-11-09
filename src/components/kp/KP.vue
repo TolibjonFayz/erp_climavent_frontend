@@ -428,7 +428,7 @@
                 v-model="kpForm.kp_date"
                 type="date"
                 :placeholder="$t('kpDatePlaceholder')"
-                format="YYYY-MM-DD"
+                format="DD.MM.YYYY"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
               />
@@ -440,7 +440,7 @@
                 v-model="kpForm.dogovor_next"
                 type="date"
                 :placeholder="$t('kpDatePlaceholder')"
-                format="YYYY-MM-DD"
+                format="DD.MM.YYYY"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
               />
@@ -452,7 +452,7 @@
                 v-model="kpForm.closed_date"
                 type="date"
                 :placeholder="$t('kpDatePlaceholder')"
-                format="YYYY-MM-DD"
+                format="DD.MM.YYYY"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
               />
@@ -470,10 +470,9 @@
           </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('kpSumLabel')" prop="kp_sum">
-              <el-input-number
+              <UiMoneyInput
                 v-model="kpForm.kp_sum"
                 :min="0"
-                :step="100"
                 :placeholder="$t('kpSumPlaceholder')"
                 style="width: 100%"
               />
@@ -545,6 +544,7 @@
 </template>
 
 <script setup>
+import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { errorText } from '@/utils/errorText'
 import { useQueryPrefill } from '@/composables/useQueryPrefill'
 import { computed, onMounted, reactive, ref, watch } from 'vue'

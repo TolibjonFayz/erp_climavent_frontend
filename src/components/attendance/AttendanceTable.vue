@@ -776,10 +776,7 @@ const form = reactive({
 const dialogTitle = computed(() => {
   if (!activeDay.value) return ''
   const d = new Date(activeDay.value.date + 'T00:00:00')
-  const label =
-    locale.value === 'ru'
-      ? d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
-      : `${d.getDate()}-${uzMonths[d.getMonth()].toLowerCase()}`
+  const label = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
   return canEdit.value ? `${t('editAttendance')} — ${label}` : `${t('dayDetails')} — ${label}`
 })
 
@@ -995,7 +992,7 @@ const fmtSync = (iso) => {
   if (!iso) return '—'
   const d = new Date(iso)
   const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`
-  return toDateStr(d) === todayStr ? time : `${pad(d.getDate())}.${pad(d.getMonth() + 1)} ${time}`
+  return toDateStr(d) === todayStr ? time : `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${time}`
 }
 // Agent ofis kompyuterida ishlaydi — 24 soatdan ko'p jim tursa ogohlantiramiz
 // Bitta terminal boshqasidan 1 soatdan ko'p orqada qolsa — o'sha terminal tarmoqdan uzilgan

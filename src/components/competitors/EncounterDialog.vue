@@ -60,12 +60,12 @@
         </el-col>
         <el-col :span="12">
           <el-form-item :label="$t('cmpTheirPrice')">
-            <el-input-number v-model="form.their_price" :min="0" :controls="false" style="width: 100%" />
+            <UiMoneyInput v-model="form.their_price" :min="0" style="width: 100%" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item :label="$t('cmpOurPrice')">
-            <el-input-number v-model="form.our_price" :min="0" :controls="false" style="width: 100%" />
+            <UiMoneyInput v-model="form.our_price" :min="0" style="width: 100%" />
           </el-form-item>
         </el-col>
         <el-col :span="24">
@@ -105,6 +105,7 @@
 </template>
 
 <script setup>
+import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import UiQuickPhrases from '@/components/ui/UiQuickPhrases.vue'

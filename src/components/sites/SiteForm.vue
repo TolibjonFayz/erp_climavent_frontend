@@ -22,7 +22,7 @@
                 type="date"
                 :placeholder="$t('vaqtniTanlang')"
                 :disabled-date="disabledDate"
-                format="YYYY-MM-DD"
+                format="DD.MM.YYYY"
               />
               <el-time-picker v-model="goingTime" format="HH:mm" :placeholder="$t('soatminut')" />
             </div>
@@ -82,7 +82,7 @@
           <el-config-provider :locale="locale">
             <el-date-picker
               v-model="form.dogovortime"
-              type="date"
+              type="date" format="DD.MM.YYYY"
               :placeholder="$t('vaqtniTanlang')"
               size="default"
             />
@@ -93,7 +93,7 @@
           <el-config-provider :locale="locale">
             <el-date-picker
               v-model="form.kptime"
-              type="date"
+              type="date" format="DD.MM.YYYY"
               :placeholder="$t('vaqtniTanlang')"
               size="default"
             />
@@ -205,7 +205,7 @@
                 type="date"
                 :placeholder="$t('vaqtniTanlang')"
                 :disabled-date="disabledDate"
-                format="YYYY-MM-DD"
+                format="DD.MM.YYYY"
                 @change="syncAdditionalGoingTime(index, obj)"
               />
               <el-time-picker
@@ -276,7 +276,7 @@
           <el-config-provider :locale="locale">
             <el-date-picker
               v-model="obj.dogovortime"
-              type="date"
+              type="date" format="DD.MM.YYYY"
               :placeholder="$t('vaqtniTanlang')"
               size="default"
             />
@@ -292,7 +292,7 @@
           <el-config-provider :locale="locale">
             <el-date-picker
               v-model="obj.kptime"
-              type="date"
+              type="date" format="DD.MM.YYYY"
               :placeholder="$t('vaqtniTanlang')"
               size="default"
             />

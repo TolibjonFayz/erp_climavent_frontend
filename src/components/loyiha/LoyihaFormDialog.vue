@@ -134,7 +134,7 @@
               <el-date-picker
                 v-model="form.given_date"
                 type="date"
-                format="YYYY-MM-DD"
+                format="DD.MM.YYYY"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
               />
@@ -153,7 +153,7 @@
               <el-date-picker
                 v-model="form.finished_date"
                 type="date"
-                format="YYYY-MM-DD"
+                format="DD.MM.YYYY"
                 value-format="YYYY-MM-DD"
                 :disabled-date="beforeGivenDate"
                 style="width: 100%"
@@ -223,11 +223,10 @@
                   </el-tooltip>
                 </div>
               </template>
-              <el-input-number
+              <UiMoneyInput
                 v-model="form.kp_sum"
                 :min="0"
                 :precision="2"
-                :controls="false"
                 style="width: 100%"
               />
             </el-form-item>
@@ -245,7 +244,7 @@
               <el-date-picker
                 v-model="form.kp_date"
                 type="date"
-                format="YYYY-MM-DD"
+                format="DD.MM.YYYY"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
               />
@@ -281,11 +280,10 @@
                   </el-tooltip>
                 </div>
               </template>
-              <el-input-number
+              <UiMoneyInput
                 v-model="form.dogovor_sum"
                 :min="0"
                 :precision="2"
-                :controls="false"
                 style="width: 100%"
               />
             </el-form-item>
@@ -303,7 +301,7 @@
               <el-date-picker
                 v-model="form.dogovor_date"
                 type="date"
-                format="YYYY-MM-DD"
+                format="DD.MM.YYYY"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
               />
@@ -350,6 +348,7 @@
 </template>
 
 <script setup>
+import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { errorText } from '@/utils/errorText'
 import { computed, reactive, ref, watch } from 'vue'
 import { InfoFilled } from '@element-plus/icons-vue'

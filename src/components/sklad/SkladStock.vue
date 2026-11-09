@@ -185,7 +185,7 @@ import UiHint from '@/components/ui/UiHint.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import UiToolbar from '@/components/ui/UiToolbar.vue'
 import { stockStatus } from '@/stores/sklad'
-import { fmtNum } from '@/utils/format'
+import { fmtNum, formatDate } from '@/utils/format'
 import { dayMonth, fmtQty, periodLabel, unitLabel } from '@/utils/skladFormat'
 import { useInfiniteList } from '@/composables/useInfiniteList'
 
@@ -331,7 +331,7 @@ function exportExcel() {
     [t('skColReserve')]: it.reserve - it.release,
     [t('skColAdjust')]: it.adjust,
     [t('skColClosing')]: it.closing,
-    [t('skColLastFull')]: it.last_move_date || '',
+    [t('skColLastFull')]: it.last_move_date ? formatDate(it.last_move_date) : '',
   }))
   const ws = XLSX.utils.json_to_sheet(rows)
   ws['!cols'] = [{ wch: 14 }, { wch: 48 }, { wch: 48 }, { wch: 18 }, { wch: 8 }, ...Array(7).fill({ wch: 14 })]

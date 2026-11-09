@@ -135,7 +135,7 @@
           </div>
           <div v-if="canEdit" class="ot-pay-add">
             <el-date-picker v-model="pay.date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" :placeholder="$t('otPayDate')" class="ot-pay-add__date" />
-            <el-input-number v-model="pay.amount" :controls="false" :placeholder="$t('otPayAmount')" class="ot-pay-add__amount" />
+            <UiMoneyInput v-model="pay.amount" :placeholder="$t('otPayAmount')" class="ot-pay-add__amount" />
             <el-input v-model="pay.comment" :placeholder="$t('otPayComment')" class="ot-pay-add__comment" />
             <el-button type="primary" :icon="Plus" :disabled="!pay.amount || !pay.date" :loading="saving === 'pay'" @click="addPayment">
               {{ $t('otPayAdd') }}
@@ -286,7 +286,7 @@
           <el-date-picker v-model="payEdit.date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" />
         </el-form-item>
         <el-form-item :label="$t('otPayAmount')">
-          <el-input-number v-model="payEdit.amount" :controls="false" :disabled="!canEdit" style="width: 100%" />
+          <UiMoneyInput v-model="payEdit.amount" :disabled="!canEdit" style="width: 100%" />
         </el-form-item>
         <el-form-item :label="$t('otPayComment')">
           <el-input v-model="payEdit.comment" maxlength="1000" />
@@ -342,6 +342,7 @@
 </template>
 
 <script setup>
+import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
