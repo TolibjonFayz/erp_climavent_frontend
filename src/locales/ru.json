@@ -1847,6 +1847,7 @@
   "notifTitle": "Уведомления",
   "notifAnnouncement": "Объявление",
   "notifNewTask": "Новая задача",
+  "notifSkladChecks": "Новые договоры: {n} — проверьте наличие на складе",
   "notifApprovals": "{n} задач ждут вашего подтверждения",
   "notifEmpty": "Пока уведомлений нет",
   "gsTitle": "Поиск",

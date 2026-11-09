@@ -26,6 +26,11 @@
           <el-option v-for="s in SERIES" :key="s" :label="$t(`otSeries_${s}`)" :value="s" />
         </el-select>
       </UiField>
+      <UiField :label="$t('otFDidox')">
+        <el-select v-model="filters.didox" clearable :placeholder="$t('otAll')" class="ot-sel">
+          <el-option v-for="d in DIDOX_FILTERS" :key="d" :label="$t(`otDidoxF_${d}`)" :value="d" />
+        </el-select>
+      </UiField>
       <template #actions>
         <el-checkbox v-model="filters.showFinal">{{ $t('otShowFinal') }}</el-checkbox>
         <el-button v-if="dirty" text @click="$emit('reset')">{{ $t('otReset') }}</el-button>
@@ -102,6 +107,9 @@
                 <span class="ot-dot" :class="dotClass(row.didox_poa)">{{ $t('otDidoxPoaShort') }}</span>
               </el-tooltip>
             </span>
+            <el-tooltip v-if="row.didox_files_count" :content="$t('otDidoxFilesTip', { n: row.didox_files_count, sum: fmtMoney(row.didox_files_sum) })">
+              <div class="ot-didox-files">📎 {{ row.didox_files_count }}</div>
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column :label="$t('otColStage')" prop="stage" sortable="custom" min-width="140">
@@ -137,7 +145,7 @@ import UiToolbar from '@/components/ui/UiToolbar.vue'
 import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { formatDate } from '@/utils/format'
-import { fmtMoney, fmtShort, PAY_TONE, PAYS, SERIES, STAGE_TONE, STAGES } from '@/utils/otgruzkaFormat'
+import { DIDOX_FILTERS, fmtMoney, fmtShort, matchDidox, PAY_TONE, PAYS, SERIES, STAGE_TONE, STAGES } from '@/utils/otgruzkaFormat'
 import OtBar from './OtBar.vue'
 
 const props = defineProps({
@@ -151,7 +159,7 @@ const { t } = useI18n()
 const managers = computed(() => [...new Set(props.rows.map((r) => r.manager_name).filter(Boolean))].sort())
 const dirty = computed(() => {
   const f = props.filters
-  return Boolean(f.q || f.manager || f.stage || f.pay || f.series || f.alert || f.showFinal)
+  return Boolean(f.q || f.manager || f.stage || f.pay || f.series || f.didox || f.alert || f.showFinal)
 })
 
 const norm = (s) => String(s || '').toLowerCase()
@@ -168,6 +176,7 @@ const filtered = computed(() => {
       if (!(r.debt > 1) || r.final_status) return false
     } else if (f.pay && r.pay_status !== f.pay) return false
     if (f.series && r.series !== f.series) return false
+    if (f.didox && !matchDidox(r, f.didox)) return false
     if (f.alert && !r.alerts.includes(f.alert)) return false
     if (q) {
       const hay = norm([r.dogovor_number, r.client_name, r.client_inn, r.manager_name, r.client_contact, r.note_main, r.note_extra, r.next_action, r.invoice_numbers].join(' '))
@@ -386,5 +395,11 @@ const rowClass = ({ row }) => (row.final_status ? 'is-final' : '')
     background: var(--ui-surface-2);
     color: var(--ui-ink-2);
   }
+}
+.ot-didox-files {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ui-muted);
+  white-space: nowrap;
 }
 </style>

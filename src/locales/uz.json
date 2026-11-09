@@ -1849,6 +1849,7 @@
   "notifTitle": "Bildirishnomalar",
   "notifAnnouncement": "E'lon",
   "notifNewTask": "Yangi vazifa",
+  "notifSkladChecks": "Yangi shartnomalar: {n} ta — omborda mahsulotlarni tekshiring",
   "notifApprovals": "{n} ta vazifa tasdiqingizni kutmoqda",
   "notifEmpty": "Hozircha bildirishnoma yo'q",
   "gsTitle": "Qidiruv",

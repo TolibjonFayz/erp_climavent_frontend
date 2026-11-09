@@ -34,8 +34,8 @@
 
         <!-- Jarayon bosqichlari -->
         <div class="ot-steps">
-          <div class="ot-step" :class="`is-${didoxTone}`">
-            <span class="ot-step__name">{{ $t('otStepDidox') }}</span>
+          <div class="ot-step" :class="[`is-${didoxTone}`, { 'is-click': canEdit && o.official }]" v-bind="stepAttrs('didox', o.official)">
+            <span class="ot-step__name">{{ $t('otStepDidox') }}<el-icon v-if="canEdit && o.official" class="ot-step__pen"><EditPen /></el-icon></span>
             <template v-if="o.official">
               <span class="ot-step__val">{{ $t('otDidoxContract') }}: {{ flag(o.didox_contract) }}</span>
               <span class="ot-step__val">{{ $t('otDidoxPoa') }}: {{ flag(o.didox_poa) }}</span>
@@ -47,19 +47,30 @@
             <b>{{ fmtPct(o.contract_sum > 0 ? o.paid_sum / o.contract_sum : 0) }}</b>
             <span class="ot-step__val">{{ fmtShort(o.paid_sum) }} / {{ fmtShort(o.contract_sum) }}</span>
           </div>
-          <div class="ot-step" :class="o.ready_pct >= 1 ? 'is-good' : 'is-link'">
-            <span class="ot-step__name">{{ $t('otStepReady') }}</span>
+          <div class="ot-step" :class="[o.ready_pct >= 1 ? 'is-good' : 'is-link', { 'is-click': canEdit }]" v-bind="stepAttrs('ready')">
+            <span class="ot-step__name">{{ $t('otStepReady') }}<el-icon v-if="canEdit" class="ot-step__pen"><EditPen /></el-icon></span>
             <b>{{ fmtPct(o.ready_pct) }}</b>
             <span v-if="o.sgp_date" class="ot-step__val">{{ formatDate(o.sgp_date) }}</span>
           </div>
-          <div class="ot-step" :class="o.shipped_pct >= 1 ? 'is-good' : o.shipped_pct > 0 ? 'is-link' : 'is-muted'">
-            <span class="ot-step__name">{{ $t('otStepShip') }}</span>
+          <div class="ot-step" :class="[o.shipped_pct >= 1 ? 'is-good' : o.shipped_pct > 0 ? 'is-link' : 'is-muted', { 'is-click': canEdit }]" v-bind="stepAttrs('shipped')">
+            <span class="ot-step__name">{{ $t('otStepShip') }}<el-icon v-if="canEdit" class="ot-step__pen"><EditPen /></el-icon></span>
             <b>{{ fmtPct(o.shipped_pct) }}</b>
           </div>
-          <div class="ot-step" :class="o.invoice_numbers ? 'is-good' : 'is-muted'">
-            <span class="ot-step__name">{{ $t('otStepInvoice') }}</span>
+          <div class="ot-step" :class="[o.invoice_numbers || o.didox_files_count ? 'is-good' : 'is-muted', { 'is-click': canEdit }]" v-bind="stepAttrs('invoice')">
+            <span class="ot-step__name">{{ $t('otStepInvoice') }}<el-icon v-if="canEdit" class="ot-step__pen"><EditPen /></el-icon></span>
             <span class="ot-step__val">{{ o.invoice_numbers || '—' }}</span>
+            <span v-if="o.didox_files_count" class="ot-step__val">📎 {{ o.didox_files_count }} · {{ fmtShort(o.didox_files_sum) }}</span>
           </div>
+        </div>
+
+        <!-- Ombor tekshiruvi (yangi shartnoma kelganda) -->
+        <div v-if="o.sklad_check === 'pending'" class="ot-d__sklad is-pending">
+          <el-icon><Bell /></el-icon> {{ $t('otSkladPending') }}
+        </div>
+        <div v-else-if="o.sklad_check === 'done'" class="ot-d__sklad is-done">
+          <el-icon><CircleCheck /></el-icon>
+          {{ $t('otSkladDone', { date: formatDateTime(o.sklad_checked_at) }) }}
+          <template v-if="o.sklad_check_note"> — {{ o.sklad_check_note }}</template>
         </div>
 
         <!-- Keyingi qadam — har doim tahrirlanadi -->
@@ -76,7 +87,7 @@
         <section class="ot-sec">
           <div class="ot-sec__head">
             <h4>{{ $t('otColClient') }}</h4>
-            <el-button v-if="editable" size="small" :icon="Edit" @click="editOpen = true">{{ $t('otEdit') }}</el-button>
+            <el-button v-if="canEdit" size="small" :icon="Edit" @click="editOpen = true">{{ $t('otEdit') }}</el-button>
           </div>
           <dl class="ot-info">
             <dt>{{ $t('otManager') }}</dt><dd>{{ o.manager_name || '—' }}</dd>
@@ -106,7 +117,7 @@
         <section class="ot-sec">
           <div class="ot-sec__head">
             <h4>
-              <UiHint :label="$t('otPayments')" :hint="editable ? (twoWay ? $t('otPaymentsHintTwoWay') : '') : $t('otPaymentsHint')" />
+              <UiHint :label="$t('otPayments')" :hint="canEdit ? (twoWay ? $t('otPaymentsHintTwoWay') : '') : $t('otPaymentsHint')" />
             </h4>
             <span class="ot-muted">{{ $t('otPayTotal') }}: <b>{{ fmtMoney(o.paid_sum) }}</b></span>
           </div>
@@ -117,12 +128,12 @@
             <span class="ot-pay__comment">{{ payComment(p) }}</span>
             <span class="ot-pay__btns">
               <el-button text size="small" :icon="EditPen" :aria-label="$t('otPayEdit')" @click="editPayment(p)" />
-              <el-popconfirm v-if="editable && p.source === 'erp'" :title="$t('otConfirmDelete')" @confirm="removePayment(p)">
+              <el-popconfirm v-if="canEdit && p.source === 'erp'" :title="$t('otConfirmDelete')" @confirm="removePayment(p)">
                 <template #reference><el-button text size="small" type="danger" :icon="Delete" :aria-label="$t('otDelete')" /></template>
               </el-popconfirm>
             </span>
           </div>
-          <div v-if="editable" class="ot-pay-add">
+          <div v-if="canEdit" class="ot-pay-add">
             <el-date-picker v-model="pay.date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" :placeholder="$t('otPayDate')" class="ot-pay-add__date" />
             <el-input-number v-model="pay.amount" :controls="false" :placeholder="$t('otPayAmount')" class="ot-pay-add__amount" />
             <el-input v-model="pay.comment" :placeholder="$t('otPayComment')" class="ot-pay-add__comment" />
@@ -131,6 +142,9 @@
             </el-button>
           </div>
         </section>
+
+        <!-- Didox: schyot-faktura fayllari (to'lovlardan keyin, mahsulotlardan oldin) -->
+        <OtDidoxFiles :order="o" :is-admin="isAdmin" @changed="applyDetail" />
 
         <!-- Mahsulotlar: shartnomadagi nom/soni/narxi + omborda nechtasi tayyor -->
         <section class="ot-sec">
@@ -240,6 +254,14 @@
               </div>
               <div v-if="n.kind === 'change'" class="ot-tl__text">
                 <template v-if="n.data?.field === 'from_dogovor'">{{ $t('otFromDogovor') }}</template>
+                <template v-else-if="n.data?.field === 'didox_file'">
+                  {{ $t(n.data.action === 'remove' ? 'otDidoxRemoved' : 'otDidoxAdded', { name: n.data.file_name }) }}
+                  <template v-if="n.data.amount != null"> · {{ fmtMoney(n.data.amount) }}</template>
+                </template>
+                <template v-else-if="n.data?.field === 'sklad_check'">
+                  {{ $t('otSkladChecked', { ready: n.data.ready ?? 0, total: n.data.total ?? 0 }) }}
+                  <div v-if="n.text" class="ot-muted">{{ n.text }}</div>
+                </template>
                 <template v-else-if="n.data?.field === 'payment'">
                   {{ $t('otPaymentFixed', { date: formatDate(n.data.pay_date), amount: fmtMoney(n.data.amount) }) }}
                 </template>
@@ -264,7 +286,7 @@
           <el-date-picker v-model="payEdit.date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" />
         </el-form-item>
         <el-form-item :label="$t('otPayAmount')">
-          <el-input-number v-model="payEdit.amount" :controls="false" :disabled="!editable" style="width: 100%" />
+          <el-input-number v-model="payEdit.amount" :controls="false" :disabled="!canEdit" style="width: 100%" />
         </el-form-item>
         <el-form-item :label="$t('otPayComment')">
           <el-input v-model="payEdit.comment" maxlength="1000" />
@@ -285,6 +307,36 @@
       </template>
     </el-dialog>
 
+    <!-- Bosqichni tez tahrirlash: tayyorlik, jo'natish, Didox, schyot-faktura -->
+    <el-dialog v-model="qe.open" :title="qe.field ? $t(`otQuick_${qe.field}`) : ''" width="440px" append-to-body>
+      <template v-if="qe.field === 'ready' || qe.field === 'shipped'">
+        <div class="ot-qe__pct">
+          <el-slider v-model="qe.pct" :step="5" class="ot-qe__slider" />
+          <el-input-number v-model="qe.pct" :min="0" :max="100" :controls="false" class="ot-qe__num" />
+          <span>%</span>
+        </div>
+        <div class="ot-qe__presets">
+          <el-button v-for="v in [0, 25, 50, 75, 100]" :key="v" size="small" :type="qe.pct === v ? 'primary' : 'default'" @click="qe.pct = v">{{ v }}%</el-button>
+        </div>
+        <el-form v-if="qe.field === 'ready'" label-position="top" class="ot-qe__form">
+          <el-form-item :label="$t('otSgp')">
+            <el-date-picker v-model="qe.sgp_date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" style="width: 100%" />
+          </el-form-item>
+        </el-form>
+      </template>
+      <el-form v-else-if="qe.field === 'didox'" label-position="top">
+        <el-form-item :label="$t('otDidoxContract')"><el-segmented v-model="qe.didox_contract" :options="flagOptions" /></el-form-item>
+        <el-form-item :label="$t('otDidoxPoa')"><el-segmented v-model="qe.didox_poa" :options="flagOptions" /></el-form-item>
+      </el-form>
+      <el-form v-else-if="qe.field === 'invoice'" label-position="top">
+        <el-form-item :label="$t('otInvoice')"><el-input v-model="qe.invoice" maxlength="255" :placeholder="$t('otInvoicePh')" /></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="qe.open = false">{{ $t('otCancel') }}</el-button>
+        <el-button type="primary" :loading="saving === 'quick'" @click="saveQuick">{{ $t('otSave') }}</el-button>
+      </template>
+    </el-dialog>
+
     <OtgruzkaEditDialog v-if="o" v-model="editOpen" :order="o" @saved="applyDetail" />
   </el-drawer>
 </template>
@@ -293,7 +345,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { Close, Delete, Edit, EditPen, Plus, WarningFilled } from '@element-plus/icons-vue'
+import { Bell, CircleCheck, Close, Delete, Edit, EditPen, Plus, WarningFilled } from '@element-plus/icons-vue'
 import UiHint from '@/components/ui/UiHint.vue'
 import api from '@/api/otgruzka'
 import { useUsersStore } from '@/stores/user'
@@ -301,6 +353,7 @@ import { formatDate, formatDateTime, telHref } from '@/utils/format'
 import { changeValue, fmtMoney, fmtPct, fmtShort, otError, PAY_TONE, STAGE_TONE, STOCK_TONE } from '@/utils/otgruzkaFormat'
 import OtgruzkaEditDialog from './OtgruzkaEditDialog.vue'
 import OtItemsEditor from './OtItemsEditor.vue'
+import OtDidoxFiles from './OtDidoxFiles.vue'
 import { fmtQty } from '@/utils/skladFormat'
 
 const props = defineProps({
@@ -326,6 +379,48 @@ const next = reactive({ text: '', date: null })
 const pay = reactive({ date: new Date().toISOString().slice(0, 10), amount: undefined, comment: '' })
 const note = reactive({ kind: 'note', text: '' })
 const payEdit = reactive({ open: false, id: null, date: '', amount: 0, comment: '' })
+// ERP asosiy / ikki tomonlama rejim — yoki karta jadvalda yo'q (ERP'da ochilgan): tahrirlash mumkin
+const canEdit = computed(() => !!o.value && (props.editable || o.value.source !== 'sheet' || o.value.sheet_removed))
+
+// ─── Bosqichni tez tahrirlash ───────────────────────────────────────
+const qe = reactive({ open: false, field: '', pct: 0, sgp_date: null, didox_contract: 'na', didox_poa: 'na', invoice: '' })
+const flagOptions = computed(() => [
+  { label: t('otYes'), value: 'yes' },
+  { label: t('otNo'), value: 'no' },
+  { label: t('otNa'), value: 'na' },
+])
+const toFlag = (v) => (v === true ? 'yes' : v === false ? 'no' : 'na')
+const fromFlag = (v) => (v === 'yes' ? true : v === 'no' ? false : null)
+// Bosiladigan bosqich kartasi: klaviaturadan ham ochiladi
+function stepAttrs(field, allowed = true) {
+  if (!canEdit.value || !allowed) return {}
+  return { role: 'button', tabindex: 0, onClick: () => openQuick(field), onKeydown: (e) => e.key === 'Enter' && openQuick(field) }
+}
+function openQuick(field) {
+  const d = o.value
+  Object.assign(qe, {
+    open: true,
+    field,
+    pct: Math.round(((field === 'shipped' ? d.shipped_pct : d.ready_pct) || 0) * 100),
+    sgp_date: d.sgp_date || null,
+    didox_contract: toFlag(d.didox_contract),
+    didox_poa: toFlag(d.didox_poa),
+    invoice: d.invoice_numbers || '',
+  })
+}
+async function saveQuick() {
+  const pct = Math.min(100, Math.max(0, Number(qe.pct) || 0)) / 100
+  const body =
+    qe.field === 'ready'
+      ? { ready_pct: pct, sgp_date: qe.sgp_date || null }
+      : qe.field === 'shipped'
+        ? { shipped_pct: pct }
+        : qe.field === 'didox'
+          ? { didox_contract: fromFlag(qe.didox_contract), didox_poa: fromFlag(qe.didox_poa) }
+          : { invoice_numbers: qe.invoice.trim() || null }
+  if (await run('quick', () => api.update(o.value.id, body))) qe.open = false
+}
+
 const drawerSize = computed(() => (window.innerWidth < 640 ? '100%' : '600px'))
 const noteKinds = computed(() => [
   { label: t('otNoteKind_note'), value: 'note' },
@@ -422,7 +517,7 @@ function editPayment(p) {
 async function savePayment() {
   const orig = o.value.payments.find((p) => p.id === payEdit.id)
   const body = { pay_date: payEdit.date, comment: payEdit.comment.trim() || (orig?.comment?.startsWith('sys:') ? orig.comment : null) }
-  if (props.editable && payEdit.amount !== orig?.amount) body.amount = payEdit.amount
+  if (canEdit.value && payEdit.amount !== orig?.amount) body.amount = payEdit.amount
   if (await run('payEdit', () => api.updatePayment(payEdit.id, body))) payEdit.open = false
 }
 
@@ -540,9 +635,72 @@ const author = (n) => {
   }
 }
 .ot-step__name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--ui-muted);
+}
+.ot-step__pen {
+  font-size: 12px;
+  opacity: 0.45;
+}
+.ot-step.is-click {
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  &:hover,
+  &:focus-visible {
+    background: var(--ui-link-soft);
+    box-shadow: inset 0 0 0 1px var(--ui-link-line);
+    outline: none;
+    .ot-step__pen {
+      opacity: 1;
+      color: var(--ui-link);
+    }
+  }
+}
+.ot-d__sklad {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--ui-radius);
+  font-size: 13px;
+  &.is-pending {
+    background: var(--ui-warn-soft);
+    color: var(--ui-warn-ink);
+    border: 1px solid var(--ui-warn-line);
+  }
+  &.is-done {
+    background: var(--ui-good-soft);
+    color: var(--ui-good);
+  }
+}
+.ot-qe__pct {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ot-qe__slider {
+  flex: 1 1 auto;
+}
+.ot-qe__num {
+  width: 80px;
+}
+.ot-qe__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+.ot-qe__form {
+  margin-top: 14px;
 }
 .ot-step__val {
   font-size: 12px;

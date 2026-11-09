@@ -19,6 +19,17 @@
       <el-icon class="notif-approvals__arrow"><ArrowRight /></el-icon>
     </button>
 
+    <button
+      v-if="skladPending"
+      type="button"
+      class="notif-approvals"
+      @click="go('/sklad?tab=checks')"
+    >
+      <el-icon><Box /></el-icon>
+      <span>{{ $t('notifSkladChecks', { n: skladPending }) }}</span>
+      <el-icon class="notif-approvals__arrow"><ArrowRight /></el-icon>
+    </button>
+
     <ul v-if="items.length" class="notif-list">
       <li
         v-for="n in items"
@@ -43,13 +54,13 @@
         </div>
       </li>
     </ul>
-    <p v-else-if="!pendingApprovals" class="notif-empty">{{ $t('notifEmpty') }}</p>
+    <p v-else-if="!pendingApprovals && !skladPending" class="notif-empty">{{ $t('notifEmpty') }}</p>
   </el-drawer>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { ArrowRight, Bell, List, Promotion } from '@element-plus/icons-vue'
+import { ArrowRight, Bell, Box, List, Promotion } from '@element-plus/icons-vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { formatDateTime } from '@/utils/format'
 
@@ -57,7 +68,7 @@ defineProps({ modelValue: { type: Boolean, default: false } })
 const emit = defineEmits(['update:modelValue'])
 
 const router = useRouter()
-const { items, pendingApprovals, markAllSeen } = useNotifications()
+const { items, pendingApprovals, skladPending, markAllSeen } = useNotifications()
 
 const fmtTime = (d) => (d ? formatDateTime(d) : '')
 

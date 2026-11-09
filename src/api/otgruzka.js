@@ -21,4 +21,18 @@ export default {
   removePayment: (id) => apiClient.delete(`otgruzka/payments/${id}`),
   addNote: (id, payload) => apiClient.post(`otgruzka/${id}/notes`, payload),
   removeNote: (id) => apiClient.delete(`otgruzka/notes/${id}`),
+  // Didox: schyot-faktura fayllari (Cloudflare R2)
+  addDidox: (id, file, meta = {}, onUploadProgress) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    for (const [k, v] of Object.entries(meta)) if (v !== undefined && v !== null && v !== '') fd.append(k, String(v))
+    return apiClient.post(`otgruzka/${id}/didox`, fd, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 0, onUploadProgress })
+  },
+  updateDidox: (fileId, payload) => apiClient.patch(`otgruzka/didox/${fileId}`, payload),
+  removeDidox: (fileId) => apiClient.delete(`otgruzka/didox/${fileId}`),
+  didoxLink: (fileId, mode = 'inline') => apiClient.get(`otgruzka/didox/${fileId}/link`, { params: { mode } }),
+  // Ombor tekshiruvi (yangi shartnomalar)
+  skladChecks: () => apiClient.get('otgruzka/sklad-checks'),
+  skladChecksCount: () => apiClient.get('otgruzka/sklad-checks/count'),
+  skladCheck: (id, payload) => apiClient.post(`otgruzka/${id}/sklad-check`, payload),
 }

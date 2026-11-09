@@ -454,6 +454,22 @@ export const uz = {
   skRd_none: 'Tayyor emas',
   skRd_unknown: 'Omborda topilmadi',
   skRdEmpty: "Mahsulotlari kiritilgan, jo'natilmagan shartnoma yo'q",
+
+  // Yangi shartnomalar — ombor tekshiruvi
+  skTabChecks: 'Yangi shartnomalar',
+  skChkBannerTitle: '{n} ta yangi shartnoma',
+  skChkBannerText: 'Mahsulotlar omborda bor-yo\'qligini tekshiring',
+  skChkBannerGo: 'Tekshirish',
+  skChkEmpty: "Tekshirilmagan yangi shartnoma yo'q",
+  skChkSince: 'kelgan: {time}',
+  skChkNoItems: 'Mahsulotlar kiritilmagan',
+  skChkNotePh: 'Izoh (masalan: 2 ta ВКП 50x30 yetishmaydi)',
+  skChkDone: 'Tekshirildi',
+  skChkSaved: 'Belgilandi',
+  skChk_ready: 'Bor',
+  skChk_partial: 'Qisman bor',
+  skChk_none: "Yo'q",
+  skChk_unknown: 'Omborda topilmadi',
 }
 
 export const ru = {
@@ -879,4 +895,20 @@ export const ru = {
   skRd_none: 'Не готов',
   skRd_unknown: 'Нет на складе',
   skRdEmpty: 'Нет неотгруженных договоров с указанными товарами',
+
+  // Новые договоры — проверка склада
+  skTabChecks: 'Новые договоры',
+  skChkBannerTitle: 'Новых договоров: {n}',
+  skChkBannerText: 'Проверьте наличие товаров на складе',
+  skChkBannerGo: 'Проверить',
+  skChkEmpty: 'Нет непроверенных новых договоров',
+  skChkSince: 'поступил: {time}',
+  skChkNoItems: 'Товары не указаны',
+  skChkNotePh: 'Комментарий (например: не хватает 2 шт ВКП 50x30)',
+  skChkDone: 'Проверено',
+  skChkSaved: 'Отмечено',
+  skChk_ready: 'Есть',
+  skChk_partial: 'Частично',
+  skChk_none: 'Нет',
+  skChk_unknown: 'Не найден на складе',
 }

@@ -136,7 +136,7 @@ const createOpen = ref(false)
 const tab = ref(['list', 'managers', 'lines', 'settings'].includes(route.query.tab) ? route.query.tab : 'list')
 const openId = ref(route.query.id ? Number(route.query.id) : null)
 
-const emptyFilters = () => ({ q: '', manager: '', stage: '', pay: '', series: '', alert: '', showFinal: false })
+const emptyFilters = () => ({ q: '', manager: '', stage: '', pay: '', series: '', didox: '', alert: '', showFinal: false })
 const filters = reactive(emptyFilters())
 
 // Tab va ochiq karta manzilda — havolani ulashsa shu holat ochiladi

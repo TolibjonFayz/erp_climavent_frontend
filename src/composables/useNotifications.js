@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import bossApi from '@/api/boss'
+import otgruzkaApi from '@/api/otgruzka'
 import { useTasksStore } from '@/stores/tasks'
 import { useUsersStore } from '@/stores/user'
 
@@ -8,6 +9,8 @@ import { useUsersStore } from '@/stores/user'
 const POLL_MS = 5 * 60 * 1000
 
 const announcements = ref([])
+// Ombor: yangi shartnomalar — mahsulotlar borligini tekshirish kutilmoqda
+const skladChecks = ref(0)
 const seenAt = ref(0)
 let timer = null
 
@@ -64,8 +67,12 @@ export function useNotifications() {
   const pendingApprovals = computed(() =>
     isApprover.value ? tasksStore.pendingApprovals.length : 0,
   )
+  // Ombor sahifasiga ruxsati bor xodimlar (admin ham) ko'radi
+  const canSklad = computed(() => !!usersStore.currentUser && usersStore.currentUser.permissions?.sklad !== false)
+  const skladPending = computed(() => (canSklad.value ? skladChecks.value : 0))
+
   const unreadCount = computed(
-    () => items.value.filter((n) => n.unread).length + pendingApprovals.value,
+    () => items.value.filter((n) => n.unread).length + pendingApprovals.value + skladPending.value,
   )
 
   async function refresh() {
@@ -73,6 +80,11 @@ export function useNotifications() {
       announcements.value = (await bossApi.getFeed()) || []
     } catch {
       // bildirishnoma ikkinchi darajali — xatoni jimgina o'tkazamiz
+    }
+    try {
+      if (canSklad.value) skladChecks.value = (await otgruzkaApi.skladChecksCount())?.count || 0
+    } catch {
+      skladChecks.value = 0
     }
     try {
       // Xodimning vazifalari kichik ro'yxat — yangi vazifa sahifa yangilanmasdan ko'rinsin
@@ -100,5 +112,5 @@ export function useNotifications() {
     }
   }
 
-  return { items, unreadCount, pendingApprovals, start, refresh, markAllSeen }
+  return { items, unreadCount, pendingApprovals, skladPending, start, refresh, markAllSeen }
 }

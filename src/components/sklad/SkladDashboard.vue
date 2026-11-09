@@ -70,6 +70,16 @@
       <el-button v-else type="primary" size="large" @click="quizOpen = true">{{ $t('trStart') }}</el-button>
     </div>
 
+    <!-- Bildirishnoma: yangi shartnomalar — mahsulotlar omborda borligini tekshirish kerak -->
+    <button v-if="checksCount > 0 && tab !== 'checks'" type="button" class="sk-notify" @click="showTab('checks')">
+      <el-icon class="sk-notify__icon"><Bell /></el-icon>
+      <span class="sk-notify__text">
+        <b>{{ $t('skChkBannerTitle', { n: checksCount }) }}</b>
+        <span>{{ $t('skChkBannerText') }}</span>
+      </span>
+      <span class="sk-notify__go">{{ $t('skChkBannerGo') }} →</span>
+    </button>
+
     <!-- Ko'rsatkichlar: 4 ta asosiy raqam (keng — raqamlar kesilmaydi) -->
     <div class="sk-overview" data-tour="sk-stats">
       <div class="sk-stats">
@@ -131,6 +141,15 @@
           @go-settings="showTab('admin')"
         />
       </el-tab-pane>
+      <el-tab-pane name="checks">
+        <template #label>
+          <span class="sk-tab-checks">
+            {{ $t('skTabChecks') }}
+            <span v-if="checksCount" class="sk-tab-badge">{{ checksCount }}</span>
+          </span>
+        </template>
+        <SkladChecks v-if="visited.checks" @open="openItem" @count="checksCount = $event" />
+      </el-tab-pane>
       <el-tab-pane name="movements" :label="$t('skTabMovements')">
         <SkladMovements v-if="visited.movements" :is-admin="isAdmin" @open="openItem" />
       </el-tab-pane>
@@ -175,7 +194,10 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Calendar, CircleCheck, EditPen, InfoFilled, Plus, Van, WarningFilled } from '@element-plus/icons-vue'
+import { Bell, Calendar, CircleCheck, EditPen, InfoFilled, Plus, Van, WarningFilled } from '@element-plus/icons-vue'
+import { useRoute } from 'vue-router'
+import otgruzkaApi from '@/api/otgruzka'
+import SkladChecks from './SkladChecks.vue'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import OnboardingTour from '@/components/onboarding/OnboardingTour.vue'
@@ -205,8 +227,18 @@ const isAdmin = computed(() => !!usersStore.currentUser?.is_admin)
 const period = ref('')
 const loading = ref(false)
 const loadError = ref('')
-const tab = ref('stock')
-const visited = reactive({ stock: true })
+const route = useRoute()
+// ?tab=checks — bildirishnomadan kelganda yangi shartnomalar ro'yxati darhol ochiladi
+const tab = ref(route.query.tab === 'checks' ? 'checks' : 'stock')
+const visited = reactive({ stock: true, [tab.value]: true })
+const checksCount = ref(0)
+async function loadChecksCount() {
+  try {
+    checksCount.value = (await otgruzkaApi.skladChecksCount()).count || 0
+  } catch {
+    checksCount.value = 0 // otgruzka moduliga ruxsat bo'lmasa — bildirishnoma ko'rinmaydi
+  }
+}
 const contractsView = ref('erp')
 const contractsViews = computed(() => [
   { label: t('skCtrViewErp'), value: 'erp' },
@@ -373,6 +405,7 @@ function buildSteps() {
 onMounted(async () => {
   tour.setSteps(buildSteps(), () => (itemId.value = null), onTutorialDone)
   loadTraining()
+  loadChecksCount()
   await load()
   // Birinchi kirishda yo'riqnoma o'zi ochiladi; keyin — "Yo'riqnoma" tugmasi orqali
   if (!tour.state.seen) setTimeout(() => tour.start(), 600)
@@ -592,5 +625,71 @@ onMounted(async () => {
     flex-direction: column;
     gap: 16px;
   }
+}
+.sk-notify {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--ui-warn-line);
+  border-radius: var(--ui-radius);
+  background: var(--ui-warn-soft);
+  color: var(--ui-warn-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  &:hover,
+  &:focus-visible {
+    border-color: var(--ui-warn);
+  }
+}
+.sk-notify__icon {
+  flex: none;
+  font-size: 20px;
+  animation: sk-ring 2.4s ease-in-out infinite;
+}
+@keyframes sk-ring {
+  0%, 80%, 100% { transform: rotate(0); }
+  84% { transform: rotate(14deg); }
+  88% { transform: rotate(-12deg); }
+  92% { transform: rotate(8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-notify__icon {
+    animation: none;
+  }
+}
+.sk-notify__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  b {
+    font-size: 14px;
+  }
+}
+.sk-notify__go {
+  flex: none;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sk-tab-checks {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.sk-tab-badge {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--ui-bad);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
 }
 </style>

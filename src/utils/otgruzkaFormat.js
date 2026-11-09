@@ -60,3 +60,27 @@ export function changeValue(field, v) {
   if (field === 'final_status') return t(`otStage_${v}`)
   return String(v)
 }
+
+// Didox filtri: ok — shartnoma va ishonchnoma bor; missing — biri yo'q; pending — hali belgilanmagan;
+// files / nofiles — schyot-faktura fayli yuklangan / yuklanmagan (rasmiy shartnomalar); na — Didox kerak emas
+export const DIDOX_FILTERS = ['ok', 'missing', 'pending', 'files', 'nofiles', 'na']
+export function didoxStateOf(r) {
+  if (!r.official) return 'na'
+  if (r.didox_contract === false || r.didox_poa === false) return 'missing'
+  if (r.didox_contract === true && r.didox_poa === true) return 'ok'
+  return 'pending'
+}
+export function matchDidox(r, f) {
+  if (!f) return true
+  if (f === 'files') return (r.didox_files_count || 0) > 0
+  if (f === 'nofiles') return r.official && !(r.didox_files_count > 0)
+  return didoxStateOf(r) === f
+}
+
+/** Fayl hajmi: 1536 → "1.5 KB" */
+export function fmtSize(n) {
+  const b = Number(n) || 0
+  if (b < 1024) return `${b} B`
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`
+  return `${(b / 1024 / 1024).toFixed(1)} MB`
+}
