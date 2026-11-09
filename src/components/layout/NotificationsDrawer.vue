@@ -1,34 +1,22 @@
 <template>
   <el-drawer
     :model-value="modelValue"
-    :title="$t('notifTitle')"
     direction="rtl"
     size="380px"
     class="notif-drawer"
     @update:model-value="(v) => emit('update:modelValue', v)"
-    @closed="markAllSeen"
   >
-    <button
-      v-if="pendingApprovals"
-      type="button"
-      class="notif-approvals"
-      @click="go('/tasks')"
-    >
-      <el-icon><Bell /></el-icon>
-      <span>{{ $t('notifApprovals', { n: pendingApprovals }) }}</span>
-      <el-icon class="notif-approvals__arrow"><ArrowRight /></el-icon>
-    </button>
-
-    <button
-      v-if="skladPending"
-      type="button"
-      class="notif-approvals"
-      @click="go('/sklad?tab=checks')"
-    >
-      <el-icon><Box /></el-icon>
-      <span>{{ $t('notifSkladChecks', { n: skladPending }) }}</span>
-      <el-icon class="notif-approvals__arrow"><ArrowRight /></el-icon>
-    </button>
+    <template #header>
+      <div class="notif-head">
+        <span class="notif-head__title">
+          {{ $t('notifTitle') }}
+          <span v-if="unreadCount" class="notif-head__count">{{ unreadCount }}</span>
+        </span>
+        <el-button v-if="unreadCount" link type="primary" :icon="Finished" @click="markAllSeen">
+          {{ $t('notifMarkAll') }}
+        </el-button>
+      </div>
+    </template>
 
     <ul v-if="items.length" class="notif-list">
       <li
@@ -36,31 +24,38 @@
         :key="n.key"
         class="notif-item"
         :class="{ 'is-unread': n.unread, 'is-link': !!n.to }"
-        @click="n.to && go(n.to)"
+        role="button"
+        tabindex="0"
+        @click="open(n)"
+        @keydown.enter="open(n)"
       >
         <span class="notif-item__icon" :class="`is-${n.type}`">
-          <el-icon><Promotion v-if="n.type === 'announcement'" /><List v-else /></el-icon>
+          <el-icon>
+            <Promotion v-if="n.type === 'announcement'" />
+            <Bell v-else-if="n.type === 'approval'" />
+            <Box v-else-if="n.type === 'sklad'" />
+            <List v-else />
+          </el-icon>
         </span>
         <div class="notif-item__body">
           <div class="notif-item__head">
-            <span class="notif-item__kind">
-              {{ $t(n.type === 'announcement' ? 'notifAnnouncement' : 'notifNewTask') }}
-            </span>
+            <span class="notif-item__kind">{{ $t(KIND[n.type]) }}</span>
             <span class="notif-item__time">{{ fmtTime(n.time) }}</span>
           </div>
           <div class="notif-item__title">{{ n.title }}</div>
           <div v-if="n.text" class="notif-item__text">{{ n.text }}</div>
           <div v-if="n.author" class="notif-item__author">— {{ n.author }}</div>
         </div>
+        <span v-if="n.unread" class="notif-item__dot" :aria-label="$t('notifUnread')" />
       </li>
     </ul>
-    <p v-else-if="!pendingApprovals && !skladPending" class="notif-empty">{{ $t('notifEmpty') }}</p>
+    <p v-else class="notif-empty">{{ $t('notifEmpty') }}</p>
   </el-drawer>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { ArrowRight, Bell, Box, List, Promotion } from '@element-plus/icons-vue'
+import { Bell, Box, Finished, List, Promotion } from '@element-plus/icons-vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { formatDateTime } from '@/utils/format'
 
@@ -68,7 +63,19 @@ defineProps({ modelValue: { type: Boolean, default: false } })
 const emit = defineEmits(['update:modelValue'])
 
 const router = useRouter()
-const { items, pendingApprovals, skladPending, markAllSeen } = useNotifications()
+const { items, unreadCount, markRead, markAllSeen } = useNotifications()
+const KIND = {
+  announcement: 'notifAnnouncement',
+  task: 'notifNewTask',
+  approval: 'notifApproval',
+  sklad: 'notifSklad',
+}
+
+// Bosilganda — o'qilgan bo'ladi (qizil raqam kamayadi); havolasi bo'lsa o'sha sahifa ochiladi
+function open(n) {
+  markRead(n.key)
+  if (n.to) go(n.to)
+}
 
 const fmtTime = (d) => (d ? formatDateTime(d) : '')
 
@@ -79,25 +86,54 @@ function go(path) {
 </script>
 
 <style scoped>
-.notif-approvals {
+.notif-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  width: 100%;
-  margin-bottom: 14px;
-  padding: 10px 12px;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ui-warn, #b45309);
-  text-align: left;
-  background: rgba(240, 160, 32, 0.1);
-  border: 1px solid rgba(240, 160, 32, 0.35);
-  border-radius: 8px;
+}
+.notif-head__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ui-ink);
+}
+.notif-head__count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--ui-bad, #dc2626);
+  color: #fff;
+  font-size: 11px;
+  line-height: 20px;
+  text-align: center;
+}
+.notif-item {
+  position: relative;
   cursor: pointer;
 }
-.notif-approvals__arrow {
-  margin-left: auto;
+.notif-item__dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ui-link, #2a78d6);
+}
+.notif-item__icon.is-approval {
+  background: #d97706;
+}
+.notif-item__icon.is-sklad {
+  background: #0f766e;
+}
+.notif-item.is-unread .notif-item__head {
+  padding-right: 14px;
+}
+.notif-item:not(.is-unread) {
+  opacity: 0.75;
 }
 .notif-list {
   list-style: none;

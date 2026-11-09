@@ -5,24 +5,40 @@ import { useTasksStore } from '@/stores/tasks'
 import { useUsersStore } from '@/stores/user'
 
 // Sidebar'dagi bildirishnoma qo'ng'irog'i: Boss e'lonlari, menga berilgan yangi vazifalar,
-// tasdiq kutayotgan so'rovlar (tasdiqlovchi/admin uchun). Holat butun ilova uchun bitta.
+// tasdiq kutayotgan so'rovlar (tasdiqlovchi/admin), omborga yangi shartnomalar.
+// Har bildirishnoma alohida o'qiladi (bosilganda); "Barchasini o'qilgan qilish" — hammasini.
+// O'qilganlar shu brauzerda, foydalanuvchi bo'yicha saqlanadi. Holat butun ilova uchun bitta.
 const POLL_MS = 5 * 60 * 1000
+const MAX_READ_KEYS = 500
 
 const announcements = ref([])
-// Ombor: yangi shartnomalar — mahsulotlar borligini tekshirish kutilmoqda
-const skladChecks = ref(0)
-const seenAt = ref(0)
+const skladChecks = ref([]) // [{ id, dogovor_number, client_name, manager_name, at }]
+const seenAt = ref(0) // "Barchasini o'qilgan" bosilgan vaqt — undan oldingilar o'qilgan
+const readKeys = ref(new Set()) // alohida bosib o'qilganlar
 let timer = null
 
 const userId = () => Number(localStorage.getItem('userid'))
 const seenKey = () => `notif:seen:${userId()}`
+const readKey = () => `notif:read:${userId()}`
 const ts = (d) => (d ? new Date(d).getTime() : 0)
 
-function readSeen() {
+function loadState() {
   try {
     seenAt.value = Number(localStorage.getItem(seenKey())) || 0
+    readKeys.value = new Set(JSON.parse(localStorage.getItem(readKey()) || '[]'))
   } catch {
     seenAt.value = 0
+    readKeys.value = new Set()
+  }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(seenKey(), String(seenAt.value))
+    // Ro'yxat cheksiz o'smasin — eng oxirgilari qoladi
+    localStorage.setItem(readKey(), JSON.stringify([...readKeys.value].slice(-MAX_READ_KEYS)))
+  } catch {
+    // brauzer saqlashga ruxsat bermasa — faqat shu sessiyada o'qilgan bo'ladi
   }
 }
 
@@ -34,6 +50,8 @@ export function useNotifications() {
   const isApprover = computed(
     () => isAdmin.value || (tasksStore.approver && Number(tasksStore.approver.id) === userId()),
   )
+  // Ombor sahifasiga ruxsati bor xodimlar (admin ham) ko'radi
+  const canSklad = computed(() => !!usersStore.currentUser && usersStore.currentUser.permissions?.sklad !== false)
 
   // Menga berilgan, hali boshlanmagan vazifalar (admin ham o'ziga berilganini ko'radi)
   const newTasks = computed(() => {
@@ -59,21 +77,28 @@ export function useNotifications() {
         time: t.createdAt,
         to: '/tasks',
       })),
+      ...(isApprover.value ? tasksStore.pendingApprovals : []).map((t) => ({
+        key: `appr-${t.id}`,
+        type: 'approval',
+        title: t.title,
+        text: t.approval_note || t.description || '',
+        time: t.updatedAt || t.createdAt,
+        to: '/tasks',
+      })),
+      ...(canSklad.value ? skladChecks.value : []).map((c) => ({
+        key: `sklad-${c.id}`,
+        type: 'sklad',
+        title: `№ ${c.dogovor_number || '—'} · ${c.client_name || ''}`,
+        text: c.manager_name || '',
+        time: c.at,
+        to: '/sklad?tab=checks',
+      })),
     ]
     list.sort((a, b) => ts(b.time) - ts(a.time))
-    return list.map((n) => ({ ...n, unread: ts(n.time) > seenAt.value }))
+    return list.map((n) => ({ ...n, unread: ts(n.time) > seenAt.value && !readKeys.value.has(n.key) }))
   })
 
-  const pendingApprovals = computed(() =>
-    isApprover.value ? tasksStore.pendingApprovals.length : 0,
-  )
-  // Ombor sahifasiga ruxsati bor xodimlar (admin ham) ko'radi
-  const canSklad = computed(() => !!usersStore.currentUser && usersStore.currentUser.permissions?.sklad !== false)
-  const skladPending = computed(() => (canSklad.value ? skladChecks.value : 0))
-
-  const unreadCount = computed(
-    () => items.value.filter((n) => n.unread).length + pendingApprovals.value + skladPending.value,
-  )
+  const unreadCount = computed(() => items.value.filter((n) => n.unread).length)
 
   async function refresh() {
     try {
@@ -82,9 +107,9 @@ export function useNotifications() {
       // bildirishnoma ikkinchi darajali — xatoni jimgina o'tkazamiz
     }
     try {
-      if (canSklad.value) skladChecks.value = (await otgruzkaApi.skladChecksCount())?.count || 0
+      if (canSklad.value) skladChecks.value = (await otgruzkaApi.skladChecksCount())?.items || []
     } catch {
-      skladChecks.value = 0
+      skladChecks.value = []
     }
     try {
       // Xodimning vazifalari kichik ro'yxat — yangi vazifa sahifa yangilanmasdan ko'rinsin
@@ -97,20 +122,27 @@ export function useNotifications() {
   }
 
   function start() {
-    readSeen()
+    loadState()
     if (timer) return
     refresh()
     timer = setInterval(refresh, POLL_MS)
   }
 
-  function markAllSeen() {
-    seenAt.value = Date.now()
-    try {
-      localStorage.setItem(seenKey(), String(seenAt.value))
-    } catch {
-      // brauzer saqlashga ruxsat bermasa — faqat shu sessiyada o'qilgan bo'ladi
-    }
+  /** Bitta bildirishnomani o'qilgan deb belgilash (bosilganda) */
+  function markRead(key) {
+    if (readKeys.value.has(key)) return
+    const next = new Set(readKeys.value)
+    next.delete(key) // oxiriga o'tkazish — kesishda yangilari qolsin
+    next.add(key)
+    readKeys.value = next
+    saveState()
   }
 
-  return { items, unreadCount, pendingApprovals, skladPending, start, refresh, markAllSeen }
+  function markAllSeen() {
+    seenAt.value = Date.now()
+    readKeys.value = new Set() // vaqt bo'yicha hammasi o'qilgan — alohida ro'yxat kerak emas
+    saveState()
+  }
+
+  return { items, unreadCount, start, refresh, markRead, markAllSeen }
 }

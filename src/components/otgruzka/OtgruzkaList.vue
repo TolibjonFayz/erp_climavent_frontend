@@ -52,7 +52,6 @@
         row-key="id"
         class="ot-table"
         :row-class-name="rowClass"
-        :default-sort="{ prop: 'sheet_row', order: 'ascending' }"
         @row-click="(r) => $emit('open', r.id)"
         @sort-change="onSort"
       >
@@ -187,9 +186,12 @@ const filtered = computed(() => {
 })
 
 // Tartiblash
-const sort = ref({ prop: 'sheet_row', order: 'ascending' })
+// Default: oxirgi kiritilgan karta tepada (ERP'ga qo'shilgan vaqti bo'yicha).
+// Ustun bo'yicha tartiblash bekor qilinsa — yana shu tartibga qaytadi.
+const NEWEST = { prop: 'entered', order: 'descending' }
+const sort = ref({ ...NEWEST })
 function onSort({ prop, order }) {
-  sort.value = { prop: order ? prop : 'sheet_row', order: order || 'ascending' }
+  sort.value = order ? { prop, order } : { ...NEWEST }
 }
 // "Yaratilgan": shartnoma sanasi, bo'lmasa karta ERP'ga qo'shilgan sana
 const createdOf = (r) => r.dogovor_date || r.createdAt || null
@@ -199,6 +201,7 @@ const sortVal = (r, p) => {
     const d = createdOf(r)
     return d ? `${String(d).slice(0, 10)} ${String(r.createdAt || '')}` : ''
   }
+  if (p === 'entered') return new Date(r.createdAt).getTime() || 0
   if (p === 'paid_ratio') return r.contract_sum > 0 ? r.paid_sum / r.contract_sum : 0
   if (p === 'dogovor_number') return Number(r.dogovor_number) || 0
   if (p === 'stage') return STAGES.indexOf(r.stage)
@@ -210,7 +213,11 @@ const sorted = computed(() => {
   return [...filtered.value].sort((a, b) => {
     const x = sortVal(a, prop)
     const y = sortVal(b, prop)
-    if (x === y) return a.id - b.id
+    if (x === y) {
+      // Bir vaqtda kiritilganlar (jadvaldan birga kelgan): jadvalda pastroqdagi — yangiroq
+      if (prop === 'entered') return (b.sheet_row ?? Infinity) - (a.sheet_row ?? Infinity) || b.id - a.id
+      return a.id - b.id
+    }
     if (x === '' || x === null) return 1
     if (y === '' || y === null) return -1
     return (typeof x === 'string' ? x.localeCompare(y) : x - y) * dir
