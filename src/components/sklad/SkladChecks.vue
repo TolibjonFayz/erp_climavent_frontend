@@ -58,7 +58,18 @@
 
       <footer class="sk-chk__foot">
         <el-input v-model="notes[c.id]" :placeholder="$t('skChkNotePh')" maxlength="2000" clearable />
-        <el-button type="primary" :icon="Check" :loading="saving === c.id" @click="markDone(c)">{{ $t('skChkDone') }}</el-button>
+        <!-- Adashib bosilmasin — avval tasdiqlash so'raladi -->
+        <el-popconfirm
+          :title="$t('skChkConfirm', { n: c.dogovor_number || '—' })"
+          :confirm-button-text="$t('skChkConfirmYes')"
+          :cancel-button-text="$t('skChkConfirmNo')"
+          width="260"
+          @confirm="markDone(c)"
+        >
+          <template #reference>
+            <el-button type="primary" :icon="Check" :loading="saving === c.id">{{ $t('skChkDone') }}</el-button>
+          </template>
+        </el-popconfirm>
       </footer>
     </article>
   </div>
