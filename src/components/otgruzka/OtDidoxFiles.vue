@@ -56,12 +56,16 @@
             <div class="ot-muted">
               <template v-if="f.invoice_number">№ {{ f.invoice_number }}</template>
               <template v-if="f.invoice_date"> · {{ formatDate(f.invoice_date) }}</template>
-              <template v-if="f.invoice_number || f.invoice_date"> · </template>
+              <template v-if="f.kind === 'poa' && f.poa_company"> · {{ f.poa_company }}</template>
+              <template v-if="f.invoice_number || f.invoice_date || (f.kind === 'poa' && f.poa_company)"> · </template>
               {{ fmtSize(f.size_bytes) }} · {{ uploader(f) }}
             </div>
             <div v-if="f.comment" class="ot-dx__comment">{{ f.comment }}</div>
           </div>
-          <span v-if="f.kind !== 'poa'" class="ot-dx__amount" :class="{ 'is-empty': f.amount == null }">
+          <span v-if="f.kind === 'poa' && f.poa_valid_until" class="ot-tag" :class="`is-${poaTone(f)}`">
+            {{ poaStateText(f) }}
+          </span>
+          <span v-else-if="f.kind !== 'poa'" class="ot-dx__amount" :class="{ 'is-empty': f.amount == null }">
             {{ f.amount == null ? $t('otDidoxNoAmount') : fmtMoney(f.amount) }}
           </span>
           <span class="ot-dx__btns">
@@ -77,26 +81,82 @@
 
     <!-- Yuklash: schyot-faktura uchun summa, raqam, sana; ishonchnoma uchun raqam va sana -->
     <el-dialog v-model="up.open" :title="$t(up.kind === 'poa' ? 'otPoaUploadTitle' : 'otDidoxUploadTitle')" width="min(720px, 96vw)" append-to-body :close-on-click-modal="!up.busy">
-      <p class="ot-muted ot-dx__tip">{{ $t(up.kind === 'poa' ? 'otPoaUploadTip' : 'otDidoxUploadTip') }}</p>
-      <div v-for="(r, i) in up.rows" :key="i" class="ot-dx__row" :class="`is-${r.state}`">
+      <p class="ot-muted ot-dx__tip">{{ $t(up.kind === 'poa' ? 'otPoaUploadTip' : 'otDidoxUploadTip') }} {{ $t('otDidoxReadTip') }}</p>
+      <div v-for="(r, i) in up.rows" :key="r.uid" class="ot-dx__row" :class="`is-${r.state}`">
         <div class="ot-dx__row-head">
           <span class="ot-dx__row-name" :title="r.file.name">{{ r.file.name }}</span>
           <span class="ot-muted">{{ fmtSize(r.file.size) }}</span>
+          <el-tag v-if="r.reading" size="small" type="info">{{ $t('otDidoxReading') }}</el-tag>
+          <el-tag v-if="r.kind !== up.kind" size="small" type="warning">{{ $t(r.kind === 'poa' ? 'otDidoxAsPoa' : 'otDidoxAsInvoice') }}</el-tag>
           <el-tag v-if="r.state === 'done'" type="success" size="small">{{ $t('otDidoxUploaded') }}</el-tag>
           <el-tag v-else-if="r.state === 'error'" type="danger" size="small">{{ r.error }}</el-tag>
           <el-progress v-else-if="r.state === 'loading'" :percentage="r.progress" :stroke-width="6" class="ot-dx__progress" />
           <el-button v-if="!up.busy && r.state !== 'done'" text size="small" :icon="Close" :aria-label="$t('otDelete')" @click="up.rows.splice(i, 1)" />
         </div>
+        <el-alert v-if="r.dup" type="error" show-icon :closable="false" :title="r.dup" class="ot-dx__dup" />
+
         <div class="ot-dx__row-fields">
-          <UiMoneyInput v-if="up.kind !== 'poa'" v-model="r.amount" :min="0" :placeholder="$t('otDidoxAmount')" :disabled="r.state === 'done'" class="ot-dx__f-amount" />
-          <el-input v-model="r.invoice_number" :placeholder="$t(up.kind === 'poa' ? 'otPoaNumber' : 'otDidoxNumber')" maxlength="64" :disabled="r.state === 'done'" class="ot-dx__f-num" />
-          <el-date-picker v-model="r.invoice_date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" :placeholder="$t('otDidoxDate')" :disabled="r.state === 'done'" class="ot-dx__f-date" />
+          <UiMoneyInput v-if="r.kind !== 'poa'" v-model="r.amount" :min="0" :placeholder="$t('otDidoxAmount')" :disabled="r.state === 'done'" class="ot-dx__f-amount" @change="recheck(r)" />
+          <el-input v-model="r.invoice_number" :placeholder="$t(r.kind === 'poa' ? 'otPoaNumber' : 'otDidoxNumber')" maxlength="64" :disabled="r.state === 'done'" class="ot-dx__f-num" @change="recheck(r)" />
+          <el-date-picker v-model="r.invoice_date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" :placeholder="$t(r.kind === 'poa' ? 'otPoaIssued' : 'otDidoxDate')" :disabled="r.state === 'done'" class="ot-dx__f-date" @change="recheck(r)" />
+          <template v-if="r.kind === 'poa'">
+            <el-date-picker v-model="r.poa_valid_until" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" :placeholder="$t('otPoaValidUntil')" :disabled="r.state === 'done'" class="ot-dx__f-date" @change="recheck(r)" />
+            <el-input v-model="r.poa_company" :placeholder="$t('otPoaCompany')" maxlength="255" :disabled="r.state === 'done'" class="ot-dx__f-company" />
+            <el-input v-model="r.poa_inn" :placeholder="$t('otInn')" maxlength="32" :disabled="r.state === 'done'" class="ot-dx__f-num" @change="recheck(r)" />
+          </template>
         </div>
+
+        <!-- O'qilgan hujjat: asosiy ma'lumot, tovarlar va tekshiruv natijasi -->
+        <div v-if="r.parsed && r.parsed.kind !== 'unknown'" class="ot-dx__read">
+          <div class="ot-dx__read-head">
+            <template v-if="r.parsed.kind === 'poa'">
+              {{ $t('otPoaDoc', { n: r.parsed.number || '—', date: formatDate(r.parsed.date) }) }}
+              · {{ r.parsed.company || '—' }}<template v-if="r.parsed.company_inn"> ({{ $t('otInn') }} {{ r.parsed.company_inn }})</template>
+              <div v-if="r.parsed.person" class="ot-muted">{{ $t('otPoaPerson') }}: {{ r.parsed.person }}</div>
+            </template>
+            <template v-else>
+              {{ $t('otInvoiceDoc', { n: r.parsed.number || '—', date: formatDate(r.parsed.date) }) }}
+              · {{ r.parsed.buyer_name || '—' }}<template v-if="r.parsed.buyer_inn"> ({{ $t('otInn') }} {{ r.parsed.buyer_inn }})</template>
+            </template>
+            <div v-if="r.parsed.contract_number" class="ot-muted">
+              {{ $t('otDidoxContractRef', { n: r.parsed.contract_number, date: formatDate(r.parsed.contract_date) }) }}
+            </div>
+          </div>
+          <table v-if="r.parsed.items?.length" class="ot-dx__items">
+            <thead>
+              <tr>
+                <th>{{ $t('otItemName') }}</th>
+                <th class="is-r">{{ $t('otItemQty') }}</th>
+                <th v-if="r.parsed.kind === 'invoice'" class="is-r">{{ $t('otDidoxLineTotal') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="it in r.parsed.items" :key="it.no">
+                <td :title="it.name">{{ it.no }}. {{ it.name }}</td>
+                <td class="is-r nowrap">{{ fmtQty(it.qty) }} {{ it.unit || '' }}</td>
+                <td v-if="r.parsed.kind === 'invoice'" class="is-r nowrap">{{ fmtMoney(it.total) }}</td>
+              </tr>
+            </tbody>
+            <tfoot v-if="r.parsed.kind === 'invoice' && r.parsed.total != null">
+              <tr>
+                <td colspan="2" class="is-r ot-muted">{{ $t('otDidoxGrandTotal') }}</td>
+                <td class="is-r nowrap"><b>{{ fmtMoney(r.parsed.total) }}</b></td>
+              </tr>
+            </tfoot>
+          </table>
+          <ul v-if="r.checks.length" class="ot-dx__checks">
+            <li v-for="(c, k) in r.checks" :key="k" :class="`is-${c.level}`">
+              <span class="ot-dx__chk-icon">{{ c.level === 'ok' ? '✓' : c.level === 'warn' ? '!' : '✕' }}</span>
+              {{ $t(c.key, fmtParams(c.params)) }}
+            </li>
+          </ul>
+        </div>
+        <div v-else-if="r.note" class="ot-muted">{{ r.note }}</div>
       </div>
       <template #footer>
         <el-button :disabled="up.busy" @click="up.open = false">{{ $t('otCancel') }}</el-button>
         <el-button :disabled="up.busy" :icon="Plus" @click="pick(up.kind)">{{ $t('otDidoxMore') }}</el-button>
-        <el-button type="primary" :loading="up.busy" :disabled="!pending.length" @click="uploadAll">
+        <el-button type="primary" :loading="up.busy" :disabled="!pending.length || reading" @click="uploadAll">
           {{ $t('otDidoxUpload', { n: pending.length }) }}
         </el-button>
       </template>
@@ -109,9 +169,16 @@
           <UiMoneyInput v-model="ed.amount" :min="0" style="width: 100%" />
         </el-form-item>
         <el-form-item :label="$t(ed.kind === 'poa' ? 'otPoaNumber' : 'otDidoxNumber')"><el-input v-model="ed.invoice_number" maxlength="64" /></el-form-item>
-        <el-form-item :label="$t('otDidoxDate')">
+        <el-form-item :label="$t(ed.kind === 'poa' ? 'otPoaIssued' : 'otDidoxDate')">
           <el-date-picker v-model="ed.invoice_date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" style="width: 100%" />
         </el-form-item>
+        <template v-if="ed.kind === 'poa'">
+          <el-form-item :label="$t('otPoaValidUntil')">
+            <el-date-picker v-model="ed.poa_valid_until" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" style="width: 100%" />
+          </el-form-item>
+          <el-form-item :label="$t('otPoaCompany')"><el-input v-model="ed.poa_company" maxlength="255" /></el-form-item>
+          <el-form-item :label="$t('otInn')"><el-input v-model="ed.poa_inn" maxlength="32" /></el-form-item>
+        </template>
         <el-form-item :label="$t('otPayComment')"><el-input v-model="ed.comment" maxlength="1000" /></el-form-item>
       </el-form>
       <template #footer>
@@ -133,6 +200,8 @@ import api from '@/api/otgruzka'
 import { useUsersStore } from '@/stores/user'
 import { formatDate } from '@/utils/format'
 import { fmtMoney, fmtSize, otError } from '@/utils/otgruzkaFormat'
+import { fmtQty } from '@/utils/skladFormat'
+import { checkInvoice, checkPoa, readDidoxPdf } from '@/utils/didoxPdfImport'
 
 const props = defineProps({
   order: { type: Object, required: true },
@@ -148,7 +217,7 @@ const MAX_SIZE = 25 * 1024 * 1024
 const input = ref(null)
 const over = ref('') // qaysi blok ustiga fayl sudralmoqda
 const up = reactive({ open: false, busy: false, kind: 'invoice', rows: [] })
-const ed = reactive({ open: false, busy: false, id: null, kind: 'invoice', amount: undefined, invoice_number: '', invoice_date: null, comment: '' })
+const ed = reactive({ open: false, busy: false, id: null, kind: 'invoice', amount: undefined, invoice_number: '', invoice_date: null, comment: '', poa_valid_until: null, poa_company: '', poa_inn: '' })
 
 // Ikki blok: schyot-fakturalar (summasi bilan) va ishonchnomalar
 const blocks = computed(() => {
@@ -158,7 +227,37 @@ const blocks = computed(() => {
     { kind: 'poa', title: 'otDidoxPoas', empty: 'otPoaEmpty', files: files.filter((f) => f.kind === 'poa') },
   ]
 })
-const pending = computed(() => up.rows.filter((r) => r.state !== 'done'))
+// Dublikat (state = blocked) va yuklangan fayllar yuborilmaydi
+const pending = computed(() => up.rows.filter((r) => r.state !== 'done' && r.state !== 'blocked'))
+const reading = computed(() => up.rows.some((r) => r.reading))
+let uid = 0
+
+// ─── Ishonchnoma muddati ───
+const todayIso = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+const daysLeft = (iso) => Math.round((new Date(`${iso}T00:00:00Z`) - new Date(`${todayIso()}T00:00:00Z`)) / 86400000)
+function poaTone(f) {
+  const left = daysLeft(f.poa_valid_until)
+  return left < 0 ? 'bad' : left <= 3 ? 'warn' : 'good'
+}
+function poaStateText(f) {
+  const left = daysLeft(f.poa_valid_until)
+  return left < 0 ? t('otPoaExpired', { date: formatDate(f.poa_valid_until) }) : t('otPoaUntilDays', { date: formatDate(f.poa_valid_until), n: left })
+}
+
+// Tekshiruv matnlari uchun: summalar "1 234 567", sanalar "21.10.2026"
+const fmtParams = (p = {}) => {
+  const out = {}
+  for (const [k, v] of Object.entries(p)) {
+    if (['lines', 'total', 'after', 'contract', 'price', 'cardPrice'].includes(k)) out[k] = fmtMoney(v)
+    else if (k === 'date') out[k] = formatDate(v)
+    else if (k === 'qty' || k === 'cardQty') out[k] = fmtQty(v)
+    else out[k] = v ?? '—'
+  }
+  return out
+}
 
 const totalClass = computed(() => {
   const o = props.order
@@ -210,9 +309,121 @@ function addFiles(files, kind) {
       ElMessage.warning(t('otDidoxTooBig', { name: file.name }))
       continue
     }
-    up.rows.push({ file, amount: undefined, invoice_number: guessNumber(file.name), invoice_date: null, state: 'new', progress: 0, error: '' })
+    const row = reactive({
+      uid: ++uid,
+      file,
+      kind,
+      amount: undefined,
+      invoice_number: kind === 'poa' ? '' : guessNumber(file.name),
+      invoice_date: null,
+      doc_id: null,
+      poa_valid_until: null,
+      poa_company: '',
+      poa_inn: '',
+      parsed: null,
+      checks: [],
+      reading: false,
+      note: '',
+      dup: '',
+      state: 'new',
+      progress: 0,
+      error: '',
+    })
+    up.rows.push(row)
+    if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') readRow(row)
+    else recheck(row)
   }
   if (up.rows.length) up.open = true
+}
+
+// PDF (Didox) o'qiladi: maydonlar to'ldiriladi; hujjat turi boshqa bo'lsa — o'sha tur sifatida yuklanadi
+async function readRow(row) {
+  row.reading = true
+  try {
+    const p = await readDidoxPdf(row.file)
+    row.parsed = p
+    if (p.kind === 'unknown') {
+      row.note = t('otDidoxReadUnknown')
+    } else {
+      row.kind = p.kind
+      row.doc_id = p.doc_id || null
+      row.invoice_number = p.number || row.invoice_number
+      row.invoice_date = p.date || row.invoice_date
+      if (p.kind === 'poa') {
+        row.amount = undefined
+        row.poa_valid_until = p.valid_until || null
+        row.poa_company = p.company || ''
+        row.poa_inn = p.company_inn || ''
+      } else if (p.total != null) row.amount = p.total
+    }
+  } catch {
+    row.note = t('otDidoxReadFail')
+  } finally {
+    row.reading = false
+  }
+  await recheck(row)
+}
+
+function runChecks(row) {
+  const p = row.parsed
+  if (!p || p.kind === 'unknown') return
+  if (row.kind === 'poa') {
+    row.checks = checkPoa({ ...p, number: row.invoice_number, valid_until: row.poa_valid_until }, props.order)
+  } else {
+    // Shu oynadagi boshqa (hali yuklanmagan) fakturalar ham summaga qo'shiladi
+    const others = up.rows
+      .filter((r) => r !== row && r.kind === 'invoice' && r.state !== 'done' && r.state !== 'blocked')
+      .reduce((s, r) => s + (Number(r.amount) || 0), 0)
+    row.checks = checkInvoice({ ...p, number: row.invoice_number }, props.order, { otherSum: (props.order.didox_files_sum || 0) + others })
+  }
+}
+
+const normNo = (s) => String(s || '').replace(/\s/g, '').toLowerCase()
+
+// Dublikat: avval kartadagi fayllar va shu oynadagi boshqa fayllar, keyin butun baza (server)
+async function findDup(row) {
+  const num = normNo(row.invoice_number)
+  const rowInn = String(row.poa_inn || '').replace(/\D/g, '')
+  const sameNo = (kind, n, date, inn) =>
+    !!num &&
+    (kind || 'invoice') === row.kind &&
+    normNo(n) === num &&
+    (row.kind === 'poa' ? !rowInn || !inn || String(inn) === rowInn : !row.invoice_date || !date || date === row.invoice_date)
+  const local = (props.order.didox_files || []).find(
+    (f) => (row.doc_id && f.doc_id === row.doc_id) || sameNo(f.kind, f.invoice_number, f.invoice_date, f.poa_inn),
+  )
+  if (local) return { number: local.invoice_number || row.invoice_number, where: t('otDidoxDupHere'), file: local.file_name }
+  const idx = up.rows.indexOf(row)
+  const twin = up.rows.find(
+    (r, k) => k < idx && r.state !== 'blocked' && ((row.doc_id && r.doc_id === row.doc_id) || sameNo(r.kind, r.invoice_number, r.invoice_date, r.poa_inn)),
+  )
+  if (twin) return { number: row.invoice_number || twin.invoice_number, where: t('otDidoxDupBatch'), file: twin.file.name }
+  if (!num && !row.doc_id) return null
+  try {
+    const { duplicate: d } = await api.checkDidox(props.order.id, {
+      kind: row.kind,
+      invoice_number: row.invoice_number?.trim() || undefined,
+      invoice_date: row.kind === 'invoice' ? row.invoice_date || undefined : undefined,
+      doc_id: row.doc_id || undefined,
+      poa_inn: row.kind === 'poa' ? rowInn || undefined : undefined,
+    })
+    if (d) {
+      const where = d.order_id === props.order.id ? t('otDidoxDupHere') : t('otDidoxDupOther', { dogovor: d.dogovor_number ?? '—', client: d.client_name ?? '—' })
+      return { number: d.invoice_number || row.invoice_number, where, file: d.file_name }
+    }
+  } catch {
+    // Server tekshiruvi ishlamasa ham yuklashda server baribir rad etadi (409)
+  }
+  return null
+}
+
+async function recheck(row) {
+  if (row.state === 'done') return
+  runChecks(row)
+  const d = await findDup(row)
+  row.dup = d ? t(row.kind === 'poa' ? 'otPoaDup' : 'otDidoxDup', { number: d.number || '—', where: d.where, file: d.file }) : ''
+  if (d) row.state = 'blocked'
+  else if (row.state === 'blocked') row.state = 'new'
 }
 
 async function uploadAll() {
@@ -226,10 +437,12 @@ async function uploadAll() {
         props.order.id,
         r.file,
         {
-          kind: up.kind,
-          amount: up.kind === 'poa' ? undefined : r.amount,
+          kind: r.kind,
+          amount: r.kind === 'poa' ? undefined : r.amount,
           invoice_number: r.invoice_number?.trim(),
           invoice_date: r.invoice_date,
+          doc_id: r.doc_id,
+          ...(r.kind === 'poa' ? { poa_valid_until: r.poa_valid_until, poa_company: r.poa_company?.trim(), poa_inn: r.poa_inn?.trim() } : {}),
         },
         (ev) => {
           if (ev.total) r.progress = Math.round((ev.loaded / ev.total) * 100)
@@ -245,7 +458,7 @@ async function uploadAll() {
   if (last) emit('changed', last)
   // Ishonchnoma yuklandi, lekin "Ishonchnoma: bor" belgisini o'zi yoqib bo'lmadi (jadval asosiy rejimda)
   if (last?.poa_flag_skipped) ElMessage.warning(t('otPoaFlagSkipped'))
-  if (!up.rows.some((r) => r.state === 'error')) {
+  if (!up.rows.some((r) => r.state === 'error' || r.state === 'blocked')) {
     up.open = false
     up.rows = []
     ElMessage.success(t('otSaved'))
@@ -277,6 +490,9 @@ function startEdit(f) {
     invoice_number: f.invoice_number || '',
     invoice_date: f.invoice_date || null,
     comment: f.comment || '',
+    poa_valid_until: f.poa_valid_until || null,
+    poa_company: f.poa_company || '',
+    poa_inn: f.poa_inn || '',
   })
 }
 async function saveEdit() {
@@ -287,6 +503,9 @@ async function saveEdit() {
       invoice_number: ed.invoice_number.trim() || null,
       invoice_date: ed.invoice_date || null,
       comment: ed.comment.trim() || null,
+      ...(ed.kind === 'poa'
+        ? { poa_valid_until: ed.poa_valid_until || null, poa_company: ed.poa_company.trim() || null, poa_inn: ed.poa_inn.trim() || null }
+        : {}),
     })
     emit('changed', d)
     ed.open = false
@@ -545,5 +764,112 @@ async function remove(f) {
 }
 .ot-dx__f-date {
   flex: 1 1 150px;
+}
+.ot-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--ui-surface-2);
+  color: var(--ui-muted);
+  &.is-good {
+    background: var(--ui-good-soft);
+    color: var(--ui-good);
+  }
+  &.is-warn {
+    background: var(--ui-warn-soft);
+    color: var(--ui-warn);
+  }
+  &.is-bad {
+    background: var(--ui-bad-soft);
+    color: var(--ui-bad);
+  }
+}
+.ot-dx__row.is-blocked {
+  border-color: var(--ui-bad);
+}
+.ot-dx__dup {
+  padding: 6px 10px;
+}
+.ot-dx__f-company {
+  flex: 2 1 220px;
+}
+.ot-dx__read {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-2);
+  font-size: 13px;
+  color: var(--ui-ink);
+}
+.ot-dx__read-head {
+  font-weight: 600;
+  .ot-muted {
+    font-weight: 400;
+    font-size: 12px;
+  }
+}
+.ot-dx__items {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  th,
+  td {
+    padding: 3px 4px;
+    border-bottom: 1px dashed var(--ui-line-soft);
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    color: var(--ui-muted);
+    font-weight: 600;
+  }
+  td:first-child {
+    max-width: 0;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .is-r {
+    text-align: right;
+  }
+  .nowrap {
+    white-space: nowrap;
+  }
+}
+.ot-dx__checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  li {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+  }
+  .is-ok {
+    color: var(--ui-good);
+  }
+  .is-warn {
+    color: var(--ui-warn);
+  }
+  .is-bad {
+    color: var(--ui-bad);
+    font-weight: 600;
+  }
+}
+.ot-dx__chk-icon {
+  flex: 0 0 12px;
+  font-weight: 800;
+  text-align: center;
 }
 </style>
