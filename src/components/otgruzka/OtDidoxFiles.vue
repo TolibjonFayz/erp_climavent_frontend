@@ -243,6 +243,8 @@ async function uploadAll() {
   }
   up.busy = false
   if (last) emit('changed', last)
+  // Ishonchnoma yuklandi, lekin "Ishonchnoma: bor" belgisini o'zi yoqib bo'lmadi (jadval asosiy rejimda)
+  if (last?.poa_flag_skipped) ElMessage.warning(t('otPoaFlagSkipped'))
   if (!up.rows.some((r) => r.state === 'error')) {
     up.open = false
     up.rows = []
