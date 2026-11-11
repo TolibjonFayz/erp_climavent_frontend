@@ -387,7 +387,7 @@ export const extractPdfPages = async (pdfjs, data) => {
 
 // pdf.js og'ir (~1MB) — faqat PDF yuklanganda dinamik yuklanadi
 let pdfjsPromise = null
-const loadPdfjs = () => {
+export const loadPdfjs = () => {
   if (!pdfjsPromise) {
     pdfjsPromise = Promise.all([
       import('pdfjs-dist/legacy/build/pdf.min.mjs'),

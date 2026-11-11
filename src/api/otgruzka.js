@@ -30,6 +30,8 @@ export default {
   },
   updateDidox: (fileId, payload) => apiClient.patch(`otgruzka/didox/${fileId}`, payload),
   removeDidox: (fileId) => apiClient.delete(`otgruzka/didox/${fileId}`),
+  // Yuklashdan oldin dublikatni tekshirish (raqam / sana / Didox ID) — butun bazada
+  checkDidox: (id, params) => apiClient.get(`otgruzka/${id}/didox/check`, { params }),
   didoxLink: (fileId, mode = 'inline') => apiClient.get(`otgruzka/didox/${fileId}/link`, { params: { mode } }),
   // Ombor tekshiruvi (yangi shartnomalar)
   skladChecks: () => apiClient.get('otgruzka/sklad-checks'),
