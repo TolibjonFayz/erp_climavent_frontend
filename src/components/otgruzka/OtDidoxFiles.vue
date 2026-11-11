@@ -1,67 +1,83 @@
 <template>
-  <!-- Didox: schyot-faktura fayllari (Cloudflare R2) va har bir fayldagi summa -->
+  <!-- Didox: schyot-faktura (summasi bilan) va ishonchnoma fayllari (Cloudflare R2) -->
   <section class="ot-sec ot-dx">
     <div class="ot-sec__head">
       <h4><UiHint :label="$t('otDidoxTitle')" :hint="$t('otDidoxHint')" /></h4>
-      <span class="ot-sec__btns">
-        <span v-if="order.didox_files?.length" class="ot-muted">
-          {{ $t('otDidoxTotal') }}: <b :class="totalClass">{{ fmtMoney(order.didox_files_sum) }}</b>
-          <template v-if="order.contract_sum > 0"> / {{ fmtMoney(order.contract_sum) }}</template>
-        </span>
-        <el-button size="small" type="primary" plain :icon="Upload" :disabled="order.storage_ready === false" @click="pick">
-          {{ $t('otDidoxAdd') }}
-        </el-button>
-      </span>
     </div>
     <input ref="input" type="file" multiple :accept="ACCEPT" hidden @change="onPicked" />
 
     <el-alert v-if="order.storage_ready === false" type="warning" show-icon :closable="false" :title="$t('otDidoxStorageOff')" />
 
-    <div
-      v-if="!order.didox_files?.length"
-      class="ot-dx__drop"
-      :class="{ 'is-over': over }"
-      role="button"
-      tabindex="0"
-      @click="pick"
-      @keydown.enter="pick"
-      @dragover.prevent="over = true"
-      @dragleave="over = false"
-      @drop.prevent="onDrop"
-    >
-      <el-icon><UploadFilled /></el-icon>
-      <span>{{ $t('otDidoxEmpty') }}</span>
+    <div v-for="b in blocks" :key="b.kind" class="ot-dx__block">
+      <div class="ot-dx__block-head">
+        <span class="ot-dx__block-title">
+          {{ $t(b.title) }}
+          <span v-if="b.files.length" class="ot-dx__badge">{{ b.files.length }}</span>
+        </span>
+        <span class="ot-sec__btns">
+          <span v-if="b.kind === 'invoice' && b.files.length" class="ot-muted">
+            {{ $t('otDidoxTotal') }}: <b :class="totalClass">{{ fmtMoney(order.didox_files_sum) }}</b>
+            <template v-if="order.contract_sum > 0"> / {{ fmtMoney(order.contract_sum) }}</template>
+          </span>
+          <el-button size="small" type="primary" plain :icon="Upload" :disabled="order.storage_ready === false" @click="pick(b.kind)">
+            {{ $t('otDidoxAdd') }}
+          </el-button>
+        </span>
+      </div>
+
+      <div
+        v-if="!b.files.length"
+        class="ot-dx__drop"
+        :class="{ 'is-over': over === b.kind }"
+        role="button"
+        tabindex="0"
+        @click="pick(b.kind)"
+        @keydown.enter="pick(b.kind)"
+        @dragover.prevent="over = b.kind"
+        @dragleave="over = ''"
+        @drop.prevent="onDrop($event, b.kind)"
+      >
+        <el-icon><UploadFilled /></el-icon>
+        <span>{{ $t(b.empty) }}</span>
+      </div>
+
+      <ul
+        v-else
+        class="ot-dx__list"
+        :class="{ 'is-over': over === b.kind }"
+        @dragover.prevent="over = b.kind"
+        @dragleave="over = ''"
+        @drop.prevent="onDrop($event, b.kind)"
+      >
+        <li v-for="f in b.files" :key="f.id" class="ot-dx__file" :class="{ 'is-poa': f.kind === 'poa' }">
+          <span class="ot-dx__icon" :class="`is-${extOf(f)}`">{{ extOf(f).toUpperCase() }}</span>
+          <div class="ot-dx__body">
+            <button type="button" class="ot-dx__name" :title="f.file_name" @click="open(f, 'inline')">{{ f.file_name }}</button>
+            <div class="ot-muted">
+              <template v-if="f.invoice_number">№ {{ f.invoice_number }}</template>
+              <template v-if="f.invoice_date"> · {{ formatDate(f.invoice_date) }}</template>
+              <template v-if="f.invoice_number || f.invoice_date"> · </template>
+              {{ fmtSize(f.size_bytes) }} · {{ uploader(f) }}
+            </div>
+            <div v-if="f.comment" class="ot-dx__comment">{{ f.comment }}</div>
+          </div>
+          <span v-if="f.kind !== 'poa'" class="ot-dx__amount" :class="{ 'is-empty': f.amount == null }">
+            {{ f.amount == null ? $t('otDidoxNoAmount') : fmtMoney(f.amount) }}
+          </span>
+          <span class="ot-dx__btns">
+            <el-button text size="small" :icon="Download" :aria-label="$t('otDidoxDownload')" @click="open(f, 'download')" />
+            <el-button text size="small" :icon="EditPen" :aria-label="$t('otEdit')" @click="startEdit(f)" />
+            <el-popconfirm v-if="canDelete(f)" :title="$t('otConfirmDelete')" @confirm="remove(f)">
+              <template #reference><el-button text size="small" type="danger" :icon="Delete" :aria-label="$t('otDelete')" /></template>
+            </el-popconfirm>
+          </span>
+        </li>
+      </ul>
     </div>
 
-    <ul v-else class="ot-dx__list" @dragover.prevent="over = true" @dragleave="over = false" @drop.prevent="onDrop">
-      <li v-for="f in order.didox_files" :key="f.id" class="ot-dx__file">
-        <span class="ot-dx__icon" :class="`is-${kind(f)}`">{{ kind(f).toUpperCase() }}</span>
-        <div class="ot-dx__body">
-          <button type="button" class="ot-dx__name" :title="f.file_name" @click="open(f, 'inline')">{{ f.file_name }}</button>
-          <div class="ot-muted">
-            <template v-if="f.invoice_number">№ {{ f.invoice_number }}</template>
-            <template v-if="f.invoice_date"> · {{ formatDate(f.invoice_date) }}</template>
-            <template v-if="f.invoice_number || f.invoice_date"> · </template>
-            {{ fmtSize(f.size_bytes) }} · {{ uploader(f) }}
-          </div>
-          <div v-if="f.comment" class="ot-dx__comment">{{ f.comment }}</div>
-        </div>
-        <span class="ot-dx__amount" :class="{ 'is-empty': f.amount == null }">
-          {{ f.amount == null ? $t('otDidoxNoAmount') : fmtMoney(f.amount) }}
-        </span>
-        <span class="ot-dx__btns">
-          <el-button text size="small" :icon="Download" :aria-label="$t('otDidoxDownload')" @click="open(f, 'download')" />
-          <el-button text size="small" :icon="EditPen" :aria-label="$t('otEdit')" @click="startEdit(f)" />
-          <el-popconfirm v-if="canDelete(f)" :title="$t('otConfirmDelete')" @confirm="remove(f)">
-            <template #reference><el-button text size="small" type="danger" :icon="Delete" :aria-label="$t('otDelete')" /></template>
-          </el-popconfirm>
-        </span>
-      </li>
-    </ul>
-
-    <!-- Yuklash: tanlangan har bir fayl uchun summa, raqam, sana -->
-    <el-dialog v-model="up.open" :title="$t('otDidoxUploadTitle')" width="min(720px, 96vw)" append-to-body :close-on-click-modal="!up.busy">
-      <p class="ot-muted ot-dx__tip">{{ $t('otDidoxUploadTip') }}</p>
+    <!-- Yuklash: schyot-faktura uchun summa, raqam, sana; ishonchnoma uchun raqam va sana -->
+    <el-dialog v-model="up.open" :title="$t(up.kind === 'poa' ? 'otPoaUploadTitle' : 'otDidoxUploadTitle')" width="min(720px, 96vw)" append-to-body :close-on-click-modal="!up.busy">
+      <p class="ot-muted ot-dx__tip">{{ $t(up.kind === 'poa' ? 'otPoaUploadTip' : 'otDidoxUploadTip') }}</p>
       <div v-for="(r, i) in up.rows" :key="i" class="ot-dx__row" :class="`is-${r.state}`">
         <div class="ot-dx__row-head">
           <span class="ot-dx__row-name" :title="r.file.name">{{ r.file.name }}</span>
@@ -72,14 +88,14 @@
           <el-button v-if="!up.busy && r.state !== 'done'" text size="small" :icon="Close" :aria-label="$t('otDelete')" @click="up.rows.splice(i, 1)" />
         </div>
         <div class="ot-dx__row-fields">
-          <UiMoneyInput v-model="r.amount" :min="0" :placeholder="$t('otDidoxAmount')" :disabled="r.state === 'done'" class="ot-dx__f-amount" />
-          <el-input v-model="r.invoice_number" :placeholder="$t('otDidoxNumber')" maxlength="64" :disabled="r.state === 'done'" class="ot-dx__f-num" />
+          <UiMoneyInput v-if="up.kind !== 'poa'" v-model="r.amount" :min="0" :placeholder="$t('otDidoxAmount')" :disabled="r.state === 'done'" class="ot-dx__f-amount" />
+          <el-input v-model="r.invoice_number" :placeholder="$t(up.kind === 'poa' ? 'otPoaNumber' : 'otDidoxNumber')" maxlength="64" :disabled="r.state === 'done'" class="ot-dx__f-num" />
           <el-date-picker v-model="r.invoice_date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" :placeholder="$t('otDidoxDate')" :disabled="r.state === 'done'" class="ot-dx__f-date" />
         </div>
       </div>
       <template #footer>
         <el-button :disabled="up.busy" @click="up.open = false">{{ $t('otCancel') }}</el-button>
-        <el-button :disabled="up.busy" :icon="Plus" @click="pick">{{ $t('otDidoxMore') }}</el-button>
+        <el-button :disabled="up.busy" :icon="Plus" @click="pick(up.kind)">{{ $t('otDidoxMore') }}</el-button>
         <el-button type="primary" :loading="up.busy" :disabled="!pending.length" @click="uploadAll">
           {{ $t('otDidoxUpload', { n: pending.length }) }}
         </el-button>
@@ -89,10 +105,10 @@
     <!-- Fayl ma'lumotini tahrirlash -->
     <el-dialog v-model="ed.open" :title="$t('otDidoxEditTitle')" width="420px" append-to-body>
       <el-form label-position="top">
-        <el-form-item :label="$t('otDidoxAmount')">
+        <el-form-item v-if="ed.kind !== 'poa'" :label="$t('otDidoxAmount')">
           <UiMoneyInput v-model="ed.amount" :min="0" style="width: 100%" />
         </el-form-item>
-        <el-form-item :label="$t('otDidoxNumber')"><el-input v-model="ed.invoice_number" maxlength="64" /></el-form-item>
+        <el-form-item :label="$t(ed.kind === 'poa' ? 'otPoaNumber' : 'otDidoxNumber')"><el-input v-model="ed.invoice_number" maxlength="64" /></el-form-item>
         <el-form-item :label="$t('otDidoxDate')">
           <el-date-picker v-model="ed.invoice_date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" style="width: 100%" />
         </el-form-item>
@@ -130,9 +146,18 @@ const ACCEPT = '.pdf,.png,.jpg,.jpeg,.webp,.heic,.xml,.json,.zip,.xls,.xlsx,.doc
 const MAX_SIZE = 25 * 1024 * 1024
 
 const input = ref(null)
-const over = ref(false)
-const up = reactive({ open: false, busy: false, rows: [] })
-const ed = reactive({ open: false, busy: false, id: null, amount: undefined, invoice_number: '', invoice_date: null, comment: '' })
+const over = ref('') // qaysi blok ustiga fayl sudralmoqda
+const up = reactive({ open: false, busy: false, kind: 'invoice', rows: [] })
+const ed = reactive({ open: false, busy: false, id: null, kind: 'invoice', amount: undefined, invoice_number: '', invoice_date: null, comment: '' })
+
+// Ikki blok: schyot-fakturalar (summasi bilan) va ishonchnomalar
+const blocks = computed(() => {
+  const files = props.order.didox_files || []
+  return [
+    { kind: 'invoice', title: 'otDidoxInvoices', empty: 'otDidoxEmpty', files: files.filter((f) => f.kind !== 'poa') },
+    { kind: 'poa', title: 'otDidoxPoas', empty: 'otPoaEmpty', files: files.filter((f) => f.kind === 'poa') },
+  ]
+})
 const pending = computed(() => up.rows.filter((r) => r.state !== 'done'))
 
 const totalClass = computed(() => {
@@ -141,7 +166,7 @@ const totalClass = computed(() => {
   return Math.abs((o.didox_files_sum || 0) - o.contract_sum) <= 1 ? 'is-good' : 'is-warn'
 })
 
-function kind(f) {
+function extOf(f) {
   const n = String(f.file_name || '').toLowerCase()
   const ext = n.includes('.') ? n.split('.').pop() : ''
   if (ext === 'pdf') return 'pdf'
@@ -156,21 +181,30 @@ const uploader = (f) => {
 }
 const canDelete = (f) => props.isAdmin || f.uploaded_by === usersStore.currentUser?.id
 
-function pick() {
+let pickKind = 'invoice'
+function pick(kind) {
+  pickKind = kind
   input.value.value = ''
   input.value.click()
 }
 function onPicked(e) {
-  addFiles([...(e.target.files || [])])
+  addFiles([...(e.target.files || [])], pickKind)
 }
-function onDrop(e) {
-  over.value = false
-  addFiles([...(e.dataTransfer?.files || [])])
+function onDrop(e, kind) {
+  over.value = ''
+  addFiles([...(e.dataTransfer?.files || [])], kind)
 }
 // Fayl nomidan schyot-faktura raqamini taxmin qilish (masalan "СФ-1234.pdf" → 1234)
 const guessNumber = (name) => /(\d{2,})/.exec(name.replace(/\.[^.]+$/, ''))?.[1] || ''
-function addFiles(files) {
+function addFiles(files, kind) {
   if (!files.length) return
+  // Oyna boshqa tur uchun ochiq bo'lsa (masalan schyot-faktura yuklanmoqda) — aralashtirilmaydi
+  if (up.open && up.kind !== kind) {
+    if (up.busy) return
+    up.rows = up.rows.filter((r) => r.state === 'done')
+  }
+  if (!up.open) up.rows = []
+  up.kind = kind
   for (const file of files) {
     if (file.size > MAX_SIZE) {
       ElMessage.warning(t('otDidoxTooBig', { name: file.name }))
@@ -191,7 +225,12 @@ async function uploadAll() {
       last = await api.addDidox(
         props.order.id,
         r.file,
-        { amount: r.amount, invoice_number: r.invoice_number?.trim(), invoice_date: r.invoice_date },
+        {
+          kind: up.kind,
+          amount: up.kind === 'poa' ? undefined : r.amount,
+          invoice_number: r.invoice_number?.trim(),
+          invoice_date: r.invoice_date,
+        },
         (ev) => {
           if (ev.total) r.progress = Math.round((ev.loaded / ev.total) * 100)
         },
@@ -231,6 +270,7 @@ function startEdit(f) {
     open: true,
     busy: false,
     id: f.id,
+    kind: f.kind || 'invoice',
     amount: f.amount ?? undefined,
     invoice_number: f.invoice_number || '',
     invoice_date: f.invoice_date || null,
@@ -298,6 +338,48 @@ async function remove(f) {
 }
 .is-warn {
   color: var(--ui-warn);
+}
+.ot-dx__block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  & + & {
+    padding-top: 12px;
+    border-top: 1px dashed var(--ui-line-soft);
+  }
+}
+.ot-dx__block-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ot-dx__block-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ui-ink-2);
+}
+.ot-dx__badge {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--ui-surface-2);
+  color: var(--ui-muted);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+.ot-dx__list.is-over {
+  outline: 1px dashed var(--ui-link);
+  outline-offset: 4px;
+  border-radius: var(--ui-radius);
+}
+.ot-dx__file.is-poa {
+  grid-template-columns: 38px minmax(0, 1fr) auto;
 }
 .ot-dx__drop {
   display: flex;

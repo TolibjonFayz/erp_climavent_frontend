@@ -63,7 +63,7 @@ export function changeValue(field, v) {
 
 // Didox filtri: ok — shartnoma va ishonchnoma bor; missing — biri yo'q; pending — hali belgilanmagan;
 // files / nofiles — schyot-faktura fayli yuklangan / yuklanmagan (rasmiy shartnomalar); na — Didox kerak emas
-export const DIDOX_FILTERS = ['ok', 'missing', 'pending', 'files', 'nofiles', 'na']
+export const DIDOX_FILTERS = ['ok', 'missing', 'pending', 'files', 'nofiles', 'poafiles', 'nopoafiles', 'na']
 export function didoxStateOf(r) {
   if (!r.official) return 'na'
   if (r.didox_contract === false || r.didox_poa === false) return 'missing'
@@ -74,6 +74,8 @@ export function matchDidox(r, f) {
   if (!f) return true
   if (f === 'files') return (r.didox_files_count || 0) > 0
   if (f === 'nofiles') return r.official && !(r.didox_files_count > 0)
+  if (f === 'poafiles') return (r.didox_poa_count || 0) > 0
+  if (f === 'nopoafiles') return r.official && !(r.didox_poa_count > 0)
   return didoxStateOf(r) === f
 }
 

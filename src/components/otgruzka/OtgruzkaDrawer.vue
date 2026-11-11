@@ -255,7 +255,7 @@
               <div v-if="n.kind === 'change'" class="ot-tl__text">
                 <template v-if="n.data?.field === 'from_dogovor'">{{ $t('otFromDogovor') }}</template>
                 <template v-else-if="n.data?.field === 'didox_file'">
-                  {{ $t(n.data.action === 'remove' ? 'otDidoxRemoved' : 'otDidoxAdded', { name: n.data.file_name }) }}
+                  {{ $t(`ot${n.data.file_kind === 'poa' ? 'Poa' : 'Didox'}${n.data.action === 'remove' ? 'Removed' : 'Added'}`, { name: n.data.file_name }) }}
                   <template v-if="n.data.amount != null"> · {{ fmtMoney(n.data.amount) }}</template>
                 </template>
                 <template v-else-if="n.data?.field === 'sklad_check'">
