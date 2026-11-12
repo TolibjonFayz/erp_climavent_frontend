@@ -1263,6 +1263,7 @@
   "dogovorItemsTotalApplied": "Summa bandlardan hisoblab qo'yildi",
   "dogovorPrint": "Hujjat",
   "dogovorDeleteConfirm": "Bu shartnomani o'chirmoqchimisiz?",
+  "dogovorBackToList": "Ro'yxatga qaytish",
   "dogovorView": "Shartnoma (ko'rish)",
   "dogovorLockedHint": "Kiritilganiga 2 kundan oshgan — faqat admin o'zgartira oladi",
   "dogovorValidationDate": "Shartnoma sanasini tanlang",

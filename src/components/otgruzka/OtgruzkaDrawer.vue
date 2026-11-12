@@ -1,14 +1,6 @@
 <template>
-  <!-- Karta ekran o'rtasida (dialog); sarlavha va yopish tugmasi kartaning o'zida -->
-  <el-dialog
-    :model-value="modelValue != null"
-    width="min(860px, 96vw)"
-    top="3vh"
-    :show-close="false"
-    append-to-body
-    class="ot-drawer"
-    @close="$emit('update:modelValue', null)"
-  >
+  <!-- inline — alohida sahifa (/otgruzka/:id); aks holda ekran o'rtasida dialog -->
+  <component :is="inline ? 'div' : ElDialog" v-bind="wrapAttrs" @close="$emit('update:modelValue', null)">
     <div v-loading="loading" class="ot-d">
       <el-alert v-if="error" type="error" show-icon :closable="false" :title="error" />
       <template v-if="o">
@@ -24,7 +16,7 @@
               <span class="ot-tag" :class="`is-${PAY_TONE[o.pay_status]}`">{{ $t(`otPay_${o.pay_status}`) }}</span>
             </div>
           </div>
-          <el-button text :icon="Close" :aria-label="$t('onbClose')" @click="$emit('update:modelValue', null)" />
+          <el-button v-if="!inline" text :icon="Close" :aria-label="$t('onbClose')" @click="$emit('update:modelValue', null)" />
         </header>
 
         <el-alert v-if="o.sheet_removed" type="warning" show-icon :closable="false" :title="$t('otRemoved')" />
@@ -62,7 +54,7 @@
           </div>
           <div class="ot-step" :class="[o.invoice_numbers || o.didox_files_count ? 'is-good' : 'is-muted', { 'is-click': canEdit }]" v-bind="stepAttrs('invoice')">
             <span class="ot-step__name">{{ $t('otStepInvoice') }}<el-icon v-if="canEdit" class="ot-step__pen"><EditPen /></el-icon></span>
-            <span class="ot-step__val">{{ o.invoice_numbers || '—' }}</span>
+            <span class="ot-step__val">{{ invoiceNumbers || '—' }}</span>
             <span v-if="o.didox_files_count" class="ot-step__val">📎 {{ o.didox_files_count }} · {{ fmtShort(o.didox_files_sum) }}</span>
           </div>
         </div>
@@ -106,7 +98,7 @@
             </dd>
             <dt>{{ $t('otDate') }}</dt><dd>{{ o.dogovor_date ? formatDate(o.dogovor_date) : '—' }}</dd>
             <dt>{{ $t('otSum') }}</dt><dd><b>{{ fmtMoney(o.contract_sum) }}</b></dd>
-            <dt>{{ $t('otInvoice') }}</dt><dd>{{ o.invoice_numbers || '—' }}</dd>
+            <dt>{{ $t('otInvoice') }}</dt><dd>{{ invoiceNumbers || '—' }}</dd>
             <dt>{{ $t('otErpDogovor') }}</dt>
             <dd>
               <router-link v-if="o.dogovor" :to="{ path: '/dogovor', query: { n: String(o.dogovor.dogovor_number), d: formatDate(o.dogovor.dogovor_date) } }">
@@ -364,14 +356,14 @@
     </el-dialog>
 
     <OtgruzkaEditDialog v-if="o" v-model="editOpen" :order="o" @saved="applyDetail" />
-  </el-dialog>
+  </component>
 </template>
 
 <script setup>
 import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
+import { ElDialog, ElMessage } from 'element-plus'
 import { Bell, CircleCheck, Close, Delete, Edit, EditPen, Plus, WarningFilled } from '@element-plus/icons-vue'
 import UiHint from '@/components/ui/UiHint.vue'
 import api from '@/api/otgruzka'
@@ -390,8 +382,22 @@ const props = defineProps({
   editable: Boolean,
   twoWay: Boolean,
   isAdmin: Boolean,
+  // Alohida sahifa sifatida (dialog emas)
+  inline: Boolean,
 })
 const emit = defineEmits(['update:modelValue', 'changed'])
+const wrapAttrs = computed(() =>
+  props.inline
+    ? { class: 'ot-card-page' }
+    : {
+        modelValue: props.modelValue != null,
+        width: 'min(860px, 96vw)',
+        top: '3vh',
+        showClose: false,
+        appendToBody: true,
+        class: 'ot-drawer',
+      },
+)
 const { t } = useI18n()
 const usersStore = useUsersStore()
 
@@ -523,6 +529,21 @@ async function loadStock(d) {
     stockLoading.value = false
   }
 }
+// Schyot-faktura raqamlari: kartadagi (jadvaldagi) + yuklangan fayllardagi — takrorsiz
+const invoiceNumbers = computed(() => {
+  const norm = (x) => String(x).replace(/\s+/g, '').toLowerCase()
+  const out = []
+  const add = (x) => {
+    const v = String(x || '').trim()
+    if (v && !out.some((y) => norm(y) === norm(v))) out.push(v)
+  }
+  String(o.value?.invoice_numbers || '')
+    .split(/[,;\n]+/)
+    .forEach(add)
+  for (const f of o.value?.didox_files || []) if ((f.kind || 'invoice') === 'invoice') add(f.invoice_number)
+  return out.join(', ')
+})
+
 // Schyot-fakturalar bo'yicha tayyorlik (fakturadagi tovarlar soni / kartadagi jami soni)
 const inv = computed(() => invoicedProgress(o.value))
 
@@ -971,6 +992,14 @@ const author = (n) => {
 </style>
 
 <style lang="scss">
+// Alohida sahifadagi karta
+.ot-card-page {
+  max-width: 980px;
+  margin: 0 auto;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line-soft);
+  border-radius: var(--ui-radius);
+}
 // Otgruzka kartasi dialogi: standart sarlavha yo'q, ichi o'zi aylanadi
 .ot-drawer.el-dialog {
   padding: 0;

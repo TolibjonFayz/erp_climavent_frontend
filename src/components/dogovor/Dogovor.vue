@@ -3,7 +3,7 @@
     :title="$t('dogovorPageTitle')"
     :subtitle="isAdmin ? $t('dogovorPageSubtitle') : $t('dogovorPageSubtitleOwn')"
   >
-    <template #actions>
+    <template v-if="!cardId" #actions>
       <el-upload
         class="dg-upload"
         :show-file-list="false"
@@ -20,6 +20,81 @@
       </el-button>
     </template>
 
+    <!-- Bitta shartnoma sahifasi (/dogovor/:id): avval faqat ko'rish, tahrirlash — tugma bilan -->
+    <div v-if="cardId" class="dg-card">
+      <div class="dg-card__bar">
+        <el-button :icon="ArrowLeft" @click="backToList">{{ $t('dogovorBackToList') }}</el-button>
+        <span class="dg-card__btns">
+          <el-button :icon="Printer" :disabled="!card" @click="printDogovor(card)">{{ $t('dogovorPrint') }}</el-button>
+          <el-button v-if="card && canModify(card)" type="primary" :icon="Edit" @click="openEditDialog(card)">{{ $t('edit') }}</el-button>
+        </span>
+      </div>
+      <UiPanel v-loading="cardLoading">
+        <el-alert v-if="cardError" type="error" show-icon :closable="false" :title="cardError" />
+        <template v-if="card">
+          <div class="dg-card__head">
+            <div class="dg-sub">
+              № {{ card.dogovor_number ?? '—' }} · {{ formatDate(card.dogovor_date) }}
+              <el-tag :type="statusTag(card.dogovor_status)" size="small" effect="light">{{ statusLabel(card.dogovor_status) }}</el-tag>
+            </div>
+            <h2 class="dg-card__title">{{ card.client_name || '—' }}</h2>
+            <div class="dg-money dg-card__sum">{{ fmtMoney(card.dogovor_sum) }}</div>
+          </div>
+          <el-alert v-if="!canModify(card)" type="info" show-icon :closable="false" :title="$t('dogovorLockedHint')" />
+          <dl class="dg-card__grid">
+            <div v-for="f in cardFields" :key="f.label">
+              <dt>{{ $t(f.label) }}</dt>
+              <dd>{{ f.value }}</dd>
+            </div>
+          </dl>
+          <h4 class="dg-card__sec">{{ $t('dogovorSectionItems') }}</h4>
+          <div v-if="!cardItems.length" class="dg-muted">{{ $t('dogovorNoItems') }}</div>
+          <table v-else class="dg-card__items">
+            <thead>
+              <tr>
+                <th>№</th>
+                <th>{{ $t('dogovorItemName') }}</th>
+                <th class="is-r">{{ $t('dogovorItemQty') }}</th>
+                <th class="is-r">{{ $t('dogovorItemPrice') }}</th>
+                <th class="is-r">{{ $t('dogovorItemTotal') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(it, i) in cardItems" :key="i">
+                <td class="dg-muted">{{ i + 1 }}.</td>
+                <td>{{ it.name }}</td>
+                <td class="is-r nowrap">{{ fmtNum(it.qty) }} {{ it.unit || '' }}</td>
+                <td class="is-r nowrap">{{ fmtMoney(it.price) }}</td>
+                <td class="is-r nowrap">{{ fmtMoney((Number(it.qty) || 0) * (Number(it.price) || 0)) }}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" class="is-r dg-muted">{{ $t('dogovorItemsSubtotal') }}</td>
+                <td class="is-r nowrap"><b>{{ fmtNum(cardQty) }}</b></td>
+                <td></td>
+                <td class="is-r nowrap">{{ fmtMoney(cardSubtotal) }}</td>
+              </tr>
+              <tr>
+                <td colspan="4" class="is-r dg-muted">{{ $t('dogovorVat') }}</td>
+                <td class="is-r nowrap">{{ fmtMoney(cardSubtotal * 0.12) }}</td>
+              </tr>
+              <tr>
+                <td colspan="4" class="is-r dg-muted">{{ $t('dogovorItemsTotal') }}</td>
+                <td class="is-r nowrap"><b>{{ fmtMoney(cardSubtotal * 1.12) }}</b></td>
+              </tr>
+            </tfoot>
+          </table>
+          <template v-if="card.comment || (isAdmin && card.admin_comment)">
+            <h4 class="dg-card__sec">{{ $t('dogovorSectionNotes') }}</h4>
+            <p v-if="card.comment" class="dg-card__note">{{ card.comment }}</p>
+            <p v-if="isAdmin && card.admin_comment" class="dg-admin-note">{{ card.admin_comment }}</p>
+          </template>
+        </template>
+      </UiPanel>
+    </div>
+
+    <template v-else>
     <!-- Ko'rsatkichlar: bosilsa shu holat bo'yicha filtrlanadi -->
     <div class="dg-stats">
       <UiStat
@@ -265,6 +340,8 @@
         </el-button>
       </el-empty>
     </UiPanel>
+
+    </template>
 
     <!-- Qo'shish / tahrirlash -->
     <el-dialog
@@ -638,7 +715,7 @@ import { useQueryPrefill } from '@/composables/useQueryPrefill'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import dogovorApi from '@/api/dogovor'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useOpenFromQuery } from '@/composables/useOpenFromQuery'
 import UiQuickPhrases from '@/components/ui/UiQuickPhrases.vue'
 import * as XLSX from 'xlsx'
@@ -653,6 +730,7 @@ import {
   Printer,
   Search,
   Upload,
+  ArrowLeft,
 } from '@element-plus/icons-vue'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
@@ -1147,6 +1225,7 @@ const handleSubmit = async () => {
     }
     dialogVisible.value = false
     await load()
+    if (cardId.value) await loadCard(cardId.value)
   } catch (error) {
     ElMessage.error(errorText(error, t('dogovorMessageSaveError')))
   }
@@ -1174,27 +1253,70 @@ onMounted(async () => {
 // "+ Yangi" menyusidan kelganda (?new=1) qo'shish oynasi ochiladi
 useOpenFromQuery(openCreateDialog)
 
-// Ro'yxatdagi shartnoma bosilganda shu oynada dialog ochiladi; havola (/dogovor?open=<id>) bilan kelinganda ham
+// Ro'yxatdagi shartnoma bosilganda shu oynada alohida sahifa (/dogovor/:id) ochiladi:
+// avval faqat ko'rish, tahrirlash oynasi — "Tahrirlash" tugmasi bilan
 const route = useRoute()
+const router = useRouter()
+const cardId = computed(() => Number(route.params.id) || null)
+const card = ref(null)
+const cardLoading = ref(false)
+const cardError = ref('')
+
 function openInTab(row) {
-  if (row?.id) openEditDialog(row, !canModify(row))
+  if (row?.id) router.push({ path: `/dogovor/${row.id}` })
 }
-// Yangi oynada: shartnoma kartasi ochiladi (tahrirlash huquqi bo'lmasa — faqat ko'rish)
+// Orqaga: ro'yxatdan kelingan bo'lsa — tarixda orqaga (filtr va sahifa saqlanadi), aks holda ro'yxatga
+function backToList() {
+  if (String(window.history.state?.back || '').startsWith('/dogovor')) router.back()
+  else router.push({ path: '/dogovor' })
+}
+async function loadCard(id) {
+  cardLoading.value = true
+  cardError.value = ''
+  try {
+    if (!usersStore.currentUser) await usersStore.getUserInfo(currentUserId).catch(() => {})
+    const row = await dogovorApi.getOne(id)
+    if (cardId.value === id) card.value = row
+  } catch (error) {
+    cardError.value = errorText(error, t('dogovorMessageLoadError'))
+  } finally {
+    cardLoading.value = false
+  }
+}
 watch(
-  () => route.query.open,
-  async (value) => {
-    const id = Number(value)
-    if (!id) return
-    try {
-      if (!usersStore.currentUser) await usersStore.getUserInfo(currentUserId).catch(() => {})
-      const row = await dogovorApi.getOne(id)
-      openEditDialog(row, !canModify(row))
-    } catch (error) {
-      ElMessage.error(errorText(error, t('dogovorMessageLoadError')))
-    }
+  cardId,
+  (id) => {
+    card.value = null
+    if (id) loadCard(id)
   },
   { immediate: true },
 )
+// Eski havolalar (?open=<id>) — yangi manzilga
+if (Number(route.query.open)) router.replace({ path: `/dogovor/${Number(route.query.open)}` })
+
+const cardItems = computed(() => (Array.isArray(card.value?.items) ? card.value.items.filter((i) => i?.name) : []))
+const cardQty = computed(() => cardItems.value.reduce((s, i) => s + (Number(i.qty) || 0), 0))
+const cardSubtotal = computed(() => cardItems.value.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.price) || 0), 0))
+const cardFields = computed(() => {
+  const c = card.value || {}
+  const list = [
+    ['dogovorManagerLabel', c.manager_name],
+    ['dogovorInnLabel', c.client_inn],
+    ['dogovorPhoneLabel', c.client_phone],
+    ['dogovorContactNameLabel', c.contact_name],
+    ['dogovorContactPositionLabel', c.contact_position],
+    ['dogovorAddressLabel', c.client_address],
+    ['dogovorPaymentDateLabel', c.payment_date ? formatDate(c.payment_date) : null],
+    ['dogovorInitialPaymentLabel', c.initial_payment != null ? fmtMoney(c.initial_payment) : null],
+    ['dogovorPrepaymentLabel', c.prepayment_percent != null ? `${c.prepayment_percent}%` : null],
+    ['dogovorProductionDaysLabel', c.production_days],
+    ['dogovorBankLabel', c.client_bank],
+    ['dogovorAccountLabel', c.client_account],
+    ['dogovorMfoLabel', c.client_mfo],
+    ['dogovorVatCodeLabel', c.client_vat_code],
+  ]
+  return list.filter(([, v]) => v !== null && v !== undefined && v !== '').map(([label, value]) => ({ label, value: String(value) }))
+})
 </script>
 
 <style lang="scss" scoped>
@@ -1259,6 +1381,75 @@ watch(
 }
 .dg-admin-note {
   color: var(--ui-warn);
+}
+.dg-card__bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.dg-card__btns {
+  display: inline-flex;
+  gap: 8px;
+}
+.dg-card__head {
+  margin-bottom: 12px;
+}
+.dg-card__title {
+  margin: 4px 0;
+  font-size: 22px;
+  color: var(--ui-ink);
+}
+.dg-card__sum {
+  font-size: 18px;
+  font-weight: 700;
+}
+.dg-card__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 20px;
+  margin: 16px 0;
+  dt {
+    font-size: 12px;
+    color: var(--ui-muted);
+  }
+  dd {
+    margin: 2px 0 0;
+    color: var(--ui-ink);
+    word-break: break-word;
+  }
+}
+.dg-card__sec {
+  margin: 18px 0 8px;
+  font-size: 15px;
+  color: var(--ui-ink);
+}
+.dg-card__items {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  th,
+  td {
+    padding: 6px;
+    border-bottom: 1px solid var(--ui-line-soft);
+    text-align: left;
+  }
+  th {
+    color: var(--ui-muted);
+    font-weight: 600;
+  }
+  .is-r {
+    text-align: right;
+  }
+  .nowrap {
+    white-space: nowrap;
+  }
+}
+.dg-card__note {
+  white-space: pre-wrap;
+  margin: 0 0 8px;
 }
 .dg-view-note {
   margin-bottom: 12px;

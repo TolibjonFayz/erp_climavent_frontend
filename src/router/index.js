@@ -4,6 +4,10 @@ import { createRouter, createWebHistory } from 'vue-router'
 // Boss (director) user id — only this user may open /boss
 const BOSS_USER_ID = 16
 
+// Ro'yxat va bitta karta sahifasi bir xil komponent (bitta yuklovchi — komponent qayta yaratilmaydi)
+const DogovorView = () => import('@/views/DogovorView.vue')
+const OtgruzkaView = () => import('@/views/OtgruzkaView.vue')
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -43,7 +47,14 @@ const router = createRouter({
     {
       path: '/dogovor',
       name: 'dogovor',
-      component: () => import('@/views/DogovorView.vue'),
+      component: DogovorView,
+      meta: { requiresAuth: true, permissionKey: 'dogovor', nav: 'dogovor' },
+    },
+    // Bitta shartnoma sahifasi — ro'yxat bilan bir komponent (orqaga qaytilganda filtrlar saqlanadi)
+    {
+      path: '/dogovor/:id(\\d+)',
+      name: 'dogovor-card',
+      component: DogovorView,
       meta: { requiresAuth: true, permissionKey: 'dogovor', nav: 'dogovor' },
     },
     {
@@ -67,7 +78,14 @@ const router = createRouter({
     {
       path: '/otgruzka',
       name: 'otgruzka',
-      component: () => import('@/views/OtgruzkaView.vue'),
+      component: OtgruzkaView,
+      meta: { requiresAuth: true, permissionKey: 'otgruzka', nav: 'otgruzka' },
+    },
+    // Bitta otgruzka kartasi sahifasi
+    {
+      path: '/otgruzka/:id(\\d+)',
+      name: 'otgruzka-card',
+      component: OtgruzkaView,
       meta: { requiresAuth: true, permissionKey: 'otgruzka', nav: 'otgruzka' },
     },
     {
