@@ -164,6 +164,7 @@
           <table v-else v-loading="stockLoading" class="ot-lines ot-items">
             <thead>
               <tr>
+                <th class="is-r ot-items__no">№</th>
                 <th>{{ $t('otItemName') }}</th>
                 <th class="is-r">{{ $t('otItemQty') }}</th>
                 <th class="is-r">{{ $t('otItemPrice') }}</th>
@@ -173,6 +174,7 @@
             </thead>
             <tbody>
               <tr v-for="(it, i) in o.items" :key="i">
+                <td class="is-r ot-muted ot-items__no">{{ i + 1 }}.</td>
                 <td>{{ it.name }}</td>
                 <td class="is-r nowrap">{{ fmtQty(it.qty) }} {{ it.unit || '' }}</td>
                 <td class="is-r nowrap">{{ fmtMoney(it.price) }}</td>
@@ -199,7 +201,9 @@
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="3" class="is-r ot-muted">{{ $t('otItemsTotal') }}</td>
+                <td colspan="2" class="is-r ot-muted">{{ $t('otItemsTotal') }}</td>
+                <td class="is-r nowrap"><b>{{ fmtQty(itemsQty) }} {{ itemsUnit }}</b></td>
+                <td></td>
                 <td class="is-r nowrap"><b>{{ fmtMoney(itemsTotal) }}</b></td>
                 <td></td>
               </tr>
@@ -240,9 +244,11 @@
             <el-input v-model="note.text" type="textarea" :autosize="{ minRows: 2, maxRows: 6 }" :placeholder="$t('otNotePh')" maxlength="4000" />
             <el-button type="primary" :disabled="!note.text.trim()" :loading="saving === 'note'" @click="addNote">{{ $t('otNoteAdd') }}</el-button>
           </div>
-          <div v-if="!o.notes.length" class="ot-muted">{{ $t('otNoHistory') }}</div>
-          <ul class="ot-tl">
-            <li v-for="n in o.notes" :key="n.id" :class="`is-${n.kind}`">
+          <!-- Xodimlar yozgan izohlar va tizim qayd etgan o'zgarishlar — alohida -->
+          <el-segmented v-model="histTab" :options="histTabs" size="small" class="ot-hist-tabs" />
+          <div v-if="!shownNotes.length" class="ot-muted">{{ $t(histTab === 'change' ? 'otNoChanges' : 'otNoComments') }}</div>
+          <ul class="ot-tl" :class="`is-tab-${histTab}`">
+            <li v-for="n in shownNotes" :key="n.id" :class="`is-${n.kind}`">
               <div class="ot-tl__meta">
                 <span class="ot-tl__kind">{{ $t(`otNoteKind_${n.kind}`) }}</span>
                 <span>{{ formatDateTime(n.createdAt) }}</span>
@@ -255,7 +261,7 @@
               <div v-if="n.kind === 'change'" class="ot-tl__text">
                 <template v-if="n.data?.field === 'from_dogovor'">{{ $t('otFromDogovor') }}</template>
                 <template v-else-if="n.data?.field === 'didox_file'">
-                  {{ $t(`ot${n.data.file_kind === 'poa' ? 'Poa' : 'Didox'}${n.data.action === 'remove' ? 'Removed' : 'Added'}`, { name: n.data.file_name }) }}
+                  {{ $t(`ot${{ poa: 'Poa', contract: 'Contract' }[n.data.file_kind] || 'Didox'}${n.data.action === 'remove' ? 'Removed' : 'Added'}`, { name: n.data.file_name }) }}
                   <template v-if="n.data.amount != null"> · {{ fmtMoney(n.data.amount) }}</template>
                 </template>
                 <template v-else-if="n.data?.field === 'sklad_check'">
@@ -423,6 +429,16 @@ async function saveQuick() {
 }
 
 const drawerSize = computed(() => (window.innerWidth < 640 ? '100%' : '600px'))
+// Tarix: "Izohlar" (izoh, qo'ng'iroq — xodim yozgan) va "O'zgarishlar" (tizim qayd etgan) alohida
+const histTab = ref('comment')
+const commentNotes = computed(() => (o.value?.notes || []).filter((n) => n.kind !== 'change'))
+const changeNotes = computed(() => (o.value?.notes || []).filter((n) => n.kind === 'change'))
+const shownNotes = computed(() => (histTab.value === 'change' ? changeNotes.value : commentNotes.value))
+const histTabs = computed(() => [
+  { label: `${t('otHistComments')} (${commentNotes.value.length})`, value: 'comment' },
+  { label: `${t('otHistChanges')} (${changeNotes.value.length})`, value: 'change' },
+])
+
 const noteKinds = computed(() => [
   { label: t('otNoteKind_note'), value: 'note' },
   { label: t('otNoteKind_call'), value: 'call' },
@@ -487,6 +503,12 @@ async function loadStock(d) {
     stockLoading.value = false
   }
 }
+// Jami soni: barcha qatorlar yig'indisi; birligi bitta bo'lsa — o'sha (masalan "шт")
+const itemsQty = computed(() => (o.value?.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0))
+const itemsUnit = computed(() => {
+  const units = [...new Set((o.value?.items || []).map((it) => String(it.unit || '').trim()).filter(Boolean))]
+  return units.length === 1 ? units[0] : ''
+})
 const itemsTotal = computed(() => (o.value?.items || []).reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.price) || 0), 0))
 const stockTone = (sum) => (sum.positions && sum.ready_positions === sum.positions ? 'good' : sum.pct > 0 ? 'warn' : 'muted')
 function openItems() {
@@ -523,7 +545,10 @@ async function savePayment() {
 }
 
 async function addNote() {
-  if (await run('note', () => api.addNote(o.value.id, { kind: note.kind, text: note.text.trim() }))) note.text = ''
+  if (await run('note', () => api.addNote(o.value.id, { kind: note.kind, text: note.text.trim() }))) {
+    note.text = ''
+    histTab.value = 'comment'
+  }
 }
 const removeNote = (n) => run('note', () => api.removeNote(n.id))
 const canDeleteNote = (n) =>
@@ -531,7 +556,8 @@ const canDeleteNote = (n) =>
   n.source === 'erp' &&
   (props.isAdmin || (n.created_by === usersStore.currentUser?.id && Date.now() - new Date(n.createdAt).getTime() < 2 * 86400000))
 
-const flag = (v) => (v === true ? t('otYes') : v === false ? t('otNo') : t('otNa'))
+// Rasmiy shartnomada belgi qo'yilmagan bo'lsa — "belgilanmagan" ("kerak emas" emas)
+const flag = (v) => (v === true ? t('otYes') : v === false ? t('otNo') : t('otDidoxF_pending'))
 const didoxTone = computed(() => {
   if (!o.value?.official) return 'muted'
   const { didox_contract: c, didox_poa: p } = o.value
@@ -550,6 +576,10 @@ const author = (n) => {
 </script>
 
 <style scoped lang="scss">
+.ot-items__no {
+  width: 28px;
+  white-space: nowrap;
+}
 .ot-d {
   display: flex;
   flex-direction: column;
@@ -845,6 +875,9 @@ const author = (n) => {
     width: 100%;
   }
 }
+.ot-hist-tabs {
+  align-self: flex-start;
+}
 .ot-tl {
   list-style: none;
   margin: 0;
@@ -857,11 +890,23 @@ const author = (n) => {
     border-left: 3px solid var(--ui-line);
     background: var(--ui-surface-2);
     border-radius: 0 var(--ui-radius) var(--ui-radius) 0;
+    // Xodim yozgan izoh — ko'k, qo'ng'iroq — yashil fon
     &.is-note {
       border-left-color: var(--ui-link);
+      background: var(--ui-link-soft);
     }
     &.is-call {
       border-left-color: var(--ui-good);
+      background: var(--ui-good-soft);
+    }
+    // Tizim qayd etgan o'zgarish — kulrang, ixchamroq
+    &.is-change {
+      padding-top: 6px;
+      padding-bottom: 6px;
+      font-size: 13px;
+      .ot-tl__text {
+        color: var(--ui-ink-2);
+      }
     }
   }
 }

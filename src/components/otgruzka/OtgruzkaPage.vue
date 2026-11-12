@@ -82,7 +82,7 @@
           :rows="rows"
           :loading="loading"
           :filters="filters"
-          @open="openId = $event"
+          @open="openInTab"
           @reset="resetFilters"
         />
       </el-tab-pane>
@@ -90,7 +90,7 @@
         <OtgruzkaManagers :rows="rows" @pick="pickManager" />
       </el-tab-pane>
       <el-tab-pane name="lines" :label="$t('otTabLines')" lazy>
-        <OtgruzkaLines @open="openId = $event" />
+        <OtgruzkaLines @open="openInTab" />
       </el-tab-pane>
       <el-tab-pane v-if="isAdmin" name="settings" :label="$t('otTabSettings')" lazy>
         <OtgruzkaSettings :settings="settings" :syncing="syncing" @sync="syncNow" @mode="setMode" @changed="reloadSettings" />
@@ -138,6 +138,12 @@ const openId = ref(route.query.id ? Number(route.query.id) : null)
 
 const emptyFilters = () => ({ q: '', manager: '', stage: '', pay: '', series: '', didox: '', alert: '', showFinal: false })
 const filters = reactive(emptyFilters())
+
+// Ro'yxatdan bosilgan karta yangi oynada (brauzer tab) ochiladi — bir nechtasini yonma-yon ko'rish mumkin
+function openInTab(id) {
+  if (!id) return
+  window.open(router.resolve({ path: route.path, query: { id } }).href, '_blank')
+}
 
 // Tab va ochiq karta manzilda — havolani ulashsa shu holat ochiladi
 watch([tab, openId], ([tb, id]) => {

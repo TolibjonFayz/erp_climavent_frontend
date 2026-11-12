@@ -3,7 +3,7 @@
 // avtomatik to'ldirish va otgruzka kartasi bilan solishtirish uchun.
 // pdf.js har bir matn bo'lagini koordinatasi bilan beradi (y — pastdan yuqoriga).
 
-import { extractPdfPages, loadPdfjs } from './dogovorPdfImport'
+import { extractPdfPages, loadPdfjs, parseDogovorPages } from './dogovorPdfImport'
 
 const SAME_LINE = 3 // pt
 const NAME_GAP = 11 // pt — nom qatorlari orasidagi bo'shliq bundan katta bo'lsa — keyingi tovar
@@ -240,6 +240,30 @@ const parsePoa = (pages, text) => {
   return out
 }
 
+// ─── Shartnoma ───
+// Rekvizitlar mavjud o'quvchidan (shartnoma qo'shish oynasidagi PDF to'ldirish) olinadi
+const parseContract = (pages, text) => {
+  let d = {}
+  try {
+    d = parseDogovorPages(pages)
+  } catch {
+    d = {}
+  }
+  // Didox protokolidagi holat: imzolangan / tasdiqlangan
+  const signed = /ПОДТВЕРЖД|ПОДПИСАН(?!ИЯ)|Imzolangan|Тасдиқланган/i.test(text)
+  return {
+    kind: 'contract',
+    doc_id: docIdOf(text),
+    number: d.dogovor_number != null ? String(d.dogovor_number) : null,
+    date: d.dogovor_date || null,
+    client_name: d.client_name || null,
+    client_inn: d.client_inn || null,
+    sum: d.dogovor_sum ?? null,
+    signed,
+    has_protocol: /ПРОТОКОЛ ПОДПИСАНИЯ/i.test(text),
+  }
+}
+
 const round2 = (n) => Math.round(n * 100) / 100
 
 // pages: [{ items: [{ str, x, y }] }] — pdf.js'dan mustaqil (sinash uchun)
@@ -249,6 +273,8 @@ export const parseDidoxPages = (rawPages) => {
   const text = clean(pages.flatMap((p) => toLines(p.items).map((l) => l.text)).join('\n'))
   if (/Счет-фактура\s*№/i.test(text)) return parseInvoice(pages, text)
   if (/Доверенность действительна до/i.test(text) || /^Доверенность\s/m.test(text)) return parsePoa(pages, text)
+  // Shartnoma (Didox orqali yuborilgan): imzolash protokoli yoki "ДОГОВОР" / "шартнома" sarlavhasi
+  if (/ПРОТОКОЛ ПОДПИСАНИЯ|ДОГОВОР|шартнома/i.test(text)) return parseContract(pages, text)
   return { kind: 'unknown', doc_id: docIdOf(text) }
 }
 
@@ -429,5 +455,25 @@ export function checkPoa(poa, order, today = new Date()) {
       else push('ok', 'otChkItemOk', { no: it.no, name: best.c.name, qty: it.qty })
     }
   }
+  return out
+}
+
+/** Shartnoma fayli: raqami, mijoz (INN), Didox'da imzolanganligi */
+export function checkContract(doc, order) {
+  const out = []
+  const push = (level, key, params = {}) => out.push({ level, key, params })
+  if (!doc.number) push('warn', 'otChkNoNumber')
+  const contract = sameContract(doc.number, order.dogovor_number)
+  if (contract === true) push('ok', 'otChkContractOk', { n: doc.number })
+  else if (contract === false) push('bad', 'otChkContract', { inv: doc.number, card: order.dogovor_number })
+  if (order.client_inn && doc.client_inn) {
+    if (String(order.client_inn).replace(/\D/g, '') === String(doc.client_inn).replace(/\D/g, '')) push('ok', 'otChkBuyerOk', { name: doc.client_name || doc.client_inn })
+    else push('bad', 'otChkBuyerInn', { inv: doc.client_inn, card: order.client_inn, name: doc.client_name || '' })
+  } else if (doc.client_name && order.client_name) {
+    const same = sameCompany(doc.client_name, order.client_name)
+    push(same ? 'ok' : 'warn', same ? 'otChkBuyerOk' : 'otChkBuyerName', { name: doc.client_name, card: order.client_name })
+  }
+  if (doc.has_protocol) push(doc.signed ? 'ok' : 'warn', doc.signed ? 'otChkContractSigned' : 'otChkContractNotSigned')
+  else push('warn', 'otChkContractNoDidox')
   return out
 }

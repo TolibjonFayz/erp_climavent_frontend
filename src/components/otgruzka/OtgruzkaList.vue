@@ -250,7 +250,8 @@ const totals = computed(() => {
   return { sum, debt }
 })
 
-const flag = (v) => (v === true ? t('otYes') : v === false ? t('otNo') : t('otNa'))
+// Nuqtalar faqat rasmiy shartnomalarda — belgi qo'yilmagan bo'lsa "belgilanmagan" ("kerak emas" emas)
+const flag = (v) => (v === true ? t('otYes') : v === false ? t('otNo') : t('otDidoxF_pending'))
 const dotClass = (v) => (v === true ? 'is-good' : v === false ? 'is-bad' : 'is-muted')
 const rowClass = ({ row }) => (row.final_status ? 'is-final' : '')
 </script>

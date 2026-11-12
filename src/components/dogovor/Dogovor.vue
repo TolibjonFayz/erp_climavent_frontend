@@ -144,6 +144,7 @@
         :data="pageRows"
         class="dg-table"
         :empty-text="$t('dogovorNoMatchDescription')"
+        @row-click="openInTab"
       >
         <!-- Jadval ekranga sig'sin: bog'liq ma'lumotlar bitta ustunda, ikkinchisi ostida -->
         <el-table-column type="index" :index="rowIndex" label="#" width="50" />
@@ -200,7 +201,7 @@
         </el-table-column>
         <el-table-column width="110" align="right" fixed="right">
           <template #default="{ row }">
-            <div class="dg-actions">
+            <div class="dg-actions" @click.stop>
               <el-tooltip :content="$t('dogovorPrint')" placement="top">
                 <el-button
                   link
@@ -268,7 +269,7 @@
     <!-- Qo'shish / tahrirlash -->
     <el-dialog
       v-model="dialogVisible"
-      :title="editing ? $t('edit') : $t('dogovorDialogTitle')"
+      :title="viewOnly ? $t('dogovorView') : editing ? $t('edit') : $t('dogovorDialogTitle')"
       width="880px"
       append-to-body
       class="dogovor-dialog"
@@ -305,7 +306,8 @@
         </el-alert>
       </div>
 
-      <el-form ref="formRef" :model="form" :rules="formRules" label-position="top">
+      <el-alert v-if="viewOnly" type="info" show-icon :closable="false" :title="$t('dogovorLockedHint')" class="dg-view-note" />
+      <el-form ref="formRef" :model="form" :rules="formRules" label-position="top" :disabled="viewOnly">
         <el-divider content-position="left">{{ $t('dogovorSectionMain') }}</el-divider>
         <el-row :gutter="18">
           <el-col :span="8">
@@ -621,7 +623,7 @@
 
       <template #footer>
         <el-button @click="dialogVisible = false">{{ $t('cancel') }}</el-button>
-        <el-button type="primary" :loading="dogovorStore.isLoading" @click="handleSubmit">
+        <el-button v-if="!viewOnly" type="primary" :loading="dogovorStore.isLoading" @click="handleSubmit">
           {{ $t('save') }}
         </el-button>
       </template>
@@ -636,6 +638,7 @@ import { useQueryPrefill } from '@/composables/useQueryPrefill'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import dogovorApi from '@/api/dogovor'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import { useOpenFromQuery } from '@/composables/useOpenFromQuery'
 import UiQuickPhrases from '@/components/ui/UiQuickPhrases.vue'
 import * as XLSX from 'xlsx'
@@ -937,6 +940,7 @@ const printDogovor = async (row) => {
 
 // ─── Forma ───
 const dialogVisible = ref(false)
+const viewOnly = ref(false) // boshqa xodimning / muddati o'tgan shartnomasi — faqat ko'rish
 const editing = ref(null)
 const formRef = ref(null)
 
@@ -1070,13 +1074,15 @@ const handlePdfFill = async (file) => {
 }
 
 const openCreateDialog = () => {
+  viewOnly.value = false
   editing.value = null
   resetPdfState()
   Object.assign(form, initialForm())
   dialogVisible.value = true
 }
 
-const openEditDialog = (row) => {
+const openEditDialog = (row, readOnly = false) => {
+  viewOnly.value = readOnly
   editing.value = row
   resetPdfState()
   Object.assign(form, {
@@ -1167,6 +1173,30 @@ onMounted(async () => {
 
 // "+ Yangi" menyusidan kelganda (?new=1) qo'shish oynasi ochiladi
 useOpenFromQuery(openCreateDialog)
+
+// Ro'yxatdagi shartnoma bosilganda yangi oynada (brauzer tab) ochiladi: /dogovor?open=<id>
+const route = useRoute()
+const router = useRouter()
+function openInTab(row) {
+  if (!row?.id) return
+  window.open(router.resolve({ path: route.path, query: { open: row.id } }).href, '_blank')
+}
+// Yangi oynada: shartnoma kartasi ochiladi (tahrirlash huquqi bo'lmasa — faqat ko'rish)
+watch(
+  () => route.query.open,
+  async (value) => {
+    const id = Number(value)
+    if (!id) return
+    try {
+      if (!usersStore.currentUser) await usersStore.getUserInfo(currentUserId).catch(() => {})
+      const row = await dogovorApi.getOne(id)
+      openEditDialog(row, !canModify(row))
+    } catch (error) {
+      ElMessage.error(errorText(error, t('dogovorMessageLoadError')))
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <style lang="scss" scoped>
@@ -1231,6 +1261,12 @@ useOpenFromQuery(openCreateDialog)
 }
 .dg-admin-note {
   color: var(--ui-warn);
+}
+.dg-view-note {
+  margin-bottom: 12px;
+}
+.dg-table :deep(.el-table__row) {
+  cursor: pointer;
 }
 .dg-actions {
   display: inline-flex;
