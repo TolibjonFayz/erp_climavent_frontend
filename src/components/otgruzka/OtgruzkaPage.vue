@@ -120,7 +120,6 @@ import OtgruzkaLines from './OtgruzkaLines.vue'
 import OtgruzkaSettings from './OtgruzkaSettings.vue'
 import OtgruzkaDrawer from './OtgruzkaDrawer.vue'
 import OtgruzkaCreateDialog from './OtgruzkaCreateDialog.vue'
-import { openInNewTab } from '@/utils/openInNewTab'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -140,14 +139,9 @@ const openId = ref(route.query.id ? Number(route.query.id) : null)
 const emptyFilters = () => ({ q: '', manager: '', stage: '', pay: '', series: '', didox: '', alert: '', showFinal: false })
 const filters = reactive(emptyFilters())
 
-// Ro'yxatdan bosilgan karta yangi oynada (brauzer tab) ochiladi — bir nechtasini yonma-yon ko'rish mumkin
-// Brauzer yangi oynani bloklasa — karta shu oynada ochiladi va qanday ruxsat berish aytiladi
+// Ro'yxatdan bosilgan karta shu oynada ochiladi (manzilda ?id= — havolani ulashsa ham ochiladi)
 function openInTab(id) {
-  if (!id) return
-  const opened = openInNewTab(router.resolve({ path: route.path, query: { id } }).href, () => {
-    openId.value = id
-  })
-  if (!opened && !window.Capacitor) ElMessage.info({ message: t('uiPopupBlocked'), duration: 6000 })
+  if (id) openId.value = id
 }
 
 // Tab va ochiq karta manzilda — havolani ulashsa shu holat ochiladi
