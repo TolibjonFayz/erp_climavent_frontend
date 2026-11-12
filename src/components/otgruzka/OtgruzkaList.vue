@@ -57,7 +57,10 @@
       >
         <el-table-column :label="$t('otColNumber')" prop="dogovor_number" sortable="custom" min-width="100">
           <template #default="{ row }">
-            <div class="ot-num">№ {{ row.dogovor_number || '—' }}</div>
+            <!-- Haqiqiy havola: o'ng tugma → "Yangi oynada ochish", Ctrl/o'rta tugma bilan bosish ham ishlaydi -->
+            <a class="ot-num ot-num-link" :href="$router.resolve({ path: '/otgruzka', query: { id: row.id } }).href" target="_blank" @click.stop>
+              № {{ row.dogovor_number || '—' }}
+            </a>
             <div class="ot-series" :class="{ 'is-off': !row.official }">{{ $t(`otSeries_${row.series}`) }}</div>
           </template>
         </el-table-column>
@@ -257,6 +260,15 @@ const rowClass = ({ row }) => (row.final_status ? 'is-final' : '')
 </script>
 
 <style scoped lang="scss">
+.ot-num-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  &:hover {
+    color: var(--ui-link);
+    text-decoration: underline;
+  }
+}
 .ot-list {
   display: flex;
   flex-direction: column;
