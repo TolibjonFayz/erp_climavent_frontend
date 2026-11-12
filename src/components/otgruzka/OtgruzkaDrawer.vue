@@ -1,14 +1,6 @@
 <template>
-  <!-- Karta ekran o'rtasida (dialog); sarlavha va yopish tugmasi kartaning o'zida -->
-  <el-dialog
-    :model-value="modelValue != null"
-    width="min(860px, 96vw)"
-    top="3vh"
-    :show-close="false"
-    append-to-body
-    class="ot-drawer"
-    @close="$emit('update:modelValue', null)"
-  >
+  <!-- inline — alohida sahifa (/otgruzka/:id); aks holda ekran o'rtasida dialog -->
+  <component :is="inline ? 'div' : ElDialog" v-bind="wrapAttrs" @close="$emit('update:modelValue', null)">
     <div v-loading="loading" class="ot-d">
       <el-alert v-if="error" type="error" show-icon :closable="false" :title="error" />
       <template v-if="o">
@@ -24,7 +16,7 @@
               <span class="ot-tag" :class="`is-${PAY_TONE[o.pay_status]}`">{{ $t(`otPay_${o.pay_status}`) }}</span>
             </div>
           </div>
-          <el-button text :icon="Close" :aria-label="$t('onbClose')" @click="$emit('update:modelValue', null)" />
+          <el-button v-if="!inline" text :icon="Close" :aria-label="$t('onbClose')" @click="$emit('update:modelValue', null)" />
         </header>
 
         <el-alert v-if="o.sheet_removed" type="warning" show-icon :closable="false" :title="$t('otRemoved')" />
@@ -53,6 +45,7 @@
           <div class="ot-step" :class="[o.ready_pct >= 1 ? 'is-good' : 'is-link', { 'is-click': canEdit }]" v-bind="stepAttrs('ready')">
             <span class="ot-step__name">{{ $t('otStepReady') }}<el-icon v-if="canEdit" class="ot-step__pen"><EditPen /></el-icon></span>
             <b>{{ fmtPct(o.ready_pct) }}</b>
+            <span v-if="inv.hasData && inv.pct != null" class="ot-step__val">{{ $t('otReadyByInvoice', { pct: fmtPct(inv.pct) }) }}</span>
             <span v-if="o.sgp_date" class="ot-step__val">{{ formatDate(o.sgp_date) }}</span>
           </div>
           <div class="ot-step" :class="[o.shipped_pct >= 1 ? 'is-good' : o.shipped_pct > 0 ? 'is-link' : 'is-muted', { 'is-click': canEdit }]" v-bind="stepAttrs('shipped')">
@@ -61,7 +54,7 @@
           </div>
           <div class="ot-step" :class="[o.invoice_numbers || o.didox_files_count ? 'is-good' : 'is-muted', { 'is-click': canEdit }]" v-bind="stepAttrs('invoice')">
             <span class="ot-step__name">{{ $t('otStepInvoice') }}<el-icon v-if="canEdit" class="ot-step__pen"><EditPen /></el-icon></span>
-            <span class="ot-step__val">{{ o.invoice_numbers || '—' }}</span>
+            <span class="ot-step__val">{{ invoiceNumbers || '—' }}</span>
             <span v-if="o.didox_files_count" class="ot-step__val">📎 {{ o.didox_files_count }} · {{ fmtShort(o.didox_files_sum) }}</span>
           </div>
         </div>
@@ -105,7 +98,7 @@
             </dd>
             <dt>{{ $t('otDate') }}</dt><dd>{{ o.dogovor_date ? formatDate(o.dogovor_date) : '—' }}</dd>
             <dt>{{ $t('otSum') }}</dt><dd><b>{{ fmtMoney(o.contract_sum) }}</b></dd>
-            <dt>{{ $t('otInvoice') }}</dt><dd>{{ o.invoice_numbers || '—' }}</dd>
+            <dt>{{ $t('otInvoice') }}</dt><dd>{{ invoiceNumbers || '—' }}</dd>
             <dt>{{ $t('otErpDogovor') }}</dt>
             <dd>
               <router-link v-if="o.dogovor" :to="{ path: '/dogovor', query: { n: String(o.dogovor.dogovor_number), d: formatDate(o.dogovor.dogovor_date) } }">
@@ -156,6 +149,11 @@
               <UiHint :label="$t('otItems')" :hint="$t('otItemsHint')" />
             </h4>
             <span class="ot-sec__btns">
+              <el-tooltip v-if="inv.hasData && inv.pct != null" :content="$t('otInvoicedHint')" placement="top">
+                <span class="ot-tag" :class="inv.left ? 'is-link' : 'is-good'">
+                  {{ $t('otInvoicedSummary', { pct: fmtPct(inv.pct), done: fmtQty(inv.done), total: fmtQty(inv.totalQty), left: fmtQty(inv.left) }) }}
+                </span>
+              </el-tooltip>
               <span v-if="stock && o.items.length" class="ot-tag" :class="`is-${stockTone(stock.summary)}`">
                 {{ $t('otStockSummary', { ready: stock.summary.ready_positions, total: stock.summary.positions }) }}
               </span>
@@ -164,12 +162,17 @@
           </div>
           <div v-if="o.items_from_dogovor" class="ot-muted">{{ $t('otItemsFromDogovor') }}</div>
           <div v-if="!o.items.length" class="ot-muted">{{ $t('otNoItems') }}</div>
+          <div v-if="o.items.length && inv.missing" class="ot-muted">{{ $t('otInvoicedMissing', { n: inv.missing }) }}</div>
+          <div v-if="o.items.length && inv.unmatched.length" class="ot-warn-text">
+            {{ $t('otInvoicedUnmatched', { names: inv.unmatched.map((u) => `${u.name} (${fmtQty(u.qty)})`).join('; ') }) }}
+          </div>
           <table v-else v-loading="stockLoading" class="ot-lines ot-items">
             <thead>
               <tr>
                 <th class="is-r ot-items__no">№</th>
                 <th>{{ $t('otItemName') }}</th>
                 <th class="is-r">{{ $t('otItemQty') }}</th>
+                <th v-if="inv.hasData" class="is-r">{{ $t('otItemInvoiced') }}</th>
                 <th class="is-r">{{ $t('otItemPrice') }}</th>
                 <th class="is-r">{{ $t('otItemSum') }}</th>
                 <th>{{ $t('otItemStock') }}</th>
@@ -180,6 +183,11 @@
                 <td class="is-r ot-muted ot-items__no">{{ i + 1 }}.</td>
                 <td>{{ it.name }}</td>
                 <td class="is-r nowrap">{{ fmtQty(it.qty) }} {{ it.unit || '' }}</td>
+                <td v-if="inv.hasData" class="is-r nowrap">
+                  <span class="ot-tag" :class="inv.rows[i].left ? (inv.rows[i].invoiced ? 'is-link' : 'is-muted') : 'is-good'">
+                    {{ fmtQty(inv.rows[i].invoiced) }} / {{ fmtQty(it.qty) }}
+                  </span>
+                </td>
                 <td class="is-r nowrap">{{ fmtMoney(it.price) }}</td>
                 <td class="is-r nowrap">{{ fmtMoney((it.qty || 0) * (it.price || 0)) }}</td>
                 <td>
@@ -206,6 +214,7 @@
               <tr>
                 <td colspan="2" class="is-r ot-muted">{{ $t('otItemsTotal') }}</td>
                 <td class="is-r nowrap"><b>{{ fmtQty(itemsQty) }} {{ itemsUnit }}</b></td>
+                <td v-if="inv.hasData" class="is-r nowrap"><b>{{ fmtQty(inv.done) }} / {{ fmtQty(inv.totalQty) }}</b></td>
                 <td></td>
                 <td class="is-r nowrap"><b>{{ fmtMoney(itemsTotal) }}</b></td>
                 <td></td>
@@ -347,14 +356,14 @@
     </el-dialog>
 
     <OtgruzkaEditDialog v-if="o" v-model="editOpen" :order="o" @saved="applyDetail" />
-  </el-dialog>
+  </component>
 </template>
 
 <script setup>
 import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
+import { ElDialog, ElMessage } from 'element-plus'
 import { Bell, CircleCheck, Close, Delete, Edit, EditPen, Plus, WarningFilled } from '@element-plus/icons-vue'
 import UiHint from '@/components/ui/UiHint.vue'
 import api from '@/api/otgruzka'
@@ -364,6 +373,7 @@ import { changeValue, fmtMoney, fmtPct, fmtShort, otError, PAY_TONE, STAGE_TONE,
 import OtgruzkaEditDialog from './OtgruzkaEditDialog.vue'
 import OtItemsEditor from './OtItemsEditor.vue'
 import OtDidoxFiles from './OtDidoxFiles.vue'
+import { invoicedProgress } from '@/utils/didoxPdfImport'
 import { fmtQty } from '@/utils/skladFormat'
 
 const props = defineProps({
@@ -372,8 +382,22 @@ const props = defineProps({
   editable: Boolean,
   twoWay: Boolean,
   isAdmin: Boolean,
+  // Alohida sahifa sifatida (dialog emas)
+  inline: Boolean,
 })
 const emit = defineEmits(['update:modelValue', 'changed'])
+const wrapAttrs = computed(() =>
+  props.inline
+    ? { class: 'ot-card-page' }
+    : {
+        modelValue: props.modelValue != null,
+        width: 'min(860px, 96vw)',
+        top: '3vh',
+        showClose: false,
+        appendToBody: true,
+        class: 'ot-drawer',
+      },
+)
 const { t } = useI18n()
 const usersStore = useUsersStore()
 
@@ -505,6 +529,24 @@ async function loadStock(d) {
     stockLoading.value = false
   }
 }
+// Schyot-faktura raqamlari: kartadagi (jadvaldagi) + yuklangan fayllardagi — takrorsiz
+const invoiceNumbers = computed(() => {
+  const norm = (x) => String(x).replace(/\s+/g, '').toLowerCase()
+  const out = []
+  const add = (x) => {
+    const v = String(x || '').trim()
+    if (v && !out.some((y) => norm(y) === norm(v))) out.push(v)
+  }
+  String(o.value?.invoice_numbers || '')
+    .split(/[,;\n]+/)
+    .forEach(add)
+  for (const f of o.value?.didox_files || []) if ((f.kind || 'invoice') === 'invoice') add(f.invoice_number)
+  return out.join(', ')
+})
+
+// Schyot-fakturalar bo'yicha tayyorlik (fakturadagi tovarlar soni / kartadagi jami soni)
+const inv = computed(() => invoicedProgress(o.value))
+
 // Jami soni: barcha qatorlar yig'indisi; birligi bitta bo'lsa — o'sha (masalan "шт")
 const itemsQty = computed(() => (o.value?.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0))
 const itemsUnit = computed(() => {
@@ -578,6 +620,15 @@ const author = (n) => {
 </script>
 
 <style scoped lang="scss">
+.ot-warn-text {
+  font-size: 13px;
+  color: var(--ui-warn);
+}
+// "№" ustuni qo'shilgach mahsulot nomi ham chapga tekislanadi
+.ot-items th:nth-child(2),
+.ot-items td:nth-child(2) {
+  text-align: left;
+}
 .ot-items__no {
   width: 28px;
   white-space: nowrap;
@@ -941,6 +992,14 @@ const author = (n) => {
 </style>
 
 <style lang="scss">
+// Alohida sahifadagi karta
+.ot-card-page {
+  max-width: 980px;
+  margin: 0 auto;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line-soft);
+  border-radius: var(--ui-radius);
+}
 // Otgruzka kartasi dialogi: standart sarlavha yo'q, ichi o'zi aylanadi
 .ot-drawer.el-dialog {
   padding: 0;

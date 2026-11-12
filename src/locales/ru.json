@@ -1276,6 +1276,7 @@
   "dogovorItemsTotalApplied": "Сумма рассчитана по позициям",
   "dogovorPrint": "Документ",
   "dogovorDeleteConfirm": "Удалить этот договор?",
+  "dogovorBackToList": "Назад к списку",
   "dogovorView": "Договор (просмотр)",
   "dogovorLockedHint": "Прошло больше 2 дней — изменить может только админ",
   "dogovorValidationDate": "Выберите дату договора",

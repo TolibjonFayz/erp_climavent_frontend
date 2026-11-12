@@ -462,6 +462,10 @@ async function uploadAll() {
           invoice_number: r.invoice_number?.trim(),
           invoice_date: r.invoice_date,
           doc_id: r.doc_id,
+          // Faktura tovarlari — kartada "necha foizi fakturalangan" hisobi uchun
+          ...(r.kind === 'invoice' && r.parsed?.kind === 'invoice' && r.parsed.items?.length
+            ? { items: JSON.stringify(r.parsed.items.map((i) => ({ name: i.name, qty: i.qty, unit: i.unit, total: i.total }))) }
+            : {}),
           ...(r.kind === 'poa' ? { poa_valid_until: r.poa_valid_until, poa_company: r.poa_company?.trim(), poa_inn: r.poa_inn?.trim() } : {}),
         },
         (ev) => {

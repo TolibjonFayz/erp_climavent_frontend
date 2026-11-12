@@ -26,6 +26,21 @@
       <el-button v-if="editable" type="primary" :icon="Plus" @click="createOpen = true">{{ $t('otNew') }}</el-button>
     </template>
 
+    <!-- Bitta karta sahifasi (/otgruzka/:id): ro'yxat o'rniga shu oynada ochiladi -->
+    <template v-if="cardId">
+      <el-button class="ot-back" :icon="ArrowLeft" @click="backToList">{{ $t('otBackToList') }}</el-button>
+      <OtgruzkaDrawer
+        inline
+        :model-value="cardId"
+        :editable="editable"
+        :two-way="!!settings.two_way"
+        :is-admin="isAdmin"
+        @update:model-value="backToList"
+        @changed="onChanged"
+      />
+    </template>
+
+    <template v-else>
     <el-alert v-if="loadError" type="error" show-icon :closable="false" :title="loadError" />
 
     <div class="ot-overview">
@@ -96,8 +111,8 @@
         <OtgruzkaSettings :settings="settings" :syncing="syncing" @sync="syncNow" @mode="setMode" @changed="reloadSettings" />
       </el-tab-pane>
     </el-tabs>
+    </template>
 
-    <OtgruzkaDrawer v-model="openId" :editable="editable" :two-way="!!settings.two_way" :is-admin="isAdmin" @changed="onChanged" />
     <OtgruzkaCreateDialog v-model="createOpen" @created="onCreated" />
   </UiPage>
 </template>
@@ -107,7 +122,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { CircleCheck, Document, InfoFilled, Plus, Refresh, WarningFilled } from '@element-plus/icons-vue'
+import { CircleCheck, Document, InfoFilled, Plus, Refresh, WarningFilled, ArrowLeft } from '@element-plus/icons-vue'
 import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import api from '@/api/otgruzka'
@@ -134,19 +149,27 @@ const loadError = ref('')
 const syncing = ref(false)
 const createOpen = ref(false)
 const tab = ref(['list', 'managers', 'lines', 'settings'].includes(route.query.tab) ? route.query.tab : 'list')
-const openId = ref(route.query.id ? Number(route.query.id) : null)
+// Ochiq karta — manzilda (/otgruzka/:id). Eski havolalar (?id=) yangi manzilga o'tkaziladi
+const cardId = computed(() => Number(route.params.id) || null)
+if (route.query.id && Number(route.query.id)) router.replace({ path: `/otgruzka/${Number(route.query.id)}` })
 
 const emptyFilters = () => ({ q: '', manager: '', stage: '', pay: '', series: '', didox: '', alert: '', showFinal: false })
 const filters = reactive(emptyFilters())
 
-// Ro'yxatdan bosilgan karta shu oynada ochiladi (manzilda ?id= — havolani ulashsa ham ochiladi)
+// Ro'yxatdan bosilgan karta shu oynada alohida sahifa bo'lib ochiladi
 function openInTab(id) {
-  if (id) openId.value = id
+  if (id) router.push({ path: `/otgruzka/${id}` })
+}
+// Orqaga: ro'yxatdan kelingan bo'lsa — tarixda orqaga (filtrlar saqlanadi), aks holda ro'yxatga
+function backToList() {
+  if (String(window.history.state?.back || '').startsWith('/otgruzka')) router.back()
+  else router.push({ path: '/otgruzka' })
 }
 
 // Tab va ochiq karta manzilda — havolani ulashsa shu holat ochiladi
-watch([tab, openId], ([tb, id]) => {
-  const query = { ...route.query, tab: tb === 'list' ? undefined : tb, id: id || undefined }
+watch(tab, (tb) => {
+  if (cardId.value) return
+  const query = { ...route.query, tab: tb === 'list' ? undefined : tb, id: undefined }
   router.replace({ query })
 })
 
@@ -251,13 +274,17 @@ function onChanged(order) {
 }
 function onCreated(order) {
   onChanged(order)
-  openId.value = order.id
+  openInTab(order.id)
 }
 
 onMounted(load)
 </script>
 
 <style scoped lang="scss">
+.ot-back {
+  align-self: flex-start;
+  margin-bottom: 12px;
+}
 .ot-mode {
   display: inline-flex;
   align-items: center;
