@@ -477,3 +477,49 @@ export function checkContract(doc, order) {
   else push('warn', 'otChkContractNoDidox')
   return out
 }
+
+/**
+ * Schyot-fakturalar bo'yicha tayyorlik: yuklangan fakturalardagi tovarlar soni kartadagi
+ * mahsulotlarga (nom / model kodi bo'yicha) taqsimlanadi.
+ * rows[i] — o.items[i] uchun { invoiced, left }; pct — jami fakturalangan / jami soni.
+ */
+export function invoicedProgress(order) {
+  const card = order?.items || []
+  const files = (order?.didox_files || []).filter((f) => (f.kind || 'invoice') === 'invoice')
+  const withItems = files.filter((f) => Array.isArray(f.items) && f.items.length)
+  const invoiced = card.map(() => 0)
+  const unmatched = []
+  for (const f of withItems) {
+    for (const it of f.items) {
+      const qty = Number(it.qty) || 0
+      let best = -1
+      let bestScore = 0
+      card.forEach((c, k) => {
+        if (!c?.name) return
+        const s = nameScore(it.name, c.name)
+        if (s < 0.5) return
+        const free = (Number(c.qty) || 0) - invoiced[k] > 0
+        const bestFree = best >= 0 && (Number(card[best].qty) || 0) - invoiced[best] > 0
+        // Eng o'xshashi; teng bo'lsa — hali to'lmagan qator
+        if (s > bestScore || (s === bestScore && free && !bestFree)) {
+          best = k
+          bestScore = s
+        }
+      })
+      if (best < 0) unmatched.push({ name: it.name, qty, invoice: f.invoice_number })
+      else invoiced[best] += qty
+    }
+  }
+  const totalQty = card.reduce((s, c) => s + (Number(c?.qty) || 0), 0)
+  const done = card.reduce((s, c, k) => s + Math.min(invoiced[k], Number(c?.qty) || 0), 0)
+  return {
+    hasData: withItems.length > 0,
+    missing: files.length - withItems.length,
+    rows: card.map((c, k) => ({ invoiced: invoiced[k], left: Math.max(0, (Number(c?.qty) || 0) - invoiced[k]) })),
+    totalQty,
+    done,
+    left: Math.max(0, totalQty - done),
+    pct: totalQty > 0 ? done / totalQty : null,
+    unmatched,
+  }
+}

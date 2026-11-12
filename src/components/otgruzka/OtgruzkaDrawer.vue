@@ -53,6 +53,7 @@
           <div class="ot-step" :class="[o.ready_pct >= 1 ? 'is-good' : 'is-link', { 'is-click': canEdit }]" v-bind="stepAttrs('ready')">
             <span class="ot-step__name">{{ $t('otStepReady') }}<el-icon v-if="canEdit" class="ot-step__pen"><EditPen /></el-icon></span>
             <b>{{ fmtPct(o.ready_pct) }}</b>
+            <span v-if="inv.hasData && inv.pct != null" class="ot-step__val">{{ $t('otReadyByInvoice', { pct: fmtPct(inv.pct) }) }}</span>
             <span v-if="o.sgp_date" class="ot-step__val">{{ formatDate(o.sgp_date) }}</span>
           </div>
           <div class="ot-step" :class="[o.shipped_pct >= 1 ? 'is-good' : o.shipped_pct > 0 ? 'is-link' : 'is-muted', { 'is-click': canEdit }]" v-bind="stepAttrs('shipped')">
@@ -156,6 +157,11 @@
               <UiHint :label="$t('otItems')" :hint="$t('otItemsHint')" />
             </h4>
             <span class="ot-sec__btns">
+              <el-tooltip v-if="inv.hasData && inv.pct != null" :content="$t('otInvoicedHint')" placement="top">
+                <span class="ot-tag" :class="inv.left ? 'is-link' : 'is-good'">
+                  {{ $t('otInvoicedSummary', { pct: fmtPct(inv.pct), done: fmtQty(inv.done), total: fmtQty(inv.totalQty), left: fmtQty(inv.left) }) }}
+                </span>
+              </el-tooltip>
               <span v-if="stock && o.items.length" class="ot-tag" :class="`is-${stockTone(stock.summary)}`">
                 {{ $t('otStockSummary', { ready: stock.summary.ready_positions, total: stock.summary.positions }) }}
               </span>
@@ -164,12 +170,17 @@
           </div>
           <div v-if="o.items_from_dogovor" class="ot-muted">{{ $t('otItemsFromDogovor') }}</div>
           <div v-if="!o.items.length" class="ot-muted">{{ $t('otNoItems') }}</div>
+          <div v-if="o.items.length && inv.missing" class="ot-muted">{{ $t('otInvoicedMissing', { n: inv.missing }) }}</div>
+          <div v-if="o.items.length && inv.unmatched.length" class="ot-warn-text">
+            {{ $t('otInvoicedUnmatched', { names: inv.unmatched.map((u) => `${u.name} (${fmtQty(u.qty)})`).join('; ') }) }}
+          </div>
           <table v-else v-loading="stockLoading" class="ot-lines ot-items">
             <thead>
               <tr>
                 <th class="is-r ot-items__no">№</th>
                 <th>{{ $t('otItemName') }}</th>
                 <th class="is-r">{{ $t('otItemQty') }}</th>
+                <th v-if="inv.hasData" class="is-r">{{ $t('otItemInvoiced') }}</th>
                 <th class="is-r">{{ $t('otItemPrice') }}</th>
                 <th class="is-r">{{ $t('otItemSum') }}</th>
                 <th>{{ $t('otItemStock') }}</th>
@@ -180,6 +191,11 @@
                 <td class="is-r ot-muted ot-items__no">{{ i + 1 }}.</td>
                 <td>{{ it.name }}</td>
                 <td class="is-r nowrap">{{ fmtQty(it.qty) }} {{ it.unit || '' }}</td>
+                <td v-if="inv.hasData" class="is-r nowrap">
+                  <span class="ot-tag" :class="inv.rows[i].left ? (inv.rows[i].invoiced ? 'is-link' : 'is-muted') : 'is-good'">
+                    {{ fmtQty(inv.rows[i].invoiced) }} / {{ fmtQty(it.qty) }}
+                  </span>
+                </td>
                 <td class="is-r nowrap">{{ fmtMoney(it.price) }}</td>
                 <td class="is-r nowrap">{{ fmtMoney((it.qty || 0) * (it.price || 0)) }}</td>
                 <td>
@@ -206,6 +222,7 @@
               <tr>
                 <td colspan="2" class="is-r ot-muted">{{ $t('otItemsTotal') }}</td>
                 <td class="is-r nowrap"><b>{{ fmtQty(itemsQty) }} {{ itemsUnit }}</b></td>
+                <td v-if="inv.hasData" class="is-r nowrap"><b>{{ fmtQty(inv.done) }} / {{ fmtQty(inv.totalQty) }}</b></td>
                 <td></td>
                 <td class="is-r nowrap"><b>{{ fmtMoney(itemsTotal) }}</b></td>
                 <td></td>
@@ -364,6 +381,7 @@ import { changeValue, fmtMoney, fmtPct, fmtShort, otError, PAY_TONE, STAGE_TONE,
 import OtgruzkaEditDialog from './OtgruzkaEditDialog.vue'
 import OtItemsEditor from './OtItemsEditor.vue'
 import OtDidoxFiles from './OtDidoxFiles.vue'
+import { invoicedProgress } from '@/utils/didoxPdfImport'
 import { fmtQty } from '@/utils/skladFormat'
 
 const props = defineProps({
@@ -505,6 +523,9 @@ async function loadStock(d) {
     stockLoading.value = false
   }
 }
+// Schyot-fakturalar bo'yicha tayyorlik (fakturadagi tovarlar soni / kartadagi jami soni)
+const inv = computed(() => invoicedProgress(o.value))
+
 // Jami soni: barcha qatorlar yig'indisi; birligi bitta bo'lsa — o'sha (masalan "шт")
 const itemsQty = computed(() => (o.value?.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0))
 const itemsUnit = computed(() => {
@@ -578,6 +599,15 @@ const author = (n) => {
 </script>
 
 <style scoped lang="scss">
+.ot-warn-text {
+  font-size: 13px;
+  color: var(--ui-warn);
+}
+// "№" ustuni qo'shilgach mahsulot nomi ham chapga tekislanadi
+.ot-items th:nth-child(2),
+.ot-items td:nth-child(2) {
+  text-align: left;
+}
 .ot-items__no {
   width: 28px;
   white-space: nowrap;
