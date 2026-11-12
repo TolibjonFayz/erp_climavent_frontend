@@ -45,12 +45,12 @@
           <div class="ot-step" :class="[o.ready_pct >= 1 ? 'is-good' : 'is-link', { 'is-click': canEdit }]" v-bind="stepAttrs('ready')">
             <span class="ot-step__name">{{ $t('otStepReady') }}<el-icon v-if="canEdit" class="ot-step__pen"><EditPen /></el-icon></span>
             <b>{{ fmtPct(o.ready_pct) }}</b>
-            <span v-if="inv.hasData && inv.pct != null" class="ot-step__val">{{ $t('otReadyByInvoice', { pct: fmtPct(inv.pct) }) }}</span>
             <span v-if="o.sgp_date" class="ot-step__val">{{ formatDate(o.sgp_date) }}</span>
           </div>
           <div class="ot-step" :class="[o.shipped_pct >= 1 ? 'is-good' : o.shipped_pct > 0 ? 'is-link' : 'is-muted', { 'is-click': canEdit }]" v-bind="stepAttrs('shipped')">
             <span class="ot-step__name">{{ $t('otStepShip') }}<el-icon v-if="canEdit" class="ot-step__pen"><EditPen /></el-icon></span>
             <b>{{ fmtPct(o.shipped_pct) }}</b>
+            <span v-if="inv.hasData && inv.pct != null" class="ot-step__val">{{ $t('otReadyByInvoice', { pct: fmtPct(inv.pct) }) }}</span>
           </div>
           <div class="ot-step" :class="[o.invoice_numbers || o.didox_files_count ? 'is-good' : 'is-muted', { 'is-click': canEdit }]" v-bind="stepAttrs('invoice')">
             <span class="ot-step__name">{{ $t('otStepInvoice') }}<el-icon v-if="canEdit" class="ot-step__pen"><EditPen /></el-icon></span>
@@ -149,9 +149,9 @@
               <UiHint :label="$t('otItems')" :hint="$t('otItemsHint')" />
             </h4>
             <span class="ot-sec__btns">
-              <el-tooltip v-if="inv.hasData && inv.pct != null" :content="$t('otInvoicedHint')" placement="top">
+              <el-tooltip v-if="inv.hasData && inv.pct != null" :content="$t('otShippedHint')" placement="top">
                 <span class="ot-tag" :class="inv.left ? 'is-link' : 'is-good'">
-                  {{ $t('otInvoicedSummary', { pct: fmtPct(inv.pct), done: fmtQty(inv.done), total: fmtQty(inv.totalQty), left: fmtQty(inv.left) }) }}
+                  {{ $t('otShippedSummary', { pct: fmtPct(inv.pct), done: fmtQty(inv.done), total: fmtQty(inv.totalQty), left: fmtQty(inv.left) }) }}
                 </span>
               </el-tooltip>
               <span v-if="stock && o.items.length" class="ot-tag" :class="`is-${stockTone(stock.summary)}`">
@@ -172,10 +172,12 @@
                 <th class="is-r ot-items__no">№</th>
                 <th>{{ $t('otItemName') }}</th>
                 <th class="is-r">{{ $t('otItemQty') }}</th>
-                <th v-if="inv.hasData" class="is-r">{{ $t('otItemInvoiced') }}</th>
                 <th class="is-r">{{ $t('otItemPrice') }}</th>
                 <th class="is-r">{{ $t('otItemSum') }}</th>
                 <th>{{ $t('otItemStock') }}</th>
+                <th class="is-r">
+                  <el-tooltip :content="$t('otShippedHint')" placement="top"><span>{{ $t('otItemShipped') }}</span></el-tooltip>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -183,11 +185,6 @@
                 <td class="is-r ot-muted ot-items__no">{{ i + 1 }}.</td>
                 <td>{{ it.name }}</td>
                 <td class="is-r nowrap">{{ fmtQty(it.qty) }} {{ it.unit || '' }}</td>
-                <td v-if="inv.hasData" class="is-r nowrap">
-                  <span class="ot-tag" :class="inv.rows[i].left ? (inv.rows[i].invoiced ? 'is-link' : 'is-muted') : 'is-good'">
-                    {{ fmtQty(inv.rows[i].invoiced) }} / {{ fmtQty(it.qty) }}
-                  </span>
-                </td>
                 <td class="is-r nowrap">{{ fmtMoney(it.price) }}</td>
                 <td class="is-r nowrap">{{ fmtMoney((it.qty || 0) * (it.price || 0)) }}</td>
                 <td>
@@ -208,16 +205,32 @@
                     </el-tooltip>
                   </template>
                 </td>
+                <!-- Отгружаемость: fakturalardan avtomatik, bosib qo'lda o'zgartirish mumkin -->
+                <td class="is-r nowrap">
+                  <button
+                    type="button"
+                    class="ot-tag ot-ship"
+                    :class="inv.rows[i].left ? (inv.rows[i].invoiced ? 'is-link' : 'is-muted') : 'is-good'"
+                    :title="inv.rows[i].manual ? $t('otShippedManualTip', { auto: fmtQty(inv.rows[i].auto) }) : $t('otShippedAutoTip')"
+                    @click="editShipped(i)"
+                  >
+                    {{ fmtQty(inv.rows[i].invoiced) }} / {{ fmtQty(it.qty) }}
+                    <template v-if="inv.rows[i].pct != null"> · {{ fmtPct(inv.rows[i].pct) }}</template>
+                    <el-icon v-if="inv.rows[i].manual" class="ot-ship__pen"><EditPen /></el-icon>
+                  </button>
+                </td>
               </tr>
             </tbody>
             <tfoot>
               <tr>
                 <td colspan="2" class="is-r ot-muted">{{ $t('otItemsTotal') }}</td>
                 <td class="is-r nowrap"><b>{{ fmtQty(itemsQty) }} {{ itemsUnit }}</b></td>
-                <td v-if="inv.hasData" class="is-r nowrap"><b>{{ fmtQty(inv.done) }} / {{ fmtQty(inv.totalQty) }}</b></td>
                 <td></td>
                 <td class="is-r nowrap"><b>{{ fmtMoney(itemsTotal) }}</b></td>
                 <td></td>
+                <td class="is-r nowrap">
+                  <b>{{ fmtQty(inv.done) }} / {{ fmtQty(inv.totalQty) }}<template v-if="inv.pct != null"> · {{ fmtPct(inv.pct) }}</template></b>
+                </td>
               </tr>
             </tfoot>
           </table>
@@ -363,7 +376,7 @@
 import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElDialog, ElMessage } from 'element-plus'
+import { ElDialog, ElMessage, ElMessageBox } from 'element-plus'
 import { Bell, CircleCheck, Close, Delete, Edit, EditPen, Plus, WarningFilled } from '@element-plus/icons-vue'
 import UiHint from '@/components/ui/UiHint.vue'
 import api from '@/api/otgruzka'
@@ -556,15 +569,51 @@ const itemsUnit = computed(() => {
 const itemsTotal = computed(() => (o.value?.items || []).reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.price) || 0), 0))
 const stockTone = (sum) => (sum.positions && sum.ready_positions === sum.positions ? 'good' : sum.pct > 0 ? 'warn' : 'muted')
 function openItems() {
-  itemsEdit.list = (o.value.items || []).map((i) => ({ name: i.name, unit: i.unit || '', qty: i.qty, price: i.price }))
+  itemsEdit.list = (o.value.items || []).map((i) => ({ name: i.name, unit: i.unit || '', qty: i.qty, price: i.price, shipped: i.shipped ?? null }))
   if (!itemsEdit.list.length) itemsEdit.list.push({ name: '', unit: 'шт', qty: 1, price: 0 })
   itemsEdit.open = true
 }
 async function saveItems() {
   const items = itemsEdit.list
     .filter((i) => String(i.name || '').trim())
-    .map((i) => ({ name: i.name.trim(), unit: String(i.unit || '').trim() || null, qty: Number(i.qty) || 0, price: Number(i.price) || 0 }))
+    .map((i) => ({
+      name: i.name.trim(),
+      unit: String(i.unit || '').trim() || null,
+      qty: Number(i.qty) || 0,
+      price: Number(i.price) || 0,
+      ...(i.shipped != null ? { shipped: i.shipped } : {}),
+    }))
   if (await run('items', () => api.update(o.value.id, { items }))) itemsEdit.open = false
+}
+
+// Отгружаемость: qo'lda o'zgartirish (bo'sh qoldirilsa — fakturalardan avtomatik)
+async function editShipped(i) {
+  const it = o.value.items[i]
+  const row = inv.value.rows[i]
+  let value
+  try {
+    ;({ value } = await ElMessageBox.prompt(
+      t('otShippedPrompt', { name: it.name, qty: fmtQty(it.qty), auto: fmtQty(row.auto) }),
+      t('otItemShipped'),
+      {
+        inputValue: row.manual ? String(row.invoiced) : '',
+        inputPlaceholder: t('otShippedAutoPh', { auto: fmtQty(row.auto) }),
+        inputPattern: /^\s*(\d+([.,]\d+)?)?\s*$/,
+        inputErrorMessage: t('otShippedBad'),
+        confirmButtonText: t('otSave'),
+        cancelButtonText: t('otCancel'),
+      },
+    ))
+  } catch {
+    return // bekor qilindi
+  }
+  const v = String(value ?? '').trim().replace(',', '.')
+  const items = o.value.items.map((x, k) => {
+    const base = { name: x.name, unit: x.unit || null, qty: Number(x.qty) || 0, price: Number(x.price) || 0 }
+    const shipped = k === i ? (v === '' ? null : Number(v)) : x.shipped
+    return shipped != null ? { ...base, shipped } : base
+  })
+  await run('items', () => api.update(o.value.id, { items }))
 }
 
 const nextDirty = computed(() => o.value && ((next.text || '') !== (o.value.next_action || '') || (next.date || null) !== (o.value.next_action_date || null)))
@@ -620,6 +669,20 @@ const author = (n) => {
 </script>
 
 <style scoped lang="scss">
+.ot-ship {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  &:hover {
+    filter: brightness(0.95);
+    text-decoration: underline;
+  }
+}
+.ot-ship__pen {
+  margin-left: 4px;
+  font-size: 11px;
+  vertical-align: -1px;
+}
 .ot-warn-text {
   font-size: 13px;
   color: var(--ui-warn);
@@ -994,8 +1057,9 @@ const author = (n) => {
 <style lang="scss">
 // Alohida sahifadagi karta
 .ot-card-page {
-  max-width: 980px;
-  margin: 0 auto;
+  // Sahifaning odatiy konteyneri bo'ylab (boshqa sahifalar kabi)
+  width: 100%;
+  box-sizing: border-box;
   background: var(--ui-surface);
   border: 1px solid var(--ui-line-soft);
   border-radius: var(--ui-radius);

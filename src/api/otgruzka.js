@@ -28,10 +28,19 @@ export default {
     for (const [k, v] of Object.entries(meta)) if (v !== undefined && v !== null && v !== '') fd.append(k, String(v))
     return apiClient.post(`otgruzka/${id}/didox`, fd, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 0, onUploadProgress })
   },
+  // Shartnoma bo'limidagi Didox PDF — bog'langan otgruzka kartasiga shartnoma fayli bo'lib
+  addDidoxByDogovor: (dogovorId, file, meta = {}) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    for (const [k, v] of Object.entries(meta)) if (v !== undefined && v !== null && v !== '') fd.append(k, String(v))
+    return apiClient.post(`otgruzka/by-dogovor/${dogovorId}/didox`, fd, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 0 })
+  },
   updateDidox: (fileId, payload) => apiClient.patch(`otgruzka/didox/${fileId}`, payload),
   removeDidox: (fileId) => apiClient.delete(`otgruzka/didox/${fileId}`),
   // Yuklashdan oldin dublikatni tekshirish (raqam / sana / Didox ID) — butun bazada
   checkDidox: (id, params) => apiClient.get(`otgruzka/${id}/didox/check`, { params }),
+  // Fayl tarkibi (PDF'ni qayta o'qish uchun)
+  didoxFile: (fileId) => apiClient.get(`otgruzka/didox/${fileId}/file`, { responseType: 'arraybuffer', timeout: 0 }),
   didoxLink: (fileId, mode = 'inline') => apiClient.get(`otgruzka/didox/${fileId}/link`, { params: { mode } }),
   // Ombor tekshiruvi (yangi shartnomalar)
   skladChecks: () => apiClient.get('otgruzka/sklad-checks'),

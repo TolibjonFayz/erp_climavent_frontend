@@ -12,7 +12,8 @@
           {{ $t('notifTitle') }}
           <span v-if="unreadCount" class="notif-head__count">{{ unreadCount }}</span>
         </span>
-        <el-button v-if="unreadCount" link type="primary" :icon="Finished" @click="markAllSeen">
+        <!-- "Hammasini o'qilgan qilish" — faqat adminlarda; boshqalar har birini ochib o'qiydi -->
+        <el-button v-if="unreadCount && isAdmin" link type="primary" :icon="Finished" @click="markAllSeen">
           {{ $t('notifMarkAll') }}
         </el-button>
       </div>
@@ -54,7 +55,9 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUsersStore } from '@/stores/user'
 import { Bell, Box, Finished, List, Promotion } from '@element-plus/icons-vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { formatDateTime } from '@/utils/format'
@@ -64,6 +67,8 @@ const emit = defineEmits(['update:modelValue'])
 
 const router = useRouter()
 const { items, unreadCount, markRead, markAllSeen } = useNotifications()
+const usersStore = useUsersStore()
+const isAdmin = computed(() => !!usersStore.currentUser?.is_admin)
 const KIND = {
   announcement: 'notifAnnouncement',
   task: 'notifNewTask',

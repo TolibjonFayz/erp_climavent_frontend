@@ -1264,6 +1264,8 @@
   "dogovorPrint": "Hujjat",
   "dogovorDeleteConfirm": "Bu shartnomani o'chirmoqchimisiz?",
   "dogovorBackToList": "Ro'yxatga qaytish",
+  "dogovorDidoxAttached": "Didox'dan olingan shartnoma PDF'i otgruzka kartasiga biriktirildi — \"Shartnoma: bor\" belgilandi",
+  "dogovorDidoxAttachFail": "Shartnoma saqlandi, lekin Didox PDF'ini otgruzka kartasiga biriktirib bo'lmadi — kartada qo'lda yuklang",
   "dogovorView": "Shartnoma (ko'rish)",
   "dogovorLockedHint": "Kiritilganiga 2 kundan oshgan — faqat admin o'zgartira oladi",
   "dogovorValidationDate": "Shartnoma sanasini tanlang",

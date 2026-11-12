@@ -742,6 +742,8 @@ import { useDogovorStore } from '@/stores/dogovor'
 import { useUsersStore } from '@/stores/user'
 import { printDogovorDocument } from '@/utils/dogovorPdf'
 import { readDogovorPdf } from '@/utils/dogovorPdfImport'
+import { readDidoxPdf } from '@/utils/didoxPdfImport'
+import otgruzkaApi from '@/api/otgruzka'
 import ManagerSelect from '@/components/ui/ManagerSelect.vue'
 
 const { t } = useI18n()
@@ -1096,12 +1098,22 @@ const PDF_FIELDS = [
 const resetPdfState = () => {
   pdfResult.value = null
   pdfFilled.value = new Set()
+  didoxPdf.value = null
 }
+// Didox'dan olingan (imzolash protokoli / Didox ID bor) shartnoma PDF'i — saqlangach otgruzka kartasiga biriktiriladi
+const didoxPdf = ref(null) // { file, doc_id }
 
 const handlePdfFill = async (file) => {
   pdfLoading.value = true
+  didoxPdf.value = null
   try {
     const data = await readDogovorPdf(file)
+    // Didox belgilari (ID / protokol) — alohida, xato bo'lsa forma to'ldirishga ta'sir qilmaydi
+    readDidoxPdf(file)
+      .then((d) => {
+        if (d.kind === 'contract' && (d.doc_id || d.has_protocol)) didoxPdf.value = { file, doc_id: d.doc_id || null }
+      })
+      .catch(() => {})
     const keys = Object.keys(data).filter((key) => key in form)
     if (!keys.length) {
       ElMessage.warning(t('dogovorPdfNothingFound'))
@@ -1220,14 +1232,35 @@ const handleSubmit = async () => {
       await dogovorStore.updateDogovor(editing.value.id, payload)
       ElMessage.success(t('dogovorMessageUpdated'))
     } else {
-      await dogovorStore.createDogovor(payload)
+      const created = await dogovorStore.createDogovor(payload)
       ElMessage.success(t('dogovorMessageSaved'))
+      await attachDidoxPdf(created?.id ?? created?.data?.id)
     }
     dialogVisible.value = false
     await load()
     if (cardId.value) await loadCard(cardId.value)
   } catch (error) {
     ElMessage.error(errorText(error, t('dogovorMessageSaveError')))
+  }
+}
+
+// Didox PDF'ini otgruzka kartasiga "Договор (Didox)" fayli bo'lib biriktiradi ("Договор: есть" o'zi yoqiladi)
+async function attachDidoxPdf(dogovorId) {
+  const pdf = didoxPdf.value
+  if (!pdf || !dogovorId) return
+  try {
+    await otgruzkaApi.addDidoxByDogovor(dogovorId, pdf.file, {
+      kind: 'contract',
+      doc_id: pdf.doc_id,
+      invoice_number: form.dogovor_number ? String(form.dogovor_number) : undefined,
+      invoice_date: form.dogovor_date || undefined,
+    })
+    ElMessage.success(t('dogovorDidoxAttached'))
+  } catch (error) {
+    // Dublikat (allaqachon biriktirilgan) — jim; boshqa xato — ogohlantirish
+    if (error?.response?.status !== 409) ElMessage.warning(errorText(error, t('dogovorDidoxAttachFail')))
+  } finally {
+    didoxPdf.value = null
   }
 }
 
