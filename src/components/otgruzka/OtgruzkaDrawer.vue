@@ -1,8 +1,11 @@
 <template>
-  <el-drawer
+  <!-- Karta ekran o'rtasida (dialog); sarlavha va yopish tugmasi kartaning o'zida -->
+  <el-dialog
     :model-value="modelValue != null"
-    :size="drawerSize"
-    :with-header="false"
+    width="min(860px, 96vw)"
+    top="3vh"
+    :show-close="false"
+    append-to-body
     class="ot-drawer"
     @close="$emit('update:modelValue', null)"
   >
@@ -344,7 +347,7 @@
     </el-dialog>
 
     <OtgruzkaEditDialog v-if="o" v-model="editOpen" :order="o" @saved="applyDetail" />
-  </el-drawer>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -428,7 +431,6 @@ async function saveQuick() {
   if (await run('quick', () => api.update(o.value.id, body))) qe.open = false
 }
 
-const drawerSize = computed(() => (window.innerWidth < 640 ? '100%' : '600px'))
 // Tarix: "Izohlar" (izoh, qo'ng'iroq — xodim yozgan) va "O'zgarishlar" (tizim qayd etgan) alohida
 const histTab = ref('comment')
 const commentNotes = computed(() => (o.value?.notes || []).filter((n) => n.kind !== 'change'))
@@ -935,5 +937,32 @@ const author = (n) => {
   margin-top: 4px;
   white-space: pre-wrap;
   color: var(--ui-ink);
+}
+</style>
+
+<style lang="scss">
+// Otgruzka kartasi dialogi: standart sarlavha yo'q, ichi o'zi aylanadi
+.ot-drawer.el-dialog {
+  padding: 0;
+  overflow: hidden;
+  .el-dialog__header {
+    display: none;
+  }
+  .el-dialog__body {
+    padding: 0;
+    max-height: 94vh;
+    overflow-y: auto;
+  }
+}
+@media (max-width: 640px) {
+  .ot-drawer.el-dialog {
+    --el-dialog-margin-top: 0;
+    width: 100% !important;
+    margin: 0;
+    border-radius: 0;
+    .el-dialog__body {
+      max-height: 100vh;
+    }
+  }
 }
 </style>
