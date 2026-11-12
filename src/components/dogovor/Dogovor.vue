@@ -150,10 +150,7 @@
         <el-table-column type="index" :index="rowIndex" label="#" width="50" />
         <el-table-column :label="$t('dogovorTableNumberDate')" min-width="95">
           <template #default="{ row }">
-            <!-- Haqiqiy havola: o'ng tugma → "Yangi oynada ochish", Ctrl/o'rta tugma bilan bosish ham ishlaydi -->
-            <a class="dg-strong dg-num-link" :href="$router.resolve({ path: '/dogovor', query: { open: row.id } }).href" target="_blank" @click.stop>
-              {{ row.dogovor_number ?? '—' }}
-            </a>
+            <div class="dg-strong">{{ row.dogovor_number ?? '—' }}</div>
             <div class="dg-sub">{{ formatDate(row.dogovor_date) }}</div>
           </template>
         </el-table-column>
@@ -641,9 +638,8 @@ import { useQueryPrefill } from '@/composables/useQueryPrefill'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import dogovorApi from '@/api/dogovor'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useOpenFromQuery } from '@/composables/useOpenFromQuery'
-import { openInNewTab } from '@/utils/openInNewTab'
 import UiQuickPhrases from '@/components/ui/UiQuickPhrases.vue'
 import * as XLSX from 'xlsx'
 import { ElMessage } from 'element-plus'
@@ -1178,16 +1174,10 @@ onMounted(async () => {
 // "+ Yangi" menyusidan kelganda (?new=1) qo'shish oynasi ochiladi
 useOpenFromQuery(openCreateDialog)
 
-// Ro'yxatdagi shartnoma bosilganda yangi oynada (brauzer tab) ochiladi: /dogovor?open=<id>
+// Ro'yxatdagi shartnoma bosilganda shu oynada dialog ochiladi; havola (/dogovor?open=<id>) bilan kelinganda ham
 const route = useRoute()
-const router = useRouter()
-// Brauzer yangi oynani bloklasa — shartnoma shu oynada ochiladi va qanday ruxsat berish aytiladi
 function openInTab(row) {
-  if (!row?.id) return
-  const opened = openInNewTab(router.resolve({ path: route.path, query: { open: row.id } }).href, () => {
-    openEditDialog(row, !canModify(row))
-  })
-  if (!opened && !window.Capacitor) ElMessage.info({ message: t('uiPopupBlocked'), duration: 6000 })
+  if (row?.id) openEditDialog(row, !canModify(row))
 }
 // Yangi oynada: shartnoma kartasi ochiladi (tahrirlash huquqi bo'lmasa — faqat ko'rish)
 watch(
@@ -1269,15 +1259,6 @@ watch(
 }
 .dg-admin-note {
   color: var(--ui-warn);
-}
-.dg-num-link {
-  display: block;
-  color: inherit;
-  text-decoration: none;
-  &:hover {
-    color: var(--ui-link);
-    text-decoration: underline;
-  }
 }
 .dg-view-note {
   margin-bottom: 12px;
