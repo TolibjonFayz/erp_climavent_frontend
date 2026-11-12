@@ -15,5 +15,8 @@ export default {
   addSource: (payload) => apiClient.post('sklad/sources', payload),
   removeSource: (id) => apiClient.delete(`sklad/sources/${id}`),
   sync: (payload = {}) => apiClient.post('sklad/sync', payload),
+  // Avtomatik sinxron sozlamasi va sinxronlar tarixi
+  setAutoSync: (payload) => apiClient.patch('sklad/auto-sync', payload),
+  getSyncLog: () => apiClient.get('sklad/sync-log'),
   sapImport: (formData) => apiClient.post('sklad/sap-import', formData),
 }

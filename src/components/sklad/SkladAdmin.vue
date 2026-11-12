@@ -19,20 +19,72 @@
     </div>
   </UiPanel>
 
+  <!-- Sinxron: avtomatik / qo'lda va tarix -->
+  <UiPanel :title="$t('skAutoTitle')" :hint="$t('skAutoHint')">
+    <div class="sk-auto">
+      <el-segmented
+        :model-value="store.autoSync?.enabled ? 'auto' : 'manual'"
+        :options="[
+          { label: $t('skAutoAuto'), value: 'auto' },
+          { label: $t('skAutoManual'), value: 'manual' },
+        ]"
+        :disabled="store.mode === 'live' || autoSaving"
+        @change="(v) => saveAuto({ enabled: v === 'auto' })"
+      />
+      <template v-if="store.autoSync?.enabled">
+        <span class="sk-muted">{{ $t('skAutoEvery') }}</span>
+        <el-select
+          :model-value="store.autoSync.interval_min"
+          size="small"
+          class="sk-auto__interval"
+          :disabled="autoSaving"
+          @change="(v) => saveAuto({ enabled: true, interval_min: v })"
+        >
+          <el-option v-for="m in AUTO_INTERVALS" :key="m" :label="$t('skAutoMin', { n: m })" :value="m" />
+        </el-select>
+        <span v-if="store.autoSync.next_auto_at" class="sk-muted">
+          · {{ $t('skAutoNext') }}: {{ formatDateTime(store.autoSync.next_auto_at) }}
+        </span>
+      </template>
+      <span v-if="store.mode === 'live'" class="sk-muted">{{ $t('skAutoLiveOff') }}</span>
+    </div>
+
+    <h4 class="sk-log-title">{{ $t('skLogTitle') }}</h4>
+    <div v-if="!store.syncLog.length" class="sk-muted">{{ $t('skLogEmpty') }}</div>
+    <el-table v-else :data="store.syncLog.slice(0, logLimit)" size="small" class="sk-table" max-height="360">
+      <el-table-column :label="$t('skLogAt')" min-width="140">
+        <template #default="{ row }">{{ formatDateTime(row.at) }}</template>
+      </el-table-column>
+      <el-table-column :label="$t('skLogTrigger')" min-width="110">
+        <template #default="{ row }">
+          <el-tag size="small" :type="row.trigger === 'auto' ? 'success' : 'primary'" effect="plain">
+            {{ row.trigger === 'auto' ? $t('skAutoAuto') : $t('skAutoManual') }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('skLogWho')" min-width="140">
+        <template #default="{ row }">{{ row.trigger === 'auto' ? $t('skLogSystem') : row.user_name || '—' }}</template>
+      </el-table-column>
+      <el-table-column :label="$t('skLogResult')" min-width="220">
+        <template #default="{ row }">
+          <span v-if="row.error" class="sk-bad">{{ row.error }}</span>
+          <template v-else>
+            <span :class="row.failed ? 'sk-bad' : 'sk-good'">{{ $t('skLogOk', { ok: row.ok, failed: row.failed }) }}</span>
+            <div v-for="(src, k) in (row.sources || []).filter((x) => !x.ok)" :key="k" class="sk-muted">
+              {{ src.title || '—' }}: {{ src.code ? codeMessage(src.code, src.params, src.error) : src.error }}
+            </div>
+          </template>
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('skLogMs')" min-width="80" align="right">
+        <template #default="{ row }">{{ (row.ms / 1000).toFixed(1) }} s</template>
+      </el-table-column>
+    </el-table>
+    <el-button v-if="store.syncLog.length > logLimit" link type="primary" @click="logLimit += 20">{{ $t('skLogMore') }}</el-button>
+  </UiPanel>
+
   <!-- Google Sheets varaqlari -->
   <UiPanel :title="$t('skAdmSources')" :hint="$t('skAdmSourcesHint')" flush>
-    <template #actions>
-      <el-button
-        type="primary"
-        size="small"
-        :icon="Refresh"
-        :loading="syncing === 'all'"
-        :disabled="store.mode === 'live'"
-        @click="sync()"
-      >
-        {{ $t('skAdmSyncAll') }}
-      </el-button>
-    </template>
     <el-table :data="store.sources" size="small" class="sk-table">
       <el-table-column :label="$t('skAdmSheet')" min-width="170" column-key="skAdmSheet">
         <template #default="{ row }">
@@ -184,7 +236,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete, Plus, Refresh, Upload } from '@element-plus/icons-vue'
+import { Delete, Plus, Upload } from '@element-plus/icons-vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import TrainingReport from '@/components/onboarding/TrainingReport.vue'
 import { useSkladStore } from '@/stores/sklad'
@@ -200,7 +252,27 @@ const newLink = ref('')
 const newKind = ref('month')
 const newTitle = ref('')
 
-onMounted(() => store.loadSources().catch(() => {}))
+onMounted(() => {
+  store.loadSources().catch(() => {})
+  store.loadSettings().catch(() => {})
+  store.loadSyncLog().catch(() => {})
+})
+
+// ─── Avtomatik sinxron ───
+const AUTO_INTERVALS = [5, 10, 15, 30, 60, 120, 240, 720, 1440]
+const autoSaving = ref(false)
+const logLimit = ref(20)
+async function saveAuto(payload) {
+  autoSaving.value = true
+  try {
+    await store.setAutoSync({ interval_min: store.autoSync?.interval_min ?? 30, ...payload })
+    ElMessage.success(t('skSaved'))
+  } catch (e) {
+    ElMessage.error(apiError(e))
+  } finally {
+    autoSaving.value = false
+  }
+}
 
 // ─── SAP ro'yxati ───
 const sapStage = ref('') // '' | 'skAdmSapReading' | 'skAdmSapSending'
@@ -277,6 +349,25 @@ async function addSource() {
 </script>
 
 <style scoped lang="scss">
+.sk-auto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sk-auto__interval {
+  width: 130px;
+}
+.sk-log-title {
+  margin: 16px 0 8px;
+  font-size: 14px;
+}
+.sk-good {
+  color: var(--ui-good);
+}
+.sk-bad {
+  color: var(--ui-bad);
+}
 .sk-modes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

@@ -27,6 +27,8 @@ export const useSkladStore = defineStore('sklad', {
     periods: [],
     mode: 'mirror',
     lastSyncedAt: null,
+    autoSync: null, // { enabled, interval_min, last_auto_at, next_auto_at }
+    syncLog: [],
     items: [],
     movements: [],
     movementsPeriod: '',
@@ -103,6 +105,25 @@ export const useSkladStore = defineStore('sklad', {
       return res
     },
 
+    async loadSettings() {
+      const res = await runRequest(this, () => skladApi.getSettings(), 'Settings failed')
+      this.mode = res.mode
+      this.autoSync = res.auto_sync || null
+      return res
+    },
+
+    async setAutoSync(payload) {
+      const res = await runRequest(this, () => skladApi.setAutoSync(payload), 'Auto sync failed')
+      this.autoSync = res.auto_sync || null
+      return res
+    },
+
+    async loadSyncLog() {
+      const res = await runRequest(this, () => skladApi.getSyncLog(), 'Sync log failed')
+      this.syncLog = Array.isArray(res) ? res : []
+      return this.syncLog
+    },
+
     async setMode(mode) {
       const res = await runRequest(this, () => skladApi.updateSettings({ mode }), 'Settings failed')
       this.mode = res.mode
@@ -135,7 +156,7 @@ export const useSkladStore = defineStore('sklad', {
         'Sync failed',
       )
       this.movementsPeriod = ''
-      await Promise.all([this.loadReport(), this.loadSources(), this.loadContracts()])
+      await Promise.all([this.loadReport(), this.loadSources(), this.loadContracts(), this.loadSyncLog().catch(() => {})])
       return res
     },
   },

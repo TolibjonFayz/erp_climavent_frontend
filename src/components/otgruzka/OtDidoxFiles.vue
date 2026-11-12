@@ -15,6 +15,9 @@
           <span v-if="b.files.length" class="ot-dx__badge">{{ b.files.length }}</span>
         </span>
         <span class="ot-sec__btns">
+          <el-tooltip v-if="b.kind === 'invoice' && b.files.some(isPdf)" :content="$t('otRecheckHint')" placement="top">
+            <el-button size="small" :icon="Refresh" :loading="rc.busy" @click="recheckAll(false)">{{ $t('otRecheck') }}</el-button>
+          </el-tooltip>
           <span v-if="b.kind === 'invoice' && b.files.length" class="ot-muted">
             {{ $t('otDidoxTotal') }}: <b :class="totalClass">{{ fmtMoney(order.didox_files_sum) }}</b>
             <template v-if="order.contract_sum > 0"> / {{ fmtMoney(order.contract_sum) }}</template>
@@ -24,6 +27,24 @@
           </el-button>
         </span>
       </div>
+
+      <el-alert
+        v-if="b.kind === 'invoice' && rc.results.length"
+        :type="rc.results.some((r) => r.level === 'bad') ? 'warning' : 'success'"
+        show-icon
+        class="ot-dx__rc"
+        :title="$t('otRecheckDone', { n: rc.results.length, changed: rc.results.filter((r) => r.changes.length).length })"
+        @close="rc.results = []"
+      >
+        <ul class="ot-dx__rc-list">
+          <li v-for="r in rc.results" :key="r.id" :class="`is-${r.level}`">
+            <b>{{ r.name }}</b>:
+            <template v-if="r.error">{{ r.error }}</template>
+            <template v-else-if="!r.changes.length">{{ $t('otRecheckSame') }}</template>
+            <template v-else>{{ r.changes.join('; ') }}</template>
+          </li>
+        </ul>
+      </el-alert>
 
       <div
         v-if="!b.files.length"
@@ -52,7 +73,15 @@
         <li v-for="f in b.files" :key="f.id" class="ot-dx__file" :class="{ 'is-poa': f.kind === 'poa' }">
           <span class="ot-dx__icon" :class="`is-${extOf(f)}`">{{ extOf(f).toUpperCase() }}</span>
           <div class="ot-dx__body">
-            <button type="button" class="ot-dx__name" :title="f.file_name" @click="open(f, 'inline')">{{ f.file_name }}</button>
+            <!-- Haqiqiy havola (imzolangan R2 havolasi oldindan olinadi) — brauzer yangi oynani bloklamaydi -->
+            <a
+              class="ot-dx__name"
+              :href="linkOf(f, 'inline')"
+              target="_blank"
+              rel="noopener"
+              :title="f.file_name"
+              @click="onLinkClick($event, f, 'inline')"
+            >{{ f.file_name }}</a>
             <div class="ot-muted">
               <template v-if="f.invoice_number">№ {{ f.invoice_number }}</template>
               <template v-if="f.invoice_date"> · {{ formatDate(f.invoice_date) }}</template>
@@ -69,7 +98,15 @@
             {{ f.amount == null ? $t('otDidoxNoAmount') : fmtMoney(f.amount) }}
           </span>
           <span class="ot-dx__btns">
-            <el-button text size="small" :icon="Download" :aria-label="$t('otDidoxDownload')" @click="open(f, 'download')" />
+            <el-button
+              text
+              size="small"
+              tag="a"
+              :href="linkOf(f, 'download')"
+              :icon="Download"
+              :aria-label="$t('otDidoxDownload')"
+              @click="onLinkClick($event, f, 'download')"
+            />
             <el-button text size="small" :icon="EditPen" :aria-label="$t('otEdit')" @click="startEdit(f)" />
             <el-popconfirm v-if="canDelete(f)" :title="$t('otConfirmDelete')" @confirm="remove(f)">
               <template #reference><el-button text size="small" type="danger" :icon="Delete" :aria-label="$t('otDelete')" /></template>
@@ -195,17 +232,17 @@
 
 <script setup>
 import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
-import { computed, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { Close, Delete, Download, EditPen, Plus, Upload, UploadFilled } from '@element-plus/icons-vue'
+import { Close, Delete, Download, EditPen, Plus, Refresh, Upload, UploadFilled } from '@element-plus/icons-vue'
 import UiHint from '@/components/ui/UiHint.vue'
 import api from '@/api/otgruzka'
 import { useUsersStore } from '@/stores/user'
 import { formatDate } from '@/utils/format'
 import { fmtMoney, fmtSize, otError } from '@/utils/otgruzkaFormat'
 import { fmtQty } from '@/utils/skladFormat'
-import { checkContract, checkInvoice, checkPoa, readDidoxPdf } from '@/utils/didoxPdfImport'
+import { checkContract, checkInvoice, checkPoa, readDidoxPdf, readDidoxPdfData } from '@/utils/didoxPdfImport'
 
 const props = defineProps({
   order: { type: Object, required: true },
@@ -493,6 +530,112 @@ async function uploadAll() {
   }
 }
 
+// ─── Yuklangan schyot-fakturalarni qayta o'qish ───
+// Eski fayllar faqat 1-sahifadan o'qilgan bo'lishi mumkin (summa / tovarlar xato) — PDF butunlay
+// qayta o'qiladi va summa, raqam, sana, tovarlar yangilanadi. Tovarlari saqlanmagan fayllar karta
+// ochilganda o'zi tekshiriladi; "Qayta tekshirish" tugmasi — hammasini.
+const rc = reactive({ busy: false, results: [] })
+const isPdf = (f) => /\.pdf$/i.test(f.file_name || '') || f.mime_type === 'application/pdf'
+const sameNum = (a, b) => Math.abs((Number(a) || 0) - (Number(b) || 0)) <= 1
+async function recheckFile(f) {
+  const res = { id: f.id, name: f.invoice_number ? `№ ${f.invoice_number}` : f.file_name, changes: [], level: 'ok', error: '' }
+  try {
+    const p = await readDidoxPdfData(await api.didoxFile(f.id))
+    if (p.kind !== 'invoice') {
+      res.error = t('otDidoxReadUnknown')
+      res.level = 'warn'
+      return { res }
+    }
+    const patch = {}
+    if (p.total != null && !sameNum(p.total, f.amount)) {
+      patch.amount = p.total
+      res.changes.push(t('otRecheckAmount', { from: f.amount == null ? '—' : fmtMoney(f.amount), to: fmtMoney(p.total) }))
+      res.level = 'bad'
+    }
+    if (p.number && String(p.number).trim() !== String(f.invoice_number || '').trim()) {
+      patch.invoice_number = p.number
+      res.changes.push(t('otRecheckNumber', { from: f.invoice_number || '—', to: p.number }))
+    }
+    if (p.date && p.date !== f.invoice_date) {
+      patch.invoice_date = p.date
+      res.changes.push(t('otRecheckDate', { from: f.invoice_date ? formatDate(f.invoice_date) : '—', to: formatDate(p.date) }))
+    }
+    if (p.doc_id && !f.doc_id) patch.doc_id = p.doc_id
+    const items = (p.items || []).map((i) => ({ name: i.name, qty: i.qty, unit: i.unit, total: i.total }))
+    if (items.length && JSON.stringify(items) !== JSON.stringify(f.items || null)) {
+      patch.items = items
+      if (!f.items) res.changes.push(t('otRecheckItems', { n: items.length }))
+    }
+    if (!Object.keys(patch).length) return { res }
+    const detail = await api.updateDidox(f.id, patch)
+    return { res, detail }
+  } catch (e) {
+    res.error = otError(e)
+    res.level = 'bad'
+    return { res }
+  }
+}
+async function recheckAll(onlyMissing) {
+  if (rc.busy) return
+  const list = (props.order.didox_files || []).filter(
+    (f) => (f.kind || 'invoice') === 'invoice' && isPdf(f) && (!onlyMissing || !Array.isArray(f.items)),
+  )
+  if (!list.length) return
+  rc.busy = true
+  const results = []
+  let last = null
+  for (const f of list) {
+    const { res, detail } = await recheckFile(f)
+    results.push(res)
+    if (detail) last = detail
+  }
+  rc.busy = false
+  if (last) emit('changed', last)
+  // Avtomatik tekshiruvda faqat o'zgarish yoki xato bo'lsa ko'rsatamiz
+  rc.results = onlyMissing ? results.filter((r) => r.changes.length || r.error) : results
+}
+// Karta ochilganda: tovarlari saqlanmagan (eski) fakturalar — bir marta (shu brauzer sessiyasida)
+const autoTried = new Set()
+watch(
+  () => props.order.id,
+  () => {
+    const todo = (props.order.didox_files || []).filter(
+      (f) => (f.kind || 'invoice') === 'invoice' && isPdf(f) && !Array.isArray(f.items) && !autoTried.has(f.id),
+    )
+    if (!todo.length) return
+    todo.forEach((f) => autoTried.add(f.id))
+    recheckAll(true)
+  },
+  { immediate: true },
+)
+
+// ─── Fayl havolalari: oldindan olinadi va 20 daqiqada yangilanadi (server havolasi 30 daqiqa amal qiladi)
+const links = reactive({})
+const linkOf = (f, mode) => links[`${f.id}:${mode}`] || undefined
+async function ensureLinks() {
+  const all = props.order.didox_files || []
+  await Promise.all(
+    all.flatMap((f) =>
+      ['inline', 'download'].map(async (mode) => {
+        try {
+          const { url } = await api.didoxLink(f.id, mode)
+          links[`${f.id}:${mode}`] = url
+        } catch {
+          // havola olinmasa — bosilganda eski usulda ochiladi
+        }
+      }),
+    ),
+  )
+}
+watch(() => (props.order.didox_files || []).map((f) => f.id).join(','), ensureLinks, { immediate: true })
+const linkTimer = setInterval(ensureLinks, 20 * 60 * 1000)
+onBeforeUnmount(() => clearInterval(linkTimer))
+function onLinkClick(e, f, mode) {
+  if (linkOf(f, mode)) return // brauzerning o'zi ochadi
+  e.preventDefault()
+  open(f, mode)
+}
+
 async function open(f, mode) {
   // Havola so'ralguncha yangi oyna ochib qo'yamiz — aks holda brauzer popup'ni bloklaydi
   const win = mode === 'inline' ? window.open('', '_blank') : null
@@ -696,8 +839,20 @@ async function remove(f) {
 .ot-dx__body {
   min-width: 0;
 }
+.ot-dx__rc {
+  margin-bottom: 8px;
+}
+.ot-dx__rc-list {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 12px;
+  .is-bad {
+    color: var(--ui-bad);
+  }
+}
 .ot-dx__name {
   display: block;
+  text-decoration: none;
   max-width: 100%;
   padding: 0;
   border: 0;

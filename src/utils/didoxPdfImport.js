@@ -69,17 +69,23 @@ const parseParty = (items, labelRe) => {
 
 // Mahsulotlar jadvali: har qator chap chetdagi tartib raqamidan boshlanadi;
 // raqamli ustunlar tartibi: miqdor, narx, yetkazish qiymati, QQS stavkasi, QQS summasi, QQS bilan jami.
+// Katta fakturalar o'nlab sahifa bo'ladi: keyingi sahifalarda sarlavha bo'lmasligi mumkin —
+// ustun o'rinlari birinchi sarlavhadan eslab qolinadi va "Итого"gacha barcha sahifalar o'qiladi.
 const parseInvoiceTable = (pages) => {
   const rows = []
   let total = null
+  let cols = null // { qtyX, nameHeadX, nameX }
   for (const page of pages) {
     const items = page.items
     const qtyHead = items.find((i) => clean(i.str) === 'Количество')
-    if (!qtyHead) continue
-    const nameHead = items.find((i) => /^Наименование/.test(clean(i.str)) && Math.abs(i.y - qtyHead.y) < 12)
-    // Ustun raqamlari qatori (1 2 3 …) sarlavha ostida — jadval undan pastda boshlanadi
-    const colNums = items.filter((i) => /^\d{1,2}$/.test(clean(i.str)) && i.y < qtyHead.y && qtyHead.y - i.y < 30)
-    const tableTop = colNums.length >= 5 ? Math.min(...colNums.map((i) => i.y)) - 2 : qtyHead.y - 12
+    let tableTop = Infinity
+    if (qtyHead) {
+      const nameHead = items.find((i) => /^Наименование/.test(clean(i.str)) && Math.abs(i.y - qtyHead.y) < 12)
+      // Ustun raqamlari qatori (1 2 3 …) sarlavha ostida — jadval undan pastda boshlanadi
+      const colNums = items.filter((i) => /^\d{1,2}$/.test(clean(i.str)) && i.y < qtyHead.y && qtyHead.y - i.y < 30)
+      tableTop = colNums.length >= 5 ? Math.min(...colNums.map((i) => i.y)) - 2 : qtyHead.y - 12
+      cols = { qtyX: qtyHead.x, nameHeadX: nameHead?.x ?? 40, nameX: cols?.nameX ?? null }
+    } else if (!cols) continue // jadval hali boshlanmagan (masalan muqova sahifa)
     const totalItem = items.find((i) => /^Итого$/.test(clean(i.str)) && i.y < tableTop)
     const bottom = totalItem ? totalItem.y + 2 : -Infinity
     const inTable = items.filter((i) => i.y < tableTop && i.y > bottom)
@@ -89,9 +95,9 @@ const parseInvoiceTable = (pages) => {
     const anchors = []
     for (const l of lines) {
       const first = l.items[0]
-      if (!(first.x < (nameHead?.x ?? 40) - 3 && /^\d{1,3}$/.test(clean(first.str)))) continue
+      if (!(first.x < cols.nameHeadX - 3 && /^\d{1,4}$/.test(clean(first.str)))) continue
       const numsText = l.items
-        .filter((i) => i.x >= qtyHead.x - 15)
+        .filter((i) => i.x >= cols.qtyX - 15)
         .map((i) => i.str)
         .join(' ')
       const tokens = numsText.match(AMOUNT_RE) || []
@@ -100,7 +106,7 @@ const parseInvoiceTable = (pages) => {
       const rate = tokens.find((t) => t.endsWith('%'))
       const unit = clean(
         l.items
-          .filter((i) => i.x < qtyHead.x - 15 && i.x > (nameHead?.x ?? 0) + 60 && !/^\d{10,}/.test(i.str) && !/^\d+$/.test(clean(i.str)))
+          .filter((i) => i.x < cols.qtyX - 15 && i.x > cols.nameHeadX + 60 && !/^\d{10,}/.test(i.str) && !/^\d+$/.test(clean(i.str)))
           .map((i) => i.str)
           .slice(-1)
           .join(''),
@@ -119,12 +125,15 @@ const parseInvoiceTable = (pages) => {
       })
     }
 
-    // Nom ustuni: chapga tekislangan, x — eng ko'p uchraydigan qiymat
-    if (nameHead) {
+    // Nom ustuni: chapga tekislangan, x — eng ko'p uchraydigan qiymat (birinchi sahifadan eslab qolinadi)
+    if (cols.nameX == null) {
       const xs = {}
-      for (const i of inTable) if (i.x > nameHead.x - 10 && i.x < nameHead.x + 30) xs[Math.round(i.x)] = (xs[Math.round(i.x)] || 0) + 1
-      const nameX = Number(Object.entries(xs).sort((a, b) => b[1] - a[1])[0]?.[0])
-      const nameItems = inTable.filter((i) => Math.abs(i.x - nameX) < 2).sort((a, b) => b.y - a.y)
+      for (const i of inTable) if (i.x > cols.nameHeadX - 10 && i.x < cols.nameHeadX + 30) xs[Math.round(i.x)] = (xs[Math.round(i.x)] || 0) + 1
+      const best = Object.entries(xs).sort((p, q) => q[1] - p[1])[0]
+      if (best) cols.nameX = Number(best[0])
+    }
+    if (cols.nameX != null) {
+      const nameItems = inTable.filter((i) => Math.abs(i.x - cols.nameX) < 2).sort((p, q) => q.y - p.y)
       // Bo'shliq bo'yicha bloklarga ajratamiz
       const blocks = []
       for (const it of nameItems) {
@@ -134,10 +143,11 @@ const parseInvoiceTable = (pages) => {
           last.minY = it.y
         } else blocks.push({ maxY: it.y, minY: it.y, parts: [it.str] })
       }
-      for (const b of blocks) {
-        const own = anchors.find((a) => a.y <= b.maxY + 4 && a.y >= b.minY - 4)
-        if (own) own.nameParts.push(...b.parts)
-        else if (rows.length && !anchors.some((a) => a.y > b.maxY)) rows[rows.length - 1].nameParts.push(...b.parts)
+      for (const blk of blocks) {
+        const own = anchors.find((x) => x.y <= blk.maxY + 4 && x.y >= blk.minY - 4)
+        if (own) own.nameParts.push(...blk.parts)
+        // Oldingi sahifadan davom etayotgan nom — oldingi qatorga
+        else if (rows.length && !anchors.some((x) => x.y > blk.maxY)) rows[rows.length - 1].nameParts.push(...blk.parts)
       }
     }
     rows.push(...anchors)
@@ -146,6 +156,7 @@ const parseInvoiceTable = (pages) => {
       const tokens = (toLines(items.filter((i) => Math.abs(i.y - totalItem.y) <= SAME_LINE))[0]?.text || '').match(AMOUNT_RE) || []
       const values = tokens.filter((t) => !t.endsWith('%')).map(num)
       if (values.length) total = values[values.length - 1]
+      break // jadval tugadi — qolgan sahifalar (imzolar) o'qilmaydi
     }
   }
   return {
@@ -278,10 +289,12 @@ export const parseDidoxPages = (rawPages) => {
   return { kind: 'unknown', doc_id: docIdOf(text) }
 }
 
-export const readDidoxPdf = async (file) => {
+export const readDidoxPdf = async (file) => readDidoxPdfData(new Uint8Array(await file.arrayBuffer()))
+
+// Serverdagi (avval yuklangan) faylni qayta o'qish uchun — baytlar bilan
+export const readDidoxPdfData = async (data) => {
   const pdfjs = await loadPdfjs()
-  const data = new Uint8Array(await file.arrayBuffer())
-  const pages = await extractPdfPages(pdfjs, data)
+  const pages = await extractPdfPages(pdfjs, data instanceof Uint8Array ? data : new Uint8Array(data))
   if (!pages.some((p) => p.items.length)) throw new Error('NO_TEXT')
   return parseDidoxPages(pages)
 }
@@ -510,12 +523,23 @@ export function invoicedProgress(order) {
       else invoiced[best] += qty
     }
   }
+  // Qo'lda kiritilgan otgruzka soni (item.shipped) — fakturadagidan ustun
+  const shipped = card.map((c, k) => (c?.shipped != null ? Number(c.shipped) || 0 : invoiced[k]))
   const totalQty = card.reduce((s, c) => s + (Number(c?.qty) || 0), 0)
-  const done = card.reduce((s, c, k) => s + Math.min(invoiced[k], Number(c?.qty) || 0), 0)
+  const done = card.reduce((s, c, k) => s + Math.min(shipped[k], Number(c?.qty) || 0), 0)
   return {
-    hasData: withItems.length > 0,
+    hasData: withItems.length > 0 || card.some((c) => c?.shipped != null),
     missing: files.length - withItems.length,
-    rows: card.map((c, k) => ({ invoiced: invoiced[k], left: Math.max(0, (Number(c?.qty) || 0) - invoiced[k]) })),
+    rows: card.map((c, k) => {
+      const qty = Number(c?.qty) || 0
+      return {
+        invoiced: shipped[k], // ko'rsatiladigan son (qo'lda yoki fakturadan)
+        auto: invoiced[k], // fakturalardan hisoblangan
+        manual: c?.shipped != null,
+        left: Math.max(0, qty - shipped[k]),
+        pct: qty > 0 ? Math.min(1, shipped[k] / qty) : null,
+      }
+    }),
     totalQty,
     done,
     left: Math.max(0, totalQty - done),

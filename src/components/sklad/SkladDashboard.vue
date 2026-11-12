@@ -12,6 +12,11 @@
           <el-icon class="sk-mode__info"><InfoFilled /></el-icon>
         </span>
       </el-tooltip>
+      <span v-if="store.mode === 'mirror' && store.autoSync" class="sk-sub">
+        <el-tag size="small" :type="store.autoSync.enabled ? 'success' : 'info'" effect="plain">
+          {{ store.autoSync.enabled ? $t('skAutoOnShort', { min: store.autoSync.interval_min }) : $t('skAutoOffShort') }}
+        </el-tag>
+      </span>
       <span v-if="store.mode === 'mirror' && store.lastSyncedAt" class="sk-sub">
         {{ $t('skLastSync') }}: {{ formatDateTime(store.lastSyncedAt) }}
       </span>
@@ -33,6 +38,10 @@
           {{ training.passed ? $t('trPassedChip') : $t('trTestBtn') }}
         </el-button>
       </span>
+      <!-- Qo'lda sinxron — tepada (admin, Google Sheets rejimida) -->
+      <el-button v-if="isAdmin && store.mode === 'mirror'" :icon="Refresh" :loading="syncingTop" @click="syncTop">
+        {{ $t('skSyncNow') }}
+      </el-button>
       <span class="sk-main-actions">
         <el-select
           v-model="period"
@@ -194,8 +203,9 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Bell, Calendar, CircleCheck, EditPen, InfoFilled, Plus, Van, WarningFilled } from '@element-plus/icons-vue'
+import { Bell, Calendar, CircleCheck, EditPen, InfoFilled, Plus, Van, WarningFilled, Refresh } from '@element-plus/icons-vue'
 import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import otgruzkaApi from '@/api/otgruzka'
 import SkladChecks from './SkladChecks.vue'
 import UiPage from '@/components/ui/UiPage.vue'
@@ -223,6 +233,23 @@ const { t } = useI18n()
 const store = useSkladStore()
 const usersStore = useUsersStore()
 const isAdmin = computed(() => !!usersStore.currentUser?.is_admin)
+
+// Qo'lda sinxron (tepadagi tugma) va avtomatik sinxron holati
+const syncingTop = ref(false)
+async function syncTop() {
+  syncingTop.value = true
+  try {
+    const res = await store.sync()
+    const failed = res.results.filter((r) => !r.ok)
+    if (failed.length) ElMessage.warning(t('skAdmSyncPartial', { n: failed.length }))
+    else ElMessage.success(t('skAdmSyncDone'))
+  } catch (e) {
+    ElMessage.error(apiError(e))
+  } finally {
+    syncingTop.value = false
+  }
+}
+onMounted(() => store.loadSettings().catch(() => {}))
 
 const period = ref('')
 const loading = ref(false)

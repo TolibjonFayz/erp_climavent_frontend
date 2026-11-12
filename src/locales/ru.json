@@ -1277,6 +1277,8 @@
   "dogovorPrint": "Документ",
   "dogovorDeleteConfirm": "Удалить этот договор?",
   "dogovorBackToList": "Назад к списку",
+  "dogovorDidoxAttached": "PDF договора из Didox прикреплён к карточке отгрузки — отмечено «Договор: есть»",
+  "dogovorDidoxAttachFail": "Договор сохранён, но PDF из Didox не удалось прикрепить к карточке отгрузки — загрузите вручную в карточке",
   "dogovorView": "Договор (просмотр)",
   "dogovorLockedHint": "Прошло больше 2 дней — изменить может только админ",
   "dogovorValidationDate": "Выберите дату договора",
