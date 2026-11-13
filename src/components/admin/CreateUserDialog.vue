@@ -52,6 +52,11 @@
           </el-form-item>
         </el-col>
         <el-col :span="24">
+          <el-form-item :label="$t('admPosition')" prop="position">
+            <el-input v-model="form.position" maxlength="120" :placeholder="$t('admPositionPh')" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="24">
           <el-checkbox v-model="form.is_admin">{{ $t('cuMakeAdmin') }}</el-checkbox>
         </el-col>
       </el-row>
@@ -92,6 +97,7 @@ const emptyForm = () => ({
   password: '',
   phone_number: '',
   email: '',
+  position: '',
   is_admin: false,
 })
 const form = reactive(emptyForm())

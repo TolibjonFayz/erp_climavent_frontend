@@ -744,6 +744,7 @@ import { printDogovorDocument } from '@/utils/dogovorPdf'
 import { readDogovorPdf } from '@/utils/dogovorPdfImport'
 import { readDidoxPdf } from '@/utils/didoxPdfImport'
 import otgruzkaApi from '@/api/otgruzka'
+import { useNotifications } from '@/composables/useNotifications'
 import ManagerSelect from '@/components/ui/ManagerSelect.vue'
 
 const { t } = useI18n()
@@ -1264,10 +1265,14 @@ async function attachDidoxPdf(dogovorId) {
   }
 }
 
+const { refresh: refreshNotifications } = useNotifications()
+
 const handleDelete = async (id) => {
   try {
     await dogovorStore.deleteDogovor(id)
     ElMessage.success(t('dogovorMessageDeleted'))
+    // Ombor so'rovi serverda bekor qilinadi — qo'ng'iroqcha va ombor ro'yxati darhol yangilansin
+    refreshNotifications()
     await load()
   } catch (error) {
     ElMessage.error(errorText(error, t('dogovorMessageDeleteError')))

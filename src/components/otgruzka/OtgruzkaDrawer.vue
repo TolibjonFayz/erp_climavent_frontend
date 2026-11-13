@@ -119,9 +119,14 @@
           </div>
           <div v-if="!o.payments.length" class="ot-muted">{{ $t('otNoPayments') }}</div>
           <div v-for="p in o.payments" :key="p.id" class="ot-pay">
-            <span class="ot-pay__date">{{ formatDate(p.pay_date) }}</span>
+            <span class="ot-pay__date" :title="$t('otPayArrived')">{{ formatDate(p.pay_date) }}</span>
             <span class="ot-pay__amount" :class="{ 'is-neg': p.amount < 0 }">{{ p.amount > 0 ? '+' : '' }}{{ fmtMoney(p.amount) }}</span>
             <span class="ot-pay__comment">{{ payComment(p) }}</span>
+            <!-- Kim va qachon kiritgan: kiritilgan vaqt (soniyagacha) + username / FIO / lavozim -->
+            <span class="ot-pay__meta">
+              <span class="ot-pay__entered">{{ $t('otPayEntered') }}: {{ formatDateTime(p.createdAt) }}</span>
+              <span class="ot-pay__who">{{ payAuthor(p) }}</span>
+            </span>
             <span class="ot-pay__btns">
               <el-button text size="small" :icon="EditPen" :aria-label="$t('otPayEdit')" @click="editPayment(p)" />
               <el-popconfirm v-if="canEdit && p.source === 'erp'" :title="$t('otConfirmDelete')" @confirm="removePayment(p)">
@@ -163,6 +168,13 @@
           <div v-if="o.items_from_dogovor" class="ot-muted">{{ $t('otItemsFromDogovor') }}</div>
           <div v-if="!o.items.length" class="ot-muted">{{ $t('otNoItems') }}</div>
           <div v-if="o.items.length && inv.missing" class="ot-muted">{{ $t('otInvoicedMissing', { n: inv.missing }) }}</div>
+          <!-- Faktura bo'yicha soni shartnomadagidan ko'p mahsulotlar -->
+          <div v-if="overRows.length" class="ot-over">
+            <b>{{ $t('otOverTitle') }}:</b>
+            <div v-for="r in overRows" :key="r.i" class="ot-over__row">
+              {{ $t('otOverItem', { name: r.name, shipped: fmtQty(r.shipped), qty: fmtQty(r.qty), over: fmtQty(r.over) }) }}
+            </div>
+          </div>
           <div v-if="o.items.length && inv.unmatched.length" class="ot-warn-text">
             {{ $t('otInvoicedUnmatched', { names: inv.unmatched.map((u) => `${u.name} (${fmtQty(u.qty)})`).join('; ') }) }}
           </div>
@@ -181,7 +193,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(it, i) in o.items" :key="i">
+              <tr v-for="(it, i) in o.items" :key="i" :class="{ 'is-over': overIdx.has(i) }">
                 <td class="is-r ot-muted ot-items__no">{{ i + 1 }}.</td>
                 <td>{{ it.name }}</td>
                 <td class="is-r nowrap">{{ fmtQty(it.qty) }} {{ it.unit || '' }}</td>
@@ -285,6 +297,7 @@
               </div>
               <div v-if="n.kind === 'change'" class="ot-tl__text">
                 <template v-if="n.data?.field === 'from_dogovor'">{{ $t('otFromDogovor') }}</template>
+                <template v-else-if="n.data?.field === 'dogovor_removed'">{{ $t('otDogovorRemoved') }}</template>
                 <template v-else-if="n.data?.field === 'didox_file'">
                   {{ $t(`ot${{ poa: 'Poa', contract: 'Contract' }[n.data.file_kind] || 'Didox'}${n.data.action === 'remove' ? 'Removed' : 'Added'}`, { name: n.data.file_name }) }}
                   <template v-if="n.data.amount != null"> · {{ fmtMoney(n.data.amount) }}</template>
@@ -374,7 +387,7 @@
 
 <script setup>
 import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, h, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElDialog, ElMessage, ElMessageBox } from 'element-plus'
 import { Bell, CircleCheck, Close, Delete, Edit, EditPen, Plus, WarningFilled } from '@element-plus/icons-vue'
@@ -559,6 +572,17 @@ const invoiceNumbers = computed(() => {
 
 // Schyot-fakturalar bo'yicha tayyorlik (fakturadagi tovarlar soni / kartadagi jami soni)
 const inv = computed(() => invoicedProgress(o.value))
+// Otgruzka (faktura yoki qo'lda) soni shartnomadagidan ko'p bo'lgan mahsulotlar
+const overRows = computed(() =>
+  (o.value?.items || [])
+    .map((it, i) => {
+      const qty = Number(it.qty) || 0
+      const shipped = inv.value.rows[i]?.invoiced || 0
+      return { i, name: it.name, qty, shipped, over: shipped - qty }
+    })
+    .filter((r) => r.name && r.over > 1e-6),
+)
+const overIdx = computed(() => new Set(overRows.value.map((r) => r.i)))
 
 // Jami soni: barcha qatorlar yig'indisi; birligi bitta bo'lsa — o'sha (masalan "шт")
 const itemsQty = computed(() => (o.value?.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0))
@@ -593,7 +617,11 @@ async function editShipped(i) {
   let value
   try {
     ;({ value } = await ElMessageBox.prompt(
-      t('otShippedPrompt', { name: it.name, qty: fmtQty(it.qty), auto: fmtQty(row.auto) }),
+      // Tovar nomi oddiy, "shartnomada / fakturada / kiriting" qismi — katta, qalin, kursiv
+      h('div', [
+        h('div', { style: 'margin-bottom: 8px' }, it.name),
+        h('div', { style: 'font-size: 17px; font-weight: 700; font-style: italic; line-height: 1.4' }, t('otShippedPromptTail', { qty: fmtQty(it.qty), auto: fmtQty(row.auto) })),
+      ]),
       t('otItemShipped'),
       {
         inputValue: row.manual ? String(row.invoiced) : '',
@@ -618,6 +646,14 @@ async function editShipped(i) {
 
 const nextDirty = computed(() => o.value && ((next.text || '') !== (o.value.next_action || '') || (next.date || null) !== (o.value.next_action_date || null)))
 const saveNext = () => run('next', () => api.update(o.value.id, { next_action: next.text.trim() || null, next_action_date: next.date || null }))
+
+// To'lovni kiritgan xodim: username / FIO / lavozim (jadvaldan kelgan bo'lsa — manba)
+function payAuthor(p) {
+  const u = p.creator
+  if (!u) return p.source === 'sheet' ? t('otPayBySheet') : '—'
+  const fio = [u.firstname, u.lastname].filter(Boolean).join(' ')
+  return [u.username, fio, u.position].filter(Boolean).join(' / ')
+}
 
 async function addPayment() {
   const ok = await run('pay', () => api.addPayment(o.value.id, { amount: pay.amount, pay_date: pay.date, comment: pay.comment || undefined }))
@@ -905,7 +941,7 @@ const author = (n) => {
 }
 .ot-pay {
   display: grid;
-  grid-template-columns: 90px 130px 1fr auto;
+  grid-template-columns: 90px 130px 1fr auto auto;
   align-items: center;
   gap: 8px;
   padding: 6px 0;
@@ -924,11 +960,38 @@ const author = (n) => {
   font-size: 13px;
   color: var(--ui-muted);
 }
+.ot-pay__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ui-muted);
+  text-align: right;
+}
+.ot-pay__who {
+  color: var(--ui-text, inherit);
+  font-weight: 600;
+}
 .ot-pay__btns {
   display: inline-flex;
   .el-button + .el-button {
     margin-left: 0;
   }
+}
+.ot-over {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--ui-bad-soft);
+  color: var(--ui-bad);
+  font-size: 13px;
+}
+.ot-over__row {
+  font-weight: 600;
+}
+.ot-items tr.is-over td {
+  background: var(--ui-bad-soft);
 }
 .ot-pay-add {
   display: flex;

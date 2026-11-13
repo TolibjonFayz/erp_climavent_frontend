@@ -21,7 +21,15 @@
             <div v-if="row.order" class="ot-muted">{{ row.order.client_name }}</div>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('otLineName')" prop="item_name" min-width="280" sortable />
+        <el-table-column :label="$t('otLineName')" prop="item_name" min-width="280" sortable>
+          <template #default="{ row }">
+            <div>{{ row.item_name }}</div>
+            <!-- Faktura bo'yicha soni shartnomadagidan ko'p -->
+            <span v-if="row.over" class="ot-tag is-bad" :title="$t('otOverTitle')">
+              {{ $t('otOverLine', { shipped: fmtQty(row.over.shipped), qty: fmtQty(row.over.qty), over: fmtQty(row.over.over) }) }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('otLineQty')" prop="qty_contract" align="right" min-width="100" />
         <el-table-column :label="$t('otLineIn')" prop="qty_in" align="right" min-width="90" />
         <el-table-column :label="$t('otLineOut')" prop="qty_out" align="right" min-width="100" />
@@ -42,6 +50,7 @@ import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import api from '@/api/otgruzka'
 import { otError } from '@/utils/otgruzkaFormat'
+import { fmtQty } from '@/utils/skladFormat'
 
 defineEmits(['open'])
 const rows = ref([])

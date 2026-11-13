@@ -47,6 +47,7 @@
               <div>
                 <div class="user-cell__name">{{ row.firstname }} {{ row.lastname }}</div>
                 <div class="user-cell__un">{{ '@' + row.username }}</div>
+                <div v-if="row.position" class="user-cell__un">{{ row.position }}</div>
               </div>
             </div>
           </template>
@@ -193,6 +194,10 @@
             <span class="udf-val">{{ selectedUser.phone_number || '—' }}</span>
           </div>
           <div class="udf-row">
+            <span class="udf-lbl"><el-icon><UserFilled /></el-icon> {{ $t('admPosition') }}</span>
+            <span class="udf-val">{{ selectedUser.position || '—' }}</span>
+          </div>
+          <div class="udf-row">
             <span class="udf-lbl"><el-icon><Message /></el-icon> Email</span>
             <span class="udf-val">{{ selectedUser.email || '—' }}</span>
           </div>
@@ -296,6 +301,11 @@
               <el-input v-model="editForm.email" />
             </el-form-item>
           </el-col>
+          <el-col :span="24">
+            <el-form-item :label="$t('admPosition')" prop="position">
+              <el-input v-model="editForm.position" maxlength="120" :placeholder="$t('admPositionPh')" />
+            </el-form-item>
+          </el-col>
         </el-row>
       </el-form>
       <template #footer>
@@ -380,7 +390,7 @@ const filteredUsers = computed(() => {
   return usersStore.allUsers.filter((u) => {
     const matchSearch =
       !s ||
-      ['firstname', 'lastname', 'username', 'phone_number'].some((k) =>
+      ['firstname', 'lastname', 'username', 'phone_number', 'position'].some((k) =>
         (u[k] ?? '').toLowerCase().includes(s),
       )
     const matchRole = !roleFilter.value || (roleFilter.value === 'admin' ? u.is_admin : !u.is_admin)
@@ -520,7 +530,7 @@ const editVisible = ref(false)
 const editLoading = ref(false)
 const editFormRef = ref(null)
 const editTarget = ref(null)
-const editForm = reactive({ firstname: '', lastname: '', username: '', phone_number: '', email: '' })
+const editForm = reactive({ firstname: '', lastname: '', username: '', phone_number: '', email: '', position: '' })
 // Email tekshirilmaydi: bazada eski "." kabi qiymatlar bor — ular ismni tahrirlashni to'smasin
 const editRules = {
   firstname: [required('admValFirstname')],
@@ -536,6 +546,7 @@ function openEditUser(user) {
     username: user.username || '',
     phone_number: user.phone_number || '',
     email: user.email || '',
+    position: user.position || '',
   })
   editVisible.value = true
 }

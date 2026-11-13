@@ -14,12 +14,12 @@ export function formatDate(value) {
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
 }
 
-/** → "28.02.2026 14:05" */
+/** → "28.02.2026 14:05:09" */
 export function formatDateTime(value) {
   if (!value) return '—'
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return '—'
-  return `${formatDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return `${formatDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
 /** Ikki sana orasidagi vaqt: "2 soat 15 daq" (t — i18n funksiyasi) */

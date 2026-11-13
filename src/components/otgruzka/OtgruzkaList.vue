@@ -93,6 +93,16 @@
         <el-table-column :label="$t('otColShipped')" prop="shipped_pct" sortable="custom" min-width="84">
           <template #default="{ row }">
             <OtBar :value="row.shipped_pct" :tone="row.shipped_pct >= 1 ? 'good' : 'link'" />
+            <!-- Faktura bo'yicha soni shartnomadagidan ko'p tovarlar -->
+            <el-tooltip v-if="row.over_items?.length" placement="left">
+              <template #content>
+                <div><b>{{ $t('otOverTitle') }}</b></div>
+                <div v-for="(x, i) in row.over_items" :key="i">
+                  {{ $t('otOverItem', { name: x.name, shipped: fmtQty(x.shipped), qty: fmtQty(x.qty), over: fmtQty(x.over) }) }}
+                </div>
+              </template>
+              <span class="ot-tag is-bad ot-over-tag">{{ $t('otOverTag', { n: row.over_items.length }) }}</span>
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column :label="$t('otColDidox')" min-width="66" align="center">
@@ -145,6 +155,7 @@ import UiField from '@/components/ui/UiField.vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import { formatDate } from '@/utils/format'
 import { DIDOX_FILTERS, fmtMoney, fmtShort, matchDidox, PAY_TONE, PAYS, SERIES, STAGE_TONE, STAGES } from '@/utils/otgruzkaFormat'
+import { fmtQty } from '@/utils/skladFormat'
 import OtBar from './OtBar.vue'
 
 const props = defineProps({
@@ -370,6 +381,10 @@ const rowClass = ({ row }) => (row.final_status ? 'is-final' : '')
 }
 .ot-sentinel {
   height: 1px;
+}
+.ot-over-tag {
+  margin-top: 2px;
+  cursor: help;
 }
 </style>
 
