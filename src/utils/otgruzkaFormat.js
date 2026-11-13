@@ -1,6 +1,6 @@
 // Otgruzka bo'limi uchun formatlash va xato matnlari
 import i18n from '@/i18n'
-import { fmtNum } from '@/utils/format'
+import { fmtNum, formatDate } from '@/utils/format'
 
 const t = (...a) => i18n.global.t(...a)
 const te = (k) => i18n.global.te(k)
@@ -49,7 +49,7 @@ export const STAGES = ['waiting', 'ready', 'partial', 'shipped', 'done', 'refuse
 export const FINAL_STAGES = ['refused', 'returned', 'stopped', 'stock']
 export const PAYS = ['unpaid', 'partial', 'paid', 'none']
 export const SERIES = ['cv_official', 'cv_unofficial', 'jv_official', 'jv_unofficial', 'other']
-export const ALERTS = ['shipped_unpaid', 'ready_waiting', 'paid_not_shipped', 'didox_missing', 'overdue', 'zero_sum']
+export const ALERTS = ['shipped_unpaid', 'ready_waiting', 'paid_not_shipped', 'didox_missing', 'invoice_over', 'overdue', 'zero_sum']
 
 /** Tarixdagi `change` yozuvi qiymatini o'qiladigan qilish */
 export function changeValue(field, v) {
@@ -86,3 +86,13 @@ export function fmtSize(n) {
   if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`
   return `${(b / 1024 / 1024).toFixed(1)} MB`
 }
+
+// "Schyot-faktura № 12, 01.11.2026" / "Счёт-фактура № 12 от 01.11.2026" (sana bo'lmasa — faqat raqam)
+export const invoiceRef = (f) =>
+  f?.invoice_date
+    ? t('otOverInvoiceRef', { n: f.invoice_number || '—', date: formatDate(f.invoice_date) })
+    : t('otOverInvoiceNo', { n: f?.invoice_number || '—' })
+export const contractRef = (c) =>
+  c?.dogovor_date
+    ? t('otOverContractRef', { n: c.dogovor_number || '—', date: formatDate(c.dogovor_date) })
+    : t('otOverContractNo', { n: c?.dogovor_number || '—' })

@@ -90,9 +90,20 @@
             <OtBar :value="row.ready_pct" :tone="row.ready_pct >= 1 ? 'good' : 'link'" />
           </template>
         </el-table-column>
-        <el-table-column :label="$t('otColShipped')" prop="shipped_pct" sortable="custom" min-width="84">
+        <el-table-column :label="$t('otColShipped')" prop="shipped_pct" sortable="custom" min-width="96">
           <template #default="{ row }">
             <OtBar :value="row.shipped_pct" :tone="row.shipped_pct >= 1 ? 'good' : 'link'" />
+            <!-- Schyot-fakturalarda shartnomadagidan ko'p yozilgan tovar bor -->
+            <el-popover v-if="row.over_items?.length" placement="bottom" :width="480" trigger="click">
+              <template #reference>
+                <button type="button" class="ot-over-chip" :title="$t('otAlert_invoice_over')" :aria-label="$t('otAlert_invoice_over')" @click.stop>
+                  <el-icon><WarningFilled /></el-icon> {{ $t('otOverListChip', { n: row.over_items.length }) }}
+                </button>
+              </template>
+              <div class="ot-over-pop" @click.stop>
+                <OtOverDetails v-for="x in row.over_items" :key="x.index" :item="x" compact />
+              </div>
+            </el-popover>
           </template>
         </el-table-column>
         <el-table-column :label="$t('otColDidox')" min-width="66" align="center">
@@ -146,6 +157,7 @@ import UiPanel from '@/components/ui/UiPanel.vue'
 import { formatDate } from '@/utils/format'
 import { DIDOX_FILTERS, fmtMoney, fmtShort, matchDidox, PAY_TONE, PAYS, SERIES, STAGE_TONE, STAGES } from '@/utils/otgruzkaFormat'
 import OtBar from './OtBar.vue'
+import OtOverDetails from './OtOverDetails.vue'
 
 const props = defineProps({
   rows: { type: Array, default: () => [] },
@@ -374,6 +386,35 @@ const rowClass = ({ row }) => (row.final_status ? 'is-final' : '')
 </style>
 
 <style lang="scss">
+/* "+N ortiqcha" — fakturalarda shartnomadan ko'p tovar (ro'yxat va mahsulotlar bo'limi) */
+.ot-over-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 0 8px;
+  border: 1px solid var(--ui-bad-line);
+  border-radius: 99px;
+  background: var(--ui-bad-soft);
+  color: var(--ui-bad);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.7;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ot-over-pop {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 60vh;
+  overflow-y: auto;
+  > * + * {
+    padding-top: 12px;
+    border-top: 1px dashed var(--ui-line-soft);
+  }
+}
 /* Holat belgisi (boshqa otgruzka komponentlari ham ishlatadi) */
 .ot-tag {
   display: inline-block;

@@ -31,6 +31,7 @@
             {{ usersStore?.currentUser?.firstname }} {{ usersStore?.currentUser?.lastname }}
           </h2>
           <p class="st-username">@{{ usersStore?.currentUser?.username || '—' }}</p>
+          <p v-if="usersStore?.currentUser?.position" class="st-position">{{ usersStore.currentUser.position }}</p>
           <el-tag
             :type="usersStore?.currentUser?.is_admin ? 'primary' : 'info'"
             size="small"
@@ -223,6 +224,8 @@ const infoItems = computed(() => {
   return [
     { key: 'firstname', label: t('ism'), value: u?.firstname },
     { key: 'lastname', label: t('familiya'), value: u?.lastname },
+    // Lavozimni admin belgilaydi (bu yerda faqat ko'rinadi)
+    { key: 'position', label: t('admPosition'), value: u?.position || t('admPositionNone') },
     {
       key: 'phone',
       label: t('telefonRaqam'),
@@ -451,6 +454,12 @@ onMounted(async () => {
   margin: 0 0 4px;
   font-size: 13px;
   color: var(--ui-muted);
+}
+.st-position {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ui-ink-2);
 }
 .st-hint {
   margin: 12px 0 4px;

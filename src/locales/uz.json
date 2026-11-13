@@ -1274,6 +1274,7 @@
   "dogovorMessageSaved": "Shartnoma qo'shildi",
   "dogovorMessageUpdated": "Shartnoma yangilandi",
   "dogovorMessageDeleted": "Shartnoma o'chirildi",
+  "dogovorSkladChecksRemoved": "Omborga yuborilgan tekshiruv so'rovi va bildirishnoma ham o'chirildi",
   "dogovorMessageSaveError": "Shartnomani saqlashda xatolik",
   "dogovorMessageDeleteError": "Shartnomani o'chirishda xatolik",
   "dogovorMessageLoadError": "Shartnomalarni yuklashda xatolik",

@@ -65,7 +65,7 @@
         </div>
         <div v-else-if="o.sklad_check === 'done'" class="ot-d__sklad is-done">
           <el-icon><CircleCheck /></el-icon>
-          {{ $t('otSkladDone', { date: formatDateTime(o.sklad_checked_at) }) }}
+          {{ $t('otSkladDone', { date: formatDateTimeSec(o.sklad_checked_at) }) }}
           <template v-if="o.sklad_check_note"> — {{ o.sklad_check_note }}</template>
         </div>
 
@@ -118,10 +118,30 @@
             <span class="ot-muted">{{ $t('otPayTotal') }}: <b>{{ fmtMoney(o.paid_sum) }}</b></span>
           </div>
           <div v-if="!o.payments.length" class="ot-muted">{{ $t('otNoPayments') }}</div>
+          <!-- Har qatorda: to'lov kelgan sana, ERP'ga kiritilgan vaqt, summa, izoh, kim kiritgani -->
+          <div v-else class="ot-pay ot-pay--head" aria-hidden="true">
+            <span>{{ $t('otPayCameAt') }}</span>
+            <span>{{ $t('otPayEnteredAt') }}</span>
+            <span class="is-r">{{ $t('otPayAmount') }}</span>
+            <span>{{ $t('otPayComment') }}</span>
+            <span class="is-r">{{ $t('otPayWho') }}</span>
+            <span></span>
+          </div>
           <div v-for="p in o.payments" :key="p.id" class="ot-pay">
-            <span class="ot-pay__date">{{ formatDate(p.pay_date) }}</span>
+            <span class="ot-pay__date" :data-label="$t('otPayCameAt')">{{ formatDate(p.pay_date) }}</span>
+            <span class="ot-pay__entered" :data-label="$t('otPayEnteredAt')" :title="payEditedTitle(p)">
+              {{ formatDateTimeSec(p.createdAt) }}<span v-if="payEditedTitle(p)" class="ot-pay__edited">✎</span>
+            </span>
             <span class="ot-pay__amount" :class="{ 'is-neg': p.amount < 0 }">{{ p.amount > 0 ? '+' : '' }}{{ fmtMoney(p.amount) }}</span>
             <span class="ot-pay__comment">{{ payComment(p) }}</span>
+            <span class="ot-pay__who" :title="payWho(p).title">
+              <template v-if="payWho(p).user">
+                <span class="ot-pay__login">@{{ payWho(p).user.username }}</span>
+                <span v-if="payWho(p).fio" class="ot-pay__fio">{{ payWho(p).fio }}</span>
+                <span v-if="payWho(p).user.position" class="ot-pay__pos">{{ payWho(p).user.position }}</span>
+              </template>
+              <span v-else class="ot-pay__fio">{{ payWho(p).fio }}</span>
+            </span>
             <span class="ot-pay__btns">
               <el-button text size="small" :icon="EditPen" :aria-label="$t('otPayEdit')" @click="editPayment(p)" />
               <el-popconfirm v-if="canEdit && p.source === 'erp'" :title="$t('otConfirmDelete')" @confirm="removePayment(p)">
@@ -130,7 +150,7 @@
             </span>
           </div>
           <div v-if="canEdit" class="ot-pay-add">
-            <el-date-picker v-model="pay.date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" :placeholder="$t('otPayDate')" class="ot-pay-add__date" />
+            <el-date-picker v-model="pay.date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" :placeholder="$t('otPayCameAt')" :title="$t('otPayCameAt')" class="ot-pay-add__date" />
             <UiMoneyInput v-model="pay.amount" :placeholder="$t('otPayAmount')" class="ot-pay-add__amount" />
             <el-input v-model="pay.comment" :placeholder="$t('otPayComment')" class="ot-pay-add__comment" />
             <el-button type="primary" :icon="Plus" :disabled="!pay.amount || !pay.date" :loading="saving === 'pay'" @click="addPayment">
@@ -163,6 +183,11 @@
           <div v-if="o.items_from_dogovor" class="ot-muted">{{ $t('otItemsFromDogovor') }}</div>
           <div v-if="!o.items.length" class="ot-muted">{{ $t('otNoItems') }}</div>
           <div v-if="o.items.length && inv.missing" class="ot-muted">{{ $t('otInvoicedMissing', { n: inv.missing }) }}</div>
+          <!-- Schyot-fakturalarda shartnomadagidan ko'p yozilgan tovarlar -->
+          <div v-if="o.items.length && overList.length" class="ot-over-box">
+            <div class="ot-over-box__title">{{ $t('otOverTitle', { n: overList.length }) }}</div>
+            <OtOverDetails v-for="x in overList" :key="x.index" :item="x" />
+          </div>
           <div v-if="o.items.length && inv.unmatched.length" class="ot-warn-text">
             {{ $t('otInvoicedUnmatched', { names: inv.unmatched.map((u) => `${u.name} (${fmtQty(u.qty)})`).join('; ') }) }}
           </div>
@@ -181,9 +206,19 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(it, i) in o.items" :key="i">
+              <tr v-for="(it, i) in o.items" :key="i" :class="{ 'is-over': overBy[i] }">
                 <td class="is-r ot-muted ot-items__no">{{ i + 1 }}.</td>
-                <td>{{ it.name }}</td>
+                <td>
+                  {{ it.name }}
+                  <el-popover v-if="overBy[i]" placement="bottom-start" :width="460" trigger="click">
+                    <template #reference>
+                      <button type="button" class="ot-over-chip">
+                        <el-icon><WarningFilled /></el-icon> {{ $t('otOverChip', { n: fmtQty(overBy[i].over) }) }}
+                      </button>
+                    </template>
+                    <OtOverDetails :item="overBy[i]" :show-name="false" compact />
+                  </el-popover>
+                </td>
                 <td class="is-r nowrap">{{ fmtQty(it.qty) }} {{ it.unit || '' }}</td>
                 <td class="is-r nowrap">{{ fmtMoney(it.price) }}</td>
                 <td class="is-r nowrap">{{ fmtMoney((it.qty || 0) * (it.price || 0)) }}</td>
@@ -210,7 +245,7 @@
                   <button
                     type="button"
                     class="ot-tag ot-ship"
-                    :class="inv.rows[i].left ? (inv.rows[i].invoiced ? 'is-link' : 'is-muted') : 'is-good'"
+                    :class="overBy[i] ? 'is-bad' : inv.rows[i].left ? (inv.rows[i].invoiced ? 'is-link' : 'is-muted') : 'is-good'"
                     :title="inv.rows[i].manual ? $t('otShippedManualTip', { auto: fmtQty(inv.rows[i].auto) }) : $t('otShippedAutoTip')"
                     @click="editShipped(i)"
                   >
@@ -218,6 +253,7 @@
                     <template v-if="inv.rows[i].pct != null"> · {{ fmtPct(inv.rows[i].pct) }}</template>
                     <el-icon v-if="inv.rows[i].manual" class="ot-ship__pen"><EditPen /></el-icon>
                   </button>
+                  <div v-if="overBy[i] && inv.rows[i].manual" class="ot-ship__auto">{{ $t('otOverAutoShort', { n: fmtQty(inv.rows[i].auto) }) }}</div>
                 </td>
               </tr>
             </tbody>
@@ -276,7 +312,7 @@
             <li v-for="n in shownNotes" :key="n.id" :class="`is-${n.kind}`">
               <div class="ot-tl__meta">
                 <span class="ot-tl__kind">{{ $t(`otNoteKind_${n.kind}`) }}</span>
-                <span>{{ formatDateTime(n.createdAt) }}</span>
+                <span>{{ formatDateTimeSec(n.createdAt) }}</span>
                 <span>· {{ author(n) }}</span>
                 <span v-if="n.source === 'sheet'" class="ot-tl__src">{{ n.data?.import ? $t('otNoteImport') : $t('otNoteFromSheet') }}</span>
                 <el-popconfirm v-if="canDeleteNote(n)" :title="$t('otConfirmDelete')" @confirm="removeNote(n)">
@@ -285,6 +321,9 @@
               </div>
               <div v-if="n.kind === 'change'" class="ot-tl__text">
                 <template v-if="n.data?.field === 'from_dogovor'">{{ $t('otFromDogovor') }}</template>
+                <template v-else-if="n.data?.field === 'dogovor_removed'">
+                  {{ $t(n.data.sklad_cleared ? 'otDogovorRemovedSklad' : 'otDogovorRemoved') }}
+                </template>
                 <template v-else-if="n.data?.field === 'didox_file'">
                   {{ $t(`ot${{ poa: 'Poa', contract: 'Contract' }[n.data.file_kind] || 'Didox'}${n.data.action === 'remove' ? 'Removed' : 'Added'}`, { name: n.data.file_name }) }}
                   <template v-if="n.data.amount != null"> · {{ fmtMoney(n.data.amount) }}</template>
@@ -313,7 +352,7 @@
     <!-- To'lovni to'g'rilash -->
     <el-dialog v-model="payEdit.open" :title="$t('otPayEdit')" width="420px" append-to-body>
       <el-form label-position="top">
-        <el-form-item :label="$t('otPayDate')">
+        <el-form-item :label="$t('otPayCameAt')">
           <el-date-picker v-model="payEdit.date" type="date" value-format="YYYY-MM-DD" format="DD.MM.YYYY" />
         </el-form-item>
         <el-form-item :label="$t('otPayAmount')">
@@ -374,18 +413,19 @@
 
 <script setup>
 import UiMoneyInput from '@/components/ui/UiMoneyInput.vue'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, h, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElDialog, ElMessage, ElMessageBox } from 'element-plus'
 import { Bell, CircleCheck, Close, Delete, Edit, EditPen, Plus, WarningFilled } from '@element-plus/icons-vue'
 import UiHint from '@/components/ui/UiHint.vue'
 import api from '@/api/otgruzka'
 import { useUsersStore } from '@/stores/user'
-import { formatDate, formatDateTime, telHref } from '@/utils/format'
-import { changeValue, fmtMoney, fmtPct, fmtShort, otError, PAY_TONE, STAGE_TONE, STOCK_TONE } from '@/utils/otgruzkaFormat'
+import { formatDate, formatDateTimeSec, telHref } from '@/utils/format'
+import { changeValue, contractRef, fmtMoney, fmtPct, fmtShort, invoiceRef, otError, PAY_TONE, STAGE_TONE, STOCK_TONE } from '@/utils/otgruzkaFormat'
 import OtgruzkaEditDialog from './OtgruzkaEditDialog.vue'
 import OtItemsEditor from './OtItemsEditor.vue'
 import OtDidoxFiles from './OtDidoxFiles.vue'
+import OtOverDetails from './OtOverDetails.vue'
 import { invoicedProgress } from '@/utils/didoxPdfImport'
 import { fmtQty } from '@/utils/skladFormat'
 
@@ -559,6 +599,10 @@ const invoiceNumbers = computed(() => {
 
 // Schyot-fakturalar bo'yicha tayyorlik (fakturadagi tovarlar soni / kartadagi jami soni)
 const inv = computed(() => invoicedProgress(o.value))
+// Fakturalarda shartnomadagidan ko'p yozilgan tovarlar (server hisoblaydi: qaysi faktura va
+// mijozning qaysi shartnomalarida shu tovar nechta) — mahsulot qatori raqami bo'yicha
+const overList = computed(() => o.value?.over_items || [])
+const overBy = computed(() => Object.fromEntries(overList.value.map((x) => [x.index, x])))
 
 // Jami soni: barcha qatorlar yig'indisi; birligi bitta bo'lsa — o'sha (masalan "шт")
 const itemsQty = computed(() => (o.value?.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0))
@@ -587,15 +631,53 @@ async function saveItems() {
 }
 
 // Отгружаемость: qo'lda o'zgartirish (bo'sh qoldirilsa — fakturalardan avtomatik)
+// Dialog matni: tovar nomi alohida (oddiy), shartnoma/faktura soni va so'rov — alohida, katta, qalin,
+// kursiv. Fakturalar shartnomadan ko'p bo'lsa — qaysi faktura va shartnomalarda nechta yozilgani.
+function shippedMessage(it, row, over) {
+  const unit = it.unit ? ` ${it.unit}` : ''
+  const q = (n) => `${fmtQty(n)}${unit}`
+  const lines = [
+    h('div', { class: 'ot-shipbox__name' }, it.name),
+    h('div', { class: 'ot-shipbox__facts' }, [
+      h('div', `${t('otOverByContract')}: ${q(it.qty)}`),
+      h('div', { class: over ? 'is-bad' : '' }, `${t('otOverByInvoices')}: ${q(row.auto)}${over ? ` (${t('otOverExtra', { n: q(over.over) })})` : ''}`),
+      h('div', { class: 'ot-shipbox__ask' }, t('otShippedAsk')),
+    ]),
+  ]
+  if (over) {
+    lines.push(
+      h('div', { class: 'ot-shipbox__over' }, [
+        h('div', { class: 'ot-shipbox__lbl' }, t('otOverInvoices')),
+        h(
+          'ul',
+          over.invoices.map((f) => h('li', [`${invoiceRef(f)} — `, h('b', q(f.qty))])),
+        ),
+        h('div', { class: 'ot-shipbox__lbl' }, t('otOverContracts')),
+        h(
+          'ul',
+          over.contracts.map((c) =>
+            h('li', { class: c.current ? 'is-current' : '' }, [
+              `${contractRef(c)}${c.current ? ` (${t('otOverThis')})` : ''} — `,
+              h('b', `${fmtQty(c.qty)}${c.unit || it.unit ? ` ${c.unit || it.unit}` : ''}`),
+            ]),
+          ),
+        ),
+      ]),
+    )
+  }
+  return h('div', { class: 'ot-shipbox__body' }, lines)
+}
+
 async function editShipped(i) {
   const it = o.value.items[i]
   const row = inv.value.rows[i]
   let value
   try {
     ;({ value } = await ElMessageBox.prompt(
-      t('otShippedPrompt', { name: it.name, qty: fmtQty(it.qty), auto: fmtQty(row.auto) }),
+      () => shippedMessage(it, row, overBy.value[i]),
       t('otItemShipped'),
       {
+        customClass: 'ot-shipbox',
         inputValue: row.manual ? String(row.invoiced) : '',
         inputPlaceholder: t('otShippedAutoPh', { auto: fmtQty(row.auto) }),
         inputPattern: /^\s*(\d+([.,]\d+)?)?\s*$/,
@@ -660,6 +742,20 @@ const didoxTone = computed(() => {
 })
 const phones = computed(() => (o.value?.client_phone || '').split(/,\s*/).filter((p) => /\d{5,}/.test(p.replace(/\D/g, ''))))
 const payComment = (p) => (p.comment?.startsWith('sys:') ? t(`otPaySys_${p.comment.slice(4)}`) : p.comment || '')
+// To'lovni kim kiritgan: login / F.I.Sh. / lavozim. Jadvaldan kelgani — "Google Sheets"
+const fio = (u) => [u?.firstname, u?.lastname].filter(Boolean).join(' ')
+function payWho(p) {
+  if (p.source === 'sheet') return { user: null, fio: t('otPayFromSheet'), title: t('otPayFromSheetHint') }
+  const u = p.creator
+  if (!u) return { user: null, fio: t('otSystem'), title: '' }
+  return { user: u, fio: fio(u), title: [`@${u.username}`, fio(u), u.position].filter(Boolean).join(' · ') }
+}
+// Kiritilgandan keyin tahrirlangan bo'lsa — qachonligi (sichqoncha olib borilganda)
+function payEditedTitle(p) {
+  if (!p.updatedAt || !p.createdAt) return ''
+  if (new Date(p.updatedAt) - new Date(p.createdAt) < 2000) return ''
+  return t('otPayEditedAt', { date: formatDateTimeSec(p.updatedAt) })
+}
 // Jadvaldan kelgan yozuvlar — sinxronni kim bosganidan qat'i nazar, muallifi jadval
 const author = (n) => {
   const c = n.creator
@@ -686,6 +782,47 @@ const author = (n) => {
 .ot-warn-text {
   font-size: 13px;
   color: var(--ui-warn);
+}
+// Fakturalarda shartnomadagidan ko'p yozilgan tovarlar
+.ot-over-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.ot-over-box__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ui-bad);
+}
+.ot-items tr.is-over > td {
+  background: var(--ui-bad-soft);
+}
+.ot-over-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--ui-bad-line);
+  border-radius: 99px;
+  background: var(--ui-surface);
+  color: var(--ui-bad);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.7;
+  white-space: nowrap;
+  cursor: pointer;
+  vertical-align: 1px;
+  &:hover {
+    background: var(--ui-bad-soft);
+  }
+}
+.ot-ship__auto {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--ui-bad);
 }
 // "№" ustuni qo'shilgach mahsulot nomi ham chapga tekislanadi
 .ot-items th:nth-child(2),
@@ -905,11 +1042,98 @@ const author = (n) => {
 }
 .ot-pay {
   display: grid;
-  grid-template-columns: 90px 130px 1fr auto;
+  // kelgan sana | kiritilgan vaqt | summa | izoh | kim kiritdi | tugmalar
+  grid-template-columns: 92px 150px 130px minmax(0, 1fr) minmax(0, auto) 64px;
   align-items: center;
   gap: 8px;
   padding: 6px 0;
   border-bottom: 1px dashed var(--ui-line-soft);
+  &--head {
+    padding: 0 0 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--ui-muted);
+    border-bottom: 1px solid var(--ui-line-soft);
+    .is-r {
+      text-align: right;
+    }
+  }
+}
+.ot-pay__date {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ot-pay__entered {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-ink-2);
+  white-space: nowrap;
+}
+.ot-pay__edited {
+  margin-left: 4px;
+  color: var(--ui-muted);
+  cursor: help;
+}
+// Kim kiritgani: @login · F.I.Sh. · lavozim — tugmalardan oldin, o'ngga tekislangan
+.ot-pay__who {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0 6px;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: right;
+  color: var(--ui-ink-2);
+  min-width: 0;
+  > span + span::before {
+    content: '·';
+    margin-right: 6px;
+    color: var(--ui-muted);
+  }
+}
+.ot-pay__login {
+  font-weight: 600;
+  color: var(--ui-link);
+}
+.ot-pay__pos {
+  font-style: italic;
+  color: var(--ui-muted);
+}
+// Tor ekranda qator kartochkaga aylanadi: har qiymat oldida o'z nomi
+@media (max-width: 720px) {
+  .ot-pay {
+    grid-template-columns: 1fr auto;
+    gap: 2px 8px;
+    &--head {
+      display: none;
+    }
+    > .ot-pay__date,
+    > .ot-pay__entered {
+      grid-column: 1;
+      &::before {
+        content: attr(data-label) ': ';
+        font-weight: 400;
+        color: var(--ui-muted);
+      }
+    }
+    > .ot-pay__amount {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    > .ot-pay__comment,
+    > .ot-pay__who {
+      grid-column: 1 / -1;
+      justify-content: flex-start;
+      text-align: left;
+    }
+    > .ot-pay__btns {
+      grid-column: 2;
+      grid-row: 2;
+      justify-self: end;
+    }
+  }
 }
 .ot-pay__amount {
   font-weight: 700;
@@ -1055,6 +1279,69 @@ const author = (n) => {
 </style>
 
 <style lang="scss">
+// "Отгружаемость" dialogi (ElMessageBox body'ga chiziladi — scoped emas)
+.el-message-box.ot-shipbox {
+  width: min(560px, 94vw);
+  max-width: none;
+  .el-message-box__message {
+    width: 100%;
+  }
+}
+.ot-shipbox__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+// Tovar nomi — oddiy matn, uzun bo'lsa o'zi aylanadi
+.ot-shipbox__name {
+  max-height: 34vh;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ui-ink-2);
+  word-break: break-word;
+}
+// Shartnoma / faktura soni va so'rov — alohida, katta, qalin, kursiv
+.ot-shipbox__facts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--ui-link);
+  border-radius: 6px;
+  background: var(--ui-link-soft);
+  font-size: 17px;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--ui-ink);
+  .is-bad {
+    color: var(--ui-bad);
+  }
+}
+.ot-shipbox__ask {
+  margin-top: 4px;
+}
+.ot-shipbox__over {
+  padding: 10px 12px;
+  border: 1px solid var(--ui-bad-line);
+  border-radius: 8px;
+  background: var(--ui-bad-soft);
+  font-size: 13px;
+  line-height: 1.45;
+  ul {
+    margin: 2px 0 6px;
+    padding-left: 18px;
+  }
+  li.is-current {
+    font-weight: 600;
+  }
+}
+.ot-shipbox__lbl {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ui-bad);
+}
 // Alohida sahifadagi karta
 .ot-card-page {
   // Sahifaning odatiy konteyneri bo'ylab (boshqa sahifalar kabi)

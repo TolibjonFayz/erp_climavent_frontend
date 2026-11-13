@@ -18,7 +18,7 @@
         </dd>
         <dt>{{ $t('otSetLast') }}</dt>
         <dd v-if="last">
-          <div>{{ formatDateTime(last.at) }}</div>
+          <div>{{ formatDateTimeSec(last.at) }}</div>
           <div v-if="last.ok" class="is-good">{{ $t('otSyncStats', last) }}</div>
           <div v-else class="is-bad">{{ codeText(last) }}</div>
         </dd>
@@ -79,7 +79,7 @@ import { ElMessage } from 'element-plus'
 import { CircleCheck, DocumentCopy, Refresh, WarningFilled } from '@element-plus/icons-vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import api from '@/api/otgruzka'
-import { formatDateTime } from '@/utils/format'
+import { formatDateTimeSec } from '@/utils/format'
 import { otError } from '@/utils/otgruzkaFormat'
 import { buildOtgruzkaScript, otgruzkaHookUrl } from '@/utils/otgruzkaScript'
 

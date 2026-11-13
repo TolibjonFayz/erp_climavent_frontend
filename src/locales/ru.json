@@ -1287,6 +1287,7 @@
   "dogovorMessageSaved": "Договор добавлен",
   "dogovorMessageUpdated": "Договор обновлён",
   "dogovorMessageDeleted": "Договор удалён",
+  "dogovorSkladChecksRemoved": "Запрос на проверку склада и уведомление тоже удалены",
   "dogovorMessageSaveError": "Ошибка при сохранении договора",
   "dogovorMessageDeleteError": "Ошибка при удалении договора",
   "dogovorMessageLoadError": "Ошибка при загрузке договоров",

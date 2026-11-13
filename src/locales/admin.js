@@ -438,6 +438,11 @@ export const uz = {
   actF_whereto: 'Qayerga',
   actF_company_name: 'Firma',
   actF_locationname: 'Manzil',
+  // ─── Lavozim ───
+  admPosition: 'Lavozimi',
+  admPositionPh: 'Masalan: Sotuv menejeri',
+  admPositionNone: 'Lavozim kiritilmagan',
+  admPositionHint: "To'lov, izoh va fayllarni kim kiritganini ko'rsatishda login va F.I.Sh. bilan birga chiqadi",
 }
 
 export const ru = {
@@ -877,4 +882,9 @@ export const ru = {
   actF_whereto: 'Куда',
   actF_company_name: 'Фирма',
   actF_locationname: 'Адрес',
+  // ─── Должность ───
+  admPosition: 'Должность',
+  admPositionPh: 'Например: Менеджер по продажам',
+  admPositionNone: 'Должность не указана',
+  admPositionHint: 'Показывается вместе с логином и ФИО там, где видно, кто внёс оплату, комментарий или файл',
 }

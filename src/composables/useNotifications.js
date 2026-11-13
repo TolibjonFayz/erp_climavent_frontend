@@ -9,6 +9,8 @@ import { useUsersStore } from '@/stores/user'
 // Har bildirishnoma alohida o'qiladi (bosilganda); "Barchasini o'qilgan qilish" — hammasini.
 // O'qilganlar shu brauzerda, foydalanuvchi bo'yicha saqlanadi. Holat butun ilova uchun bitta.
 const POLL_MS = 5 * 60 * 1000
+// Oynaga qaytilganda (boshqa vkladkadan) — oxirgi yangilanishdan shuncha o'tgan bo'lsa yangilanadi
+const FOCUS_REFRESH_MS = 30 * 1000
 const MAX_READ_KEYS = 500
 
 const announcements = ref([])
@@ -16,6 +18,7 @@ const skladChecks = ref([]) // [{ id, dogovor_number, client_name, manager_name,
 const seenAt = ref(0) // "Barchasini o'qilgan" bosilgan vaqt — undan oldingilar o'qilgan
 const readKeys = ref(new Set()) // alohida bosib o'qilganlar
 let timer = null
+let lastRefreshAt = 0
 
 const userId = () => Number(localStorage.getItem('userid'))
 const seenKey = () => `notif:seen:${userId()}`
@@ -102,6 +105,7 @@ export function useNotifications() {
   const unreadCount = computed(() => items.value.filter((n) => n.unread).length)
 
   async function refresh() {
+    lastRefreshAt = Date.now()
     try {
       announcements.value = (await bossApi.getFeed()) || []
     } catch {
@@ -122,12 +126,26 @@ export function useNotifications() {
     }
   }
 
+  // Boshqa xodim shartnomani o'chirsa yoki yangisini kiritsa — oynaga qaytganda 5 daqiqa kutmasdan ko'rinsin
+  function onFocus() {
+    if (document.visibilityState === 'visible' && Date.now() - lastRefreshAt > FOCUS_REFRESH_MS) refresh()
+  }
+
   function start() {
     loadState()
     if (timer) return
     refresh()
     timer = setInterval(refresh, POLL_MS)
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onFocus)
   }
+
+  /**
+   * Shartnoma o'chirildi: server uning omborga yuborgan tekshiruv so'rovini bekor qildi —
+   * qo'ng'iroqchadagi bildirishnoma 5 daqiqalik navbatni kutmasdan darhol yo'qolsin.
+   * (Raqam bo'yicha mahalliy o'chirilmaydi: shu raqamli boshqa shartnoma so'rovi o'z kuchida qolishi mumkin.)
+   */
+  const dogovorRemoved = () => refresh()
 
   /** Bitta bildirishnomani o'qilgan deb belgilash (bosilganda) */
   function markRead(key) {
@@ -146,5 +164,5 @@ export function useNotifications() {
     saveState()
   }
 
-  return { items, unreadCount, start, refresh, markRead, markAllSeen }
+  return { items, unreadCount, start, refresh, markRead, markAllSeen, dogovorRemoved }
 }

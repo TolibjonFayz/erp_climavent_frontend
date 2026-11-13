@@ -11,7 +11,7 @@
           <i class="amo-sync__dot"></i>
           <template v-if="syncing">{{ $t('amoSyncing') }}</template>
           <template v-else-if="sync?.last_sync_at">
-            {{ $t('amoLastSync') }}: {{ formatDateTime(sync.last_sync_at) }}
+            {{ $t('amoLastSync') }}: {{ formatDateTimeSec(sync.last_sync_at) }}
           </template>
           <template v-else>{{ $t('amoNeverSynced') }}</template>
         </span>
@@ -663,7 +663,7 @@ import {
   fmtDuration,
   fmtNum,
   formatDate,
-  formatDateTime,
+  formatDateTimeSec,
   pct,
   ymd,
 } from './amoFormat'

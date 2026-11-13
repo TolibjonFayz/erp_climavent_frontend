@@ -12,7 +12,7 @@
         </span>
       </el-tooltip>
       <span v-if="settings.mode === 'mirror' && settings.last_sync?.at" class="ot-sub">
-        {{ $t('otLastSync') }}: {{ formatDateTime(settings.last_sync.at) }}
+        {{ $t('otLastSync') }}: {{ formatDateTimeSec(settings.last_sync.at) }}
       </span>
     </template>
 
@@ -127,7 +127,7 @@ import UiPage from '@/components/ui/UiPage.vue'
 import UiStat from '@/components/ui/UiStat.vue'
 import api from '@/api/otgruzka'
 import { useUsersStore } from '@/stores/user'
-import { fmtNum, formatDateTime } from '@/utils/format'
+import { fmtNum, formatDateTimeSec } from '@/utils/format'
 import { ALERTS, fmtShort, otError } from '@/utils/otgruzkaFormat'
 import OtgruzkaList from './OtgruzkaList.vue'
 import OtgruzkaManagers from './OtgruzkaManagers.vue'

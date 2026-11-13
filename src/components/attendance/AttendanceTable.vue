@@ -991,7 +991,7 @@ const unlinkedCount = computed(
 const fmtSync = (iso) => {
   if (!iso) return '—'
   const d = new Date(iso)
-  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
   return toDateStr(d) === todayStr ? time : `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${time}`
 }
 // Agent ofis kompyuterida ishlaydi — 24 soatdan ko'p jim tursa ogohlantiramiz

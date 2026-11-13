@@ -28,6 +28,13 @@ export function formatDateTime(value) {
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+/** Soniyasi bilan — sinxron vaqti uchun */
+export function formatDateTimeSec(value) {
+  if (!value) return '—'
+  const d = new Date(value)
+  return `${formatDateTime(d)}:${pad(d.getSeconds())}`
+}
+
 export function formatDate(value) {
   if (!value) return '—'
   const d = new Date(value)

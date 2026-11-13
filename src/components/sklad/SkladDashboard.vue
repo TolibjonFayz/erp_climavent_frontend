@@ -18,7 +18,7 @@
         </el-tag>
       </span>
       <span v-if="store.mode === 'mirror' && store.lastSyncedAt" class="sk-sub">
-        {{ $t('skLastSync') }}: {{ formatDateTime(store.lastSyncedAt) }}
+        {{ $t('skLastSync') }}: {{ formatDateTimeSec(store.lastSyncedAt) }}
       </span>
     </template>
 
@@ -217,7 +217,7 @@ import trainingApi from '@/api/training'
 import { useOnboarding } from '@/composables/useOnboarding'
 import { useSkladStore, stockStatus } from '@/stores/sklad'
 import { useUsersStore } from '@/stores/user'
-import { fmtNum, formatDateTime } from '@/utils/format'
+import { fmtNum, formatDateTimeSec } from '@/utils/format'
 import { apiError, periodLabel } from '@/utils/skladFormat'
 import SkladStock from './SkladStock.vue'
 import SkladMovements from './SkladMovements.vue'

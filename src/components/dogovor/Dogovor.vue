@@ -745,10 +745,12 @@ import { readDogovorPdf } from '@/utils/dogovorPdfImport'
 import { readDidoxPdf } from '@/utils/didoxPdfImport'
 import otgruzkaApi from '@/api/otgruzka'
 import ManagerSelect from '@/components/ui/ManagerSelect.vue'
+import { useNotifications } from '@/composables/useNotifications'
 
 const { t } = useI18n()
 const dogovorStore = useDogovorStore()
 const usersStore = useUsersStore()
+const notifications = useNotifications()
 
 const currentUserId = Number(localStorage.getItem('userid'))
 const isAdmin = computed(() => !!usersStore.currentUser?.is_admin)
@@ -1266,8 +1268,11 @@ async function attachDidoxPdf(dogovorId) {
 
 const handleDelete = async (id) => {
   try {
-    await dogovorStore.deleteDogovor(id)
+    const res = await dogovorStore.deleteDogovor(id)
     ElMessage.success(t('dogovorMessageDeleted'))
+    // Omborga yuborilgan tekshiruv so'rovi ham bekor bo'ldi — bildirishnoma darhol yo'qolsin
+    if (res?.sklad_checks_removed) ElMessage.info(t('dogovorSkladChecksRemoved'))
+    notifications.dogovorRemoved()
     await load()
   } catch (error) {
     ElMessage.error(errorText(error, t('dogovorMessageDeleteError')))

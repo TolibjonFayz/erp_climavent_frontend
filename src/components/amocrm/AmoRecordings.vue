@@ -53,7 +53,7 @@
         <span v-if="summary.history?.last_run_at" class="rec-muted">
           {{
             $t('amoRecHistoryLast', {
-              date: formatDateTime(summary.history.last_run_at),
+              date: formatDateTimeSec(summary.history.last_run_at),
               n: fmtNum(summary.history.items),
             })
           }}
@@ -181,6 +181,7 @@ import {
   fmtNum,
   formatDate,
   formatDateTime,
+  formatDateTimeSec,
   telHref,
 } from './amoFormat'
 

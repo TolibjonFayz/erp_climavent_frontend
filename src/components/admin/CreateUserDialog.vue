@@ -52,6 +52,11 @@
           </el-form-item>
         </el-col>
         <el-col :span="24">
+          <el-form-item :label="$t('admPosition')" prop="position">
+            <el-input v-model="form.position" :placeholder="$t('admPositionPh')" maxlength="120" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="24">
           <el-checkbox v-model="form.is_admin">{{ $t('cuMakeAdmin') }}</el-checkbox>
         </el-col>
       </el-row>
@@ -92,6 +97,7 @@ const emptyForm = () => ({
   password: '',
   phone_number: '',
   email: '',
+  position: '',
   is_admin: false,
 })
 const form = reactive(emptyForm())
@@ -119,6 +125,9 @@ async function submit() {
   try {
     const { is_admin, ...payload } = form
     payload.username = payload.username.trim()
+    // Lavozim ixtiyoriy: bo'sh bo'lsa yuborilmaydi
+    payload.position = payload.position.trim()
+    if (!payload.position) delete payload.position
     // Bazada profile_image majburiy — sidebar 'profile.jpg'ni standart avatar deb biladi
     payload.profile_image = 'profile.jpg'
     const user = await usersStore.createUser(payload)

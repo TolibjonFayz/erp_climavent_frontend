@@ -47,6 +47,7 @@
               <div>
                 <div class="user-cell__name">{{ row.firstname }} {{ row.lastname }}</div>
                 <div class="user-cell__un">{{ '@' + row.username }}</div>
+                <div v-if="row.position" class="user-cell__pos">{{ row.position }}</div>
               </div>
             </div>
           </template>
@@ -135,6 +136,9 @@
         </div>
         <div class="user-drawer__name">{{ selectedUser.firstname }} {{ selectedUser.lastname }}</div>
         <div class="user-drawer__un">{{ '@' + selectedUser.username }}</div>
+        <div class="user-drawer__pos" :class="{ 'is-empty': !selectedUser.position }">
+          {{ selectedUser.position || $t('admPositionNone') }}
+        </div>
         <div class="user-drawer__tags">
           <el-tag :type="selectedUser.is_admin ? 'success' : 'warning'">
             {{ selectedUser.is_admin ? 'Admin' : $t('admRoleUser') }}
@@ -286,6 +290,12 @@
               <el-input v-model="editForm.username" autocomplete="off" />
             </el-form-item>
           </el-col>
+          <el-col :span="24">
+            <el-form-item :label="$t('admPosition')" prop="position">
+              <el-input v-model="editForm.position" :placeholder="$t('admPositionPh')" maxlength="120" clearable />
+              <div class="adm-field-hint">{{ $t('admPositionHint') }}</div>
+            </el-form-item>
+          </el-col>
           <el-col :span="12">
             <el-form-item :label="$t('admPhone')" prop="phone_number">
               <el-input v-model="editForm.phone_number" placeholder="+998..." />
@@ -380,7 +390,7 @@ const filteredUsers = computed(() => {
   return usersStore.allUsers.filter((u) => {
     const matchSearch =
       !s ||
-      ['firstname', 'lastname', 'username', 'phone_number'].some((k) =>
+      ['firstname', 'lastname', 'username', 'phone_number', 'position'].some((k) =>
         (u[k] ?? '').toLowerCase().includes(s),
       )
     const matchRole = !roleFilter.value || (roleFilter.value === 'admin' ? u.is_admin : !u.is_admin)
@@ -520,7 +530,7 @@ const editVisible = ref(false)
 const editLoading = ref(false)
 const editFormRef = ref(null)
 const editTarget = ref(null)
-const editForm = reactive({ firstname: '', lastname: '', username: '', phone_number: '', email: '' })
+const editForm = reactive({ firstname: '', lastname: '', username: '', phone_number: '', email: '', position: '' })
 // Email tekshirilmaydi: bazada eski "." kabi qiymatlar bor — ular ismni tahrirlashni to'smasin
 const editRules = {
   firstname: [required('admValFirstname')],
@@ -536,6 +546,7 @@ function openEditUser(user) {
     username: user.username || '',
     phone_number: user.phone_number || '',
     email: user.email || '',
+    position: user.position || '',
   })
   editVisible.value = true
 }
@@ -546,7 +557,8 @@ async function saveEdit() {
   const user = editTarget.value
   editLoading.value = true
   try {
-    const payload = { ...editForm, username: editForm.username.trim() }
+    // Bo'sh lavozim — "kiritilmagan" (null)
+    const payload = { ...editForm, username: editForm.username.trim(), position: editForm.position.trim() || null }
     await usersStore.updateUser(user.id, payload)
     // Jadval, drawer va ro'yxatdagi yozuv bir xil obyekt — joyida yangilaymiz
     Object.assign(user, payload)

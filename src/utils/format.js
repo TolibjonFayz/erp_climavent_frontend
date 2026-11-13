@@ -22,6 +22,17 @@ export function formatDateTime(value) {
   return `${formatDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+/**
+ * → "28.02.2026 14:05:37" — soniyasi bilan. Ma'lumot qachon yangilangani (sinxron, oxirgi
+ * yangilanish, o'zgarishlar tarixi, to'lov kiritilgan vaqt) shu ko'rinishda chiqadi.
+ */
+export function formatDateTimeSec(value) {
+  if (!value) return '—'
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return '—'
+  return `${formatDateTime(d)}:${pad(d.getSeconds())}`
+}
+
 /** Ikki sana orasidagi vaqt: "2 soat 15 daq" (t — i18n funksiyasi) */
 export function formatSpan(from, to, t) {
   if (!from || !to) return ''

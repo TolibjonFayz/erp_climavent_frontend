@@ -157,7 +157,7 @@
       </div>
       <div class="user-info">
         <h4>{{ currentUser?.firstname }} {{ currentUser?.lastname }}</h4>
-        <p>{{ currentUser?.username }}</p>
+        <p>{{ currentUser?.username }}<template v-if="currentUser?.position"> · {{ currentUser.position }}</template></p>
       </div>
     </RouterLink>
   </aside>
@@ -181,6 +181,7 @@ type CurrentUser = {
   profile_image?: string | null
   firstname?: string | null
   lastname?: string | null
+  position?: string | null
   username?: string | null
   is_admin?: boolean | null
   id?: number | null

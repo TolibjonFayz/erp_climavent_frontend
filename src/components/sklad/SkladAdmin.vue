@@ -43,7 +43,7 @@
           <el-option v-for="m in AUTO_INTERVALS" :key="m" :label="$t('skAutoMin', { n: m })" :value="m" />
         </el-select>
         <span v-if="store.autoSync.next_auto_at" class="sk-muted">
-          · {{ $t('skAutoNext') }}: {{ formatDateTime(store.autoSync.next_auto_at) }}
+          · {{ $t('skAutoNext') }}: {{ formatDateTimeSec(store.autoSync.next_auto_at) }}
         </span>
       </template>
       <span v-if="store.mode === 'live'" class="sk-muted">{{ $t('skAutoLiveOff') }}</span>
@@ -53,7 +53,7 @@
     <div v-if="!store.syncLog.length" class="sk-muted">{{ $t('skLogEmpty') }}</div>
     <el-table v-else :data="store.syncLog.slice(0, logLimit)" size="small" class="sk-table" max-height="360">
       <el-table-column :label="$t('skLogAt')" min-width="140">
-        <template #default="{ row }">{{ formatDateTime(row.at) }}</template>
+        <template #default="{ row }">{{ formatDateTimeSec(row.at) }}</template>
       </el-table-column>
       <el-table-column :label="$t('skLogTrigger')" min-width="110">
         <template #default="{ row }">
@@ -96,7 +96,7 @@
         <template #default="{ row }">{{ row.period ? periodLabel(row.period) : '—' }}</template>
       </el-table-column>
       <el-table-column :label="$t('skLastSync')" min-width="150" column-key="skLastSync">
-        <template #default="{ row }">{{ formatDateTime(row.last_synced_at) }}</template>
+        <template #default="{ row }">{{ formatDateTimeSec(row.last_synced_at) }}</template>
       </el-table-column>
       <el-table-column :label="$t('skAdmResult')" min-width="260" column-key="skAdmResult">
         <template #default="{ row }">
@@ -240,7 +240,7 @@ import { Delete, Plus, Upload } from '@element-plus/icons-vue'
 import UiPanel from '@/components/ui/UiPanel.vue'
 import TrainingReport from '@/components/onboarding/TrainingReport.vue'
 import { useSkladStore } from '@/stores/sklad'
-import { fmtNum, formatDateTime } from '@/utils/format'
+import { fmtNum, formatDateTimeSec } from '@/utils/format'
 import { apiError, codeMessage, compactSheetFile, periodLabel, syncWarning } from '@/utils/skladFormat'
 
 
